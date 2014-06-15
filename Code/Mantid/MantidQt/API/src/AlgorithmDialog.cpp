@@ -44,7 +44,7 @@ AlgorithmDialog::AlgorithmDialog(QWidget* parent) :
   QDialog(parent), m_algorithm(NULL), m_algName(""), m_algProperties(),
   m_propertyValueMap(), m_tied_properties(), m_forScript(false), m_python_arguments(),
   m_enabled(), m_disabled(), m_strMessage(""), m_msgAvailable(false), m_isInitialized(false), m_autoParseOnInit(true),
-  m_validators(), m_noValidation(), m_inputws_opts(), m_outputws_fields(), m_wsbtn_tracker()
+  m_validators(), m_noValidation(), m_inputws_opts(), m_outputws_fields(), m_wsbtn_tracker(), m_okButton(NULL)
 {
 }
 
@@ -655,9 +655,9 @@ AlgorithmDialog::createDefaultButtonLayout(const QString & helpText,
                        const QString & loadText,
                        const QString & cancelText)
 {
-  QPushButton *okButton = new QPushButton(loadText);
-  connect(okButton, SIGNAL(clicked()), this, SLOT(accept()));
-  okButton->setDefault(true);
+  m_okButton = new QPushButton(loadText);
+  connect(m_okButton, SIGNAL(clicked()), this, SLOT(accept()));
+  m_okButton->setDefault(true);
 
   QPushButton *exitButton = new QPushButton(cancelText);
   connect(exitButton, SIGNAL(clicked()), this, SLOT(close()));
@@ -665,7 +665,7 @@ AlgorithmDialog::createDefaultButtonLayout(const QString & helpText,
   QHBoxLayout *buttonRowLayout = new QHBoxLayout;
   buttonRowLayout->addWidget(createHelpButton(helpText));
   buttonRowLayout->addStretch();
-  buttonRowLayout->addWidget(okButton);
+  buttonRowLayout->addWidget(m_okButton);
   buttonRowLayout->addWidget(exitButton);
 
   return buttonRowLayout;
@@ -984,4 +984,9 @@ void AlgorithmDialog::setPreviousValue(QWidget* widget, const QString& propName)
   QMessageBox::warning(this, windowTitle(),
                QString("Cannot set value for ") + widget->metaObject()->className() +
                ". Update AlgorithmDialog::setValue() to cope with this widget.");
+}
+
+void AlgorithmDialog::setRunButtonEnabled(bool enabled)
+{
+  m_okButton->setEnabled(enabled);
 }

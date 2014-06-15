@@ -226,6 +226,8 @@ protected:
   QString getPreviousValue(const QString& propName);
   /// Set a value based on any old input that we have
   void setPreviousValue(QWidget *widget, const QString & property);
+  /// Enable/disable the run button.
+  void setRunButtonEnabled(bool enabled);
 
 /// The following methods were made public for testing in GenericDialogDemo.cpp
 public:
@@ -293,6 +295,9 @@ protected:
 
   /// A map to keep track of replace workspace button presses
   QHash<QPushButton*, int> m_wsbtn_tracker;
+
+  /// The "Run" button.
+  QPushButton *m_okButton;
   //@}
 };
 

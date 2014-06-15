@@ -265,8 +265,10 @@ namespace API
    */
   void PropertyWidget::setValue(const QString & value)
   {
+    const bool changed = getValue() != value;
     setValueImpl(value);
-    valueChangedSlot();
+    if( changed )
+      valueChangedSlot();
     updateIconVisibility();
   }
 
@@ -289,11 +291,7 @@ namespace API
       setValue(m_previousValue);
     }
     
-    // Once we've made the history icon visible, it will stay that way for
-    // the lifetime of the property widget.
-    if( m_previousValue.toStdString() != m_prop->getDefault() &&
-        !m_previousValue.isEmpty() )
-      m_icons[RESTORE]->setVisible(true);
+    updateIconVisibility();
   }
 
   /**
@@ -327,6 +325,10 @@ namespace API
       const bool wsExists = Mantid::API::AnalysisDataService::Instance().doesExist(getValue().toStdString());
       m_icons[REPLACE]->setVisible(wsExists);
     }
+
+    if( m_previousValue.toStdString() != m_prop->getDefault() &&
+        !m_previousValue.isEmpty() )
+      m_icons[RESTORE]->setVisible(true);
   }
 
   /** Slot called when someone clicks the "replace ws button" */
@@ -427,6 +429,8 @@ namespace API
     for (int i=0; i < m_widgets.size(); i++)
       m_widgets[i]->setEnabled(val);
     QWidget::setEnabled(val);
+    foreach(auto icon, m_icons)
+      icon->setEnabled(val);
   }
 
   /** Sets all widgets contained within to Visible
@@ -436,6 +440,11 @@ namespace API
     for (int i=0; i < m_widgets.size(); i++)
       m_widgets[i]->setVisible(val);
     QWidget::setVisible(val);
+    if(val)
+      updateIconVisibility();
+    else
+      foreach(auto icon, m_icons)
+        icon->setVisible(val);
   }
 
   /**

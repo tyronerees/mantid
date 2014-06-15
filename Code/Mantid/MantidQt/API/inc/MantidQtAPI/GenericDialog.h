@@ -6,11 +6,12 @@
 //----------------------------------
 #include "AlgorithmDialog.h"
 
-#include <QHash>
-#include <QtCore/qvariant.h>
 #include "MantidKernel/PropertyWithValue.h"
 #include "MantidKernel/Property.h"
 #include "MantidQtAPI/AlgorithmPropertiesWidget.h"
+
+#include <QHash>
+#include <QVariant>
 
 //----------------------------------
 // Forward declarations
@@ -51,7 +52,7 @@ namespace API
     File change history is stored at: <https://github.com/mantidproject/mantid>
     Code Documentation is available at: <http://doxygen.mantidproject.org>    
 */
-class GenericDialog : public AlgorithmDialog
+class EXPORT_OPT_MANTIDQT_API GenericDialog : public AlgorithmDialog
 {
   
   Q_OBJECT
@@ -73,6 +74,10 @@ private:
 
   /// Widget containing all the PropertyWidgets
   AlgorithmPropertiesWidget * m_algoPropertiesWidget;
+  /// Names of properties with PropertyWidgets that should not be shown,
+  // or taken into account when setting/getting values.
+  QStringList m_hiddenPropWidgets;
+
 
 };
 

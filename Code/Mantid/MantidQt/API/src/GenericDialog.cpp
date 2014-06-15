@@ -1,13 +1,20 @@
 //----------------------------------
 // Includes
 //----------------------------------
-#include "MantidQtAPI/GenericDialog.h"
-#include "MantidQtAPI/AlgorithmInputHistory.h"
 
+#include "MantidKernel/MaskedProperty.h"
 #include "MantidKernel/PropertyWithValue.h"
+
 #include "MantidAPI/FileProperty.h"
 #include "MantidAPI/IWorkspaceProperty.h"
-#include "MantidKernel/MaskedProperty.h"
+#include "MantidAPI/MultipleFileProperty.h"
+
+#include "MantidQtAPI/AlgorithmInputHistory.h"
+#include "MantidQtAPI/AlgorithmPropertiesWidget.h"
+#include "MantidQtAPI/FilePropertyWidget.h"
+#include "MantidQtAPI/GenericDialog.h"
+#include "MantidQtAPI/PropertyWidget.h"
+#include "MantidQtAPI/PropertyWidgetFactory.h"
 
 #include <QApplication>
 #include <QDesktopWidget>
@@ -24,18 +31,37 @@
 #include <QSignalMapper>
 #include <QFileInfo>
 #include <QDir>
-#include "MantidAPI/MultipleFileProperty.h"
 #include <QGroupBox>
-#include <climits>
-#include "MantidQtAPI/FilePropertyWidget.h"
-#include "MantidQtAPI/PropertyWidgetFactory.h"
-#include "MantidQtAPI/AlgorithmPropertiesWidget.h"
-#include "MantidQtAPI/PropertyWidget.h"
+
+#include <algorithm>
+
+#include <boost/functional.hpp>
 
 // Dialog stuff is defined here
 using namespace MantidQt::API;
 using namespace Mantid::Kernel;
 using namespace Mantid::API;
+
+namespace
+{
+  /**
+   * Helper function for use with std::all_of.  Returns true if the given property
+   * is disabled or hidden as per its IPropertySettings object, else returns false.
+   *
+   * @param prop :: the property to check
+   * @param alg :: the algorithm that owns the property
+   *
+   * @returns true if the proeprty is disabled or hidden, else false.
+   */
+  bool propertyIsDisabledOrHidden(Property * prop, IPropertyManager * alg)
+  {
+    auto settings = prop->getSettings();
+    if( !settings )
+      return false;
+
+    return !(settings->isEnabled(alg) && settings->isVisible(alg));
+  }
+}
 
 //----------------------------------
 // Public member functions
@@ -43,7 +69,8 @@ using namespace Mantid::API;
 /**
 * Default Constructor
 */
-GenericDialog::GenericDialog(QWidget* parent) : AlgorithmDialog(parent)
+GenericDialog::GenericDialog(QWidget* parent) : AlgorithmDialog(parent),
+  m_algoPropertiesWidget(NULL), m_hiddenPropWidgets()
 {
 }
 
@@ -53,10 +80,6 @@ GenericDialog::GenericDialog(QWidget* parent) : AlgorithmDialog(parent)
 GenericDialog::~GenericDialog()
 {
 }
-
-
-
-
 
 //----------------------------------
 // Protected member functions
@@ -88,8 +111,7 @@ void GenericDialog::initLayout()
   // Disabled the python arguments
   disabled += m_python_arguments;
   m_algoPropertiesWidget->addEnabledAndDisableLists(enabled, disabled);
-
-
+  
   // At this point, all the widgets have been added and are visible.
   // This makes sure the viewport does not get scaled smaller, even if some controls are hidden.
   QWidget * viewport = m_algoPropertiesWidget->m_viewport;
@@ -99,6 +121,26 @@ void GenericDialog::initLayout()
   viewport->layout()->setSizeConstraint(QLayout::SetMinimumSize);
 
   QCoreApplication::processEvents();
+
+  // Set all previous values (from history, etc.)
+  for( auto it = m_algoPropertiesWidget->m_propWidgets.begin(); it != m_algoPropertiesWidget->m_propWidgets.end(); it++)
+  {
+    this->setPreviousValue(it.value(), it.key());
+  }
+
+  // Using the default values, hide or disable the dynamically shown properties
+  m_algoPropertiesWidget->hideOrDisableProperties();
+
+  // Disable the run button if all this algorithm's properties are either
+  // hidden or disabled.  (This could happen, for example, when trying to run
+  // CatalogPublish without first being logged in to ICat.)
+  const auto alg = this->getAlgorithm();
+  auto properties = alg->getProperties();
+
+  const bool disableRunButton = std::all_of(
+    properties.begin(), properties.end(),
+    boost::bind2nd(propertyIsDisabledOrHidden, alg));
+  setRunButtonEnabled(!disableRunButton);
 
   int screenHeight = QApplication::desktop()->height();
   int dialogHeight = viewport->sizeHint().height();
@@ -122,14 +164,14 @@ void GenericDialog::initLayout()
     this->resize(dialogWidth, dialogHeight);
   }
 
-  // Set all previous values (from history, etc.)
-  for( auto it = m_algoPropertiesWidget->m_propWidgets.begin(); it != m_algoPropertiesWidget->m_propWidgets.end(); it++)
+  // Get a list of all properties that are hidden, so that we
+  // ignore the contents of their widgets when setting their values.
+  foreach(auto propWidget, m_algoPropertiesWidget->m_propWidgets.values())
   {
-    this->setPreviousValue(it.value(), it.key());
+    auto settings = propWidget->getProperty()->getSettings();
+    if( settings && !settings->isVisible(m_algorithm) )
+      m_hiddenPropWidgets.append(QString::fromStdString(propWidget->getProperty()->name()));
   }
-
-  // Using the default values, hide or disable the dynamically shown properties
-  m_algoPropertiesWidget->hideOrDisableProperties();
 
 }
 
@@ -142,6 +184,9 @@ void GenericDialog::parseInput()
   auto itr = m_algoPropertiesWidget->m_propWidgets.begin();
   for(; itr != m_algoPropertiesWidget->m_propWidgets.end(); itr++ )
   {
+    if( m_hiddenPropWidgets.contains(itr.key()) )
+      continue;
+
     // Get the value from each widget and store it
     storePropertyValue(itr.key(), itr.value()->getValue());
   }
@@ -158,7 +203,7 @@ void GenericDialog::accept()
   parse();
 
   //Try and set and validate the properties and
-  if( setPropertyValues() )
+  if( setPropertyValues(m_hiddenPropWidgets) )
   {
     //Store input for next time
     saveInput();

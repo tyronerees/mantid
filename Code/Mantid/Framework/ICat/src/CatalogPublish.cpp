@@ -4,8 +4,13 @@
 #include "MantidAPI/AlgorithmManager.h"
 #include "MantidAPI/CatalogManager.h"
 #include "MantidAPI/FileProperty.h"
+#include "MantidAPI/ITableWorkspace.h"
 #include "MantidAPI/WorkspaceProperty.h"
+
 #include "MantidDataObjects/Workspace2D.h"
+
+#include "MantidKernel/IPropertySettings.h"
+#include "MantidKernel/ListValidator.h"
 #include "MantidKernel/MandatoryValidator.h"
 
 #include <Poco/Net/AcceptCertificateHandler.h>
@@ -21,7 +26,103 @@
 #include <Poco/URI.h>
 
 #include <fstream>
+
 #include <boost/regex.hpp>
+#include <boost/foreach.hpp>
+
+namespace
+{
+  using namespace Mantid::Kernel;
+  using namespace Mantid::API;
+
+  /**
+   * Disable the corresponding property in the GUI if we can't publish to ICat.
+   */
+  class DisabledIfCannotPublishToICat : public IPropertySettings
+  {
+    virtual bool isEnabled(const IPropertyManager * alg) const
+    {
+      return getPublishInvestigations(alg)->rowCount() > 0;
+    }
+
+    virtual IPropertySettings* clone(){ return new DisabledIfCannotPublishToICat; }
+
+  protected:
+    ITableWorkspace_sptr getPublishInvestigations(const IPropertyManager * alg) const
+    {
+      // Let's be a bit clever about this, since it costs us quite a bit of time
+      // to ask ICat if we have any investigations we can publish to.  As we'd
+      // like to do the check once per algorithm rather than once per property
+      // (i.e. once each time CatalogPublishDialog is opened), use some static
+      // variables to cache what was returned last time.
+      static const IPropertyManager * lastAlgChecked = NULL;
+      static auto publishInvestigations = WorkspaceFactory::Instance().createTable();
+
+      if( lastAlgChecked == NULL || lastAlgChecked != alg )
+      {
+        lastAlgChecked = alg;
+
+        const auto activeSessions = Mantid::API::CatalogManager::Instance().getActiveSessions();
+        if( !activeSessions.empty() )
+        {
+          const auto catalogInfoService = boost::dynamic_pointer_cast<Mantid::API::ICatalogInfoService>(
+            Mantid::API::CatalogManager::Instance().getCatalog(activeSessions.front()->getSessionId()));
+
+          if( catalogInfoService )
+            publishInvestigations = catalogInfoService->getPublishInvestigations();
+        }
+      }
+
+      return publishInvestigations;
+    }
+  };
+
+  /**
+   * Always hide the corresponding property in the GUI.
+   */
+  class AlwaysHidden : public IPropertySettings
+  {
+    virtual bool isVisible(const IPropertyManager *) const { return false; }
+    
+    virtual IPropertySettings* clone(){ return new AlwaysHidden; }
+  };
+
+  /**
+   * As well as disabling the corresponding property in the GUI if we can't publish to
+   * ICat, also dynamically populate the allowed values of the property with the IDs
+   * of the investigations we can publish to.
+   */
+  class AskICatForAllowedValues : public DisabledIfCannotPublishToICat
+  {
+    virtual bool isConditionChanged(const IPropertyManager * alg)const
+    {
+      static ITableWorkspace_sptr previousPublishInvestigations = ITableWorkspace_sptr();
+      auto publishInvestigations = getPublishInvestigations(alg);
+
+      if( publishInvestigations != previousPublishInvestigations )
+      {
+        previousPublishInvestigations = publishInvestigations;
+        return true;
+      }
+      
+      return false;
+    }
+    
+    virtual void applyChanges(const IPropertyManager * alg, Property * const prop)
+    {
+      auto publishInvestigations = getPublishInvestigations(alg);
+      
+      std::set<std::string> allowedValues;
+      for( size_t row = 0; row < publishInvestigations->rowCount(); ++row )
+        allowedValues.insert(publishInvestigations->getRef<std::string>("InvestigationID", row));
+      
+      auto * propWithValue = dynamic_cast<PropertyWithValue<std::string> *>(prop);
+      propWithValue->replaceValidator(boost::make_shared<StringListValidator>(allowedValues));
+    }
+
+    virtual IPropertySettings* clone(){ return new AskICatForAllowedValues; }
+  };
+}
 
 namespace Mantid
 {
@@ -37,9 +138,20 @@ namespace Mantid
             "InputWorkspace","", Mantid::Kernel::Direction::Input,Mantid::API::PropertyMode::Optional),"The workspace to publish.");
       declareProperty("NameInCatalog","","The name to give to the file being saved. The file name or workspace name is used by default. "
           "This can only contain alphanumerics, underscores or periods.");
-      declareProperty("InvestigationNumber","","The investigation number where the published file will be saved to.");
+      declareProperty("InvestigationNumber", "", boost::make_shared<StringListValidator>(),
+                      "The investigation number where the published file will be saved to.");
       declareProperty("DataFileDescription","","A short description of the datafile you are publishing to the catalog.");
       declareProperty("Session","","The session information of the catalog to use.");
+
+      BOOST_FOREACH(const auto prop, getProperties())
+      {
+        if( prop->name() == "Session" )
+          setPropertySettings(prop->name(), new AlwaysHidden);
+        else if( prop->name() == "InvestigationNumber" )
+          setPropertySettings(prop->name(), new AskICatForAllowedValues);
+        else
+          setPropertySettings(prop->name(), new DisabledIfCannotPublishToICat);
+      }
     }
 
     /// Execute the algorithm
@@ -64,9 +176,29 @@ namespace Mantid
         throw std::runtime_error("Please select a workspace or a file to publish. Not both.");
       }
 
-      // Cast a catalog to a catalogInfoService to access publishing functionality.
-      auto catalogInfoService = boost::dynamic_pointer_cast<API::ICatalogInfoService>(
+      const std::string sessionID = getPropertyValue("Session");
+      ICatalogInfoService_sptr catalogInfoService;
+      if( sessionID.empty() )
+      {
+        // If no session ID was provided, then just use the first active session with
+        // the abillity to publish.
+        const auto activeSessions = Mantid::API::CatalogManager::Instance().getActiveSessions();
+        BOOST_FOREACH(auto activeSession, activeSessions)
+        {
+          if( !activeSessions.empty() )
+          {
+            catalogInfoService = boost::dynamic_pointer_cast<Mantid::API::ICatalogInfoService>(
+              Mantid::API::CatalogManager::Instance().getCatalog(activeSession->getSessionId()));
+            if( catalogInfoService )
+              break;
+          }
+        }
+      }
+      else
+      {
+        catalogInfoService = boost::dynamic_pointer_cast<API::ICatalogInfoService>(
           API::CatalogManager::Instance().getCatalog(getPropertyValue("Session")));
+      }
 
       // Check if the catalog created supports publishing functionality.
       if (!catalogInfoService) throw std::runtime_error("The catalog that you are using does not support publishing to the archives.");

@@ -1,5 +1,4 @@
-set ( SRC_FILES src/CatalogPublishDialog.cpp
-                src/CreateSampleShapeDialog.cpp
+set ( SRC_FILES src/CreateSampleShapeDialog.cpp
                 src/ConvertTableToMatrixWorkspaceDialog.cpp
                 src/StartLiveDataDialog.cpp
                 src/FitDialog.cpp
@@ -17,8 +16,7 @@ set ( SRC_FILES src/CatalogPublishDialog.cpp
 set ( SRC_UNITY_IGNORE_FILES )
 
 
-set ( MOC_FILES inc/MantidQtCustomDialogs/CatalogPublishDialog.h
-                inc/MantidQtCustomDialogs/CreateSampleShapeDialog.h
+set ( MOC_FILES inc/MantidQtCustomDialogs/CreateSampleShapeDialog.h
                 inc/MantidQtCustomDialogs/ConvertTableToMatrixWorkspaceDialog.h
                 inc/MantidQtCustomDialogs/StartLiveDataDialog.h
                 inc/MantidQtCustomDialogs/FitDialog.h
@@ -38,8 +36,7 @@ set ( INC_FILES
     ${MOC_FILES}
 )
 
-set ( UI_FILES inc/MantidQtCustomDialogs/CatalogPublishDialog.ui
-               inc/MantidQtCustomDialogs/CreateSampleShapeDialog.ui
+set ( UI_FILES inc/MantidQtCustomDialogs/CreateSampleShapeDialog.ui
                inc/MantidQtCustomDialogs/ConvertTableToMatrixWorkspaceDialog.ui
                inc/MantidQtCustomDialogs/DiagScriptInputDialog.ui
                inc/MantidQtCustomDialogs/PlotAsymmetryByLogValueDialog.ui
