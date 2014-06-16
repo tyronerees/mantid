@@ -465,6 +465,8 @@ namespace API
       // Hide/disable the widget
       widget->setEnabled( enabled );
       widget->setVisible( visible );
+
+      widget->repaint(true);
     } // for each property
 
     this->repaint(true);

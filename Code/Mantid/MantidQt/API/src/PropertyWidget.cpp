@@ -354,6 +354,7 @@ namespace API
     setUseHistoryIcon(getValue() == m_previousValue);
     if( getValue() != m_previousValue )
       m_enteredValue = getValue();
+    valueChangedSlot();
     updateIconVisibility();
   }
   

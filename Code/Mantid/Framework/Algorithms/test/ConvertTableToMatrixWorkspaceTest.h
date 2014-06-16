@@ -13,6 +13,7 @@
 using namespace Mantid;
 using namespace Mantid::API;
 using namespace Mantid::Kernel;
+using namespace Mantid::Algorithms;
 
 class ConvertTableToMatrixWorkspaceTest : public CxxTest::TestSuite
 {
@@ -97,7 +98,7 @@ public:
     size_t n = 10;
     for (size_t i = 0; i < n; ++i)
     {
-      TableRow row = tws->appendRow();
+      TableRow row = m_tws1->appendRow();
       double x = double(i);
       double y = x * 1.1;
       row << x << y;
@@ -110,15 +111,15 @@ public:
     TS_ASSERT( mws );
     TS_ASSERT_EQUALS( mws->getNumberHistograms() , 1);
     TS_ASSERT( !mws->isHistogramData() );
-    TS_ASSERT_EQUALS( mws->blocksize(), tws->rowCount() );
+    TS_ASSERT_EQUALS( mws->blocksize(), m_tws1->rowCount() );
 
     const Mantid::MantidVec& X = mws->readX(0);
     const Mantid::MantidVec& Y = mws->readY(0);
     const Mantid::MantidVec& E = mws->readE(0);
 
-    for(size_t i = 0; i < tws->rowCount(); ++i)
+    for(size_t i = 0; i < m_tws1->rowCount(); ++i)
     {
-      TableRow row = tws->getRow(i);
+      TableRow row = m_tws1->getRow(i);
       double x,y;
       row >> x >> y;
       TS_ASSERT_EQUALS( double(x), X[i] );
@@ -134,24 +135,61 @@ public:
     TS_ASSERT_THROWS( m_converter->execute(), std::runtime_error );
   }
 
+  void test_allowed_values_change_when_workspace_changes()
+  {
+    ConvertTableToMatrixWorkspace convert;
+    convert->setRethrows(true);
+    convert->initialize();
+
+    TS_ASSERT_THROWS_NOTHING( convert->setProperty("InputWorkspace", m_tws1) );
+    auto columnXAllowedValues = convert->getProperty("ColumnX").allowedValues();
+    TS_ASSERT(std::find(columnXAllowedValues.begin(), columnXAllowedValues.end(), "A") != columnXAllowedValues.end());
+    TS_ASSERT(std::find(columnXAllowedValues.begin(), columnXAllowedValues.end(), "B") != columnXAllowedValues.end());
+    TS_ASSERT_EQUALS(columnXAllowedValues.size(), 2);
+    auto columnEAllowedValues = convert->getProperty("ColumnE").allowedValues();
+    TS_ASSERT(std::find(columnXAllowedValues.begin(), columnXAllowedValues.end(), "A") != columnXAllowedValues.end());
+    TS_ASSERT(std::find(columnXAllowedValues.begin(), columnXAllowedValues.end(), "B") != columnXAllowedValues.end());
+    TS_ASSERT(std::find(columnXAllowedValues.begin(), columnXAllowedValues.end(), "") != columnXAllowedValues.end());
+    TS_ASSERT_EQUALS(columnXAllowedValues.size(), 2);
+
+    TS_ASSERT_THROWS_NOTHING( convert->setProperty("InputWorkspace", m_tws2) );
+    auto columnXAllowedValues = convert->getProperty("ColumnX").allowedValues();
+    TS_ASSERT(std::find(columnXAllowedValues.begin(), columnXAllowedValues.end(), "X") != columnXAllowedValues.end());
+    TS_ASSERT(std::find(columnXAllowedValues.begin(), columnXAllowedValues.end(), "Y") != columnXAllowedValues.end());
+    TS_ASSERT(std::find(columnXAllowedValues.begin(), columnXAllowedValues.end(), "E") != columnXAllowedValues.end());
+    TS_ASSERT_EQUALS(columnXAllowedValues.size(), 3);
+    auto columnEAllowedValues = convert->getProperty("ColumnE").allowedValues();
+    TS_ASSERT(std::find(columnXAllowedValues.begin(), columnXAllowedValues.end(), "X") != columnXAllowedValues.end());
+    TS_ASSERT(std::find(columnXAllowedValues.begin(), columnXAllowedValues.end(), "Y") != columnXAllowedValues.end());
+    TS_ASSERT(std::find(columnXAllowedValues.begin(), columnXAllowedValues.end(), "E") != columnXAllowedValues.end());
+    TS_ASSERT(std::find(columnXAllowedValues.begin(), columnXAllowedValues.end(), "") != columnXAllowedValues.end());
+    TS_ASSERT_EQUALS(columnXAllowedValues.size(), 4);
+  }
+
   void setUp()
   {
-    tws = WorkspaceFactory::Instance().createTable();
-    tws->addColumn("double","A");
-    tws->addColumn("double","B");
+    m_tws1 = WorkspaceFactory::Instance().createTable();
+    m_tws1->addColumn("double","A");
+    m_tws1->addColumn("double","B");
 
     m_converter = boost::make_shared<Mantid::Algorithms::ConvertTableToMatrixWorkspace>();
     m_converter->setRethrows(true);
     m_converter->initialize();
-    TS_ASSERT_THROWS_NOTHING( m_converter->setProperty("InputWorkspace",tws) );
+    TS_ASSERT_THROWS_NOTHING( m_converter->setProperty("InputWorkspace",m_tws1) );
     TS_ASSERT_THROWS_NOTHING( m_converter->setPropertyValue("OutputWorkspace","out") );
     TS_ASSERT_THROWS_NOTHING( m_converter->setPropertyValue("ColumnX","A") );
     TS_ASSERT_THROWS_NOTHING( m_converter->setPropertyValue("ColumnY","B") );
+    
+    m_tws2 = WorkspaceFactory::Instance().createTable();
+    m_tws2->addColumn("double","X");
+    m_tws2->addColumn("double","Y");
+    m_tws2->addColumn("double","E");
   }
 
 private:
     IAlgorithm_sptr m_converter;
-    ITableWorkspace_sptr tws;
+    ITableWorkspace_sptr m_tws1;
+    ITableWorkspace_sptr m_tws2;
 };
 
 #endif /*CONVERTTABLETOMATRIXWORKSPACETEST_H_*/

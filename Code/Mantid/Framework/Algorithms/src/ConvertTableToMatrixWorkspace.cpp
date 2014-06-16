@@ -3,14 +3,59 @@
 //----------------------------------------------------------------------
 #include "MantidAlgorithms/ConvertTableToMatrixWorkspace.h"
 #include "MantidAPI/ITableWorkspace.h"
+
+#include "MantidKernel/MandatoryValidator.h"
+#include "MantidKernel/ListValidator.h"
 #include "MantidKernel/UnitFactory.h"
 #include "MantidKernel/Unit.h"
-#include "MantidKernel/MandatoryValidator.h"
 
 #include <boost/mpl/if.hpp>
 #include <boost/type_traits.hpp>
 #include <sstream>
 
+namespace
+{
+  using namespace Mantid::Kernel;
+  using namespace Mantid::API;
+
+  /**
+   * 
+   */
+  class UpdateAllowedValues : public IPropertySettings
+  {
+    virtual bool isConditionChanged(const IPropertyManager *) const
+    {
+      return true;
+    }
+    
+    virtual void applyChanges(const IPropertyManager * alg, Property * const prop)
+    {
+      std::set<std::string> allowedValues;
+      
+      auto inputWsName = alg->getPropertyValue("InputWorkspace");
+
+      ITableWorkspace_sptr inputWs;
+      if( AnalysisDataService::Instance().doesExist(inputWsName) )
+        inputWs = boost::dynamic_pointer_cast<ITableWorkspace>(
+          AnalysisDataService::Instance().retrieve(inputWsName)
+        );
+
+      if( inputWs )
+      {
+        const auto columnNames = inputWs->getColumnNames();
+        allowedValues.insert(columnNames.begin(), columnNames.end());
+      }
+
+      if( prop->name() == "ColumnE" )
+        allowedValues.insert("");
+      
+      auto * propWithValue = dynamic_cast<PropertyWithValue<std::string> *>(prop);
+      propWithValue->replaceValidator(boost::make_shared<StringListValidator>(allowedValues));
+    }
+
+    virtual IPropertySettings* clone(){ return new UpdateAllowedValues; }
+  };
+}
 
 namespace Mantid
 {
@@ -30,6 +75,10 @@ void ConvertTableToMatrixWorkspace::init()
   declareProperty("ColumnX","", boost::make_shared<MandatoryValidator<std::string>>(),"The column name for the X vector.");
   declareProperty("ColumnY","", boost::make_shared<MandatoryValidator<std::string>>(),"The column name for the Y vector.");
   declareProperty("ColumnE","","The column name for the E vector (optional).");
+
+  setPropertySettings("ColumnX", new UpdateAllowedValues);
+  setPropertySettings("ColumnY", new UpdateAllowedValues);
+  setPropertySettings("ColumnE", new UpdateAllowedValues);
 }
 
 void ConvertTableToMatrixWorkspace::exec()
