@@ -1,9 +1,3 @@
-/*WIKI*
-
-
-Convolution of two workspaces using [[Convolution]] from CurveFitting.  Workspaces must have the same number of spectra.
-
-*WIKI*/
 //----------------------------------------------------------------------
 // Includes
 //----------------------------------------------------------------------
@@ -22,13 +16,6 @@ namespace CurveFitting
 
 // Register the algorithm into the AlgorithmFactory
 DECLARE_ALGORITHM(ConvolveWorkspaces)
-
-/// Sets documentation strings for this algorithm
-void ConvolveWorkspaces::initDocs()
-{
-  this->setWikiSummary("Convolution of two workspaces. ");
-  this->setOptionalMessage("Convolution of two workspaces.");
-}
 
 /// Constructor
 ConvolveWorkspaces::ConvolveWorkspaces() : API::Algorithm(), prog(NULL)
@@ -67,7 +54,7 @@ void ConvolveWorkspaces::exec()
   // Cache a few things for later use
   const size_t numHists = ws1->getNumberHistograms();
   const size_t numBins = ws1->blocksize();
-  Workspace2D_sptr outputWS = boost::dynamic_pointer_cast<Workspace2D>(WorkspaceFactory::Instance().create(ws1,numHists,numBins,numBins-1));
+  Workspace2D_sptr outputWS = boost::dynamic_pointer_cast<Workspace2D>(WorkspaceFactory::Instance().create(ws1,numHists,numBins+1,numBins));
 
   // First check that the workspace are the same size
   if ( numHists != ws2->getNumberHistograms()  )
@@ -76,7 +63,7 @@ void ConvolveWorkspaces::exec()
   }
 
   prog = new Progress(this, 0.0, 1.0, numHists);
-  // Now check the data itself
+  // Now convolve the histograms
   PARALLEL_FOR3(ws1, ws2, outputWS)
   for ( int l = 0; l < static_cast<int>(numHists); ++l )
   {
@@ -120,4 +107,3 @@ void ConvolveWorkspaces::exec()
 
 } // namespace Algorithms
 } // namespace Mantid
-

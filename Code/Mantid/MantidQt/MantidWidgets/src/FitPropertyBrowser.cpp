@@ -25,10 +25,14 @@
 #include "MantidAPI/CostFunctionFactory.h"
 #include "MantidAPI/ICostFunction.h"
 
-#include "MantidQtMantidWidgets/UserFunctionDialog.h"
+#include "MantidQtMantidWidgets/FilenameDialogEditor.h"
+#include "MantidQtMantidWidgets/FormulaDialogEditor.h"
+#include "MantidQtMantidWidgets/StringEditorFactory.h"
 
 #include "qttreepropertybrowser.h"
 #include "qtpropertymanager.h"
+#include "ParameterPropertyManager.h"
+
 // Suppress a warning coming out of code that isn't ours
 #if defined(__INTEL_COMPILER)
   #pragma warning disable 1125
@@ -39,8 +43,6 @@
   #pragma GCC diagnostic ignored "-Woverloaded-virtual"
 #endif
 #include "qteditorfactory.h"
-#include "StringEditorFactory.h"
-#include "StringDialogEditorFactory.h"
 #include "DoubleEditorFactory.h"
 #if defined(__INTEL_COMPILER)
   #pragma warning enable 1125
@@ -49,6 +51,8 @@
     #pragma GCC diagnostic pop
   #endif
 #endif
+
+#include <Poco/ActiveResult.h>
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -74,38 +78,6 @@ namespace MantidQt
 {
 namespace MantidWidgets
 {
-
-
-class FormulaDialogEditor: public StringDialogEditor
-{
-public:
-  FormulaDialogEditor(QtProperty *property, QWidget *parent)
-    :StringDialogEditor(property,parent){}
-protected slots:
-  void runDialog()
-  {
-    MantidQt::MantidWidgets::UserFunctionDialog *dlg = new MantidQt::MantidWidgets::UserFunctionDialog((QWidget*)parent(),getText());
-    if (dlg->exec() == QDialog::Accepted)
-    {
-      setText(dlg->getFormula());
-      updateProperty();
-    };
-  }
-};
-
-
-class FormulaDialogEditorFactory: public StringDialogEditorFactory
-{
-public:
-  FormulaDialogEditorFactory(QObject* parent):StringDialogEditorFactory(parent){}
-protected:
-  using QtAbstractEditorFactoryBase::createEditor; // Avoid Intel compiler warning
-  QWidget *createEditor(QtStringPropertyManager *manager, QtProperty *property,QWidget *parent)
-  {
-    (void) manager; //Avoid unused warning
-    return new FormulaDialogEditor(property,parent);
-  }
-};
 
 
 /**
@@ -183,6 +155,7 @@ m_mantidui(mantidui)
   m_vectorManager = new QtGroupPropertyManager(w);
   m_vectorSizeManager = new QtIntPropertyManager(w);
   m_vectorDoubleManager = new QtDoublePropertyManager(w);
+  m_parameterManager = new ParameterPropertyManager(w);
 }
 
 
@@ -240,6 +213,11 @@ void FitPropertyBrowser::init()
                                            QVariant(false)).toBool();
   m_boolManager->setValue(m_convolveMembers, convolveCompositeItems);
 
+  m_showParamErrors = m_boolManager->addProperty("Show Parameter Errors");
+  bool showParamErrors = settings.value(m_showParamErrors->propertyName(), false).toBool();
+  m_boolManager->setValue(m_showParamErrors, showParamErrors);
+  m_parameterManager->setErrorsEnabled(showParamErrors);
+
   m_xColumn = m_columnManager->addProperty("XColumn");
   m_yColumn = m_columnManager->addProperty("YColumn");
   m_errColumn = m_columnManager->addProperty("ErrColumn");
@@ -257,6 +235,7 @@ void FitPropertyBrowser::init()
   settingsGroup->addSubProperty(m_plotDiff);
   settingsGroup->addSubProperty(m_plotCompositeMembers);
   settingsGroup->addSubProperty(m_convolveMembers);
+  settingsGroup->addSubProperty(m_showParamErrors);
 
   /* Create editors and assign them to the managers */
   createEditors(w);
@@ -296,6 +275,7 @@ void FitPropertyBrowser::initLayout(QWidget *w)
   connect(m_formulaManager,SIGNAL(propertyChanged(QtProperty*)),this,SLOT(stringChanged(QtProperty*)));
   connect(m_columnManager,SIGNAL(propertyChanged(QtProperty*)),this,SLOT(columnChanged(QtProperty*)));
   connect(m_vectorDoubleManager,SIGNAL(propertyChanged(QtProperty*)),this,SLOT(vectorDoubleChanged(QtProperty*)));
+  connect(m_parameterManager,SIGNAL(propertyChanged(QtProperty*)), this, SLOT(parameterChanged(QtProperty*)));
 
   QVBoxLayout* layout = new QVBoxLayout(w);
   QGridLayout* buttonsLayout = new QGridLayout();
@@ -415,6 +395,12 @@ void FitPropertyBrowser::initLayout(QWidget *w)
 
   createCompositeFunction();
 
+  // Update tooltips when function structure is (or might've been) changed in any way
+  connect(this, SIGNAL(functionChanged()), SLOT(updateStructureTooltips()));
+
+  // Initial call, as function is not changed when it's created for the first time
+  updateStructureTooltips();
+
   m_changeSlotsEnabled = true;
     
   populateFunctionNames();
@@ -431,7 +417,7 @@ void FitPropertyBrowser::createEditors(QWidget *w)
   QtSpinBoxFactory *spinBoxFactory = new QtSpinBoxFactory(w);
   DoubleEditorFactory *doubleEditorFactory = new DoubleEditorFactory(w);
   StringEditorFactory* stringEditFactory = new StringEditorFactory(w);
-  StringDialogEditorFactory* stringDialogEditFactory = new StringDialogEditorFactory(w);
+  FilenameDialogEditorFactory* filenameDialogEditorFactory = new FilenameDialogEditorFactory(w);
   FormulaDialogEditorFactory* formulaDialogEditFactory = new FormulaDialogEditorFactory(w);
 
   m_browser = new QtTreePropertyBrowser();
@@ -440,11 +426,12 @@ void FitPropertyBrowser::createEditors(QWidget *w)
   m_browser->setFactoryForManager(m_intManager, spinBoxFactory);
   m_browser->setFactoryForManager(m_doubleManager, doubleEditorFactory);
   m_browser->setFactoryForManager(m_stringManager, stringEditFactory);
-  m_browser->setFactoryForManager(m_filenameManager, stringDialogEditFactory);
+  m_browser->setFactoryForManager(m_filenameManager, filenameDialogEditorFactory);
   m_browser->setFactoryForManager(m_formulaManager, formulaDialogEditFactory);
   m_browser->setFactoryForManager(m_columnManager, comboBoxFactory);
   m_browser->setFactoryForManager(m_vectorSizeManager, spinBoxFactory);
   m_browser->setFactoryForManager(m_vectorDoubleManager, doubleEditorFactory);
+  m_browser->setFactoryForManager(m_parameterManager, new ParameterEditorFactory(w));
 }
 
 
@@ -496,6 +483,15 @@ void FitPropertyBrowser::executeCustomSetupRemove(const QString& name)
 
   settings.remove(name);
   updateSetupMenus();
+}
+
+/**
+ * Recursively updates structure tooltips for all the functions
+ */
+void FitPropertyBrowser::updateStructureTooltips()
+{
+  // Call tooltip update func on the root handler - it goes down recursively
+  getHandler()->updateStructureTooltip();
 }
 
 void FitPropertyBrowser::executeFitMenu(const QString& item)
@@ -1219,11 +1215,19 @@ void FitPropertyBrowser::boolChanged(QtProperty* prop)
 {
   if ( ! m_changeSlotsEnabled ) return;
 
-  if ( prop == m_plotDiff || prop == m_plotCompositeMembers || prop == m_ignoreInvalidData )
+  if ( prop == m_plotDiff || prop == m_plotCompositeMembers || prop == m_ignoreInvalidData
+       || prop == m_showParamErrors )
   {
+    bool val = m_boolManager->value(prop);
+
     QSettings settings;
     settings.beginGroup("Mantid/FitBrowser");
-    settings.setValue(prop->propertyName(), m_boolManager->value(prop));
+    settings.setValue(prop->propertyName(), val);
+
+    if ( m_showParamErrors )
+    {
+      m_parameterManager->setErrorsEnabled(val);
+    }
   }
   else
   {// it could be an attribute
@@ -1302,10 +1306,6 @@ void FitPropertyBrowser::doubleChanged(QtProperty* prop)
     emit xRangeChanged(startX(), endX());
     return;
   }
-  else if(getHandler()->setParameter(prop))
-  {
-    return;
-  }
   else
   {// check if it is a constraint
     PropertyHandler* h = getHandler()->findHandler(prop);
@@ -1331,6 +1331,19 @@ void FitPropertyBrowser::doubleChanged(QtProperty* prop)
     }
   }
 }
+
+/**
+ * Called when one of the parameter values gets changed. This could be caused either by user setting
+ * the value or programmatically.
+ * @param prop :: Parameter property which value got changed
+ */
+void FitPropertyBrowser::parameterChanged(QtProperty* prop)
+{
+  if ( ! m_changeSlotsEnabled ) return;
+
+  getHandler()->setParameter(prop);
+}
+
 /** Called when a string property changed
  * @param prop :: A pointer to the property 
  */
@@ -1528,18 +1541,6 @@ void FitPropertyBrowser::doFit(int maxIterations)
 
     std::string funStr = getFittingFunction()->asString();
 
-    if ( Mantid::API::AnalysisDataService::Instance().doesExist(wsName+"_NormalisedCovarianceMatrix"))
-    {
-      Mantid::API::FrameworkManager::Instance().deleteWorkspace(wsName+"_NormalisedCovarianceMatrix");
-    }
-    if ( Mantid::API::AnalysisDataService::Instance().doesExist(wsName+"_Parameters"))
-    {
-      Mantid::API::FrameworkManager::Instance().deleteWorkspace(wsName+"_Parameters");
-    }
-    if ( Mantid::API::AnalysisDataService::Instance().doesExist(wsName+"_Workspace"))
-    {
-      Mantid::API::FrameworkManager::Instance().deleteWorkspace(wsName+"_Workspace");
-    }
 
     Mantid::API::IAlgorithm_sptr alg = Mantid::API::AlgorithmManager::Instance().create("Fit");
     alg->initialize();
@@ -1653,8 +1654,7 @@ void FitPropertyBrowser::showEvent(QShowEvent* e)
   (void)e;
   // Observe what workspaces are added and deleted unless it's a custom fitting, all workspaces for custom fitting (eg muon analysis) 
   // should be manually added.
-  observeAdd();
-  observePostDelete();
+  setADSObserveEnabled(true);
   populateWorkspaceNames();
 }
 
@@ -1664,8 +1664,13 @@ void FitPropertyBrowser::showEvent(QShowEvent* e)
 void FitPropertyBrowser::hideEvent(QHideEvent* e)
 {
   (void)e;
-  observeAdd(false);
-  observePostDelete(false);
+  setADSObserveEnabled(false);
+}
+
+void FitPropertyBrowser::setADSObserveEnabled(bool enabled)
+{
+  observeAdd(enabled);
+  observePostDelete(enabled);
 }
 
 /// workspace was added
@@ -1675,9 +1680,17 @@ void FitPropertyBrowser::addHandle(const std::string& wsName,const boost::shared
   QStringList oldWorkspaces = m_workspaceNames;
   QString oldName = QString::fromStdString(workspaceName());
   int i = m_workspaceNames.indexOf(QString(wsName.c_str()));
+
+  bool initialSignalsBlocked = m_enumManager->signalsBlocked();
+
   // if new workspace append this workspace name
   if (i < 0)
   {
+    if (!m_workspaceNames.isEmpty())
+    {
+      m_enumManager->blockSignals(true);
+    }
+
     m_workspaceNames.append(QString(wsName.c_str()));
     m_workspaceNames.sort();
     m_enumManager->setEnumNames(m_workspace, m_workspaceNames);
@@ -1688,11 +1701,14 @@ void FitPropertyBrowser::addHandle(const std::string& wsName,const boost::shared
   {
     m_enumManager->setValue(m_workspace,i);
   }
+
+  m_enumManager->blockSignals(initialSignalsBlocked);
+  /*
   if (m_workspaceNames.size() == 1)
   {
     setWorkspaceName(QString::fromStdString(wsName));
   }
-  getHandler()->updateWorkspaces(oldWorkspaces);
+  */
 }
 
 /// workspace was removed
@@ -1705,13 +1721,23 @@ void FitPropertyBrowser::postDeleteHandle(const std::string& wsName)
   {
     m_workspaceNames.removeAt(i);
   }
+
+  bool initialSignalsBlocked = m_enumManager->signalsBlocked();
+
+  if (QString::fromStdString(wsName) != oldName)
+  {
+    m_enumManager->blockSignals(true);
+  }
+
   m_enumManager->setEnumNames(m_workspace, m_workspaceNames);
+
   i = m_workspaceNames.indexOf(oldName);
   if (i >= 0)
   {
     m_enumManager->setValue(m_workspace,i);
   } 
-  getHandler()->updateWorkspaces(oldWorkspaces);
+
+  m_enumManager->blockSignals(initialSignalsBlocked);
 }
 
 
@@ -1818,7 +1844,8 @@ void FitPropertyBrowser::vectorDoubleChanged(QtProperty *prop)
     h->setVectorAttribute(prop);
 }
 
-/** Update the function parameter properties. 
+/**
+ * Update the function parameter properties
  */
 void FitPropertyBrowser::updateParameters()
 {
@@ -1861,14 +1888,19 @@ void FitPropertyBrowser::getFitResults()
       try
       {
         std::string name;
-        double value;
-        row >> name >> value;
+        double value, error;
+        row >> name >> value >> error;
+
         // In case of a single function Fit doesn't create a CompositeFunction
         if (count() == 1)
         {
           name.insert(0,"f0.");
         }
-        compositeFunction()->setParameter(name,value);
+
+        size_t paramIndex = compositeFunction()->parameterIndex(name);
+
+        compositeFunction()->setParameter(paramIndex,value);
+        compositeFunction()->setError(paramIndex, error);
       }
       catch(...)
       {
@@ -1877,6 +1909,7 @@ void FitPropertyBrowser::getFitResults()
     }
     while(row.next());
     updateParameters();
+    getHandler()->updateErrors();
   }
 }
 
@@ -1892,6 +1925,7 @@ void FitPropertyBrowser::undoFit()
       compositeFunction()->setParameter(i,m_initialParameters[i]);
     }
     updateParameters();
+    getHandler()->clearErrors();
   }
   disableUndo();
 }

@@ -44,18 +44,31 @@ class ConvertToWavelength(object):
         elif isinstance(candidate, str):
             if  mantid.api.AnalysisDataService.doesExist(candidate.strip()):
                 _workspace = mantid.api.AnalysisDataService.retrieve(candidate.strip())
+            elif  mantid.api.AnalysisDataService.doesExist("_" + str(candidate.strip())):
+                _workspace = mantid.api.AnalysisDataService.retrieve("_" + str(candidate.strip()))
             else:
-                 _workspace = msi.Load(Filename=candidate)
+                ws_name = "_" + str(candidate.strip())
+                msi.Load(Filename=candidate, OutputWorkspace=ws_name)
+                _workspace = mantid.api.AnalysisDataService.retrieve(ws_name)
         else:
              raise ValueError("Unknown source item %s" % candidate)
         return _workspace
+
+    def get_workspace_from_list(self, index):
+        ws = self.__ws_list[index]
+        return ws
+
+    def get_ws_list_size(self):
+        return len(self.__ws_list)
+    
+    def get_name_list(self):
+        return self.__source_list
 
     def __to_workspace_list(self, source_list):
         temp=[]
         for item in source_list:
             temp.append(ConvertToWavelength.to_workspace(item))
         self.__ws_list = temp
-        
     
     def __init__(self, source):
         """
@@ -73,6 +86,7 @@ class ConvertToWavelength(object):
                 source_list = [source]
         else:
             source_list = source
+        self.__source_list = source_list
         self.__to_workspace_list(source_list)    
             
     @classmethod

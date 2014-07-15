@@ -96,18 +96,12 @@ def ReadNormFile(readRes,resnormWS,nsam,Verbose):            # get norm & scale 
 		Xin = mtd[resnormWS+'_Intensity'].readX(0)
 		nrm = len(Xin)						# no. points from length of x array
 		if nrm == 0:				
-			error = 'ResNorm file has no Intensity points'			
-			logger.notice('ERROR *** ' + error)
-			sys.exit(error)
+			raise ValueError('ResNorm file has no Intensity points')
 		Xin = mtd[resnormWS+'_Stretch'].readX(0)					# no. points from length of x array
 		if len(Xin) == 0:				
-			error = 'ResNorm file has no xscale points'
-			logger.notice('ERROR *** ' + error)
-			sys.exit(error)
+			raise ValueError('ResNorm file has no xscale points')
 		if nrm != nsam:				# check that no. groups are the same
-			error = 'ResNorm groups (' +str(nrm) + ') not = Sample (' +str(nsam) +')'			
-			logger.notice('ERROR *** ' + error)
-			sys.exit(error)
+			raise ValueError('ResNorm groups (' +str(nrm) + ') not = Sample (' +str(nsam) +')')
 		else:
 			dtn,xsc = GetResNorm(resnormWS,0)
 	else:
@@ -137,22 +131,15 @@ def ReadWidthFile(readWidth,widthFile,numSampleGroups,Verbose):
 			handle.close()
 
 		except Exception, e:
-			error = 'Failed to read width file'	
-			logger.notice('ERROR *** ' + error)
-			sys.exit(error)
+			raise ValueError('Failed to read width file')
 
 		numLines = len(asc)
 		
 		if numLines == 0:
-			error = 'No groups in width file'	
-			logger.notice('ERROR *** ' + error)
-			sys.exit(error)
+			raise ValueError('No groups in width file')
 		
 		if numLines != numSampleGroups:				# check that no. groups are the same
-			error = 'Width groups (' +str(numLines) + ') not = Sample (' +str(numSampleGroups) +')'	
-			logger.notice('ERROR *** ' + error)
-			sys.exit(error)
-
+			raise ValueError('Width groups (' +str(numLines) + ') not = Sample (' +str(numSampleGroups) +')')
 	else: 
 	 	# no file: just use constant values
 	 	widthY = np.zeros(numSampleGroups)
@@ -223,8 +210,7 @@ def QLRun(program,samWS,resWS,resnormWS,erange,nbins,Fit,wfile,Loop,Verbose,Plot
 		if nres == 1:
 			prog = 'QSe'						# res file
 		else:
-			error = 'Stretched Exp ONLY works with RES file'
-			sys.exit(error)
+			raise ValueError('Stretched Exp ONLY works with RES file')
 
 	if Verbose:
 		logger.notice('Version is ' +prog)
@@ -334,8 +320,8 @@ def QLRun(program,samWS,resWS,resnormWS,erange,nbins,Fit,wfile,Loop,Verbose,Plot
 			prob2.append(yprob[2])
 
 		# create result workspace
-		fitWS = fname+'_Result'
-		fout = fitWS +'_'+ str(m)
+		fitWS = fname+'_Workspaces'
+		fout = fname+'_Workspace_'+ str(m)
 
 		CreateWorkspace(OutputWorkspace=fout, DataX=datX, DataY=datY, DataE=datE,
 			Nspec=nsp, UnitX='DeltaE', VerticalAxisUnit='Text', VerticalAxisValues=names)
@@ -487,7 +473,7 @@ def read_ql_file(file_name, nl):
 	return q_data, (amp_data, FWHM_data, height_data), (amp_error, FWHM_error, height_error)
 
 def C2Fw(prog,sname):
-	output_workspace = sname+'_Workspace'
+	output_workspace = sname+'_Result'
 	num_spectra = 0
 
 	axis_names = []
@@ -585,7 +571,7 @@ def SeBlock(a,first):                                 #read Ascii block of Integ
 	
 def C2Se(sname):
 	prog = 'QSe'
-	outWS = sname+'_Workspace'
+	outWS = sname+'_Result'
 	asc = readASCIIFile(sname+'.qse')
 	lasc = len(asc)
 	var = asc[3].split()							#split line on spaces
@@ -643,7 +629,7 @@ def C2Se(sname):
 def QuasiPlot(ws_stem,plot_type,res_plot,sequential):
 	if plot_type:
 		if sequential:
-			ws_name = ws_stem + '_Workspace'
+			ws_name = ws_stem + '_Result'
 			num_spectra = mtd[ws_name].getNumberHistograms()
 
 			if (plot_type == 'Prob' or plot_type == 'All'):
@@ -651,42 +637,45 @@ def QuasiPlot(ws_stem,plot_type,res_plot,sequential):
 				if prob_ws in mtd.getObjectNames():
 					mp.plotSpectrum(prob_ws,[1,2],False)
 		
-			if (plot_type == 'Amplitude' or plot_type == 'All'):
-				spectra_indicies = [i for i in range(num_spectra) if 'Amplitude' in mtd[ws_name].getAxis(1).label(i)]
-				plotSpectra(ws_name, 'Amplitude', indicies=spectra_indicies[:3])
-			
-			if (plot_type == 'FWHM' or plot_type == 'All'):
-				spectra_indicies = [i for i in range(num_spectra) if 'FWHM' in mtd[ws_name].getAxis(1).label(i)]
-				plotSpectra(ws_name, 'FWHM', indicies=spectra_indicies[:3])
-
-			if (plot_type == 'Beta' or plot_type == 'All'):
-				spectra_indicies = [i for i in range(num_spectra) if 'Beta' in mtd[ws_name].getAxis(1).label(i)]
-				plotSpectra(ws_name, 'Beta', indicies=spectra_indicies[:3])
+			QuasiPlotParameters(ws_name, plot_type)
 
 		if (plot_type == 'Fit' or plot_type == 'All'):
-			fWS = ws_stem+'_Result_0'
+			fWS = ws_stem+'_Workspace_0'
 			f_plot=mp.plotSpectrum(fWS,res_plot,False)
+
+
+def QuasiPlotParameters(ws_name, plot_type):
+	"""
+	Plot a parameter if the user requested it and it exists
+	in the workspace
+
+	@param ws_name :: name of the workspace to plot from. This function expects it has a TextAxis
+	@param plot_type :: the name of the parameter to plot (or All if all parameters should be plotted)
+	"""
+	num_spectra = mtd[ws_name].getNumberHistograms()
+	param_names = ['Amplitude', 'FWHM', 'Beta']
+
+	for param_name in param_names:
+		if (plot_type == param_name or plot_type == 'All'):
+			spectra_indicies = [i for i in range(num_spectra) if param_name in mtd[ws_name].getAxis(1).label(i)]
+			
+			if(len(spectra_indicies) > 0):
+				plotSpectra(ws_name, param_name, indicies=spectra_indicies[:3])
 
 # Quest programs
 def CheckBetSig(nbs):
 	Nsig = int(nbs[1])
 	if Nsig == 0:
-		error = 'Number of sigma points is Zero'			
-		logger.notice('ERROR *** ' + error)
-		sys.exit(error)
+		raise ValueError('Number of sigma points is Zero')
 	if Nsig > 200:
-		error = 'Max number of sigma points is 200'			
-		logger.notice('ERROR *** ' + error)
-		sys.exit(error)
+		raise ValueError('Max number of sigma points is 200')
+	
 	Nbet = int(nbs[0])
 	if Nbet == 0:
-		error = 'Number of beta points is Zero'			
-		logger.notice('ERROR *** ' + error)
-		sys.exit(error)
+		raise ValueError('Number of beta points is Zero')
 	if Nbet > 200:
-		error = 'Max number of beta points is 200'			
-		logger.notice('ERROR *** ' + error)
-		sys.exit(error)
+		raise ValueError('Max number of beta points is 200')
+
 	return Nbet,Nsig
 
 def QuestRun(samWS,resWS,nbs,erange,nbins,Fit,Loop,Verbose,Plot,Save):
@@ -729,9 +718,7 @@ def QuestRun(samWS,resWS,nbs,erange,nbins,Fit,Loop,Verbose,Plot,Save):
 	if nres == 1:
 		prog = 'Qst'                        # res file
 	else:
-		error = 'Stretched Exp ONLY works with RES file'			
-		logger.notice('ERROR *** ' + error)
-		sys.exit(error)
+		raise ValueError('Stretched Exp ONLY works with RES file')
 	if Verbose:
 		logger.notice(' Number of spectra = '+str(nsam))
 		logger.notice(' Erange : '+str(erange[0])+' to '+str(erange[1]))
@@ -844,7 +831,7 @@ def QuestRun(samWS,resWS,nbs,erange,nbins,Fit,Loop,Verbose,Plot,Save):
 			logger.notice('Output file for Fit : ' + fpath)
 			logger.notice('Output file for Contours : ' + cpath)
 
-	if (Plot != 'None'):
+	if (Plot != 'None' and Loop == True):
 		QuestPlot(fname,Plot)
 	EndTime('Quest')
 
@@ -931,14 +918,20 @@ def ResNormRun(vname,rname,erange,nbin,Verbose=False,Plot='None',Save=False):
 			CreateWorkspace(OutputWorkspace='__f1tmp', DataX=dataX, DataY=yfit[:nd], DataE=np.zeros(nd),
 				NSpec=1, UnitX='DeltaE')
 			ConjoinWorkspaces(InputWorkspace1='Fit', InputWorkspace2='__f1tmp', CheckOverlapping=False)				
-	CreateWorkspace(OutputWorkspace=fname+'_ResNorm_Intensity', DataX=xPar, DataY=yPar1, DataE=xPar,
+	
+	resnorm_intesity = fname+'_ResNorm_Intensity'
+	resnorm_stretch = fname+'_ResNorm_Stretch'
+	
+	CreateWorkspace(OutputWorkspace=resnorm_intesity, DataX=xPar, DataY=yPar1, DataE=xPar,
 		NSpec=1, UnitX='MomentumTransfer')
-	CreateWorkspace(OutputWorkspace=fname+'_ResNorm_Stretch', DataX=xPar, DataY=yPar2, DataE=xPar,
+	CreateWorkspace(OutputWorkspace=resnorm_stretch, DataX=xPar, DataY=yPar2, DataE=xPar,
 		NSpec=1, UnitX='MomentumTransfer')
-	group = fname + '_ResNorm_Intensity,'+ fname + '_ResNorm_Stretch'
+	
+	group = resnorm_intesity + ','+ resnorm_stretch
 
 	resnorm_workspace = fname+'_ResNorm'
 	resnorm_fit_workspace = fname+'_ResNorm_Fit'
+	
 	GroupWorkspaces(InputWorkspaces=group,OutputWorkspace=resnorm_workspace)
 	GroupWorkspaces(InputWorkspaces='Data,Fit',OutputWorkspace=resnorm_fit_workspace)
 	
@@ -950,7 +943,7 @@ def ResNormRun(vname,rname,erange,nbin,Verbose=False,Plot='None',Save=False):
 	
 	if Save:
 		par_path = os.path.join(workdir,resnorm_workspace+'.nxs')
-		SaveNexusProcessed(InputWorkspace=resnorm_fit_workspace, Filename=par_path)
+		SaveNexusProcessed(InputWorkspace=resnorm_workspace, Filename=par_path)
 		
 		fit_path = os.path.join(workdir,resnorm_fit_workspace+'.nxs')
 		SaveNexusProcessed(InputWorkspace=resnorm_fit_workspace, Filename=fit_path)

@@ -10,8 +10,8 @@ namespace Mantid
 
     /**method calculates the units, the transformation expects the input ws to be in. If the input ws is in different units, 
     the WS data will be converted into the requested units on the fly. 
-    @param dEmode -- energy conversion mode requested by the user for the transfromation
-    @param inWS   -- imput matrix workspace, the subject of transformation.
+    @param dEmode -- energy conversion mode requested by the user for the transformation
+    @param inWS   -- input matrix workspace, the subject of transformation.
     */
     const std::string MDTransfModQ::inputUnitID(Kernel::DeltaEMode::Type dEmode, API::MatrixWorkspace_const_sptr inWS)const
     {
@@ -28,8 +28,8 @@ namespace Mantid
 
     /** method returns number of matrix dimensions calculated by this class
     *   as function of the energy analysis (conversion) mode  
-    @param mode   -- energy conversion mode requested by the user for the transfromation
-    @param inWS   -- imput matrix workspace, the subject of transformation.
+    @param mode   -- energy conversion mode requested by the user for the transformation
+    @param inWS   -- input matrix workspace, the subject of transformation.
     */
     unsigned int MDTransfModQ::getNMatrixDimensions(Kernel::DeltaEMode::Type mode,API::MatrixWorkspace_const_sptr inWS)const
     {
@@ -39,14 +39,14 @@ namespace Mantid
       case(Kernel::DeltaEMode::Direct):  return 2;
       case(Kernel::DeltaEMode::Indirect):return 2;
       case(Kernel::DeltaEMode::Elastic): return 1;
-      default: throw(std::invalid_argument("Unknow or unsupported energy conversion mode"));
+      default: throw(std::invalid_argument("Unknown or unsupported energy conversion mode"));
       }
     }
 
 
     /**Convert single point of matrix workspace into reciprocal space and (optionally) modify signal and error 
     as function of reciprocal space (e.g. Lorents corrections)
-    @param x      -- the x-coordinate of matix workspace. Often can be a time of flight though the unit conversion is availible
+    @param x      -- the x-coordinate of matrix workspace. Often can be a time of flight though the unit conversion is available
     @param Coord -- converted MD coordinates of the point x calculated for particular workspace position (detector)
 
     @param signal -- the signal in the point
@@ -68,7 +68,7 @@ namespace Mantid
       }
     }
 
-    /** Method fills-in all additional properties requested by user and not defined by matrix workspace itselt. 
+    /** Method fills-in all additional properties requested by user and not defined by matrix workspace itself. 
     *  it fills in [nd - (1 or 2 -- depending on emode)] values into Coord vector;
     *
     *@param Coord -- input-output vector of MD-coordinates
@@ -109,9 +109,9 @@ namespace Mantid
     bool MDTransfModQ::calcYDepCoordinates(std::vector<coord_t> &Coord,size_t i)
     {
       UNUSED_ARG(Coord); 
-      m_ex = (m_Det+i)->X();
-      m_ey = (m_Det+i)->Y();
-      m_ez = (m_Det+i)->Z();
+      m_ex = (m_DetDirecton+i)->X();
+      m_ey = (m_DetDirecton+i)->Y();
+      m_ez = (m_DetDirecton+i)->Z();
       // if input energy changes on each detector (efixed, indirect mode only), then set up its value
       if(m_pEfixedArray)
       {
@@ -196,8 +196,8 @@ namespace Mantid
     /** method returns the vector of input coordinates values where the transformed coordinates reach its extremum values in Q or dE
      * direction. 
      *
-     * @param eMin -- minimal momentum or energy transfer for the transformation
-     * @param eMax -- maxumal momentum or energy transfer for the transformation
+     * @param eMin -- minimal momentum (in elastic mode) or energy transfer (in inelastic) for the transformation
+     * @param eMax -- maximal momentum (in elastic mode) or energy transfer (in inelastic) for the transformation
      * @param det_num -- number of the instrument detector for the transformation
      */
     std::vector<double> MDTransfModQ::getExtremumPoints(const double eMin, const double eMax,size_t det_num)const
@@ -218,7 +218,7 @@ namespace Mantid
           if(m_pEfixedArray)
             ei = double(*(m_pEfixedArray+det_num));
 
-          double ez = (m_Det+det_num)->Z();
+          double ez = (m_DetDirecton+det_num)->Z();
           double eps_extr = ei*(1-ez*ez);
           if (eps_extr>eMin && eps_extr<eMax)
           {
@@ -244,7 +244,7 @@ namespace Mantid
     }
 
 
-    /** function initalizes all variables necessary for converting workspace variables into MD variables in ModQ (elastic/inelastic) cases  */
+    /** function initializes all variables necessary for converting workspace variables into MD variables in ModQ (elastic/inelastic) cases  */
     void MDTransfModQ::initialize(const MDWSDescription &ConvParams)
     { 
       //********** Generic part of initialization, common for elastic and inelastic modes:
@@ -256,7 +256,7 @@ namespace Mantid
 
       // get pointer to the positions of the detectors
       std::vector<Kernel::V3D> const & DetDir = ConvParams.m_PreprDetTable->getColVector<Kernel::V3D>("DetDirections"); 
-      m_Det = &DetDir[0];     //
+      m_DetDirecton = &DetDir[0];     //
 
       // get min and max values defined by the algorithm. 
       ConvParams.getMinMax(m_DimMin,m_DimMax);
@@ -305,7 +305,7 @@ namespace Mantid
       m_pDetMasks =  ConvParams.m_PreprDetTable->getColDataArray<int>("detMask");
     }
     /**method returns default ID-s for ModQ elastic and inelastic modes. The ID-s are related to the units, 
-    * this class produces its ouptut in. 
+    * this class produces its output in. 
     *@param dEmode   -- energy conversion mode
     *@param inWS -- Input Matrix workspace
 
@@ -339,7 +339,7 @@ namespace Mantid
     }
 
 
-    /**function returns units ID-s which this transformation prodiuces its ouptut. 
+    /**function returns units ID-s which this transformation produces its output. 
     * @param dEmode   -- energy conversion mode
     * @param inWS -- Input Matrix workspace
     *
@@ -361,8 +361,18 @@ namespace Mantid
 
     /// constructor;
     MDTransfModQ::MDTransfModQ():
-      m_Det(NULL)//,m_NMatrixDim(-1)
+      m_ex(0),m_ey(0),m_ez(1), 
+      m_DetDirecton(NULL),//,m_NMatrixDim(-1)
+      m_NMatrixDim(0), //uninitialized
+      m_Emode(Kernel::DeltaEMode::Undefined), // uninitialized
+      m_Ki(1.),m_Ei(1.),
+      m_pEfixedArray(NULL),
+      m_pDetMasks(NULL)
     {}    
 
+    std::vector<std::string> MDTransfModQ::getEmodes()const
+    {
+      return Kernel::DeltaEMode().availableTypes();
+    }
   } // End MDAlgorighms namespace
 } // End Mantid namespace

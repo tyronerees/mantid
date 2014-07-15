@@ -69,6 +69,12 @@
 #include "Mantid/MantidMDCurveDialog.h"
 #include "MantidQtSliceViewer/LinePlotOptions.h"
 
+namespace
+{
+  /// static logger
+  Mantid::Kernel::Logger g_log("MultiLayer");
+}
+
 
 LayerButton::LayerButton(const QString& text, QWidget* parent)
 : QPushButton(text, parent)
@@ -91,8 +97,6 @@ void LayerButton::mouseDoubleClickEvent ( QMouseEvent * )
 {
 	emit showCurvesDialog();
 }
-
-Mantid::Kernel::Logger & MultiLayer::g_log = Mantid::Kernel::Logger::get("MultiLayer");
 
 MultiLayer::MultiLayer(ApplicationWindow* parent, int layers, int rows, int cols, 
                        const QString& label, const char* name, Qt::WFlags f)
@@ -996,6 +1000,9 @@ void MultiLayer::connectLayer(Graph *g)
 	connect (g,SIGNAL(viewTextDialog()),this,SIGNAL(showTextDialog()));
 	connect (g,SIGNAL(currentFontChanged(const QFont&)), this, SIGNAL(currentFontChanged(const QFont&)));
   connect (g,SIGNAL(enableTextEditor(Graph *)), this, SIGNAL(enableTextEditor(Graph *)));
+  connect (g,SIGNAL(dragMousePress(QPoint)), this, SIGNAL(dragMousePress(QPoint)));
+  connect (g,SIGNAL(dragMouseRelease(QPoint)), this, SIGNAL(dragMouseRelease(QPoint)));
+  connect (g,SIGNAL(dragMouseMove(QPoint)), this, SIGNAL(dragMouseMove(QPoint)));
 }
 
 bool MultiLayer::eventFilter(QObject *object, QEvent *e)
@@ -1419,7 +1426,7 @@ void MultiLayer::dropOntoMatrixCurve(Graph *g, MantidMatrixCurve* originalCurve,
     for( ; setIt != it.value().end(); ++setIt)
     {
       try {
-        new MantidMatrixCurve(it.key(),g,(*setIt),errorBars); // The graph takes ownership
+        new MantidMatrixCurve(it.key(),g,(*setIt),MantidMatrixCurve::Spectrum, errorBars); // The graph takes ownership
       } catch (Mantid::Kernel::Exception::NotFoundError &) {
         // Get here if workspace name is invalid - shouldn't be possible, but just in case
       } catch (std::invalid_argument&) {
