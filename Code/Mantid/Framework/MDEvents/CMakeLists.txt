@@ -5,11 +5,11 @@ set ( SRC_FILES
 	src/AffineMatrixParameterParser.cpp
 	src/BoxControllerNeXusIO.cpp
 	src/BoxControllerSettingsAlgorithm.cpp
-        src/CalculateReflectometryQBase.cpp  
+	src/CalculateReflectometryQBase.cpp
 	src/ConvToMDBase.cpp
 	src/ConvToMDEventsWS.cpp
 	src/ConvToMDHistoWS.cpp
-	src/ConvToMDSelector.cpp 
+	src/ConvToMDSelector.cpp
 	src/ConvertToReflectometryQ.cpp
 	src/CoordTransformAffine.cpp
 	src/CoordTransformAffineParser.cpp
@@ -20,12 +20,14 @@ set ( SRC_FILES
 	src/ImportMDEventWorkspace.cpp
 	src/ImportMDHistoWorkspace.cpp
 	src/ImportMDHistoWorkspaceBase.cpp
+	src/Integrate3DEvents.cpp
+	src/IntegrateEllipsoids.cpp
 	src/MDBin.cpp
 	src/MDBox.cpp
 	src/MDBoxBase.cpp
+	src/MDBoxFlatTree.cpp
 	src/MDBoxIterator.cpp
-    src/MDBoxFlatTree.cpp    
-	src/MDBoxSaveable.cpp    
+	src/MDBoxSaveable.cpp
 	src/MDEventFactory.cpp
 	src/MDEventWSWrapper.cpp
 	src/MDEventWorkspace.cpp
@@ -33,6 +35,7 @@ set ( SRC_FILES
 	src/MDHistoWorkspace.cpp
 	src/MDHistoWorkspaceIterator.cpp
 	src/MDLeanEvent.cpp
+	src/MDProduct.cpp
 	src/MDTransfAxisNames.cpp
 	src/MDTransfFactory.cpp
 	src/MDTransfModQ.cpp
@@ -46,8 +49,6 @@ set ( SRC_FILES
 	src/ReflectometryTransformKiKf.cpp
 	src/ReflectometryTransformP.cpp
 	src/ReflectometryTransformQxQz.cpp
-    src/Integrate3DEvents.cpp
-    src/IntegrateEllipsoids.cpp
 	src/SaveIsawQvector.cpp
 	src/UnitsConversionHelper.cpp
 	src/UserFunctionMD.cpp
@@ -67,9 +68,9 @@ set ( INC_FILES
 	#
 	inc/MantidMDEvents/AffineMatrixParameter.h
 	inc/MantidMDEvents/AffineMatrixParameterParser.h
-	inc/MantidMDEvents/BoxControllerNeXusIO.h        
+	inc/MantidMDEvents/BoxControllerNeXusIO.h
 	inc/MantidMDEvents/BoxControllerSettingsAlgorithm.h
-        inc/MantidMDEvents/CalculateReflectometryQBase.h
+	inc/MantidMDEvents/CalculateReflectometryQBase.h
 	inc/MantidMDEvents/ConvToMDBase.h
 	inc/MantidMDEvents/ConvToMDEventsWS.h
 	inc/MantidMDEvents/ConvToMDHistoWS.h
@@ -84,11 +85,13 @@ set ( INC_FILES
 	inc/MantidMDEvents/ImportMDEventWorkspace.h
 	inc/MantidMDEvents/ImportMDHistoWorkspace.h
 	inc/MantidMDEvents/ImportMDHistoWorkspaceBase.h
+	inc/MantidMDEvents/Integrate3DEvents.h
+	inc/MantidMDEvents/IntegrateEllipsoids.h
 	inc/MantidMDEvents/MDBin.h
 	inc/MantidMDEvents/MDBox.h
 	inc/MantidMDEvents/MDBoxBase.h
+	inc/MantidMDEvents/MDBoxFlatTree.h
 	inc/MantidMDEvents/MDBoxIterator.h
-    inc/MantidMDEvents/MDBoxFlatTree.h
 	inc/MantidMDEvents/MDBoxSaveable.h
 	inc/MantidMDEvents/MDDimensionStats.h
 	inc/MantidMDEvents/MDEvent.h
@@ -100,6 +103,7 @@ set ( INC_FILES
 	inc/MantidMDEvents/MDHistoWorkspace.h
 	inc/MantidMDEvents/MDHistoWorkspaceIterator.h
 	inc/MantidMDEvents/MDLeanEvent.h
+	inc/MantidMDEvents/MDProduct.h
 	inc/MantidMDEvents/MDTransfAxisNames.h
 	inc/MantidMDEvents/MDTransfFactory.h
 	inc/MantidMDEvents/MDTransfInterface.h
@@ -114,8 +118,6 @@ set ( INC_FILES
 	inc/MantidMDEvents/ReflectometryTransformKiKf.h
 	inc/MantidMDEvents/ReflectometryTransformP.h
 	inc/MantidMDEvents/ReflectometryTransformQxQz.h
-        inc/MantidMDEvents/Integrate3DEvents.h
-        inc/MantidMDEvents/IntegrateEllipsoids.h
 	inc/MantidMDEvents/SaveIsawQvector.h
 	inc/MantidMDEvents/SkippingPolicy.h
 	inc/MantidMDEvents/UnitsConversionHelper.h
@@ -126,7 +128,7 @@ set ( INC_FILES
 set ( TEST_FILES
 	AffineMatrixParameterParserTest.h
 	AffineMatrixParameterTest.h
-	BoxControllerNeXusIOTest.h                
+	BoxControllerNeXusIOTest.h
 	BoxControllerSettingsAlgorithmTest.h
 	ConvertToReflectometryQTest.h
 	CoordTransformAffineParserTest.h
@@ -137,12 +139,13 @@ set ( TEST_FILES
 	FitMDTest.h
 	ImportMDEventWorkspaceTest.h
 	ImportMDHistoWorkspaceTest.h
+	Integrate3DEventsTest.h
 	MDBinTest.h
 	MDBoxBaseTest.h
+	MDBoxFlatTreeTest.h
 	MDBoxIteratorTest.h
-    MDBoxFlatTreeTest.h     
+	MDBoxSaveableTest.h
 	MDBoxTest.h
-	MDBoxSaveableTest.h    
 	MDDimensionStatsTest.h
 	MDEventFactoryTest.h
 	MDEventInserterTest.h
@@ -153,18 +156,18 @@ set ( TEST_FILES
 	MDHistoWorkspaceIteratorTest.h
 	MDHistoWorkspaceTest.h
 	MDLeanEventTest.h
+	MDProductTest.h
 	MDTransfAxisNamesTest.h
 	MDTransfFactoryTest.h
+	MDTransfModQTest.h
 	MDTransfQ3DTest.h
-	MDTransfModQTest.h    
 	MDWSDescriptionTest.h
 	MDWSTransfTest.h
 	OneStepMDEWTest.h
 	QueryMDWorkspaceTest.h
-	ReflectometryTransformQxQzTest.h
+	ReflectometryTransformKiKfTest.h
 	ReflectometryTransformPTest.h
-	ReflectometryTransformKiKfTest.h	
-    Integrate3DEventsTest.h
+	ReflectometryTransformQxQzTest.h
 	SaveIsawQvectorTest.h
 	SkippingPolicyTest.h
 	UnitsConversionHelperTest.h
