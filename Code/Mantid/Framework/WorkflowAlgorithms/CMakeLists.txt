@@ -75,13 +75,7 @@ set ( INC_FILES
 set ( TEST_FILES
 	MuonCalculateAsymmetryTest.h
 	MuonLoadTest.h
-	SANSSolidAngleCorrectionTest.h
 	StepScanTest.h
-)
-
-set ( TEST_PY_FILES 
-  EQSANSQ2DTest.py 
-  SANSBeamFluxCorrectionTest.py 
 )
 
 if(UNITY_BUILD)
