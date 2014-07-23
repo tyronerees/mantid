@@ -5,6 +5,7 @@
 
 #include "MantidWorkflowAlgorithms/StepScan.h"
 #include "MantidAlgorithms/FilterByXValue.h"
+#include "MantidDataHandling/MaskDetectors.h"
 #include "MantidKernel/TimeSeriesProperty.h"
 #include "MantidKernel/UnitFactory.h"
 #include "MantidTestHelpers/WorkspaceCreationHelper.h"
@@ -30,8 +31,10 @@ public:
   {
     // I'm not sure why, but this trick seems to be needed to force linking to the Algorithms
     // library on Ubuntu (otherwise it says the child algorithms are not registered).
-    Mantid::Algorithms::FilterByXValue dummy;
-    dummy.version();
+    Mantid::Algorithms::FilterByXValue dummyFilterByXValue;
+    Mantid::DataHandling::MaskDetectors dummyMaskDetectors;
+    dummyFilterByXValue.version();
+    dummyMaskDetectors.version();
     // End of dummy code
 
     inputWS = WorkspaceCreationHelper::CreateEventWorkspace2(3,1);
