@@ -8,6 +8,7 @@
 #include "MantidKernel/MandatoryValidator.h"
 #include "MantidKernel/ListValidator.h"
 #include "MantidAPI/NullCoordTransform.h"
+#include "MantidAPI/NumericAxis.h"
 
 #include <boost/mpl/if.hpp>
 #include <boost/type_traits.hpp>
@@ -23,6 +24,22 @@ namespace
   };
 }
 
+namespace // anonymous
+{ 
+
+  size_t calcStride(const Mantid::API::IMDHistoWorkspace& workspace, size_t dim)
+{
+  size_t stride = 1;
+  for(size_t i = 0; i < dim; ++i)
+  {
+    auto dimension = workspace.getDimension(i);
+    stride *= dimension->getNBins();
+  }
+  return stride;
+}
+
+}
+  
 namespace Mantid
 {
 namespace Algorithms
@@ -57,6 +74,13 @@ void ConvertMDHistoToMatrixWorkspace::exec()
 
   // This code is copied from MantidQwtIMDWorkspaceData
   Mantid::Geometry::VecIMDDimension_const_sptr nonIntegDims = inputWorkspace->getNonIntegratedDimensions();
+
+  if ( nonIntegDims.size() == 2 )
+  {
+    make2DWorkspace();
+    return;
+  }
+  
   std::string alongDim = "";
   if (!nonIntegDims.empty())
     alongDim = nonIntegDims[0]->getName();
@@ -149,8 +173,6 @@ void ConvertMDHistoToMatrixWorkspace::exec()
   outputWorkspace->setYUnitLabel("Signal");
 
   setProperty("OutputWorkspace", outputWorkspace);
-<<<<<<< Updated upstream
-=======
 }
 
 /**
@@ -270,9 +292,7 @@ void ConvertMDHistoToMatrixWorkspace::make2DWorkspace()
   // done
   setProperty("OutputWorkspace", outputWorkspace);
 }
->>>>>>> Stashed changes
 
-}
 
 } // namespace Algorithms
 } // namespace Mantid

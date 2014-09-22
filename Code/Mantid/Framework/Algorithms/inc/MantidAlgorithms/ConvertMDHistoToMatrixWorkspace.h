@@ -70,6 +70,7 @@ private:
   void init();
   /// Execution code
   void exec();
+  void make2DWorkspace();
 };
 
 } // namespace Algorithms

@@ -121,9 +121,10 @@ namespace Mantid
       while(iter)
       {
         values->setFitData(i,iter->getNormalizedSignal());
-        double err = iter->getNormalizedError();
-        if (err <= 0.0) err = 1.0;
-        values->setFitWeight(i,1/err);
+        //double err = iter->getNormalizedError();
+        //if (err <= 0.0) err = 1.0;
+        //double weight = 1.0 / err;
+        values->setFitWeight(i,1.0);
         iter = dmd->getNextIterator();
         ++i;
       };
