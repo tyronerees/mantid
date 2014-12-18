@@ -270,7 +270,6 @@ void ParameterMap::add(const IComponent *comp,
   // can not add null pointer
   if (!par)
     return;
-
   auto existing_par = positionOf(comp, par->name().c_str(), "");
   // As this is only an add method it should really throw if it already exists.
   // However, this is old behaviour and many things rely on this actually be an
@@ -280,6 +279,7 @@ void ParameterMap::add(const IComponent *comp,
     existing_par->second = par;
   } else {
     m_map.insert(std::make_pair(comp->getComponentID(), par));
+
   }
 }
 
@@ -839,6 +839,7 @@ void ParameterMap::setCachedLocation(const IComponent *comp,
   // Call to setCachedLocation is a write so not thread-safe
   Poco::RWLock::ScopedWriteLock _lock(m_positionCache);
   m_cacheLocMap.setCache(comp->getComponentID(), location);
+
 }
 
 /// Attempts to retrieve a location from the location cache
@@ -887,6 +888,8 @@ void ParameterMap::setCachedBoundingBox(const IComponent *comp,
   // Call to setCachedRotation is a write so not thread-safe
   Poco::RWLock::ScopedWriteLock _lock(m_boundingBoxCache);
   m_boundingBoxMap.setCache(comp->getComponentID(), box);
+  }
+>>>>>>> origin/master
 }
 
 /// Attempts to retrieve a bounding box from the cache

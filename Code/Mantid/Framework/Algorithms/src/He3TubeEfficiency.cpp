@@ -109,6 +109,7 @@ void He3TubeEfficiency::exec() {
   this->progress = new API::Progress(this, 0.0, 1.0, numHists);
   Kernel::Mutex deteff_invalid;
   BEGIN_PARALLEL_FOR(THREADSAFE(inputWS, outputWS), 0, numHists, i) {
+
     PARALLEL_START_INTERUPT_REGION
 
     this->outputWS->setX(i, this->inputWS->refX(i));
@@ -120,6 +121,7 @@ void He3TubeEfficiency::exec() {
       Mantid::MantidVec &dud = this->outputWS->dataY(i);
       std::transform(dud.begin(), dud.end(), dud.begin(),
                      std::bind2nd(std::multiplies<double>(), 0));
+
       {
         Kernel::Mutex::ScopedLock _lock(deteff_invalid);
         this->spectraSkipped.push_back(this->inputWS->getAxis(1)->spectraNo(i));
@@ -290,6 +292,7 @@ void He3TubeEfficiency::getDetectorGeometry(
       detAxis = Kernel::V3D(0, 0, 1);
       {
         Kernel::Mutex::ScopedLock _lock(deteff_shapecachec);
+
         this->shapeCache.insert(
             std::pair<const Geometry::Object *, std::pair<double, Kernel::V3D>>(
                 shape_sptr.get(),
@@ -463,7 +466,6 @@ void He3TubeEfficiency::execEvent() {
       }
 
       this->progress->report();
-
       // check for canceling the algorithm
       if (i % 1000 == 0) {
         interruption_point();

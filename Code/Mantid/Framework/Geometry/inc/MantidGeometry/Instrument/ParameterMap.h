@@ -340,7 +340,6 @@ private:
   mutable Kernel::Cache<const ComponentID, Kernel::Quat> m_cacheRotMap;
   /// internal cache map for cached bounding boxes
   mutable Kernel::Cache<const ComponentID, BoundingBox> m_boundingBoxMap;
-
   mutable Poco::RWLock m_positionCache, m_rotationCache, m_boundingBoxCache,
       m_mapAccess;
 };
