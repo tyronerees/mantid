@@ -888,8 +888,6 @@ void ParameterMap::setCachedBoundingBox(const IComponent *comp,
   // Call to setCachedRotation is a write so not thread-safe
   Poco::RWLock::ScopedWriteLock _lock(m_boundingBoxCache);
   m_boundingBoxMap.setCache(comp->getComponentID(), box);
-  }
->>>>>>> origin/master
 }
 
 /// Attempts to retrieve a bounding box from the cache
