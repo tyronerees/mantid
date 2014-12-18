@@ -10,8 +10,8 @@ set ( SRC_FILES
 	src/DefineGaugeVolume.cpp
 	src/DeleteTableRows.cpp
 	src/DetermineChunking.cpp
-	src/DownloadInstrument.cpp
 	src/DownloadFile.cpp
+	src/DownloadInstrument.cpp
 	src/ExtractMonitorWorkspace.cpp
 	src/FilterEventsByLogValuePreNexus.cpp
 	src/FindDetectorsInShape.cpp
@@ -41,6 +41,7 @@ set ( SRC_FILES
 	src/LoadFullprofResolution.cpp
 	src/LoadGSASInstrumentFile.cpp
 	src/LoadGSS.cpp
+	src/LoadHFIRPDD.cpp
 	src/LoadHelper.cpp
 	src/LoadIDFFromNexus.cpp
 	src/LoadILL.cpp
@@ -159,8 +160,8 @@ set ( INC_FILES
 	inc/MantidDataHandling/DefineGaugeVolume.h
 	inc/MantidDataHandling/DeleteTableRows.h
 	inc/MantidDataHandling/DetermineChunking.h
-	inc/MantidDataHandling/DownloadInstrument.h
 	inc/MantidDataHandling/DownloadFile.h
+	inc/MantidDataHandling/DownloadInstrument.h
 	inc/MantidDataHandling/ExtractMonitorWorkspace.h
 	inc/MantidDataHandling/FilterEventsByLogValuePreNexus.h
 	inc/MantidDataHandling/FindDetectorsInShape.h
@@ -190,6 +191,7 @@ set ( INC_FILES
 	inc/MantidDataHandling/LoadFullprofResolution.h
 	inc/MantidDataHandling/LoadGSASInstrumentFile.h
 	inc/MantidDataHandling/LoadGSS.h
+	inc/MantidDataHandling/LoadHFIRPDD.h
 	inc/MantidDataHandling/LoadHelper.h
 	inc/MantidDataHandling/LoadIDFFromNexus.h
 	inc/MantidDataHandling/LoadILL.h
@@ -307,8 +309,8 @@ set ( TEST_FILES
 	DefineGaugeVolumeTest.h
 	DeleteTableRowsTest.h
 	DetermineChunkingTest.h
-	DownloadInstrumentTest.h
 	DownloadFileTest.h
+	DownloadInstrumentTest.h
 	ExtractMonitorWorkspaceTest.h
 	FilterEventsByLogValuePreNexusTest.h
 	FindDetectorsInShapeTest.h
@@ -335,6 +337,7 @@ set ( TEST_FILES
 	LoadFullprofResolutionTest.h
 	LoadGSASInstrumentFileTest.h
 	LoadGSSTest.h
+	LoadHFIRPDDTest.h
 	LoadIDFFromNexusTest.h
 	LoadILLIndirectTest.h
 	LoadILLReflectometryTest.h
