@@ -12,7 +12,7 @@ namespace Algorithms
   /** WienerSmooth algorithm performes smoothing data in a spectrum of a matrix workspace
     using the Wiener filter smoothing.
     
-    Copyright &copy; 2014 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+    Copyright &copy; 2014 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
 
     This file is part of Mantid.
 
@@ -49,6 +49,7 @@ namespace Algorithms
 
     std::pair<double,double> getStartEnd( const MantidVec& X, bool isHistogram ) const;
     API::MatrixWorkspace_sptr copyInput(API::MatrixWorkspace_sptr inputWS, size_t wsIndex);
+    API::MatrixWorkspace_sptr smoothSingleSpectrum(API::MatrixWorkspace_sptr inputWS, size_t wsIndex);
 
   };
 
