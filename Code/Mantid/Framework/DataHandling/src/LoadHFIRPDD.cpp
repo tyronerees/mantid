@@ -1,8 +1,8 @@
 #include "MantidDataHandling/LoadHFIRPDD.h"
 
-#include "MantidAPI/IMDEventWorkspace.h"
 #include "MantidAPI/WorkspaceProperty.h"
 #include "MantidAPI/FileProperty.h"
+#include "MantidGeometry/IDetector.h"
 
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -18,7 +18,7 @@ namespace DataHandling
   //----------------------------------------------------------------------------------------------
   /** Constructor
    */
-  LoadHFIRPDD::LoadHFIRPDD()
+  LoadHFIRPDD::LoadHFIRPDD() : m_instrumentName(""), m_numSpec(0)
   {
   }
 
@@ -63,7 +63,10 @@ namespace DataHandling
     m_dataTableWS = loadSpiceData(spiceFileName);
 
     // Convert table workspace to a list of 2D workspaces
-    vec_ws2d = convertToWorkspaces(m_dataTableWS);
+    std::vector<MatrixWorkspace_sptr> vec_ws2d = convertToWorkspaces(m_dataTableWS);
+
+    // Convert to MD workspaces
+    IMDEventWorkspace_sptr m_mdEventWS = convertToMDEventWS(vec_ws2d);
 
   }
 
@@ -101,34 +104,64 @@ namespace DataHandling
     MatrixWorkspace_sptr parentws = createParentWorkspace(m_numSpec);
 
     // Get table workspace's column information
-    readTableInfo(tablews);
+    size_t ipt, irotangle;
+    std::vector<std::pair<size_t, size_t> > anodelist;
+    readTableInfo(tablews, ipt, irotangle, anodelist);
 
     // Load data
     size_t numws = tablews->rowCount();
-    vector<MatrixWorkspace_sptr> vecws(numws);
+    std::vector<MatrixWorkspace_sptr> vecws(numws);
     for (size_t i = 0; i < numws; ++i)
-      vecws[i] = loadRunToMatrixWS(tablews, i);
+      vecws[i] = loadRunToMatrixWS(tablews, i, parentws, ipt, irotangle, anodelist);
 
+    return vecws;
+  }
 
+  //---
+  /** Load one run of data to a new workspace
+   */
+  MatrixWorkspace_sptr LoadHFIRPDD::loadRunToMatrixWS(TableWorkspace_const_sptr tablews, size_t irow, MatrixWorkspace_const_sptr parentws,
+                                                      size_t ipt, size_t irotangle, const std::vector<std::pair<size_t, size_t> > anodelist)
+  {
+    // New workspace from parent workspace
+    MatrixWorkspace_sptr tempws = WorkspaceFactory::Instance().create("Workspace2D", parentws);
 
+    // Set up angle
+    double twotheta = tablews->cell<double>(irow, irotangle);
+    tempws->getRun()->setPropertyValue("rotangle", twotheta);
 
+    // Load instrument
+    IAlgorithm_sptr instloader = this->createChildAlgorithm("LoadInstrument");
+    instloader->initialize();
+    instloader->setProperty("Instrument", m_instrumentName);
+
+    // Import data
+    for (size_t i = 0; i < m_numSpec; ++i)
+    {
+      Geometry::IDetector_sptr tmpdet = tempws->getDetector(i);
+      tempws->dataX(i)[0] = tmpdet->getPos().X();
+      tempws->dataX(i)[0] = tmpdet->getPos().X()+0.01;
+      tempws->dataY(i)[0] = tablews->cell<double>(irow, anodelist[i].second);
+      tempws->dataE(i)[0] = 1;
+    }
+
+    return tempws;
   }
 
   //----------------------------------------------------------------------------------------------
   /** Read table workspace's column information
    */
-  void LoadHFIRPDD::readTableInfo(TableWorkspace_const_sptr tablews)
+  void LoadHFIRPDD::readTableInfo(TableWorkspace_const_sptr tablews, size_t& ipt, size_t& irotangle,
+                                  std::vector<std::pair<size_t, size_t> >& anodelist)
   {
     // Init
     bool bfPt = false;
     bool bfRotAngle = false;
 
-    size_t ipt = -1;
-    size_t irotangle = -1;
+    ipt = -1;
+    irotangle = -1;
 
-    const std::vector<std::string> & colnames = tablews.getColumnNames();
-
-    vector<size_t> anodelist;
+    const std::vector<std::string> & colnames = tablews->getColumnNames();
 
     for (size_t icol = 0; icol < colnames.size(); ++icol)
     {
@@ -146,11 +179,13 @@ namespace DataHandling
         irotangle = icol;
         bfRotAngle = true;
       }
-      else if ( boost::starts_with("anode") )
+      else if ( boost::starts_with(colname, "anode") )
       {
         // anode
-        size_t anodeid = int(colname.split("anode")[-1]);
-        anodelist.push_back( std::make_pair<size_t, size_t>(anodeid, icol) );
+        std::vector<std::string> terms;
+        boost::split(terms, colname, boost::is_any_of("anode"));
+        size_t anodeid = static_cast<size_t>(atoi(terms.back().c_str()));
+        anodelist.push_back( std::make_pair(anodeid, icol) );
       }
       else
       {
@@ -162,9 +197,9 @@ namespace DataHandling
     } // ENDFOR
 
     // Sort out anode id index list;
-    anodelist = sorted(anodelist);
+    std::sort(anodelist.begin(), anodelist.end());
 
-    return  (ipt, irotangle, anodelist);
+    return;
   }
 
 
@@ -180,6 +215,14 @@ namespace DataHandling
     // TODO - Load property from
 
     return tempws;
+  }
+
+  //--
+  /** Convert to MD Event workspace
+   */
+  IMDEventWorkspace_sptr convertToMDEventWS(const std::vector<MatrixWorkspace_sptr> vec_wd2d)
+  {
+
   }
 
 

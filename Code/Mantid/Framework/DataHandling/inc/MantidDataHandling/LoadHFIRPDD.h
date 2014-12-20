@@ -5,6 +5,7 @@
 #include "MantidAPI/Algorithm.h"
 #include "MantidDataObjects/TableWorkspace.h"
 #include "MantidKernel/FileDescriptor.h"
+#include "MantidAPI/IMDEventWorkspace.h"
 
 namespace Mantid
 {
@@ -68,10 +69,36 @@ namespace DataHandling
     /// Load data by call
     DataObjects::TableWorkspace_sptr loadSpiceData(const std::string &spicefilename);
 
+    /// Convert to MD workspaces
+    API::IMDEventWorkspace_sptr convertToMDEventWS(const std::vector<API::MatrixWorkspace_sptr> vec_wd2d);
+
+    /// Parse data table workspace to a vector of matrix workspaces
+    std::vector<API::MatrixWorkspace_sptr> convertToWorkspaces(DataObjects::TableWorkspace_sptr tablews);
+
+    /// Create parent workspace
+    API::MatrixWorkspace_sptr createParentWorkspace(size_t numspec);
+
+    /// Read parameter information from table workspace
+    void readTableInfo(DataObjects::TableWorkspace_const_sptr tablews, size_t& ipt, size_t& irotangle,
+                       std::vector<std::pair<size_t, size_t> >& anodelist);
+
+    ///
+    API::MatrixWorkspace_sptr loadRunToMatrixWS(DataObjects::TableWorkspace_const_sptr tablews, size_t irow,
+                                                API::MatrixWorkspace_const_sptr parentws,
+                                                size_t ipt, size_t irotangle, const std::vector<std::pair<size_t, size_t> > anodelist);
+
     /// File name
     std::string m_spiceFilename;
 
     DataObjects::TableWorkspace_sptr m_dataTableWS;
+
+    /// Name of instrument
+    std::string m_instrumentName;
+
+    /// Number of detectors
+    size_t m_numSpec;
+
+
     
   };
 
