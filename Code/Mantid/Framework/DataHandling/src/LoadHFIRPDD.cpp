@@ -3,6 +3,7 @@
 #include "MantidAPI/WorkspaceProperty.h"
 #include "MantidAPI/FileProperty.h"
 #include "MantidGeometry/IDetector.h"
+#include "MantidKernel/TimeSeriesProperty.h"
 
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -36,9 +37,7 @@ namespace DataHandling
   void LoadHFIRPDD::init()
   {
     std::vector<std::string> exts;
-    exts.push_back(".gsa");
-    exts.push_back(".gss");
-    exts.push_back(".gda");
+    exts.push_back(".dat");
     exts.push_back(".txt");
     declareProperty(
         new API::FileProperty("Filename", "", API::FileProperty::Load, exts),
@@ -128,7 +127,11 @@ namespace DataHandling
 
     // Set up angle
     double twotheta = tablews->cell<double>(irow, irotangle);
-    tempws->getRun()->setPropertyValue("rotangle", twotheta);
+    TimeSeriesProperty<double> *prop2theta =
+        new TimeSeriesProperty<double>("rotangle");
+    prop2theta->addValue(time0, twotheta);
+    tempws->run().addProperty(prop2theta);
+    //  tempws->getRun()->setPropertyValue("rotangle", twotheta);
 
     // Load instrument
     IAlgorithm_sptr instloader = this->createChildAlgorithm("LoadInstrument");

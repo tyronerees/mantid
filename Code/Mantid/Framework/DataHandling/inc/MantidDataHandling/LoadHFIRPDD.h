@@ -82,7 +82,7 @@ namespace DataHandling
     void readTableInfo(DataObjects::TableWorkspace_const_sptr tablews, size_t& ipt, size_t& irotangle,
                        std::vector<std::pair<size_t, size_t> >& anodelist);
 
-    ///
+    /// Load one run (one pt.) to a matrix workspace
     API::MatrixWorkspace_sptr loadRunToMatrixWS(DataObjects::TableWorkspace_const_sptr tablews, size_t irow,
                                                 API::MatrixWorkspace_const_sptr parentws,
                                                 size_t ipt, size_t irotangle, const std::vector<std::pair<size_t, size_t> > anodelist);
