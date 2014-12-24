@@ -103,15 +103,15 @@ namespace DataHandling
     MatrixWorkspace_sptr parentws = createParentWorkspace(m_numSpec);
 
     // Get table workspace's column information
-    size_t ipt, irotangle;
+    size_t ipt, irotangle, itime;
     std::vector<std::pair<size_t, size_t> > anodelist;
-    readTableInfo(tablews, ipt, irotangle, anodelist);
+    readTableInfo(tablews, ipt, irotangle, itime, anodelist);
 
     // Load data
     size_t numws = tablews->rowCount();
     std::vector<MatrixWorkspace_sptr> vecws(numws);
     for (size_t i = 0; i < numws; ++i)
-      vecws[i] = loadRunToMatrixWS(tablews, i, parentws, ipt, irotangle, anodelist);
+      vecws[i] = loadRunToMatrixWS(tablews, i, parentws, ipt, irotangle, itime, anodelist);
 
     return vecws;
   }
@@ -119,19 +119,21 @@ namespace DataHandling
   //---
   /** Load one run of data to a new workspace
    */
-  MatrixWorkspace_sptr LoadHFIRPDD::loadRunToMatrixWS(TableWorkspace_const_sptr tablews, size_t irow, MatrixWorkspace_const_sptr parentws,
-                                                      size_t ipt, size_t irotangle, const std::vector<std::pair<size_t, size_t> > anodelist)
+  MatrixWorkspace_sptr LoadHFIRPDD::loadRunToMatrixWS(DataObjects::TableWorkspace_sptr tablews, size_t irow, MatrixWorkspace_const_sptr parentws,
+                                                      size_t ipt, size_t irotangle, size_t itime, const std::vector<std::pair<size_t, size_t> > anodelist)
   {
     // New workspace from parent workspace
-    MatrixWorkspace_sptr tempws = WorkspaceFactory::Instance().create("Workspace2D", parentws);
+    MatrixWorkspace_sptr tempws = WorkspaceFactory::Instance().create(parentws, m_numSpec, 2, 1);
 
     // Set up angle
     double twotheta = tablews->cell<double>(irow, irotangle);
     TimeSeriesProperty<double> *prop2theta =
         new TimeSeriesProperty<double>("rotangle");
-    prop2theta->addValue(time0, twotheta);
-    tempws->run().addProperty(prop2theta);
-    //  tempws->getRun()->setPropertyValue("rotangle", twotheta);
+
+    throw std::runtime_error("pttime is not set up yet.");
+    DateAndTime pttime(0);
+    prop2theta->addValue(pttime, twotheta);
+    tempws->mutableRun().addProperty(prop2theta);
 
     // Load instrument
     IAlgorithm_sptr instloader = this->createChildAlgorithm("LoadInstrument");
@@ -141,7 +143,7 @@ namespace DataHandling
     // Import data
     for (size_t i = 0; i < m_numSpec; ++i)
     {
-      Geometry::IDetector_sptr tmpdet = tempws->getDetector(i);
+      Geometry::IDetector_const_sptr tmpdet = tempws->getDetector(i);
       tempws->dataX(i)[0] = tmpdet->getPos().X();
       tempws->dataX(i)[0] = tmpdet->getPos().X()+0.01;
       tempws->dataY(i)[0] = tablews->cell<double>(irow, anodelist[i].second);
@@ -154,15 +156,17 @@ namespace DataHandling
   //----------------------------------------------------------------------------------------------
   /** Read table workspace's column information
    */
-  void LoadHFIRPDD::readTableInfo(TableWorkspace_const_sptr tablews, size_t& ipt, size_t& irotangle,
+  void LoadHFIRPDD::readTableInfo(TableWorkspace_const_sptr tablews, size_t& ipt, size_t& irotangle, size_t& itime,
                                   std::vector<std::pair<size_t, size_t> >& anodelist)
   {
     // Init
     bool bfPt = false;
     bool bfRotAngle = false;
+    bool bfTime = false;
 
     ipt = -1;
     irotangle = -1;
+    itime = -1;
 
     const std::vector<std::string> & colnames = tablews->getColumnNames();
 
@@ -181,6 +185,12 @@ namespace DataHandling
         // 2theta_zero
         irotangle = icol;
         bfRotAngle = true;
+      }
+      else if (!bfTime && colname.compare("time") == 0)
+      {
+        // time
+        itime = icol;
+        bfTime = true;
       }
       else if ( boost::starts_with(colname, "anode") )
       {
@@ -223,8 +233,29 @@ namespace DataHandling
   //--
   /** Convert to MD Event workspace
    */
-  IMDEventWorkspace_sptr convertToMDEventWS(const std::vector<MatrixWorkspace_sptr> vec_wd2d)
+  IMDEventWorkspace_sptr LoadHFIRPDD::convertToMDEventWS(const std::vector<MatrixWorkspace_sptr> vec_wd2d)
   {
+    throw std::runtime_error("First half of the method has not been implemented yet.");
+    std::string tempFileName;
+
+    IAlgorithm_sptr importMDEWS = createChildAlgorithm("ImportMDEventWorkspace");
+    // Now execute the Child Algorithm.
+    try {
+      importMDEWS->setPropertyValue("Filename", tempFileName);
+      importMDEWS->setProperty("OutputWorkspace", "Test");
+      importMDEWS->executeAsChildAlg();
+    }
+    catch (std::exception &exc) {
+      throw std::runtime_error(
+            std::string("Error running ImportMDEventWorkspace: ") + exc.what());
+    }
+    IMDEventWorkspace_sptr workspace =
+        importMDEWS->getProperty("OutputWorkspace");
+    if (!workspace)
+      throw(std::runtime_error("Can not retrieve results of child algorithm "
+                               "ImportMDEventWorkspace"));
+
+    return workspace;
 
   }
 

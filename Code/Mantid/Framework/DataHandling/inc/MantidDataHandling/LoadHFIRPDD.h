@@ -79,13 +79,15 @@ namespace DataHandling
     API::MatrixWorkspace_sptr createParentWorkspace(size_t numspec);
 
     /// Read parameter information from table workspace
-    void readTableInfo(DataObjects::TableWorkspace_const_sptr tablews, size_t& ipt, size_t& irotangle,
+    void readTableInfo(DataObjects::TableWorkspace_const_sptr tablews, size_t& ipt, size_t& irotangle, size_t& itime,
                        std::vector<std::pair<size_t, size_t> >& anodelist);
 
     /// Load one run (one pt.) to a matrix workspace
-    API::MatrixWorkspace_sptr loadRunToMatrixWS(DataObjects::TableWorkspace_const_sptr tablews, size_t irow,
+    API::MatrixWorkspace_sptr loadRunToMatrixWS(DataObjects::TableWorkspace_sptr tablews, size_t irow,
                                                 API::MatrixWorkspace_const_sptr parentws,
-                                                size_t ipt, size_t irotangle, const std::vector<std::pair<size_t, size_t> > anodelist);
+                                                size_t ipt, size_t irotangle, size_t itime, const std::vector<std::pair<size_t, size_t> > anodelist);
+
+    // API::IMDEventWorkspace_sptr convertToMDEventWS(const std::vector<API::MatrixWorkspace_sptr> vec_wd2d);
 
     /// File name
     std::string m_spiceFilename;
