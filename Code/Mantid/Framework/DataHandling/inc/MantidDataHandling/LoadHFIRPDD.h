@@ -70,7 +70,7 @@ namespace DataHandling
     DataObjects::TableWorkspace_sptr loadSpiceData(const std::string &spicefilename);
 
     /// Convert to MD workspaces
-    API::IMDEventWorkspace_sptr convertToMDEventWS(const std::vector<API::MatrixWorkspace_sptr> vec_wd2d);
+    API::IMDEventWorkspace_sptr convertToMDEventWS(const std::vector<API::MatrixWorkspace_sptr> vec_ws2d);
 
     /// Parse data table workspace to a vector of matrix workspaces
     std::vector<API::MatrixWorkspace_sptr> convertToWorkspaces(DataObjects::TableWorkspace_sptr tablews);

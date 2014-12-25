@@ -6,6 +6,7 @@
 #include "MantidKernel/TimeSeriesProperty.h"
 
 #include <boost/algorithm/string/predicate.hpp>
+#include <Poco/TemporaryFile.h>
 
 namespace Mantid
 {
@@ -66,6 +67,8 @@ namespace DataHandling
 
     // Convert to MD workspaces
     IMDEventWorkspace_sptr m_mdEventWS = convertToMDEventWS(vec_ws2d);
+
+    setProperty("OutputWorkspace", m_mdEventWS);
 
   }
 
@@ -233,11 +236,50 @@ namespace DataHandling
   //--
   /** Convert to MD Event workspace
    */
-  IMDEventWorkspace_sptr LoadHFIRPDD::convertToMDEventWS(const std::vector<MatrixWorkspace_sptr> vec_wd2d)
+  IMDEventWorkspace_sptr LoadHFIRPDD::convertToMDEventWS(const std::vector<MatrixWorkspace_sptr> vec_ws2d)
   {
-    throw std::runtime_error("First half of the method has not been implemented yet.");
-    std::string tempFileName;
+    // Write the lsit of workspacs to a file to be loaded to an MD workspace
+    Poco::TemporaryFile tmpFile;
+    std::string tempFileName = tmpFile.path();
+    g_log.debug() << "Dumping WSs in a temp file: " << tempFileName << std::endl;
 
+    std::ofstream myfile;
+    myfile.open(tempFileName.c_str());
+    myfile << "DIMENSIONS" << std::endl;
+    myfile << "x X m 100" << std::endl;
+    myfile << "y Y m 100" << std::endl;
+    myfile << "z Z m 100" << std::endl;
+    myfile << "# Signal, Error, DetectorId, RunId, coord1, coord2, ... to end of "
+              "coords" << std::endl;
+    myfile << "MDEVENTS" << std::endl;
+
+    if (vec_ws2d.size() > 0) {
+      Progress progress(this, 0, 1, vec_ws2d.size());
+      for (auto it = vec_ws2d.begin(); it < vec_ws2d.end(); ++it) {
+        std::size_t pos = std::distance(vec_ws2d.begin(), it);
+        API::MatrixWorkspace_sptr thisWorkspace = *it;
+
+        std::size_t nHist = thisWorkspace->getNumberHistograms();
+        for (std::size_t i = 0; i < nHist; ++i) {
+          Geometry::IDetector_const_sptr det = thisWorkspace->getDetector(i);
+          const MantidVec &signal = thisWorkspace->readY(i);
+          const MantidVec &error = thisWorkspace->readE(i);
+          myfile << signal[0] << " ";
+          myfile << error[0] << " ";
+          myfile << det->getID() << " ";
+          myfile << pos << " ";
+          Kernel::V3D detPos = det->getPos();
+          myfile << detPos.X() << " ";
+          myfile << detPos.Y() << " ";
+          myfile << detPos.Z() << " ";
+          myfile << std::endl;
+        }
+        progress.report("Creating MD WS");
+      }
+      myfile.close();
+    }
+
+    // Import to MD Workspace
     IAlgorithm_sptr importMDEWS = createChildAlgorithm("ImportMDEventWorkspace");
     // Now execute the Child Algorithm.
     try {
