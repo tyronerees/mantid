@@ -113,30 +113,53 @@ namespace DataHandling
     // Load data
     size_t numws = tablews->rowCount();
     std::vector<MatrixWorkspace_sptr> vecws(numws);
-    for (size_t i = 0; i < numws; ++i)
-      vecws[i] = loadRunToMatrixWS(tablews, i, parentws, ipt, irotangle, itime, anodelist);
+    double duration = 0;
+    Kernel::DateAndTime runstart =
+        parentws->run().getProperty("run_start")->value();
+    for (size_t i = 0; i < numws; ++i) {
+      vecws[i] = loadRunToMatrixWS(tablews, i, parentws, runstart, irotangle,
+                                   itime, anodelist, duration);
+      runstart += static_cast<int64_t>(duration * 1.0E9);
+    }
 
     return vecws;
   }
 
-  //---
+  //-------------------------------------------------------------------
+  //---------------------------
   /** Load one run of data to a new workspace
+   * @brief LoadHFIRPDD::loadRunToMatrixWS
+   * @param tablews :: input workspace
+   * @param irow :: the row in workspace to load
+   * @param parentws :: parent workspace with preset log
+   * @param runstart :: run star time
+   * @param irotangle :: column index of rotation angle
+   * @param itime :: column index of duration
+   * @param anodelist :: list of anodes
+   * @param duration :: output of duration
+   * @return
    */
-  MatrixWorkspace_sptr LoadHFIRPDD::loadRunToMatrixWS(DataObjects::TableWorkspace_sptr tablews, size_t irow, MatrixWorkspace_const_sptr parentws,
-                                                      size_t ipt, size_t irotangle, size_t itime, const std::vector<std::pair<size_t, size_t> > anodelist)
-  {
+  MatrixWorkspace_sptr LoadHFIRPDD::loadRunToMatrixWS(
+      DataObjects::TableWorkspace_sptr tablews, size_t irow,
+      MatrixWorkspace_const_sptr parentws, Kernel::DateAndTime runstart,
+      size_t irotangle, size_t itime,
+      const std::vector<std::pair<size_t, size_t> > anodelist,
+      double &duration) {
     // New workspace from parent workspace
     MatrixWorkspace_sptr tempws = WorkspaceFactory::Instance().create(parentws, m_numSpec, 2, 1);
 
-    // Set up angle
+    // Set up angle and time
     double twotheta = tablews->cell<double>(irow, irotangle);
     TimeSeriesProperty<double> *prop2theta =
         new TimeSeriesProperty<double>("rotangle");
 
-    throw std::runtime_error("pttime is not set up yet.");
-    DateAndTime pttime(0);
-    prop2theta->addValue(pttime, twotheta);
+    prop2theta->addValue(runstart, twotheta);
     tempws->mutableRun().addProperty(prop2theta);
+
+    TimeSeriesProperty<std::string> *proprunstart =
+        new TimeSeriesProperty<std::string>("run_start");
+    proprunstart->addValue(runstart, runstart.toISO8601String());
+    tempws->mutableRun().addProperty(proprunstart);
 
     // Load instrument
     IAlgorithm_sptr instloader = this->createChildAlgorithm("LoadInstrument");
@@ -152,6 +175,9 @@ namespace DataHandling
       tempws->dataY(i)[0] = tablews->cell<double>(irow, anodelist[i].second);
       tempws->dataE(i)[0] = 1;
     }
+
+    // Return duration
+    duration = tablews->cell<double>(irow, itime);
 
     return tempws;
   }
@@ -220,7 +246,11 @@ namespace DataHandling
 
 
   //----------------------------------------------------------------------------------------------
-
+  /**
+   * @brief LoadHFIRPDD::createParentWorkspace
+   * @param numspec
+   * @return
+   */
   API::MatrixWorkspace_sptr LoadHFIRPDD::createParentWorkspace(size_t numspec)
   {
     MatrixWorkspace_sptr tempws =
@@ -233,7 +263,7 @@ namespace DataHandling
     return tempws;
   }
 
-  //--
+  //----------------------------------------------------------------------------------------------
   /** Convert to MD Event workspace
    */
   IMDEventWorkspace_sptr LoadHFIRPDD::convertToMDEventWS(const std::vector<MatrixWorkspace_sptr> vec_ws2d)

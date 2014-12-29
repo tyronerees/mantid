@@ -83,9 +83,13 @@ namespace DataHandling
                        std::vector<std::pair<size_t, size_t> >& anodelist);
 
     /// Load one run (one pt.) to a matrix workspace
-    API::MatrixWorkspace_sptr loadRunToMatrixWS(DataObjects::TableWorkspace_sptr tablews, size_t irow,
-                                                API::MatrixWorkspace_const_sptr parentws,
-                                                size_t ipt, size_t irotangle, size_t itime, const std::vector<std::pair<size_t, size_t> > anodelist);
+    API::MatrixWorkspace_sptr
+    loadRunToMatrixWS(DataObjects::TableWorkspace_sptr tablews, size_t irow,
+                      API::MatrixWorkspace_const_sptr parentws,
+                      Kernel::DateAndTime runstart, size_t irotangle,
+                      size_t itime,
+                      const std::vector<std::pair<size_t, size_t> > anodelist,
+                      double &duration);
 
     // API::IMDEventWorkspace_sptr convertToMDEventWS(const std::vector<API::MatrixWorkspace_sptr> vec_wd2d);
 
