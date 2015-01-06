@@ -37,12 +37,23 @@ namespace DataHandling
    */
   void LoadHFIRPDD::init()
   {
+    declareProperty(new WorkspaceProperty<TableWorkspace>("InputWorkspace", "",
+                                                          Direction::Input),
+                    "Input table workspace for data.");
+
+    declareProperty(new WorkspaceProperty<MatrixWorkspace>(
+                        "ParentWorkspace", "", Direction::Input),
+                    "Input matrix workspace serving as parent workspace "
+                    "containing sample logs.");
+
+    /* These are for stage 2
     std::vector<std::string> exts;
     exts.push_back(".dat");
     exts.push_back(".txt");
     declareProperty(
         new API::FileProperty("Filename", "", API::FileProperty::Load, exts),
         "The input filename of the stored data");
+        */
 
     declareProperty(new WorkspaceProperty<IMDEventWorkspace>(
                         "OutputWorkspace", "", Direction::Output),
@@ -56,18 +67,24 @@ namespace DataHandling
    */
   void LoadHFIRPDD::exec()
   {
+    /** Stage 2
     // Process inputs
     std::string spiceFileName = getProperty("Filename");
 
     // Load SPICE data
     m_dataTableWS = loadSpiceData(spiceFileName);
+    */
+    m_dataTableWS = getProperty("InputWrokspace");
+    MatrixWorkspace_const_sptr parentWS = getProperty("ParentWorkspace");
 
     // Convert table workspace to a list of 2D workspaces
-    std::vector<MatrixWorkspace_sptr> vec_ws2d = convertToWorkspaces(m_dataTableWS);
+    std::vector<MatrixWorkspace_sptr> vec_ws2d =
+        convertToWorkspaces(m_dataTableWS, parentWS);
 
     // Convert to MD workspaces
     IMDEventWorkspace_sptr m_mdEventWS = convertToMDEventWS(vec_ws2d);
 
+    // Set property
     setProperty("OutputWorkspace", m_mdEventWS);
 
   }
@@ -100,10 +117,11 @@ namespace DataHandling
   //----------------------------------------------------------------------------------------------
   /** Convert runs/pts from table workspace to a list of workspace 2D
    */
-  std::vector<MatrixWorkspace_sptr> LoadHFIRPDD::convertToWorkspaces(DataObjects::TableWorkspace_sptr tablews)
-  {
+  std::vector<MatrixWorkspace_sptr>
+  LoadHFIRPDD::convertToWorkspaces(DataObjects::TableWorkspace_sptr tablews,
+                                   API::MatrixWorkspace_const_sptr parentws) {
     // For HB2A m_numSpec is 44
-    MatrixWorkspace_sptr parentws = createParentWorkspace(m_numSpec);
+    // MatrixWorkspace_sptr parentws = createParentWorkspace(m_numSpec);
 
     // Get table workspace's column information
     size_t ipt, irotangle, itime;
@@ -253,6 +271,8 @@ namespace DataHandling
    */
   API::MatrixWorkspace_sptr LoadHFIRPDD::createParentWorkspace(size_t numspec)
   {
+    // TODO - This method might be deleted
+
     MatrixWorkspace_sptr tempws =
         WorkspaceFactory::Instance().create("Workspace2D", numspec, 2, 1);
 

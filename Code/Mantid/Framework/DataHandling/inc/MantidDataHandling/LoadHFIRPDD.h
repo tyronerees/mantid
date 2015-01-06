@@ -73,7 +73,9 @@ namespace DataHandling
     API::IMDEventWorkspace_sptr convertToMDEventWS(const std::vector<API::MatrixWorkspace_sptr> vec_ws2d);
 
     /// Parse data table workspace to a vector of matrix workspaces
-    std::vector<API::MatrixWorkspace_sptr> convertToWorkspaces(DataObjects::TableWorkspace_sptr tablews);
+    std::vector<API::MatrixWorkspace_sptr>
+    convertToWorkspaces(DataObjects::TableWorkspace_sptr tablews,
+                        API::MatrixWorkspace_const_sptr parentws);
 
     /// Create parent workspace
     API::MatrixWorkspace_sptr createParentWorkspace(size_t numspec);
