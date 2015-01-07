@@ -86,9 +86,10 @@ public:
 
   /// Summary of algorithms purpose
   virtual const std::string summary() const {
-    return "Loads Event NeXus files (produced by the SNS) and stores it in an "
-           "EventWorkspace. Optionally, you can filter out events falling "
-           "outside a range of times-of-flight and/or a time interval.";
+    return "Loads Event NeXus files (produced by the SNS or ISIS) and "
+      "stores it in an EventWorkspace. Optionally, you can filter out "
+      "events falling outside a range of times-of-flight and/or a time "
+      "interval.";
   }
 
   /// Version
