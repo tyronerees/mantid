@@ -75,7 +75,8 @@ namespace DataHandling
     /// Parse data table workspace to a vector of matrix workspaces
     std::vector<API::MatrixWorkspace_sptr>
     convertToWorkspaces(DataObjects::TableWorkspace_sptr tablews,
-                        API::MatrixWorkspace_const_sptr parentws);
+                        API::MatrixWorkspace_const_sptr parentws,
+                        Kernel::DateAndTime runstart);
 
     /// Create parent workspace
     API::MatrixWorkspace_sptr createParentWorkspace(size_t numspec);

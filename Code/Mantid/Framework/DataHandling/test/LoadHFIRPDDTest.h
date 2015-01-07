@@ -7,9 +7,11 @@
 #include "MantidDataHandling/LoadNexusProcessed.h"
 #include "MantidAPI/MatrixWorkspace.h"
 #include "MantidAPI/ITableWorkspace.h"
+#include "MantidDataHandling/LoadInstrument.h"
 
 using Mantid::DataHandling::LoadHFIRPDD;
 using Mantid::DataHandling::LoadNexusProcessed;
+using Mantid::DataHandling::LoadInstrument;
 
 using namespace Mantid::API;
 using namespace Mantid::DataObjects;
@@ -27,6 +29,30 @@ public:
     LoadHFIRPDD loader;
     loader.initialize();
     TS_ASSERT(loader.isInitialized());
+  }
+
+  /** Test loading HB2A's IDF file
+   * @brief test_HB2BIDF
+   */
+  void test_HB2AIDF() {
+    MatrixWorkspace_sptr dataws =
+        WorkspaceFactory::Instance().create("Workspace2D", 44, 2, 1);
+    AnalysisDataService::Instance().addOrReplace("EmptyWS", dataws);
+
+    LoadInstrument loader;
+    loader.initialize();
+
+    loader.setProperty("InstrumentName", "HB2A");
+    loader.setProperty("Workspace", dataws);
+
+    loader.execute();
+    TS_ASSERT(loader.isExecuted());
+
+    MatrixWorkspace_sptr outws = boost::dynamic_pointer_cast<MatrixWorkspace>(
+        AnalysisDataService::Instance().retrieve("EmptyWS"));
+    TS_ASSERT(outws);
+
+    TS_ASSERT_EQUALS(outws->getInstrument()->getName(), "HB2A");
   }
 
   void test_LoadHB2AData()
@@ -56,9 +82,17 @@ public:
     // loader.setPropertyValue("Filename", "HB2A_exp0231_scan0001.dat");
     loader.setProperty("InputWorkspace", datatablews);
     loader.setProperty("ParentWorkspace", parentlogws);
+    loader.setProperty("Instrument", "HB2A");
+    loader.setProperty("RunStart", "2012-08-13T11:57:33");
     loader.setPropertyValue("OutputWorkspace", "HB2A_MD");
 
     loader.execute();
+    TS_ASSERT(loader.isExecuted());
+
+    IMDEventWorkspace_sptr mdws =
+        boost::dynamic_pointer_cast<IMDEventWorkspace>(
+            AnalysisDataService::Instance().retrieve("HB2A_MD"));
+    TS_ASSERT(mdws);
   }
 
 

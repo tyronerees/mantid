@@ -46,6 +46,10 @@ namespace DataHandling
                     "Input matrix workspace serving as parent workspace "
                     "containing sample logs.");
 
+    declareProperty("RunStart", "", "Run start time");
+
+    declareProperty("Instrument", "HB2A", "Instrument to be loaded. ");
+
     /* These are for stage 2
     std::vector<std::string> exts;
     exts.push_back(".dat");
@@ -74,12 +78,29 @@ namespace DataHandling
     // Load SPICE data
     m_dataTableWS = loadSpiceData(spiceFileName);
     */
-    m_dataTableWS = getProperty("InputWrokspace");
+    m_dataTableWS = getProperty("InputWorkspace");
     MatrixWorkspace_const_sptr parentWS = getProperty("ParentWorkspace");
+
+    m_instrumentName = getPropertyValue("Instrument");
+
+    // Check whether parent workspace has run start
+    DateAndTime runstart(0);
+    if (parentWS->run().hasProperty("run_start")) {
+      // Use parent workspace's first
+      runstart = parentWS->run().getProperty("run_start")->value();
+    } else {
+      // Use user given
+      std::string runstartstr = getProperty("RunStart");
+      // raise exception if user does not give a proper run start
+      if (runstartstr.size() == 0)
+        throw std::runtime_error("Run-start time is not defined either in "
+                                 "input parent workspace or given by user.");
+      runstart = DateAndTime(runstartstr);
+    }
 
     // Convert table workspace to a list of 2D workspaces
     std::vector<MatrixWorkspace_sptr> vec_ws2d =
-        convertToWorkspaces(m_dataTableWS, parentWS);
+        convertToWorkspaces(m_dataTableWS, parentWS, runstart);
 
     // Convert to MD workspaces
     IMDEventWorkspace_sptr m_mdEventWS = convertToMDEventWS(vec_ws2d);
@@ -119,7 +140,8 @@ namespace DataHandling
    */
   std::vector<MatrixWorkspace_sptr>
   LoadHFIRPDD::convertToWorkspaces(DataObjects::TableWorkspace_sptr tablews,
-                                   API::MatrixWorkspace_const_sptr parentws) {
+                                   API::MatrixWorkspace_const_sptr parentws,
+                                   Kernel::DateAndTime runstart) {
     // For HB2A m_numSpec is 44
     // MatrixWorkspace_sptr parentws = createParentWorkspace(m_numSpec);
 
@@ -127,24 +149,26 @@ namespace DataHandling
     size_t ipt, irotangle, itime;
     std::vector<std::pair<size_t, size_t> > anodelist;
     readTableInfo(tablews, ipt, irotangle, itime, anodelist);
+    g_log.notice() << "[DB] Check point 1: Number of anodelist = "
+                   << anodelist.size() << "\n";
+    m_numSpec = anodelist.size();
 
     // Load data
     size_t numws = tablews->rowCount();
     std::vector<MatrixWorkspace_sptr> vecws(numws);
     double duration = 0;
-    Kernel::DateAndTime runstart =
-        parentws->run().getProperty("run_start")->value();
     for (size_t i = 0; i < numws; ++i) {
       vecws[i] = loadRunToMatrixWS(tablews, i, parentws, runstart, irotangle,
                                    itime, anodelist, duration);
       runstart += static_cast<int64_t>(duration * 1.0E9);
     }
 
+    g_log.notice() << "[DB] Number of matrix workspaces in vector = "
+                   << vecws.size() << "\n";
     return vecws;
   }
 
-  //-------------------------------------------------------------------
-  //---------------------------
+  //----------------------------------------------------------------------------------------------
   /** Load one run of data to a new workspace
    * @brief LoadHFIRPDD::loadRunToMatrixWS
    * @param tablews :: input workspace
@@ -163,6 +187,8 @@ namespace DataHandling
       size_t irotangle, size_t itime,
       const std::vector<std::pair<size_t, size_t> > anodelist,
       double &duration) {
+    g_log.notice() << "[DB] m_numSpec = " << m_numSpec
+                   << ", Instrument name = " << m_instrumentName << ". \n";
     // New workspace from parent workspace
     MatrixWorkspace_sptr tempws = WorkspaceFactory::Instance().create(parentws, m_numSpec, 2, 1);
 
@@ -182,7 +208,11 @@ namespace DataHandling
     // Load instrument
     IAlgorithm_sptr instloader = this->createChildAlgorithm("LoadInstrument");
     instloader->initialize();
-    instloader->setProperty("Instrument", m_instrumentName);
+    instloader->setProperty("InstrumentName", m_instrumentName);
+    instloader->setProperty("Workspace", tempws);
+    instloader->execute();
+
+    tempws = instloader->getProperty("Workspace");
 
     // Import data
     for (size_t i = 0; i < m_numSpec; ++i)
@@ -202,10 +232,16 @@ namespace DataHandling
 
   //----------------------------------------------------------------------------------------------
   /** Read table workspace's column information
+   * @brief LoadHFIRPDD::readTableInfo
+   * @param tablews
+   * @param ipt
+   * @param irotangle
+   * @param itime
+   * @param anodelist
    */
-  void LoadHFIRPDD::readTableInfo(TableWorkspace_const_sptr tablews, size_t& ipt, size_t& irotangle, size_t& itime,
-                                  std::vector<std::pair<size_t, size_t> >& anodelist)
-  {
+  void LoadHFIRPDD::readTableInfo(
+      TableWorkspace_const_sptr tablews, size_t &ipt, size_t &irotangle,
+      size_t &itime, std::vector<std::pair<size_t, size_t> > &anodelist) {
     // Init
     bool bfPt = false;
     bool bfRotAngle = false;
