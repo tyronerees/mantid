@@ -2,6 +2,7 @@
 
 #include "MantidAPI/WorkspaceProperty.h"
 #include "MantidAPI/FileProperty.h"
+#include "MantidAPI/IMDIterator.h"
 #include "MantidGeometry/IDetector.h"
 #include "MantidKernel/TimeSeriesProperty.h"
 
@@ -16,6 +17,8 @@ namespace DataHandling
   using namespace Mantid::API;
   using namespace Mantid::Kernel;
   using namespace Mantid::DataObjects;
+
+  DECLARE_ALGORITHM(LoadHFIRPDD)
 
   //----------------------------------------------------------------------------------------------
   /** Constructor
@@ -104,6 +107,19 @@ namespace DataHandling
 
     // Convert to MD workspaces
     IMDEventWorkspace_sptr m_mdEventWS = convertToMDEventWS(vec_ws2d);
+
+    int64_t numevents = m_mdEventWS->getNEvents();
+    g_log.notice() << "[DB] Number of events = " << numevents << "\n";
+    IMDIterator* mditer =  m_mdEventWS->createIterator();
+    size_t numev2 = mditer->getNumEvents();
+    g_log.notice() << "[DB] Number of events = " << numev2
+                   << " Does NEXT cell exist = " << mditer->next() << "\n";
+    coord_t pos0 = mditer->getInnerPosition(0, 0);
+    coord_t posn = mditer->getInnerPosition(numev2-1, 0);
+    g_log.notice() << "[DB] " << " pos0 = " << pos0 << ", "
+                   << " pos1 = " << posn << "\n";
+
+
 
     // Set property
     setProperty("OutputWorkspace", m_mdEventWS);
@@ -327,6 +343,8 @@ namespace DataHandling
     // Write the lsit of workspacs to a file to be loaded to an MD workspace
     Poco::TemporaryFile tmpFile;
     std::string tempFileName = tmpFile.path();
+    throw std::runtime_error("print out an MD file for verifying the use of IMDIterator");
+
     g_log.debug() << "Dumping WSs in a temp file: " << tempFileName << std::endl;
 
     std::ofstream myfile;
@@ -358,8 +376,12 @@ namespace DataHandling
           myfile << detPos.X() << " ";
           myfile << detPos.Y() << " ";
           myfile << detPos.Z() << " ";
+          throw std::runtime_error("Think of adding another dimension for event filtering on sample log.");
           myfile << std::endl;
         }
+
+        throw std::runtime_error("Find out how to deal with the logs.");
+
         progress.report("Creating MD WS");
       }
       myfile.close();

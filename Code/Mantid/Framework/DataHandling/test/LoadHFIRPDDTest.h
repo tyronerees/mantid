@@ -89,6 +89,8 @@ public:
     loader.execute();
     TS_ASSERT(loader.isExecuted());
 
+    TS_ASSERT_EQUALS(1, 29121);
+
     IMDEventWorkspace_sptr mdws =
         boost::dynamic_pointer_cast<IMDEventWorkspace>(
             AnalysisDataService::Instance().retrieve("HB2A_MD"));
