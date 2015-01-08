@@ -41,7 +41,6 @@ set ( SRC_FILES
 	src/LoadFullprofResolution.cpp
 	src/LoadGSASInstrumentFile.cpp
 	src/LoadGSS.cpp
-	src/LoadHFIRPDD.cpp
 	src/LoadHelper.cpp
 	src/LoadIDFFromNexus.cpp
 	src/LoadILL.cpp
@@ -191,7 +190,6 @@ set ( INC_FILES
 	inc/MantidDataHandling/LoadFullprofResolution.h
 	inc/MantidDataHandling/LoadGSASInstrumentFile.h
 	inc/MantidDataHandling/LoadGSS.h
-	inc/MantidDataHandling/LoadHFIRPDD.h
 	inc/MantidDataHandling/LoadHelper.h
 	inc/MantidDataHandling/LoadIDFFromNexus.h
 	inc/MantidDataHandling/LoadILL.h
@@ -337,7 +335,6 @@ set ( TEST_FILES
 	LoadFullprofResolutionTest.h
 	LoadGSASInstrumentFileTest.h
 	LoadGSSTest.h
-	LoadHFIRPDDTest.h
 	LoadIDFFromNexusTest.h
 	LoadILLIndirectTest.h
 	LoadILLReflectometryTest.h

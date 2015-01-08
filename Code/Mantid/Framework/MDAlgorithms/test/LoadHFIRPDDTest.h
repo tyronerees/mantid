@@ -3,29 +3,32 @@
 
 #include <cxxtest/TestSuite.h>
 
-#include "MantidDataHandling/LoadHFIRPDD.h"
+#include "MantidMDAlgorithms/LoadHFIRPDD.h"
 #include "MantidDataHandling/LoadNexusProcessed.h"
 #include "MantidAPI/MatrixWorkspace.h"
 #include "MantidAPI/ITableWorkspace.h"
 #include "MantidDataHandling/LoadInstrument.h"
+#include "MantidAPI/IMDIterator.h"
+#include "MantidMDAlgorithms/SaveMD.h"
+
+// #include "Mantid"
 
 using Mantid::DataHandling::LoadHFIRPDD;
 using Mantid::DataHandling::LoadNexusProcessed;
 using Mantid::DataHandling::LoadInstrument;
+using Mantid::MDAlgorithms::SaveMD;
 
 using namespace Mantid::API;
 using namespace Mantid::DataObjects;
 
-class LoadHFIRPDDTest : public CxxTest::TestSuite
-{
+class LoadHFIRPDDTest : public CxxTest::TestSuite {
 public:
   // This pair of boilerplate methods prevent the suite being created statically
   // This means the constructor isn't called when running other tests
   static LoadHFIRPDDTest *createSuite() { return new LoadHFIRPDDTest(); }
-  static void destroySuite( LoadHFIRPDDTest *suite ) { delete suite; }
+  static void destroySuite(LoadHFIRPDDTest *suite) { delete suite; }
 
-  void test_Init()
-  {
+  void test_Init() {
     LoadHFIRPDD loader;
     loader.initialize();
     TS_ASSERT(loader.isInitialized());
@@ -55,8 +58,7 @@ public:
     TS_ASSERT_EQUALS(outws->getInstrument()->getName(), "HB2A");
   }
 
-  void test_LoadHB2AData()
-  {
+  void test_LoadHB2AData() {
     // This is the solution of stage 1. Stage 2 will be different
     LoadNexusProcessed nxsloader;
     nxsloader.initialize();
@@ -89,16 +91,28 @@ public:
     loader.execute();
     TS_ASSERT(loader.isExecuted());
 
-    TS_ASSERT_EQUALS(1, 29121);
-
+    // Get IMDEventWorkspace
     IMDEventWorkspace_sptr mdws =
         boost::dynamic_pointer_cast<IMDEventWorkspace>(
             AnalysisDataService::Instance().retrieve("HB2A_MD"));
     TS_ASSERT(mdws);
+
+    // Check the IMDEvent workspace generated
+    size_t numevents = mdws->getNEvents();
+    TS_ASSERT_EQUALS(numevents, 44 * 61);
+
+    IMDIterator *mditer = mdws->createIterator();
+    TS_ASSERT_EQUALS(mditer->getNumEvents(), 44 * 61);
+
+    Mantid::coord_t lastx = mditer->getInnerPosition(44 * 61 - 1, 0);
+    TS_ASSERT_DELTA(lastx, 1.57956, 0.0001);
+
+    SaveMD saver;
+    saver.initialize();
+    saver.setProperty("InputWorkspace", mdws);
+    saver.setProperty("Filename", "/tmp/hb2amd.nxs");
+    saver.execute();
   }
-
-
 };
-
 
 #endif /* MANTID_DATAHANDLING_LOADHFIRPDDTEST_H_ */

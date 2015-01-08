@@ -77,6 +77,7 @@ set ( SRC_FILES
 	src/Vector3DParameterParser.cpp
 	src/WeightedMeanMD.cpp
 	src/XorMD.cpp
+	src/LoadHFIRPDD.cpp
 )
 
 #set ( SRC_UNITY_IGNORE_FILES src/IDynamicRebinning.cpp
@@ -161,6 +162,7 @@ set ( INC_FILES
 	inc/MantidMDAlgorithms/Vector3DParameterParser.h
 	inc/MantidMDAlgorithms/WeightedMeanMD.h
 	inc/MantidMDAlgorithms/XorMD.h
+	inc/MantidMDAlgorithms/LoadHFIRPDD.h
 )
 
 # Test files. Other source files required.
@@ -235,6 +237,7 @@ set ( TEST_FILES
 	UnaryOperationMDTest.h
 	WeightedMeanMDTest.h
 	XorMDTest.h
+	LoadHFIRPDDTest.h
 )
 
 set ( GMOCK_TEST_FILES
