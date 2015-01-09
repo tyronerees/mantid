@@ -91,11 +91,15 @@ void LoadHFIRPDD::exec() {
   }
 
   // Convert table workspace to a list of 2D workspaces
-  std::vector<MatrixWorkspace_sptr> vec_ws2d =
-      convertToWorkspaces(m_dataTableWS, parentWS, runstart);
+  std::map<std::string, std::vector<double> > logvecmap;
+  std::vector<Kernel::DateAndTime> vectimes;
+  std::vector<MatrixWorkspace_sptr> vec_ws2d = convertToWorkspaces(
+      m_dataTableWS, parentWS, runstart, logvecmap, vectimes);
 
   // Convert to MD workspaces
   IMDEventWorkspace_sptr m_mdEventWS = convertToMDEventWS(vec_ws2d);
+
+  appendSampleLogs(m_mdEventWS, logvecmap, vectimes);
 
   int64_t numevents = m_mdEventWS->getNEvents();
   g_log.notice() << "[DB] Number of events = " << numevents << "\n";
@@ -144,17 +148,16 @@ LoadHFIRPDD::loadSpiceData(const std::string &spicefilename) {
 //----------------------------------------------------------------------------------------------
 /** Convert runs/pts from table workspace to a list of workspace 2D
  */
-std::vector<MatrixWorkspace_sptr>
-LoadHFIRPDD::convertToWorkspaces(DataObjects::TableWorkspace_sptr tablews,
-                                 API::MatrixWorkspace_const_sptr parentws,
-                                 Kernel::DateAndTime runstart) {
-  // For HB2A m_numSpec is 44
-  // MatrixWorkspace_sptr parentws = createParentWorkspace(m_numSpec);
-
+std::vector<MatrixWorkspace_sptr> LoadHFIRPDD::convertToWorkspaces(
+    DataObjects::TableWorkspace_sptr tablews,
+    API::MatrixWorkspace_const_sptr parentws, Kernel::DateAndTime runstart,
+    std::map<std::string, std::vector<double> > &logvecmap,
+    std::vector<Kernel::DateAndTime> &vectimes) {
   // Get table workspace's column information
   size_t ipt, irotangle, itime;
   std::vector<std::pair<size_t, size_t> > anodelist;
-  readTableInfo(tablews, ipt, irotangle, itime, anodelist);
+  std::map<std::string, size_t> sampleindexlist;
+  readTableInfo(tablews, ipt, irotangle, itime, anodelist, sampleindexlist);
   g_log.notice() << "[DB] Check point 1: Number of anodelist = "
                  << anodelist.size() << "\n";
   m_numSpec = anodelist.size();
@@ -163,15 +166,53 @@ LoadHFIRPDD::convertToWorkspaces(DataObjects::TableWorkspace_sptr tablews,
   size_t numws = tablews->rowCount();
   std::vector<MatrixWorkspace_sptr> vecws(numws);
   double duration = 0;
+  vectimes.resize(numws);
   for (size_t i = 0; i < numws; ++i) {
     vecws[i] = loadRunToMatrixWS(tablews, i, parentws, runstart, irotangle,
                                  itime, anodelist, duration);
+    vectimes[i] = runstart;
     runstart += static_cast<int64_t>(duration * 1.0E9);
   }
+
+  // Process log data which will not be put to matrix workspace but will got to
+  // MDWorkspace
+  parseSampleLogs(tablews, sampleindexlist, ipt, logvecmap);
 
   g_log.notice() << "[DB] Number of matrix workspaces in vector = "
                  << vecws.size() << "\n";
   return vecws;
+}
+
+//------------------------------------------------------------------------------------------------
+/**
+ * @brief LoadHFIRPDD::parseSampleLogs
+ * @param tablews
+ * @param indexlist
+ * @param ipt :: index for Pt. which will be not be written
+ * @param logvecmap
+ */
+void LoadHFIRPDD::parseSampleLogs(
+    DataObjects::TableWorkspace_sptr tablews,
+    const std::map<std::string, size_t> &indexlist, size_t ipt,
+    std::map<std::string, std::vector<double> > &logvecmap) {
+  size_t numrows = tablews->rowCount();
+
+  std::map<std::string, size_t>::const_iterator indexiter;
+  for (indexiter = indexlist.begin(); indexiter != indexlist.end();
+       ++indexiter) {
+    std::string logname = indexiter->first;
+    size_t icol = indexiter->second;
+
+    std::vector<double> logvec(numrows);
+    for (size_t ir = 0; ir < numrows; ++ir) {
+      double dbltemp = tablews->cell<double>(ir, icol);
+      logvec[ir] = dbltemp;
+    }
+
+    logvecmap.insert(std::make_pair(logname, logvec));
+  }
+
+  return;
 }
 
 //----------------------------------------------------------------------------------------------
@@ -247,46 +288,57 @@ MatrixWorkspace_sptr LoadHFIRPDD::loadRunToMatrixWS(
 void
 LoadHFIRPDD::readTableInfo(TableWorkspace_const_sptr tablews, size_t &ipt,
                            size_t &irotangle, size_t &itime,
-                           std::vector<std::pair<size_t, size_t> > &anodelist) {
+                           std::vector<std::pair<size_t, size_t> > &anodelist,
+                           std::map<std::string, size_t> &sampleindexlist) {
   // Init
   bool bfPt = false;
   bool bfRotAngle = false;
   bool bfTime = false;
-
-  ipt = -1;
-  irotangle = -1;
-  itime = -1;
 
   const std::vector<std::string> &colnames = tablews->getColumnNames();
 
   for (size_t icol = 0; icol < colnames.size(); ++icol) {
     const std::string &colname = colnames[icol];
 
-    if (!bfPt && colname.compare("Pt.") == 0) {
-      // Pt.
-      ipt = icol;
-      bfPt = true;
-    } else if (!bfRotAngle && colname.compare("2theta") == 0) {
-      // 2theta_zero
-      irotangle = icol;
-      bfRotAngle = true;
-    } else if (!bfTime && colname.compare("time") == 0) {
-      // time
-      itime = icol;
-      bfTime = true;
-    } else if (boost::starts_with(colname, "anode")) {
+    if (boost::starts_with(colname, "anode")) {
       // anode
       std::vector<std::string> terms;
       boost::split(terms, colname, boost::is_any_of("anode"));
       size_t anodeid = static_cast<size_t>(atoi(terms.back().c_str()));
       anodelist.push_back(std::make_pair(anodeid, icol));
     } else {
-      // regular log
-      // FIXME - Should add to sample log
-      continue;
+      sampleindexlist.insert(std::make_pair(colname, icol));
     }
+  }
 
-  } // ENDFOR
+  // Find out
+  std::map<std::string, size_t>::iterator mapiter;
+
+  // Pt.
+  mapiter = sampleindexlist.find("Pt.");
+  if (mapiter != sampleindexlist.end()) {
+    ipt = mapiter->second;
+    bfPt = true;
+  }
+
+  // 2theta_zero
+  mapiter = sampleindexlist.find("2theta");
+  if (mapiter != sampleindexlist.end()) {
+    irotangle = mapiter->second;
+    bfRotAngle = true;
+  }
+
+  // time
+  mapiter = sampleindexlist.find("time");
+  if (mapiter != sampleindexlist.end()) {
+    itime = mapiter->second;
+    bfTime = true;
+  }
+
+  if (!(bfTime && bfPt && bfRotAngle)) {
+    throw std::runtime_error(
+        "At least 1 of these 3 is not found: Pt., 2theta, time");
+  }
 
   // Sort out anode id index list;
   std::sort(anodelist.begin(), anodelist.end());
@@ -396,12 +448,50 @@ IMDEventWorkspace_sptr LoadHFIRPDD::convertToMDEventWS(
     throw(std::runtime_error("Can not retrieve results of child algorithm "
                              "ImportMDEventWorkspace"));
 
+  return workspace;
+}
+
+/**
+ * @brief LoadHFIRPDD::appendSampleLogs
+ * @param mdws
+ * @param logvecmap
+ * @param vectimes
+ */
+void LoadHFIRPDD::appendSampleLogs(
+    IMDEventWorkspace_sptr mdws,
+    const std::map<std::string, std::vector<double> > &logvecmap,
+    const std::vector<Kernel::DateAndTime> &vectimes) {
   // Process the sample logs for MD workspace
   ExperimentInfo_sptr ei = boost::make_shared<ExperimentInfo>();
-  ei->mutableRun().addLogData(new TimeSeriesProperty<double>("test"));
-  workspace->addExperimentInfo(ei);
 
-  return workspace;
+  std::map<std::string, std::vector<double> >::const_iterator miter;
+  for (miter = logvecmap.begin(); miter != logvecmap.end(); ++miter) {
+    std::string logname = miter->first;
+    const std::vector<double> &veclogval = miter->second;
+
+    // Check log values and times
+    if (veclogval.size() != vectimes.size()) {
+      g_log.error() << "Log " << logname
+                    << " has different number of log values ("
+                    << veclogval.size() << ") than number of log entry time ("
+                    << vectimes.size() << ")"
+                    << "\n";
+      continue;
+    }
+
+    // Create a new log
+    TimeSeriesProperty<double> *templog =
+        new TimeSeriesProperty<double>(logname);
+    templog->addValues(vectimes, veclogval);
+
+    // Add log to experiment info
+    ei->mutableRun().addLogData(templog);
+  }
+
+  // MD workspace add experimental information
+  mdws->addExperimentInfo(ei);
+
+  return;
 }
 
 } // namespace DataHandling
