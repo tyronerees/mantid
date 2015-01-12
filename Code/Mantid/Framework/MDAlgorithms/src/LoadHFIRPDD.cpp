@@ -96,10 +96,17 @@ void LoadHFIRPDD::exec() {
   std::vector<MatrixWorkspace_sptr> vec_ws2d = convertToWorkspaces(
       m_dataTableWS, parentWS, runstart, logvecmap, vectimes);
 
+  g_log.notice() << "[DB] Convert to workspaces done!"
+                 << "\n";
+
   // Convert to MD workspaces
   IMDEventWorkspace_sptr m_mdEventWS = convertToMDEventWS(vec_ws2d);
+  IMDEventWorkspace_sptr mdMonitorWS =
+      createMonitorMDWorkspace(vec_ws2d, logvecmap);
 
   appendSampleLogs(m_mdEventWS, logvecmap, vectimes);
+
+  reducePowderData(m_mdEventWS, mdMonitorWS);
 
   int64_t numevents = m_mdEventWS->getNEvents();
   g_log.notice() << "[DB] Number of events = " << numevents << "\n";
@@ -115,6 +122,7 @@ void LoadHFIRPDD::exec() {
 
   // Set property
   setProperty("OutputWorkspace", m_mdEventWS);
+  setProperty("OutputMonitorWorkspace", mdMonitorWS);
 }
 
 //----------------------------------------------------------------------------------------------
@@ -203,9 +211,12 @@ void LoadHFIRPDD::parseSampleLogs(
     std::string logname = indexiter->first;
     size_t icol = indexiter->second;
 
+    g_log.notice() << "[DB] "
+                   << " About to parse log " << logname << "\n";
+
     std::vector<double> logvec(numrows);
     for (size_t ir = 0; ir < numrows; ++ir) {
-      double dbltemp = tablews->cell<double>(ir, icol);
+      double dbltemp = tablews->cell_cast<double>(ir, icol);
       logvec[ir] = dbltemp;
     }
 
@@ -452,6 +463,104 @@ IMDEventWorkspace_sptr LoadHFIRPDD::convertToMDEventWS(
 }
 
 /**
+ * @brief LoadHFIRPDD::createMonitorMDWorkspace
+ * @param vec_ws2d
+ * @param logvecmap
+ * @return
+ */
+IMDEventWorkspace_sptr LoadHFIRPDD::createMonitorMDWorkspace(
+    const std::vector<MatrixWorkspace_sptr> vec_ws2d,
+    const std::map<std::string, std::vector<double> > logvecmap) {
+  // Write the lsit of workspacs to a file to be loaded to an MD workspace
+  Poco::TemporaryFile tmpFile;
+  std::string tempFileName = tmpFile.path();
+  g_log.notice() << "[DB] "
+                 << "Temp MD Event file = " << tempFileName << "\n";
+
+  // Construct a file
+  std::ofstream myfile;
+  myfile.open(tempFileName.c_str());
+  myfile << "DIMENSIONS" << std::endl;
+  myfile << "x X m 100" << std::endl;
+  myfile << "y Y m 100" << std::endl;
+  myfile << "z Z m 100" << std::endl;
+  myfile << "t T s 100" << std::endl;
+  myfile << "# Signal, Error, DetectorId, RunId, coord1, coord2, ... to end of "
+            "coords" << std::endl;
+  myfile << "MDEVENTS" << std::endl;
+
+  double relruntime = 0;
+
+  if (vec_ws2d.size() > 0) {
+    Progress progress(this, 0, 1, vec_ws2d.size());
+    size_t detindex = 0;
+    for (auto it = vec_ws2d.begin(); it < vec_ws2d.end(); ++it) {
+      std::size_t pos = std::distance(vec_ws2d.begin(), it);
+      API::MatrixWorkspace_sptr thisWorkspace = *it;
+
+      std::map<std::string, std::vector<double> >::const_iterator fiter;
+      fiter = logvecmap.find("monitor");
+      if (fiter == logvecmap.end())
+        throw std::runtime_error(
+            "Unable to find log 'monitor' in input workspace.");
+      double signal = fiter->second[static_cast<size_t>(it - vec_ws2d.begin())];
+
+      std::size_t nHist = thisWorkspace->getNumberHistograms();
+      for (std::size_t i = 0; i < nHist; ++i) {
+        Geometry::IDetector_const_sptr det = thisWorkspace->getDetector(i);
+
+        // const MantidVec &signal = thisWorkspace->readY(i);
+        const MantidVec &error = thisWorkspace->readE(i);
+        myfile << signal << " ";
+        myfile << error[0] << " ";
+        myfile << det->getID() + detindex << " ";
+        myfile << pos << " ";
+        Kernel::V3D detPos = det->getPos();
+        myfile << detPos.X() << " ";
+        myfile << detPos.Y() << " ";
+        myfile << detPos.Z() << " ";
+        // Add a new dimension as event time
+        myfile << relruntime << " ";
+        myfile << std::endl;
+      }
+
+      // Increment on detector IDs
+      if (nHist < 100)
+        detindex += 100;
+      else
+        detindex += nHist;
+
+      // Run time
+      relruntime +=
+          atof(thisWorkspace->run().getProperty("time")->value().c_str());
+
+      progress.report("Creating MD WS");
+    }
+    myfile.close();
+  }
+
+  // Import to MD Workspace
+  IAlgorithm_sptr importMDEWS = createChildAlgorithm("ImportMDEventWorkspace");
+  // Now execute the Child Algorithm.
+  try {
+    importMDEWS->setPropertyValue("Filename", tempFileName);
+    importMDEWS->setProperty("OutputWorkspace", "Test");
+    importMDEWS->executeAsChildAlg();
+  }
+  catch (std::exception &exc) {
+    throw std::runtime_error(
+        std::string("Error running ImportMDEventWorkspace: ") + exc.what());
+  }
+  IMDEventWorkspace_sptr workspace =
+      importMDEWS->getProperty("OutputWorkspace");
+  if (!workspace)
+    throw(std::runtime_error("Can not retrieve results of child algorithm "
+                             "ImportMDEventWorkspace"));
+
+  return workspace;
+}
+
+/**
  * @brief LoadHFIRPDD::appendSampleLogs
  * @param mdws
  * @param logvecmap
@@ -492,6 +601,46 @@ void LoadHFIRPDD::appendSampleLogs(
   mdws->addExperimentInfo(ei);
 
   return;
+}
+
+/** Reduce the 2 MD workspaces to a workspace2D for powder diffraction pattern
+ * @brief LoadHFIRPDD::reducePowderData
+ * @param dataws
+ * @param monitorws
+ */
+API::MatrixWorkspace_sptr
+LoadHFIRPDD::reducePowderData(API::IMDEventWorkspace_sptr dataws,
+                              API::IMDEventWorkspace_sptr monitorws) {
+  int64_t numevents = dataws->getNEvents();
+  g_log.notice() << "[DB] Number of events = " << numevents << "\n";
+  IMDIterator *mditer = dataws->createIterator();
+  size_t numev2 = mditer->getNumEvents();
+  g_log.notice() << "[DB] Number of events = " << numev2
+                 << " Does NEXT cell exist = " << mditer->next() << "\n";
+  coord_t pos0 = mditer->getInnerPosition(0, 0);
+  coord_t posn = mditer->getInnerPosition(numev2 - 1, 0);
+  g_log.notice() << "[DB] "
+                 << " pos0 = " << pos0 << ", "
+                 << " pos1 = " << posn << "\n";
+
+  // Create bins in 2theta (degree)
+  size_t sizex, sizey;
+
+  std::vector<double> vecx(sizex), vecy(sizey), vecm(sizey), vece(sizey);
+
+  // Determine 2theta
+  double d2theta = -1000;
+  for (size_t i = 0; i < sizex; ++i)
+    vecx[i] = twotheta0 + static_cast<double>(i) * d2theta;
+
+  // Go through all events to find out their positions
+  IMDIterator *mditer = dataws->createIterator();
+  throw std::runtime_error("FROM HERE!");
+
+  API::MatrixWorkspace_sptr pdws =
+      WorkspaceFactory::Instance().create("Workspace2D", 1, sizex, sizey);
+
+  return pdws;
 }
 
 } // namespace DataHandling

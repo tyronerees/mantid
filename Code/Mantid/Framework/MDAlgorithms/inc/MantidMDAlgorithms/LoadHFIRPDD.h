@@ -110,6 +110,15 @@ private:
                    const std::map<std::string, std::vector<double> > &logvecmap,
                    const std::vector<Kernel::DateAndTime> &vectimes);
 
+  API::IMDEventWorkspace_sptr createMonitorMDWorkspace(
+      const std::vector<API::MatrixWorkspace_sptr> vec_ws2d,
+      const std::map<std::string, std::vector<double> > logvecmap);
+
+  /// Reduce to powder diffraction pattern
+  API::MatrixWorkspace_sptr
+  reducePowderData(API::IMDEventWorkspace_sptr dataws,
+                   API::IMDEventWorkspace_sptr monitorws);
+
   // API::IMDEventWorkspace_sptr convertToMDEventWS(const
   // std::vector<API::MatrixWorkspace_sptr> vec_wd2d);
 

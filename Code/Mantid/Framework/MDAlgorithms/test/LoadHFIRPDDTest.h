@@ -4,7 +4,8 @@
 #include <cxxtest/TestSuite.h>
 
 #include "MantidMDAlgorithms/LoadHFIRPDD.h"
-#include "MantidDataHandling/LoadNexusProcessed.h"
+// #include "MantidDataHandling/LoadNexusProcessed.h"
+#include "MantidDataHandling/LoadSpiceAscii.h"
 #include "MantidAPI/MatrixWorkspace.h"
 #include "MantidAPI/ITableWorkspace.h"
 #include "MantidDataHandling/LoadInstrument.h"
@@ -14,9 +15,10 @@
 // #include "Mantid"
 
 using Mantid::DataHandling::LoadHFIRPDD;
-using Mantid::DataHandling::LoadNexusProcessed;
+// using Mantid::DataHandling::LoadNexusProcessed;
 using Mantid::DataHandling::LoadInstrument;
 using Mantid::MDAlgorithms::SaveMD;
+using Mantid::DataHandling::LoadSpiceAscii;
 
 using namespace Mantid::API;
 using namespace Mantid::DataObjects;
@@ -60,6 +62,7 @@ public:
 
   void test_LoadHB2AData() {
     // This is the solution of stage 1. Stage 2 will be different
+#if 0
     LoadNexusProcessed nxsloader;
     nxsloader.initialize();
     nxsloader.setProperty("Filename", "HB2A_exp0231_tabledata.nxs");
@@ -73,6 +76,32 @@ public:
     nxsloader.setProperty("Filename", "HB2A_exp0231_log.nxs");
     nxsloader.setProperty("OutputWorkspace", "LogParentWS");
     nxsloader.execute();
+    MatrixWorkspace_sptr parentlogws =
+        boost::dynamic_pointer_cast<MatrixWorkspace>(
+            AnalysisDataService::Instance().retrieve("LogParentWS"));
+    TS_ASSERT(parentlogws);
+#endif
+
+    LoadSpiceAscii spcloader;
+    spcloader.initialize();
+
+    TS_ASSERT_THROWS_NOTHING(
+        spcloader.setProperty("Filename", "HB2A_exp0231_scan0001.dat"));
+    TS_ASSERT_THROWS_NOTHING(
+        spcloader.setProperty("OutputWorkspace", "DataTable"));
+    TS_ASSERT_THROWS_NOTHING(
+        spcloader.setProperty("RunInfoWorkspace", "LogParentWS"));
+    // spcloader.setPRoperty("RunStart", "");
+    TS_ASSERT_THROWS_NOTHING(
+        spcloader.setProperty("IgnoreUnlistedLogs", false));
+
+    spcloader.execute();
+
+    ITableWorkspace_sptr datatablews =
+        boost::dynamic_pointer_cast<ITableWorkspace>(
+            AnalysisDataService::Instance().retrieve("DataTable"));
+    TS_ASSERT(datatablews);
+
     MatrixWorkspace_sptr parentlogws =
         boost::dynamic_pointer_cast<MatrixWorkspace>(
             AnalysisDataService::Instance().retrieve("LogParentWS"));
@@ -106,6 +135,9 @@ public:
 
     Mantid::coord_t lastx = mditer->getInnerPosition(44 * 61 - 1, 0);
     TS_ASSERT_DELTA(lastx, 1.57956, 0.0001);
+
+    ExperimentInfo_const_sptr expinfo = mdws->getExperimentInfo(0);
+    TS_ASSERT(expinfo);
 
     SaveMD saver;
     saver.initialize();
