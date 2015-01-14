@@ -115,9 +115,15 @@ private:
       const std::map<std::string, std::vector<double> > logvecmap);
 
   /// Reduce to powder diffraction pattern
-  API::MatrixWorkspace_sptr
-  reducePowderData(API::IMDEventWorkspace_sptr dataws,
-                   API::IMDEventWorkspace_sptr monitorws);
+  API::MatrixWorkspace_sptr reducePowderData(
+      API::IMDEventWorkspace_sptr dataws, API::IMDEventWorkspace_sptr monitorws,
+      const double min2theta, const double max2theta, const double binsize);
+
+  void binMD(API::IMDEventWorkspace_sptr mdws, const std::vector<double> &vecx,
+             std::vector<double> &vecy);
+
+  double calculate2Theta(const Kernel::V3D &detpos,
+                         const Kernel::V3D &samplepos);
 
   // API::IMDEventWorkspace_sptr convertToMDEventWS(const
   // std::vector<API::MatrixWorkspace_sptr> vec_wd2d);

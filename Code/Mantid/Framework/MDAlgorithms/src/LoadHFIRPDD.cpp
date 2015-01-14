@@ -3,6 +3,7 @@
 #include "MantidAPI/WorkspaceProperty.h"
 #include "MantidAPI/FileProperty.h"
 #include "MantidAPI/IMDIterator.h"
+#include "MantidGeometry/IComponent.h"
 #include "MantidGeometry/IDetector.h"
 #include "MantidKernel/TimeSeriesProperty.h"
 
@@ -57,6 +58,22 @@ void LoadHFIRPDD::init() {
   declareProperty(new WorkspaceProperty<IMDEventWorkspace>(
                       "OutputWorkspace", "", Direction::Output),
                   "Name to use for the output workspace.");
+
+  declareProperty(new WorkspaceProperty<IMDEventWorkspace>(
+                      "OutputMonitorWorkspace", "", Direction::Output),
+                  "Name to use for the output workspace.");
+
+  declareProperty("ReduceData", true,
+                  "If set to true, then it will be reduced to a 1-spectrum "
+                  "powder diffraction workspace.");
+
+  declareProperty("TwoThetaStepSize", 0.01, "Step size of 2theta");
+
+  declareProperty("Max2Theta", 180., "Maximum value of 2theta.");
+
+  declareProperty(new WorkspaceProperty<MatrixWorkspace>(
+                      "OutputReducedWorkspace", "", Direction::Output),
+                  "Name of the output workspace for reduced data.");
 }
 
 //----------------------------------------------------------------------------------------------
@@ -106,8 +123,21 @@ void LoadHFIRPDD::exec() {
 
   appendSampleLogs(m_mdEventWS, logvecmap, vectimes);
 
-  reducePowderData(m_mdEventWS, mdMonitorWS);
+  bool reducepd = getProperty("ReduceData");
+  MatrixWorkspace_sptr redpdws;
+  if (reducepd) {
+    double max2theta = getProperty("Max2Theta");
+    double binsize = getProperty("TwoThetaStepSize");
+    if (max2theta <= 0)
+      throw std::runtime_error(
+          "Max 2theta cannot be equal to or less than zero.");
+    redpdws = reducePowderData(m_mdEventWS, mdMonitorWS, 0, max2theta, binsize);
+  } else {
+    // Create an empty workpsace
+    redpdws = WorkspaceFactory::Instance().create("Workspace2D", 1, 2, 1);
+  }
 
+  /*
   int64_t numevents = m_mdEventWS->getNEvents();
   g_log.notice() << "[DB] Number of events = " << numevents << "\n";
   IMDIterator *mditer = m_mdEventWS->createIterator();
@@ -119,10 +149,12 @@ void LoadHFIRPDD::exec() {
   g_log.notice() << "[DB] "
                  << " pos0 = " << pos0 << ", "
                  << " pos1 = " << posn << "\n";
+                 */
 
   // Set property
   setProperty("OutputWorkspace", m_mdEventWS);
   setProperty("OutputMonitorWorkspace", mdMonitorWS);
+  setProperty("OutputReducedWorkspace", redpdws);
 }
 
 //----------------------------------------------------------------------------------------------
@@ -604,43 +636,123 @@ void LoadHFIRPDD::appendSampleLogs(
 }
 
 /** Reduce the 2 MD workspaces to a workspace2D for powder diffraction pattern
+ * Reduction procedure
+ * 1. set up bins
+ * 2. loop around all the MD event
+ * 3. For each MD event, find out its 2theta value and add its signal and
+ * monitor counts to the correct bin
+ * 4. For each bin, normalize the sum of the signal by sum of monitor counts
  * @brief LoadHFIRPDD::reducePowderData
  * @param dataws
  * @param monitorws
  */
-API::MatrixWorkspace_sptr
-LoadHFIRPDD::reducePowderData(API::IMDEventWorkspace_sptr dataws,
-                              API::IMDEventWorkspace_sptr monitorws) {
+API::MatrixWorkspace_sptr LoadHFIRPDD::reducePowderData(
+    API::IMDEventWorkspace_sptr dataws, API::IMDEventWorkspace_sptr monitorws,
+    const double min2theta, const double max2theta, const double binsize) {
+  // Get some information
   int64_t numevents = dataws->getNEvents();
   g_log.notice() << "[DB] Number of events = " << numevents << "\n";
-  IMDIterator *mditer = dataws->createIterator();
-  size_t numev2 = mditer->getNumEvents();
-  g_log.notice() << "[DB] Number of events = " << numev2
-                 << " Does NEXT cell exist = " << mditer->next() << "\n";
+
+  // Create bins in 2theta (degree)
+  size_t sizex, sizey;
+  sizex = static_cast<size_t>((max2theta - min2theta) / binsize + 0.5);
+  std::vector<double> vecx(sizex), vecy(sizex - 1, 0), vecm(sizex - 1, 0),
+      vece(sizex - 1, 0);
+
+  for (size_t i = 0; i < sizex; ++i)
+    vecx[i] = min2theta + static_cast<double>(i) * binsize;
+
+  binMD(dataws, vecx, vecy);
+  binMD(dataws, vecx, vecm);
+
+  // Normalize by division
+  for (size_t i = 0; i < vecm.size(); ++i) {
+    vecy[i] = vecy[i] / vecm[i];
+    // error
+    g_log.warning("How to calculate the error bar?");
+  }
+
+  throw std::runtime_error("Implement division for normalization ASAP");
+
+  /*
   coord_t pos0 = mditer->getInnerPosition(0, 0);
   coord_t posn = mditer->getInnerPosition(numev2 - 1, 0);
   g_log.notice() << "[DB] "
                  << " pos0 = " << pos0 << ", "
                  << " pos1 = " << posn << "\n";
+                 */
 
-  // Create bins in 2theta (degree)
-  size_t sizex, sizey;
-
-  std::vector<double> vecx(sizex), vecy(sizey), vecm(sizey), vece(sizey);
-
-  // Determine 2theta
-  double d2theta = -1000;
-  for (size_t i = 0; i < sizex; ++i)
-    vecx[i] = twotheta0 + static_cast<double>(i) * d2theta;
-
-  // Go through all events to find out their positions
-  IMDIterator *mditer = dataws->createIterator();
-  throw std::runtime_error("FROM HERE!");
-
+  // Create workspace
   API::MatrixWorkspace_sptr pdws =
       WorkspaceFactory::Instance().create("Workspace2D", 1, sizex, sizey);
 
   return pdws;
+}
+
+/**
+ * @brief LoadHFIRPDD::binMD
+ * @param mdws
+ * @param vecx
+ * @param vecy
+ */
+void LoadHFIRPDD::binMD(API::IMDEventWorkspace_sptr mdws,
+                        const std::vector<double> &vecx,
+                        std::vector<double> &vecy) {
+  // Go through all events to find out their positions
+  IMDIterator *mditer = mdws->createIterator();
+
+  ExperimentInfo_const_sptr expinfo = mdws->getExperimentInfo(0);
+  Geometry::IComponent_const_sptr sample =
+      expinfo->getInstrument()->getSample();
+  const V3D samplepos = sample->getPos();
+  g_log.notice() << "[DB] Sample position is " << samplepos.X() << ", "
+                 << samplepos.Y() << ", " << samplepos.Z() << "\n";
+
+  bool scancell = true;
+  size_t nextindex = 1;
+  while (scancell) {
+    // get the number of events of this cell
+    size_t numev2 = mditer->getNumEvents();
+    g_log.notice() << "[DB] Cell " << nextindex - 1
+                   << ": Number of events = " << numev2
+                   << " Does NEXT cell exist = " << mditer->next() << "\n";
+
+    // loop over all the events in current cell
+    for (size_t iev = 0; iev < numev2; ++iev) {
+      // get detector position in 2theta and signal
+      double tempx = mditer->getInnerPosition(iev, 0);
+      double tempy = mditer->getInnerPosition(iev, 1);
+      double tempz = mditer->getInnerPosition(iev, 2);
+      Kernel::V3D detpos(tempx, tempy, tempz);
+      double twotheta = calculate2Theta(detpos, samplepos);
+      double signal = mditer->getInnerSignal(iev);
+
+      // assign signal to bin
+      std::vector<double>::const_iterator vfiter =
+          std::find(vecx.begin(), vecx.end(), twotheta);
+      int xindex = static_cast<int>(vfiter - vecx.begin());
+      if (xindex > 0 && twotheta < *vfiter)
+        xindex -= 1;
+      vecy[xindex] += signal;
+    }
+
+    // Advance to next cell
+    if (mditer->next()) {
+      // advance to next cell
+      mditer->jumpTo(nextindex);
+      ++nextindex;
+    } else {
+      // break the loop
+      scancell = false;
+    }
+  }
+
+  return;
+}
+
+double LoadHFIRPDD::calculate2Theta(const Kernel::V3D &detpos,
+                                    const Kernel::V3D &samplepos) {
+  return detpos.angle(samplepos);
 }
 
 } // namespace DataHandling
