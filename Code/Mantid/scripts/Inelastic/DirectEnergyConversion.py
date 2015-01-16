@@ -1228,10 +1228,10 @@ class DirectEnergyConversion(object):
             try:
                 # check if the spectra with correspondent number is present in the workspace
                 nsp = monitor_ws.getIndexFromSpectrumNumber(nspec);
-            except RuntimeError as err:
+            except :
                 mon_ws = data_ws.getName()+'_monitors'
                 try:
-                    monitor_ws = mtd[mon_ws];
+                    monitor_ws = mtd[mon_ws]
                 except:
                     monitor_ws=data_ws
                 # no spectra in data workspace
