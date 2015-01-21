@@ -610,7 +610,7 @@ class DirectEnergyConversion(object):
 
 
 
-      masking = None;
+      masking = None
       masks_done=False
       if not prop_man.run_diagnostics:
           header="*** Diagnostics including hard masking is skipped "
@@ -783,8 +783,11 @@ class DirectEnergyConversion(object):
             result_ws_name = common.create_resultname(monovan_run,prop_man.instr_name)
             # check the case when the sample is monovanadium itself (for testing purposes)
             if result_ws_name == deltaE_wkspace_sample.name() :
-                deltaE_wkspace_monovan = CloneWorkspace(InputWorkspace=deltaE_wkspace_sample,OutputWorkspace=result_ws_name+'-monovan');
-                deltaE_wkspace_monovan=self.remap(deltaE_wkspace_monovan,None,prop_man.monovan_mapfile)
+                deltaE_wkspace_monovan = CloneWorkspace(InputWorkspace=deltaE_wkspace_sample,OutputWorkspace=result_ws_name+'-monovan')
+                try:
+                    deltaE_wkspace_monovan=self.remap(deltaE_wkspace_monovan,None,prop_man.monovan_mapfile)
+                except RuntimeError: # Incorrect map file provided. Try without mapping 
+                    deltaE_wkspace_monovan = mtd[result_ws_name+'-monovan']
             else:
                 # convert to monovanadium to energy
                 deltaE_wkspace_monovan  = self.mono_sample(monovan_run,ei_guess,wb_mono,
@@ -800,7 +803,8 @@ class DirectEnergyConversion(object):
 
             prop_man.log('*** Absolute correction factor(s): S^2: {0:10.4f}\n*** LibISIS: {1:10.4f} Poisson: {2:10.4f}  TGP: {3:10.4f} '\
                 .format(anf_LibISIS,anf_SS2,anf_Puas,anf_TGP),'notice')
-            absnorm_factor = anf_TGP;
+            prop_man.log('*** If these numbers are too different, you are doing something wrong. Consult your instrument scientist')
+            absnorm_factor = anf_TGP
         #end
         prop_man.log('*** Using {0} value : {1} of absolute units correction factor (TGP)'.format(abs_norm_factor_is,absnorm_factor),'notice')
         prop_man.log('*******************************************************************************************','notice')
