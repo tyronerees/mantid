@@ -11,6 +11,7 @@
 #include "MantidDataHandling/LoadInstrument.h"
 #include "MantidAPI/IMDIterator.h"
 #include "MantidMDAlgorithms/SaveMD.h"
+#include "MantidGeometry/IComponent.h"
 
 // #include "Mantid"
 
@@ -57,7 +58,21 @@ public:
         AnalysisDataService::Instance().retrieve("EmptyWS"));
     TS_ASSERT(outws);
 
-    TS_ASSERT_EQUALS(outws->getInstrument()->getName(), "HB2A");
+    Mantid::Geometry::Instrument_const_sptr hb2a = outws->getInstrument();
+    TS_ASSERT(hb2a);
+    if (!hb2a)
+      return;
+
+    TS_ASSERT_EQUALS(hb2a->getName(), "HB2A");
+
+    Mantid::Geometry::IComponent_const_sptr source = hb2a->getSource();
+    TS_ASSERT(source);
+    Mantid::Geometry::IComponent_const_sptr sample = hb2a->getSample();
+    TS_ASSERT(sample);
+    const Mantid::Kernel::V3D &samplepos = sample->getPos();
+    TS_ASSERT_DELTA(samplepos.X(), 0.0, 0.00001);
+    std::vector<Mantid::detid_t> detids = hb2a->getDetectorIDs();
+    TS_ASSERT_EQUALS(detids.size(), 44);
   }
 
   void test_LoadHB2AData() {
@@ -91,7 +106,8 @@ public:
         spcloader.setProperty("OutputWorkspace", "DataTable"));
     TS_ASSERT_THROWS_NOTHING(
         spcloader.setProperty("RunInfoWorkspace", "LogParentWS"));
-    // spcloader.setPRoperty("RunStart", "");
+    TS_ASSERT_THROWS_NOTHING(spcloader.setPropertyValue(
+        "DateAndTimeLog", "date,MM/DD/YYYY,time,HH:MM:SS AM'"));
     TS_ASSERT_THROWS_NOTHING(
         spcloader.setProperty("IgnoreUnlistedLogs", false));
 
@@ -114,8 +130,10 @@ public:
     loader.setProperty("InputWorkspace", datatablews);
     loader.setProperty("ParentWorkspace", parentlogws);
     loader.setProperty("Instrument", "HB2A");
-    loader.setProperty("RunStart", "2012-08-13T11:57:33");
+    // loader.setProperty("RunStart", "2012-08-13T11:57:33");
     loader.setPropertyValue("OutputWorkspace", "HB2A_MD");
+    loader.setPropertyValue("OutputMonitorWorkspace", "MonitorMDW");
+    loader.setPropertyValue("OutputReducedWorkspace", "ReducedWS");
 
     loader.execute();
     TS_ASSERT(loader.isExecuted());

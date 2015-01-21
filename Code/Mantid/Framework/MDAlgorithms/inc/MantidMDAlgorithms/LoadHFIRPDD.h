@@ -104,6 +104,11 @@ private:
                     const std::vector<std::pair<size_t, size_t> > anodelist,
                     double &duration);
 
+  /// Append Experiment Info
+  void
+  addExperimentInfos(API::IMDWorkspace_sptr,
+                     const std::vector<API::MatrixWorkspace_sptr> vec_ws2d);
+
   /// Append sample logs to MD workspace
   void
   appendSampleLogs(API::IMDEventWorkspace_sptr mdws,
@@ -115,9 +120,11 @@ private:
       const std::map<std::string, std::vector<double> > logvecmap);
 
   /// Reduce to powder diffraction pattern
-  API::MatrixWorkspace_sptr reducePowderData(
-      API::IMDEventWorkspace_sptr dataws, API::IMDEventWorkspace_sptr monitorws,
-      const double min2theta, const double max2theta, const double binsize);
+  API::MatrixWorkspace_sptr
+  reducePowderData(API::IMDEventWorkspace_sptr dataws,
+                   API::IMDEventWorkspace_sptr monitorws,
+                   const double min2theta, const double max2theta,
+                   const double binsize, const Kernel::V3D &samplepos);
 
   void binMD(API::IMDEventWorkspace_sptr mdws, const std::vector<double> &vecx,
              std::vector<double> &vecy);

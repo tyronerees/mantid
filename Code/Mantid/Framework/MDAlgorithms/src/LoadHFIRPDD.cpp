@@ -120,7 +120,12 @@ void LoadHFIRPDD::exec() {
   IMDEventWorkspace_sptr m_mdEventWS = convertToMDEventWS(vec_ws2d);
   IMDEventWorkspace_sptr mdMonitorWS =
       createMonitorMDWorkspace(vec_ws2d, logvecmap);
+  const Kernel::V3D &samplepos =
+      vec_ws2d.front()->getInstrument()->getSample()->getPos();
 
+  // Add experiment info for each run and sample log to the first experiment
+  // info object
+  addExperimentInfos(m_mdEventWS, vec_ws2d);
   appendSampleLogs(m_mdEventWS, logvecmap, vectimes);
 
   bool reducepd = getProperty("ReduceData");
@@ -131,7 +136,13 @@ void LoadHFIRPDD::exec() {
     if (max2theta <= 0)
       throw std::runtime_error(
           "Max 2theta cannot be equal to or less than zero.");
-    redpdws = reducePowderData(m_mdEventWS, mdMonitorWS, 0, max2theta, binsize);
+    // Geometry::IComponent_const_sptr samplepos =
+    // parentWS->getInstrument()->getSample();
+    // if (!samplepos)
+    // throw std::runtime_error("In parent workspace, sample does not exist
+    // under instrument.");
+    redpdws = reducePowderData(m_mdEventWS, mdMonitorWS, 0, max2theta, binsize,
+                               samplepos);
   } else {
     // Create an empty workpsace
     redpdws = WorkspaceFactory::Instance().create("Workspace2D", 1, 2, 1);
@@ -293,6 +304,14 @@ MatrixWorkspace_sptr LoadHFIRPDD::loadRunToMatrixWS(
   TimeSeriesProperty<std::string> *proprunstart =
       new TimeSeriesProperty<std::string>("run_start");
   proprunstart->addValue(runstart, runstart.toISO8601String());
+
+  g_log.notice() << "[DB] Trying to set run start to "
+                 << runstart.toISO8601String() << "\n";
+  if (tempws->run().hasProperty("run_start")) {
+    g_log.error() << "Temp workspace exists run_start as "
+                  << tempws->run().getProperty("run_start")->value() << "\n";
+    tempws->mutableRun().removeProperty("run_start");
+  }
   tempws->mutableRun().addProperty(proprunstart);
 
   // Load instrument
@@ -648,7 +667,8 @@ void LoadHFIRPDD::appendSampleLogs(
  */
 API::MatrixWorkspace_sptr LoadHFIRPDD::reducePowderData(
     API::IMDEventWorkspace_sptr dataws, API::IMDEventWorkspace_sptr monitorws,
-    const double min2theta, const double max2theta, const double binsize) {
+    const double min2theta, const double max2theta, const double binsize,
+    const Kernel::V3D &samplepos) {
   // Get some information
   int64_t numevents = dataws->getNEvents();
   g_log.notice() << "[DB] Number of events = " << numevents << "\n";
@@ -698,16 +718,21 @@ API::MatrixWorkspace_sptr LoadHFIRPDD::reducePowderData(
 void LoadHFIRPDD::binMD(API::IMDEventWorkspace_sptr mdws,
                         const std::vector<double> &vecx,
                         std::vector<double> &vecy) {
-  // Go through all events to find out their positions
-  IMDIterator *mditer = mdws->createIterator();
-
+  // Get sample position
   ExperimentInfo_const_sptr expinfo = mdws->getExperimentInfo(0);
+  g_log.notice() << "[DB] MDWorkspace has "
+                 << expinfo->getInstrument()->getNumberDetectors(true)
+                 << " detectors. "
+                 << "\n";
+  throw std::runtime_error("MD workspace has no proper instrument setup!");
   Geometry::IComponent_const_sptr sample =
       expinfo->getInstrument()->getSample();
   const V3D samplepos = sample->getPos();
   g_log.notice() << "[DB] Sample position is " << samplepos.X() << ", "
                  << samplepos.Y() << ", " << samplepos.Z() << "\n";
 
+  // Go through all events to find out their positions
+  IMDIterator *mditer = mdws->createIterator();
   bool scancell = true;
   size_t nextindex = 1;
   while (scancell) {
