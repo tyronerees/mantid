@@ -105,9 +105,9 @@ private:
                     double &duration);
 
   /// Append Experiment Info
-  void
-  addExperimentInfos(API::IMDWorkspace_sptr,
-                     const std::vector<API::MatrixWorkspace_sptr> vec_ws2d);
+  void addExperimentInfos(API::IMDEventWorkspace_sptr mdws,
+                          const std::vector<API::MatrixWorkspace_sptr> vec_ws2d,
+                          const int &init_runnumber);
 
   /// Append sample logs to MD workspace
   void

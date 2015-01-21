@@ -46,6 +46,8 @@ void LoadHFIRPDD::init() {
 
   declareProperty("Instrument", "HB2A", "Instrument to be loaded. ");
 
+  declareProperty("InitRunNumber", 1, "Starting value for run number.");
+
   /* These are for stage 2
   std::vector<std::string> exts;
   exts.push_back(".dat");
@@ -125,28 +127,32 @@ void LoadHFIRPDD::exec() {
 
   // Add experiment info for each run and sample log to the first experiment
   // info object
-  addExperimentInfos(m_mdEventWS, vec_ws2d);
+  int initrunnumber = getProperty("InitRunNumber");
+  addExperimentInfos(m_mdEventWS, vec_ws2d, initrunnumber);
+  addExperimentInfos(mdMonitorWS, vec_ws2d, initrunnumber);
   appendSampleLogs(m_mdEventWS, logvecmap, vectimes);
 
   bool reducepd = getProperty("ReduceData");
   MatrixWorkspace_sptr redpdws;
-  if (reducepd) {
-    double max2theta = getProperty("Max2Theta");
-    double binsize = getProperty("TwoThetaStepSize");
-    if (max2theta <= 0)
-      throw std::runtime_error(
-          "Max 2theta cannot be equal to or less than zero.");
-    // Geometry::IComponent_const_sptr samplepos =
-    // parentWS->getInstrument()->getSample();
-    // if (!samplepos)
-    // throw std::runtime_error("In parent workspace, sample does not exist
-    // under instrument.");
-    redpdws = reducePowderData(m_mdEventWS, mdMonitorWS, 0, max2theta, binsize,
-                               samplepos);
-  } else {
-    // Create an empty workpsace
-    redpdws = WorkspaceFactory::Instance().create("Workspace2D", 1, 2, 1);
-  }
+
+  double max2theta = getProperty("Max2Theta");
+  double binsize = getProperty("TwoThetaStepSize");
+  if (max2theta <= 0)
+    throw std::runtime_error(
+        "Max 2theta cannot be equal to or less than zero.");
+  // Geometry::IComponent_const_sptr samplepos =
+  // parentWS->getInstrument()->getSample();
+  // if (!samplepos)
+  // throw std::runtime_error("In parent workspace, sample does not exist
+  // under instrument.");
+  redpdws = reducePowderData(m_mdEventWS, mdMonitorWS, 0, max2theta, binsize,
+                             samplepos);
+
+  /*} else {
+      // Create an empty workpsace
+      redpdws = WorkspaceFactory::Instance().create("Workspace2D", 1, 2, 1);
+    }
+    */
 
   /*
   int64_t numevents = m_mdEventWS->getNEvents();
@@ -163,6 +169,8 @@ void LoadHFIRPDD::exec() {
                  */
 
   // Set property
+  g_log.notice() << "[DB] Check point!"
+                 << "\n";
   setProperty("OutputWorkspace", m_mdEventWS);
   setProperty("OutputMonitorWorkspace", mdMonitorWS);
   setProperty("OutputReducedWorkspace", redpdws);
@@ -621,8 +629,15 @@ void LoadHFIRPDD::appendSampleLogs(
     IMDEventWorkspace_sptr mdws,
     const std::map<std::string, std::vector<double> > &logvecmap,
     const std::vector<Kernel::DateAndTime> &vectimes) {
+  // Check!
+  size_t numexpinfo = mdws->getNumExperimentInfo();
+  if (numexpinfo == 0)
+    throw std::runtime_error(
+        "There is no ExperimentInfo defined for MDWorkspace. "
+        "It is impossible to add any log!");
+
   // Process the sample logs for MD workspace
-  ExperimentInfo_sptr ei = boost::make_shared<ExperimentInfo>();
+  ExperimentInfo_sptr ei = mdws->getExperimentInfo(0);
 
   std::map<std::string, std::vector<double> >::const_iterator miter;
   for (miter = logvecmap.begin(); miter != logvecmap.end(); ++miter) {
@@ -654,6 +669,33 @@ void LoadHFIRPDD::appendSampleLogs(
   return;
 }
 
+//---------------------------------------------------------------------------------
+/** Append Experiment Info
+ * @brief LoadHFIRPDD::addExperimentInfos
+ * @param mdwd
+ * @param vec_ws2d
+ */
+void LoadHFIRPDD::addExperimentInfos(
+    API::IMDEventWorkspace_sptr mdws,
+    const std::vector<API::MatrixWorkspace_sptr> vec_ws2d,
+    const int &init_runnumber) {
+  for (size_t i = 0; i < vec_ws2d.size(); ++i) {
+    // Create an ExperimentInfo object
+    ExperimentInfo_sptr tmp_expinfo = boost::make_shared<ExperimentInfo>();
+    Geometry::Instrument_const_sptr tmp_inst = vec_ws2d[i]->getInstrument();
+    tmp_expinfo->setInstrument(tmp_inst);
+
+    tmp_expinfo->mutableRun().addProperty(new PropertyWithValue<int>(
+        "run_number", static_cast<int>(i) + init_runnumber));
+
+    // Add ExperimentInfo to workspace
+    mdws->addExperimentInfo(tmp_expinfo);
+  }
+
+  return;
+}
+
+//---------------------------------------------------------------------------------
 /** Reduce the 2 MD workspaces to a workspace2D for powder diffraction pattern
  * Reduction procedure
  * 1. set up bins
@@ -683,16 +725,17 @@ API::MatrixWorkspace_sptr LoadHFIRPDD::reducePowderData(
     vecx[i] = min2theta + static_cast<double>(i) * binsize;
 
   binMD(dataws, vecx, vecy);
-  binMD(dataws, vecx, vecm);
+  binMD(monitorws, vecx, vecm);
 
   // Normalize by division
   for (size_t i = 0; i < vecm.size(); ++i) {
-    vecy[i] = vecy[i] / vecm[i];
-    // error
-    g_log.warning("How to calculate the error bar?");
+    if (vecm[i] >= 1.)
+      vecy[i] = vecy[i] / vecm[i];
+    else
+      vecy[i] = 0.0;
   }
-
-  throw std::runtime_error("Implement division for normalization ASAP");
+  // error
+  g_log.error("How to calculate the error bar?");
 
   /*
   coord_t pos0 = mditer->getInnerPosition(0, 0);
@@ -718,13 +761,18 @@ API::MatrixWorkspace_sptr LoadHFIRPDD::reducePowderData(
 void LoadHFIRPDD::binMD(API::IMDEventWorkspace_sptr mdws,
                         const std::vector<double> &vecx,
                         std::vector<double> &vecy) {
+  // Check whether MD workspace has proper instrument and experiment Info
+  if (mdws->getNumExperimentInfo() == 0)
+    throw std::runtime_error(
+        "There is no ExperimentInfo object that has been set to "
+        "input MDEventWorkspace!");
+  else
+    g_log.information()
+        << "Number of ExperimentInfo objects of MDEventWrokspace is "
+        << mdws->getNumExperimentInfo() << "\n";
+
   // Get sample position
   ExperimentInfo_const_sptr expinfo = mdws->getExperimentInfo(0);
-  g_log.notice() << "[DB] MDWorkspace has "
-                 << expinfo->getInstrument()->getNumberDetectors(true)
-                 << " detectors. "
-                 << "\n";
-  throw std::runtime_error("MD workspace has no proper instrument setup!");
   Geometry::IComponent_const_sptr sample =
       expinfo->getInstrument()->getSample();
   const V3D samplepos = sample->getPos();
