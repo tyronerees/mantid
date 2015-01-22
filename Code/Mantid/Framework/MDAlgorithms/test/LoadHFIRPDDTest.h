@@ -107,7 +107,7 @@ public:
     TS_ASSERT_THROWS_NOTHING(
         spcloader.setProperty("RunInfoWorkspace", "LogParentWS"));
     TS_ASSERT_THROWS_NOTHING(spcloader.setPropertyValue(
-        "DateAndTimeLog", "date,MM/DD/YYYY,time,HH:MM:SS AM'"));
+        "DateAndTimeLog", "date,MM/DD/YYYY,time,HH:MM:SS AM"));
     TS_ASSERT_THROWS_NOTHING(
         spcloader.setProperty("IgnoreUnlistedLogs", false));
 

@@ -133,7 +133,6 @@ void LoadHFIRPDD::exec() {
   appendSampleLogs(m_mdEventWS, logvecmap, vectimes);
 
   bool reducepd = getProperty("ReduceData");
-  MatrixWorkspace_sptr redpdws;
 
   double max2theta = getProperty("Max2Theta");
   double binsize = getProperty("TwoThetaStepSize");
@@ -145,14 +144,17 @@ void LoadHFIRPDD::exec() {
   // if (!samplepos)
   // throw std::runtime_error("In parent workspace, sample does not exist
   // under instrument.");
-  redpdws = reducePowderData(m_mdEventWS, mdMonitorWS, 0, max2theta, binsize,
-                             samplepos);
+  MatrixWorkspace_sptr redpdws = reducePowderData(
+      m_mdEventWS, mdMonitorWS, 0, max2theta, binsize, samplepos);
 
   /*} else {
       // Create an empty workpsace
       redpdws = WorkspaceFactory::Instance().create("Workspace2D", 1, 2, 1);
     }
     */
+
+  // MatrixWorkspace_sptr redpdws =
+  // WorkspaceFactory::Instance().create("Workspace2D", 1, 18000, 17999);
 
   /*
   int64_t numevents = m_mdEventWS->getNEvents();
@@ -718,6 +720,10 @@ API::MatrixWorkspace_sptr LoadHFIRPDD::reducePowderData(
   // Create bins in 2theta (degree)
   size_t sizex, sizey;
   sizex = static_cast<size_t>((max2theta - min2theta) / binsize + 0.5);
+  sizey = sizex - 1;
+  g_log.notice() << "[DB] "
+                 << " SizeX = " << sizex << ", "
+                 << "SizeY = " << sizey << "\n";
   std::vector<double> vecx(sizex), vecy(sizex - 1, 0), vecm(sizex - 1, 0),
       vece(sizex - 1, 0);
 
@@ -779,6 +785,12 @@ void LoadHFIRPDD::binMD(API::IMDEventWorkspace_sptr mdws,
   g_log.notice() << "[DB] Sample position is " << samplepos.X() << ", "
                  << samplepos.Y() << ", " << samplepos.Z() << "\n";
 
+  Geometry::IComponent_const_sptr source =
+      expinfo->getInstrument()->getSource();
+  const V3D sourcepos = source->getPos();
+  g_log.notice() << "[DB] Source position is " << sourcepos.X() << ","
+                 << sourcepos.Y() << ", " << sourcepos.Z() << "\n";
+
   // Go through all events to find out their positions
   IMDIterator *mditer = mdws->createIterator();
   bool scancell = true;
@@ -797,13 +809,30 @@ void LoadHFIRPDD::binMD(API::IMDEventWorkspace_sptr mdws,
       double tempy = mditer->getInnerPosition(iev, 1);
       double tempz = mditer->getInnerPosition(iev, 2);
       Kernel::V3D detpos(tempx, tempy, tempz);
-      double twotheta = calculate2Theta(detpos, samplepos);
+      Kernel::V3D v_det_sample = detpos - samplepos;
+      Kernel::V3D v_sample_src = samplepos - sourcepos;
+
+      double twotheta =
+          calculate2Theta(v_det_sample, v_sample_src) / M_PI * 180.;
       double signal = mditer->getInnerSignal(iev);
 
       // assign signal to bin
       std::vector<double>::const_iterator vfiter =
-          std::find(vecx.begin(), vecx.end(), twotheta);
+          std::lower_bound(vecx.begin(), vecx.end(), twotheta);
       int xindex = static_cast<int>(vfiter - vecx.begin());
+      if (xindex < 0)
+        g_log.warning("xindex < 0");
+      if (xindex >= static_cast<int>(vecy.size()) - 1) {
+        g_log.error() << "This is the bug! "
+                      << "xindex = " << xindex << " 2theta = " << twotheta
+                      << " out of [" << vecx.front() << ", " << vecx.back()
+                      << "]. dep pos = " << detpos.X() << ", " << detpos.Y()
+                      << ", " << detpos.Z()
+                      << "; sample pos = " << samplepos.X() << ", "
+                      << samplepos.Y() << ", " << samplepos.Z() << "\n";
+        continue;
+      }
+
       if (xindex > 0 && twotheta < *vfiter)
         xindex -= 1;
       vecy[xindex] += signal;
@@ -818,7 +847,7 @@ void LoadHFIRPDD::binMD(API::IMDEventWorkspace_sptr mdws,
       // break the loop
       scancell = false;
     }
-  }
+  } // ENDOF(while)
 
   return;
 }
