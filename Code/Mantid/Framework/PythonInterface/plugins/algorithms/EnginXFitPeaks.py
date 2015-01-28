@@ -1,5 +1,6 @@
 from mantid.kernel import *
 from mantid.api import *
+import csv
 
 import math
 import numpy as np
@@ -105,21 +106,18 @@ class EnginXFitPeaks(PythonAlgorithm):
 
     def _readInExpectedPeaks(self):
         """ Reads in expected peaks from the .csv file """
-        readInArray = []
         exPeakArray = []
-        updateFileName = self.getPropertyValue("ExpectedPeaksFromFile")
-        if updateFileName != "":
-            with open(updateFileName) as f:
-                for line in f:
-                    readInArray.append([float(x) for x in line.split(',')])
-            for a in readInArray:
-                for b in a:
-                    exPeakArray.append(b)
+        exPeaksfile = self.getPropertyValue("ExpectedPeaksFromFile")
+        if exPeaksfile != "":
+            with open(exPeaksfile) as f:
+                exPeaksfileCsv = csv.reader(f, delimiter=',', quotechar= '|')
+                for row in exPeaksfileCsv:
+                    for num in row:
+                        exPeakArray.append(float(num))
             if exPeakArray == []:
                 print "File could not be read. Defaults being used."
                 expectedPeaksD = sorted(self.getProperty('ExpectedPeaks').value)
             else: 
-                print "using file"
                 expectedPeaksD = sorted(exPeakArray)
         else:
             expectedPeaksD = sorted(self.getProperty('ExpectedPeaks').value)
