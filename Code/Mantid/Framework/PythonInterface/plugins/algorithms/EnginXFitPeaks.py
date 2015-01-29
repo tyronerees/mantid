@@ -40,7 +40,7 @@ class EnginXFitPeaks(PythonAlgorithm):
         # FindPeaks will returned a list of peaks sorted by the centre found. Sort the peaks as well,
         # so we can match them with fitted centres later.
         expectedPeaksTof = sorted(expectedPeaksTof)
-        expectedPeaksD = self._readInExpectedPeaks((self.getPropertyValue("ExpectedPeaksFromFile")),((self.getProperty('ExpectedPeaks').value)))
+        expectedPeaksD = self._readInExpectedPeaks()
       
         # Find approximate peak positions, asumming Gaussian shapes
         findPeaksAlg = self.createChildAlgorithm('FindPeaks')
@@ -105,10 +105,10 @@ class EnginXFitPeaks(PythonAlgorithm):
         self.setProperty('Difc', difc)
         self.setProperty('Zero', zero)
 
-    def _readInExpectedPeaks(self, peaksFromFile, peaksMan):
+    def _readInExpectedPeaks(self):
         """ Reads in expected peaks from the .csv file, and the manually entered peaks and decides which is used. File is given preference over manually entered peaks."""
         exPeakArray = []
-        exPeaksfile = peaksFromFile
+        exPeaksfile = (self.getPropertyValue("ExpectedPeaksFromFile"))
         if exPeaksfile != "":
             with open(exPeaksfile) as f:
                 exPeaksfileCsv = csv.reader(f, delimiter=',', quotechar= '|')
@@ -117,11 +117,11 @@ class EnginXFitPeaks(PythonAlgorithm):
                         exPeakArray.append(float(num))
             if exPeakArray == []:
                 print "File could not be read. Defaults being used."
-                expectedPeaksD = sorted(peaksMan)
+                expectedPeaksD = sorted(self.getProperty('ExpectedPeaks').value)
             else: 
                 expectedPeaksD = sorted(exPeakArray)
         else:
-            expectedPeaksD = sorted(peaksMan)
+            expectedPeaksD = sorted(self.getProperty('ExpectedPeaks').value)
         return expectedPeaksD              
 
     def _getDefaultPeaks(self):
@@ -170,7 +170,7 @@ class EnginXFitPeaks(PythonAlgorithm):
 
     	# Function for converting dSpacing -> TOF for the detector
     	dSpacingToTof = lambda d: 252.816 * 2 * (50 + detL2) * math.sin(detTwoTheta / 2.0) * d
-    	expectedPeaks = self._readInExpectedPeaks((self.getPropertyValue("ExpectedPeaksFromFile")),((self.getProperty('ExpectedPeaks').value)))
+    	expectedPeaks = self._readInExpectedPeaks()
 
     	# Expected peak positions in TOF for the detector
     	expectedPeaksTof = map(dSpacingToTof, expectedPeaks)
