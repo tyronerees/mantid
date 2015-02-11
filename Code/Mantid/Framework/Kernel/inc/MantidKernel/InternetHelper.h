@@ -69,6 +69,12 @@ public:
               const std::string &method = std::string(),
               const std::string &body = std::string());
 
+  virtual int
+  sendRequest(const std::string &url, std::ostream &responseStream,
+              std::istream &inputStream,
+              const StringToStringMap &headers = StringToStringMap(),
+              const std::string &method = std::string());
+
   Kernel::ProxyInfo &getProxy(const std::string &url);
   void clearProxy();
   void setProxy(const Kernel::ProxyInfo &proxy);
@@ -91,12 +97,14 @@ private:
                             Poco::URI &uri, std::ostream &responseStream);
   int processRelocation(const Poco::Net::HTTPResponse &response,
                         std::ostream &responseStream);
+
   Kernel::ProxyInfo m_proxyInfo;
   bool m_isProxySet;
   int m_timeout;
   std::string m_method;
   std::string m_contentType;
   std::string m_body;
+  std::istream *m_inputStream;
   StringToStringMap m_headers;
   Poco::Net::HTTPRequest *m_request;
 };

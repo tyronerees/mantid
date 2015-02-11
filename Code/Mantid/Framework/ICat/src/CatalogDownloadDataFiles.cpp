@@ -7,18 +7,10 @@
 #include "MantidKernel/BoundedValidator.h"
 #include "MantidKernel/ConfigService.h"
 #include "MantidKernel/ArrayProperty.h"
+#include "MantidKernel/InternetHelper.h"
+#include "MantidKernel/Exception.h"
 
-#include <Poco/Net/AcceptCertificateHandler.h>
-#include <Poco/Net/PrivateKeyPassphraseHandler.h>
-#include <Poco/Net/HTTPSClientSession.h>
-#include <Poco/Net/SecureStreamSocket.h>
-#include <Poco/Net/SSLException.h>
-#include <Poco/Net/SSLManager.h>
-#include <Poco/Net/HTTPRequest.h>
-#include <Poco/Net/HTTPResponse.h>
 #include <Poco/Path.h>
-#include <Poco/StreamCopier.h>
-#include <Poco/URI.h>
 
 #include <fstream>
 #include <iomanip>
@@ -139,112 +131,38 @@ bool CatalogDownloadDataFiles::isDataFile(const std::string &fileName) {
  */
 std::string CatalogDownloadDataFiles::doDownloadandSavetoLocalDrive(
     const std::string &URL, const std::string &fileName) {
-  std::string pathToDownloadedDatafile;
+
+  std::string filepath =
+      Poco::Path(getPropertyValue("DownloadPath"), fileName).toString();
 
   clock_t start;
 
+  InternetHelper inetHelper;
+  start = clock();
   try {
-    Poco::URI uri(URL);
-
-    std::string path(uri.getPathAndQuery());
-    start = clock();
-
-    Poco::SharedPtr<Poco::Net::InvalidCertificateHandler> certificateHandler =
-        new Poco::Net::AcceptCertificateHandler(true);
-    // Currently do not use any means of authentication. This should be updated
-    // IDS has signed certificate.
-    const Poco::Net::Context::Ptr context =
-        new Poco::Net::Context(Poco::Net::Context::CLIENT_USE, "", "", "",
-                               Poco::Net::Context::VERIFY_NONE);
-    // Create a singleton for holding the default context. E.g. any future
-    // requests to publish are made to this certificate and context.
-    Poco::Net::SSLManager::instance().initializeClient(NULL, certificateHandler,
-                                                       context);
-
-    // Session takes ownership of socket
-    Poco::Net::SecureStreamSocket *socket =
-        new Poco::Net::SecureStreamSocket(context);
-    Poco::Net::HTTPSClientSession session(*socket);
-    session.setHost(uri.getHost());
-    session.setPort(uri.getPort());
-
-    Poco::Net::HTTPRequest request(Poco::Net::HTTPRequest::HTTP_GET, path,
-                                   Poco::Net::HTTPMessage::HTTP_1_1);
-    session.sendRequest(request);
-
-    // Close the request by requesting a response.
-    Poco::Net::HTTPResponse response;
-    // Store the response for use IF an error occurs (e.g. 404).
-    std::istream &responseStream = session.receiveResponse(response);
-
-    // Obtain the status returned by the server to verify if it was a success.
-    Poco::Net::HTTPResponse::HTTPStatus HTTPStatus = response.getStatus();
-    // The error message returned by the IDS (if one exists).
-    std::string IDSError =
-        CatalogAlgorithmHelper().getIDSError(HTTPStatus, responseStream);
-    // Cancel the algorithm and display the message if it exists.
-    if (!IDSError.empty()) {
-      // As an error occurred we must cancel the algorithm to prevent success
-      // message.
-      this->cancel();
-      // Output an appropriate error message from the JSON object returned by
-      // the IDS.
-      g_log.error(IDSError);
-      return "";
-    }
-
-    // Save the file to local disk if no errors occurred on the IDS.
-    pathToDownloadedDatafile = saveFiletoDisk(responseStream, fileName);
-
-    clock_t end = clock();
-    float diff = float(end - start) / CLOCKS_PER_SEC;
-    g_log.information() << "Time taken to download file " << fileName << " is "
-                        << std::fixed << std::setprecision(2) << diff
-                        << " seconds" << std::endl;
-
-  } catch (Poco::Net::SSLException &error) {
-    throw std::runtime_error(error.displayText());
+    inetHelper.downloadFile(URL,filepath);
   }
-  // A strange error occurs (what returns: {I/O error}, while message returns: {
-  // 9: The BIO reported an error }.
-  // This bug has been fixed in POCO 1.4 and is noted -
-  // http://sourceforge.net/p/poco/bugs/403/
-  // I have opted to catch the exception and do nothing as this allows the
-  // load/download functionality to work.
-  // However, the port the user used to download the file will be left open.
-  //
-  // In addition, there's a crash when destructing SecureSocketImpl (internal to
-  // SecureSocketStream, which is
-  // created and destroyed by HTTPSClientSession). We avoid that crash by
-  // instantiating SecureSocketStream
-  // ourselves and passing it to the HTTPSClientSession, which takes ownership.
-  catch (Poco::Exception &error) {
-    throw std::runtime_error(error.displayText());
+  catch (Exception::InternetError& ie)
+  {
+    // previous approach parsed the error from the response stream
+    // Output an appropriate error message from the JSON object returned by
+    // the IDS.
+    //std::string IDSError =
+    //    CatalogAlgorithmHelper().getIDSError(HTTPStatus, responseStream);
+    this->cancel();
+
+    g_log.error(ie.what());
+    return "";
   }
 
-  return pathToDownloadedDatafile;
-}
+  //// Save the file to local disk if no errors occurred on the IDS.
+  //pathToDownloadedDatafile = saveFiletoDisk(responseStream, fileName);
 
-/**
- * Saves the input stream to a file
- * @param rs :: The response stream from the server, which contains the file's
- * content.
- * @param fileName :: name of the output file
- * @return Full path of where file is saved to
- */
-std::string
-CatalogDownloadDataFiles::saveFiletoDisk(std::istream &rs,
-                                         const std::string &fileName) {
-  std::string filepath =
-      Poco::Path(getPropertyValue("DownloadPath"), fileName).toString();
-  std::ios_base::openmode mode =
-      isDataFile(fileName) ? std::ios_base::binary : std::ios_base::out;
-
-  std::ofstream ofs(filepath.c_str(), mode);
-  if (ofs.rdstate() & std::ios::failbit)
-    throw Exception::FileError("Error on creating File", fileName);
-  // copy the input stream to a file.
-  Poco::StreamCopier::copyStream(rs, ofs);
+  clock_t end = clock();
+  float diff = float(end - start) / CLOCKS_PER_SEC;
+  g_log.information() << "Time taken to download file " << fileName << " is "
+                      << std::fixed << std::setprecision(2) << diff
+                      << " seconds" << std::endl;
 
   return filepath;
 }

@@ -6,6 +6,7 @@
 #include "MantidAPI/FileProperty.h"
 #include "MantidAPI/WorkspaceProperty.h"
 #include "MantidDataObjects/Workspace2D.h"
+#include "MantidKernel/InternetHelper.h"
 #include "MantidKernel/MandatoryValidator.h"
 
 #include <Poco/Net/AcceptCertificateHandler.h>
@@ -140,61 +141,13 @@ void CatalogPublish::exec() {
 void CatalogPublish::publish(std::istream &fileContents,
                              const std::string &uploadURL) {
   try {
-    Poco::URI uri(uploadURL);
-    std::string path(uri.getPathAndQuery());
-
-    Poco::SharedPtr<Poco::Net::InvalidCertificateHandler> certificateHandler =
-        new Poco::Net::AcceptCertificateHandler(true);
-    // Currently do not use any means of authentication. This should be updated
-    // IDS has signed certificate.
-    const Poco::Net::Context::Ptr context =
-        new Poco::Net::Context(Poco::Net::Context::CLIENT_USE, "", "", "",
-                               Poco::Net::Context::VERIFY_NONE);
-    // Create a singleton for holding the default context. E.g. any future
-    // requests to publish are made to this certificate and context.
-    Poco::Net::SSLManager::instance().initializeClient(NULL, certificateHandler,
-                                                       context);
-    Poco::Net::HTTPSClientSession session(uri.getHost(), uri.getPort(),
-                                          context);
-
-    // Send the HTTP request, and obtain the output stream to write to. E.g. the
-    // data to publish to the server.
-    Poco::Net::HTTPRequest request(Poco::Net::HTTPRequest::HTTP_PUT, path,
-                                   Poco::Net::HTTPMessage::HTTP_1_1);
-    // Sets the encoding type of the request. This enables us to stream data to
-    // the server.
-    request.setChunkedTransferEncoding(true);
-    std::ostream &os = session.sendRequest(request);
-    // Copy data from the input stream to the server (request) output stream.
-    Poco::StreamCopier::copyStream(fileContents, os);
-
-    // Close the request by requesting a response.
-    Poco::Net::HTTPResponse response;
-    // Store the response for use IF an error occurs (e.g. 404).
-    std::istream &responseStream = session.receiveResponse(response);
-
-    // Obtain the status returned by the server to verify if it was a success.
-    Poco::Net::HTTPResponse::HTTPStatus HTTPStatus = response.getStatus();
-    // The error message returned by the IDS (if one exists).
-    std::string IDSError =
-        CatalogAlgorithmHelper().getIDSError(HTTPStatus, responseStream);
-    // Cancel the algorithm and display the message if it exists.
-    if (!IDSError.empty()) {
-      // As an error occurred we must cancel the algorithm.
-      // We cannot throw an exception here otherwise it is caught below as
-      // Poco::Exception catches runtimes,
-      // and then the I/O error is thrown as it is generated above first.
-      this->cancel();
-      // Output an appropriate error message from the JSON object returned by
-      // the IDS.
-      g_log.error(IDSError);
-    }
-  } catch (Poco::Net::SSLException &error) {
-    throw std::runtime_error(error.displayText());
+    Mantid::Kernel::InternetHelper inetHelper;
+    std::stringstream responseStream;
+    inetHelper.sendRequest(uploadURL,responseStream,fileContents);
   }
-  // This is bad, but is needed to catch a POCO I/O error.
-  // For more info see comments (of I/O error) in CatalogDownloadDataFiles.cpp
-  catch (Poco::Exception &) {
+  catch (Mantid::Kernel::Exception::InternetError& ie) {
+    this->cancel();
+    g_log.error(ie.what());
   }
 }
 

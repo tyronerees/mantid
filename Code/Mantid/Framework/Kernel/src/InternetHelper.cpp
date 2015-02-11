@@ -73,7 +73,9 @@ bool isRelocated(const int response) {
 */
 InternetHelper::InternetHelper()
     : m_proxyInfo(), m_isProxySet(false), m_timeout(30),
-      m_method(HTTPRequest::HTTP_GET), m_contentType("application/json"),
+      m_method(HTTPRequest::HTTP_GET),
+      m_inputStream(NULL),
+      m_contentType("application/json"),
       m_request(NULL) {}
 
 //----------------------------------------------------------------------------------------------
@@ -81,7 +83,9 @@ InternetHelper::InternetHelper()
 */
 InternetHelper::InternetHelper(const Kernel::ProxyInfo &proxy)
     : m_proxyInfo(proxy), m_isProxySet(true), m_timeout(30),
-      m_method(HTTPRequest::HTTP_GET), m_contentType("application/json"),
+      m_method(HTTPRequest::HTTP_GET), 
+      m_inputStream(NULL),
+      m_contentType("application/json"),
       m_request(NULL) {}
 
 //----------------------------------------------------------------------------------------------
@@ -120,8 +124,20 @@ int InternetHelper::sendRequestAndProcess(HTTPClientSession &session,
                                           std::ostream &responseStream) {
   // create a request
   this->createRequest(uri);
-  m_request->setContentLength(m_body.length());
-  session.sendRequest(*m_request) << m_body;
+  if (m_inputStream == NULL)
+  {
+    m_request->setContentLength(m_body.length());
+    session.sendRequest(*m_request) << m_body;
+  }
+  else
+  {
+    // Sets the encoding type of the request. This enables us to stream data to
+    // the server.
+    m_request->setChunkedTransferEncoding(true);
+    std::ostream &os = session.sendRequest(*m_request);
+    // Copy data from the input stream to the server (request) output stream.
+    Poco::StreamCopier::copyStream(*m_inputStream, os);
+  }
 
   HTTPResponse res;
   std::istream &rs = session.receiveResponse(res);
@@ -130,6 +146,7 @@ int InternetHelper::sendRequestAndProcess(HTTPClientSession &session,
                 << std::endl;
 
   if (retStatus == HTTPResponse::HTTP_OK ||
+      retStatus == HTTPResponse::HTTP_ACCEPTED ||
       (retStatus == HTTPResponse::HTTP_CREATED &&
        m_method == HTTPRequest::HTTP_POST)) {
     Poco::StreamCopier::copyStream(rs, responseStream);
@@ -179,11 +196,51 @@ int InternetHelper::sendRequest(const std::string &url,
 
   // send the request
   Poco::URI uri(url);
+  int retVal = 0;
   if ((uri.getScheme() == "https") || (uri.getPort() == 443)) {
-    return sendHTTPSRequest(url, responseStream);
+    retVal = sendHTTPSRequest(url, responseStream);
   } else {
-    return sendHTTPRequest(url, responseStream);
+    retVal = sendHTTPRequest(url, responseStream);
   }
+
+  //clear up any values you set earlier
+  if (!method.empty()) {
+    m_method = "";
+  }
+  if (!headers.empty()) {
+    m_headers.clear();
+  }
+  if (!body.empty()) {
+    m_body = "";
+  }
+
+  return retVal;
+}
+
+/** Performs a request using http or https depending on the url
+* @param url the address to the network resource
+* @param responseStream The stream to fill with the reply on success
+* @param headers A optional key value pair map of any additional headers to
+* include in the request.
+* @param method Generally GET (default) or POST.
+* @param body The request body to send.
+**/
+int InternetHelper::sendRequest(const std::string &url,
+                                std::ostream &responseStream,
+                                std::istream &inputStream,
+                                const StringToStringMap &headers,
+                                const std::string &method) {
+  // set instance variables from the input as appropriate
+  m_inputStream = &inputStream;
+
+  // send the request
+  Poco::URI uri(url);
+  int retVal = sendRequest(url,responseStream,headers,method);
+  
+  //clear up any values you set earlier
+  m_inputStream = NULL;
+
+  return retVal;
 }
 
 /** Performs a request using http
@@ -321,6 +378,14 @@ int InternetHelper::processErrorStates(const Poco::Net::HTTPResponse &res,
                                    retStatus);
   } else if (retStatus == HTTPResponse::HTTP_FOUND) {
     throw Exception::InternetError("Response was HTTP_FOUND, processing should "
+                                   "never have entered processErrorStates",
+                                   retStatus);
+  } else if (retStatus == HTTPResponse::HTTP_CREATED) {
+    throw Exception::InternetError("Response was HTTP_CREATED, processing should "
+                                   "never have entered processErrorStates",
+                                   retStatus);
+  } else if (retStatus == HTTPResponse::HTTP_ACCEPTED) {
+    throw Exception::InternetError("Response was HTTP_ACCEPTED, processing should "
                                    "never have entered processErrorStates",
                                    retStatus);
   } else if (retStatus == HTTPResponse::HTTP_MOVED_PERMANENTLY) {
