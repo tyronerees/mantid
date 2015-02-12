@@ -87,7 +87,7 @@ void CatalogDownloadDataFiles::exec() {
 
     // Can we open the file (Hence, have access to the archives?)
     std::ifstream hasAccessToArchives(fileLocation.c_str());
-    if (hasAccessToArchives) {
+    if (hasAccessToArchives) { 
       g_log.information() << "File (" << *fileName << ") located in archives ("
                           << fileLocation << ")." << std::endl;
       fileLocations.push_back(fileLocation);

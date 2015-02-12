@@ -8,18 +8,9 @@
 #include "MantidDataObjects/Workspace2D.h"
 #include "MantidKernel/InternetHelper.h"
 #include "MantidKernel/MandatoryValidator.h"
+#include "MantidKernel/Exception.h"
 
-#include <Poco/Net/AcceptCertificateHandler.h>
-#include <Poco/Net/PrivateKeyPassphraseHandler.h>
-#include <Poco/Net/HTTPSClientSession.h>
-#include <Poco/Net/SSLException.h>
-#include <Poco/Net/SSLManager.h>
-#include <Poco/Net/HTTPRequest.h>
-#include <Poco/Net/HTTPResponse.h>
 #include <Poco/Path.h>
-#include <Poco/SharedPtr.h>
-#include <Poco/StreamCopier.h>
-#include <Poco/URI.h>
 
 #include <fstream>
 #include <boost/regex.hpp>
