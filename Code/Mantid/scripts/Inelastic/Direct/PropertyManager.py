@@ -270,7 +270,7 @@ class PropertyManager(NonIDF_Properties):
 
 
         for par_name,value in kwargs.items() :
-            if not(value is None):
+            if not(value is None) and not par_name.startswith("MD:"):
                 setattr(self,par_name,value)
 
 
@@ -290,7 +290,8 @@ class PropertyManager(NonIDF_Properties):
 
 
         for par_name,value in kwargs.items() :
-            setattr(self,par_name,value)
+            if not par_name.startswith("MD:"):
+                setattr(self,par_name,value)
 
         return self.getChangedProperties()
 
