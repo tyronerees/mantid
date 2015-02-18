@@ -6,6 +6,7 @@ set ( TEST_PY_FILES
       test/DirectEnergyConversionTest.py
       test/IndirectApplyCorrectionsTest.py
       test/IndirectCommonTests.py
+      test/MDReductionWrapperTest.py 
       test/ReductionWrapperTest.py      
       test/ReflectometryQuickAuxiliaryTest.py 
       test/RunDescriptorTest.py

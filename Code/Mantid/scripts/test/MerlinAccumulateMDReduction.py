@@ -1,8 +1,8 @@
 """ MERLIN reduction script which also creates Merged MD files """ 
 
 ### Only required for running locally ###
-#import sys
-#sys.path.insert(0,'/home/whb43145/Mantid/mantid-develop/Code/Mantid/scripts/Inelastic')
+import sys
+sys.path.insert(0,'/home/whb43145/Mantid/mantid-develop/Code/Mantid/scripts/Inelastic')
 #sys.path.insert(0,'/home/whb43145/autoreduction_test_production')
 
 from Direct.MDReductionWrapper import *
@@ -78,7 +78,7 @@ def reduce(input_file, output_dir):
     # Define any extra directories needed for maps files etc. (not needed for running through autoreduction server)
 
     ### Only required for running locally ###
-    #maps_dir = '/home/whb43145/Mantid/RAW_to_SPE/MERLIN/masks'
+    maps_dir = '/home/whb43145/Mantid/RAW_to_SPE/MERLIN/masks'
 
     input_path, input_filename = os.path.split(input_file)
 
@@ -86,7 +86,7 @@ def reduce(input_file, output_dir):
     file_run_number = int(input_filename.split('MER')[1].split('.')[0])
 
     ### Only required for running locally ###
-    #config.setDataSearchDirs('{0};{1};{2}'.format(input_path,output_dir,maps_dir))
+    config.setDataSearchDirs('{0};{1};{2}'.format(input_path,output_dir,maps_dir))
 
     config['defaultsave.directory'] = output_dir.encode('ascii','replace') # folder to save resulting spe/nxspe files
 

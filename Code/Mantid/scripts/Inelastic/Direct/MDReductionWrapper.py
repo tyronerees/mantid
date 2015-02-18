@@ -53,7 +53,7 @@ class MDReductionWrapper(ReductionWrapper):
             if (file_run_number < range_starts[0]):
                 return -1, -1, -1
             file_number = file_run_number//number_of_runs_to_merge[0] - range_starts[0]//number_of_runs_to_merge[0] 
-            return file_number + 1, file_number * number_of_runs_to_merge[0], (file_number + 1) * number_of_runs_to_merge[0]
+            return file_number, file_number * number_of_runs_to_merge[0] + 1, (file_number + 1) * number_of_runs_to_merge[0]
         elif (len(range_starts) > 1 and len(number_of_runs_to_merge) == 1):
             for i in range(0, len(range_starts)):
                  if (file_run_number >= range_starts[i] and file_run_number < range_starts[i] + number_of_runs_to_merge[0]):
@@ -68,16 +68,15 @@ class MDReductionWrapper(ReductionWrapper):
         raise Exception("Size of range_starts, ", len(range_starts), " and number_of_runs_to_merge, ", 
                         len(number_of_runs_to_merge), " are incompatible")
 
-    def get_file_name(self, file_number, start, end):
+    def get_file_name(self, file_names, file_number, start, end):
         """ If MD:Filenames is set return the appropriate filename, else return a filename such as 123_456_SQW.nxs
         """
-        file_names = self._wvs.advanced_vars.get('MD:Filenames')
         if (file_names is None or len(file_names) == 0):
             return str(start) + '_' + str(end) + '_SQW.nxs'
         else:
             return file_names[file_number]
 
-    def get_psi(self, file_number, file_run_number, start, end):
+    def get_psi(self, psi_starts, psi_increments, file_number, file_run_number, start):
         """ For psi allowed combinations are shown below
             N = number of accumulated MD files to produce (e.g. Psi Starts is a list of N integers).
                                 ___________
@@ -86,9 +85,6 @@ class MDReductionWrapper(ReductionWrapper):
             | 'Psi Increments' | 1 | N | 1 |
             --------------------------------
         """
-
-        psi_starts = self._wvs.advanced_vars.get('MD:Psi Starts')
-        psi_increments = self._wvs.advanced_vars.get('MD:Psi Increments')
 
         if (len(psi_starts) == 1 and len(psi_increments) == 1):
             return psi_starts[0] + (file_run_number - start) * psi_increments[0]
@@ -114,9 +110,12 @@ class MDReductionWrapper(ReductionWrapper):
         else:
             file_number, start, end = self.get_file_number(file_run_number, range_starts, range_ends)
 
-        merged_filename = input_dir + '/../' + self.get_file_name(file_number, start, end)
+        merged_filename = input_dir + '/../' + \
+          self.get_file_name(self._wvs.advanced_vars.get('MD:Filenames'), file_number, start, end)
 
-        psi = self.get_psi(file_number, file_run_number, start, end)
+        psi = self.get_psi(self._wvs.advanced_vars.get('MD:Psi Starts'), \
+                           self._wvs.advanced_vars.get('MD:Psi Increments'), \
+                           file_number, file_run_number, start)
 
         ub_matrix = self._wvs.advanced_vars.get('MD:UB Matrix')
 
