@@ -10,7 +10,7 @@ def print_time(i):
 
 def call_reduce(start_time, i, interval_time, kwargs):
     start = time.time()
-    subprocess.call(['python', 'reduce.py', kwargs['data'], kwargs['output']])
+    subprocess.call(['python', 'MerlinAccumulateMDReduction.py', kwargs['data'], kwargs['output']])
     end = time.time()
     print 'Reduce time = ', end - start, ', leaving ', start_time + (i+1)*interval_time - end, ' second interval.'
     print 'Next run will start at:', time.ctime(start_time + (i+1)*interval_time), '. Last file run:', kwargs['data']
