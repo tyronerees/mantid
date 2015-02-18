@@ -1,11 +1,8 @@
 """ MERLIN reduction script which also creates Merged MD files """ 
 
-import time
-import os
-
 ### Only required for running locally ###
-import sys
-sys.path.insert(0,'/home/whb43145/Mantid/mantid-develop/Code/Mantid/scripts/Inelastic')
+#import sys
+#sys.path.insert(0,'/home/whb43145/Mantid/mantid-develop/Code/Mantid/scripts/Inelastic')
 #sys.path.insert(0,'/home/whb43145/autoreduction_test_production')
 
 from Direct.MDReductionWrapper import *
@@ -67,7 +64,6 @@ class ReduceMERLIN(MDReductionWrapper):
     def main(self, input_file = None, output_directory = None, output_file = None):
         # run reduction, write auxiliary script to add something here.
         outWS = ReductionWrapper.reduce(input_file, output_directory)
-        #SaveNexus(outWS, Filename = output_file)
 
         # When run from web service, instead return additional path for web server to copy data to
         return outWS
@@ -76,85 +72,13 @@ class ReduceMERLIN(MDReductionWrapper):
         """ sets properties defaults for the instrument with Name"""
         super(ReduceMERLIN, self).__init__('MER',web_var)
 
-def convert_and_merge(rd, input_file, input_dir, file_run_number):
-
-    # Process ranges to merge into something more useful
-    range_starts = web_var.advanced_vars.get('MD:Run Range Starts')
-    range_ends = web_var.advanced_vars.get('MD:Run Range Ends')
-    number_of_runs_to_merge = web_var.advanced_vars.get('MD:Number of Runs to Merge')
-
-    if (len(range_ends) == 0):
-        file_number, start, end = rd.get_file_number_alternative(file_run_number, range_starts, number_of_runs_to_merge)
-    else:
-        file_number, start, end = rd.get_file_number(file_run_number, range_starts, range_ends)
-
-    merged_filename = input_dir + '/../' + rd.get_file_name(file_number, start, end)
-
-    psi = rd.get_psi(file_number, file_run_number, start, end)
-
-    ub_matrix = web_var.advanced_vars.get('MD:UB Matrix')
-
-    # Convert to an MD workspace and merge into the big file
-    loaded_ws = Load(Filename = input_file)
-
-    # UB matrix contains lattice and the beam direction  
-    SetUB(Workspace = loaded_ws, a = ub_matrix[0], b = ub_matrix[1], c = ub_matrix[2])
-   
-    # Add crystal rotation logging
-    # str(float(psi)) psi and can be saved as a number
-    AddSampleLog(Workspace = loaded_ws, LogName = 'Psi', LogText = str(float(psi)), LogType = 'Number')
-
-    # Set crystal rotation
-    SetGoniometer(Workspace = loaded_ws, Axis0 = 'Psi, 0, 1, 0, 1')
-
-    # Convert to MD
-    # If these values need to be changed they can be set in def_advanced_properties
-    # on the reduction class
-    pars = dict();
-    pars['InputWorkspace']='loaded_ws'
-    pars['QDimensions']='Q3D'
-    pars['dEAnalysisMode']='Direct'
-    pars['Q3DFrames']='HKL'
-    pars['QConversionScales']='HKL'
-    pars['PreprocDetectorsWS']='preprDetMantid'
-    pars['MinValues']=web_var.advanced_vars.get('MD:Minimum Extents')
-    pars['MaxValues']=web_var.advanced_vars.get('MD:Maximum Extents')
-    pars['SplitInto']=50
-    pars['MaxRecursionDepth']=1
-    pars['MinRecursionDepth']=1
-    pars['OutputWorkspace'] = 'merged_ws'
-
-    # Get the lock on the output file. Can obtain this whether or not the file exists yet.
-    # If lock is not obtained sleep for 10s. TODO: should this timeout?
-    # In case of problems will need to delete the lock file manually.
-    while(not rd.lock_obtained(merged_filename)):
-        print "Waiting for lock on ", merged_filename
-        time.sleep(10)
-
-    # Load the output file if it exists, create it otherwise
-    if (os.path.exists(merged_filename)):
-        merged_ws = LoadMD(Filename = merged_filename, FileBackEnd = True)
-        pars['OverwriteExisting'] = False
-    else:
-        pars['OverwriteExisting'] = True
-
-    merged_ws = ConvertToMD(**pars)
-
-    # Save the files
-    if pars.get('OverwriteExisting'):
-        SaveMD(merged_ws, Filename = merged_filename, MakeFileBacked = True)        
-    else:
-        SaveMD(merged_ws, Filename = merged_filename, UpdateFileBackEnd = True)
-
-    # Release the file lock now.
-    rd.release_lock(merged_filename)
 
 # This is called by the autoreduction script itself
 def reduce(input_file, output_dir):
     # Define any extra directories needed for maps files etc. (not needed for running through autoreduction server)
 
     ### Only required for running locally ###
-    maps_dir = '/home/whb43145/Mantid/RAW_to_SPE/MERLIN/masks'
+    #maps_dir = '/home/whb43145/Mantid/RAW_to_SPE/MERLIN/masks'
 
     input_path, input_filename = os.path.split(input_file)
 
@@ -162,7 +86,8 @@ def reduce(input_file, output_dir):
     file_run_number = int(input_filename.split('MER')[1].split('.')[0])
 
     ### Only required for running locally ###
-    config.setDataSearchDirs('{0};{1};{2}'.format(input_path,output_dir,maps_dir))
+    #config.setDataSearchDirs('{0};{1};{2}'.format(input_path,output_dir,maps_dir))
+
     config['defaultsave.directory'] = output_dir.encode('ascii','replace') # folder to save resulting spe/nxspe files
 
     rd = ReduceMERLIN(web_var)
@@ -180,7 +105,7 @@ def reduce(input_file, output_dir):
     outWS = rd.reduce(input_file, output_dir)
 
     if (web_var.advanced_vars.get('MD:Accumulate to MD file')):
-        convert_and_merge(rd, output_filename, output_dir, file_run_number)
+        rd.convert_and_merge(output_filename, output_dir, file_run_number)
 
     return None # Can make this an additional save directory
 
