@@ -140,8 +140,7 @@ def convert_and_merge(rd, input_file, input_dir, file_run_number):
 
     merged_ws = ConvertToMD(**pars)
 
-    # Save the file
-    print output_file
+    # Save the files
     if pars.get('OverwriteExisting'):
         SaveMD(merged_ws, Filename = merged_filename, MakeFileBacked = True)        
     else:
