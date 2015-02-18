@@ -37,6 +37,11 @@ set ( SRC_FILES
 	src/Indirect/Quasi.cpp
 	src/Indirect/ResNorm.cpp
 	src/Indirect/Stretch.cpp
+  src/Indirect/Vesuvio.cpp
+  src/Indirect/VesuvioCorrections.cpp
+  src/Indirect/VesuvioFitting.cpp
+  src/Indirect/VesuvioLoad.cpp
+  src/Indirect/VesuvioTab.cpp
 	src/MantidEV.cpp
 	src/MantidEVWorker.cpp
     src/MultiDatasetFit.cpp
@@ -116,6 +121,11 @@ set ( INC_FILES
 	inc/MantidQtCustomInterfaces/Indirect/Quasi.h
 	inc/MantidQtCustomInterfaces/Indirect/ResNorm.h
 	inc/MantidQtCustomInterfaces/Indirect/Stretch.h
+  inc/MantidQtCustomInterfaces/Indirect/Vesuvio.h
+  inc/MantidQtCustomInterfaces/Indirect/VesuvioCorrections.h
+  inc/MantidQtCustomInterfaces/Indirect/VesuvioFitting.h
+  inc/MantidQtCustomInterfaces/Indirect/VesuvioLoad.h
+  inc/MantidQtCustomInterfaces/Indirect/VesuvioTab.h
 	inc/MantidQtCustomInterfaces/IReflPresenter.h
 	inc/MantidQtCustomInterfaces/IReflSearcher.h
 	inc/MantidQtCustomInterfaces/MantidEV.h
@@ -203,6 +213,11 @@ set ( MOC_FILES inc/MantidQtCustomInterfaces/Background.h
                 inc/MantidQtCustomInterfaces/Indirect/Quasi.h
                 inc/MantidQtCustomInterfaces/Indirect/ResNorm.h
                 inc/MantidQtCustomInterfaces/Indirect/Stretch.h
+                inc/MantidQtCustomInterfaces/Indirect/Vesuvio.h
+                inc/MantidQtCustomInterfaces/Indirect/VesuvioCorrections.h
+                inc/MantidQtCustomInterfaces/Indirect/VesuvioFitting.h
+                inc/MantidQtCustomInterfaces/Indirect/VesuvioLoad.h
+                inc/MantidQtCustomInterfaces/Indirect/VesuvioTab.h
                 inc/MantidQtCustomInterfaces/MultiDatasetFit.h
                 inc/MantidQtCustomInterfaces/Muon/ALCBaselineModellingPresenter.h
                 inc/MantidQtCustomInterfaces/Muon/ALCBaselineModellingView.h
@@ -264,6 +279,10 @@ set ( UI_FILES inc/MantidQtCustomInterfaces/AddWorkspace.ui
                inc/MantidQtCustomInterfaces/Indirect/Quasi.ui
                inc/MantidQtCustomInterfaces/Indirect/ResNorm.ui
                inc/MantidQtCustomInterfaces/Indirect/Stretch.ui
+               inc/MantidQtCustomInterfaces/Indirect/Vesuvio.ui
+               inc/MantidQtCustomInterfaces/Indirect/VesuvioCorrections.ui
+               inc/MantidQtCustomInterfaces/Indirect/VesuvioFitting.ui
+               inc/MantidQtCustomInterfaces/Indirect/VesuvioLoad.ui
                inc/MantidQtCustomInterfaces/MultiDatasetFit.ui
                inc/MantidQtCustomInterfaces/Muon/ALCBaselineModellingView.ui
                inc/MantidQtCustomInterfaces/Muon/ALCDataLoadingView.ui
