@@ -230,7 +230,8 @@ def reduce(input_file, output_dir):
     # Merlin data starts in the format: 'MERXXXXX.raw', where XXXXXX is the run number
     file_run_number = int(input_filename.split('MER')[1].split('.')[0])
 
-    config.setDataSearchDirs('{0};{1};{2}'.format(input_path,output_dir,maps_dir))
+    ### Only required for running locally ###
+    #config.setDataSearchDirs('{0};{1};{2}'.format(input_path,output_dir,maps_dir))
     config['defaultsave.directory'] = output_dir.encode('ascii','replace') # folder to save resulting spe/nxspe files
 
     rd = ReduceMERLIN(web_var)
