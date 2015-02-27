@@ -31,3 +31,14 @@
 /// Patch version of Poco used to build Mantid.
 #define POCO_VERSION_PATCH @POCO_VERSION_PATCH@
 #endif /* MANTID_KERNEL_POCOVERSION_H_ */
+
+std::string addSpaceIfNeeded(const std::string& str)
+{
+#if POCO_VERSION_MAJOR > 1
+  return str;
+#elif POCO_VERSION_MAJOR == 1 && POCO_VERSION_MINOR >= 5
+  return str;
+#else
+  return str + " ";
+#endif
+}

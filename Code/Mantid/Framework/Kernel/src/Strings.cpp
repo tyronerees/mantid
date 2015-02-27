@@ -1,6 +1,7 @@
 #include "MantidKernel/Strings.h"
 #include "MantidKernel/Exception.h"
 #include "MantidKernel/UnitLabel.h"
+#include "MantidKernel/PocoVersion.h"
 
 #include <Poco/StringTokenizer.h>
 #include <Poco/Path.h>
@@ -9,6 +10,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <cmath>
 #include <fstream>
@@ -1040,7 +1042,7 @@ std::vector<int> parseRange(const std::string &str, const std::string &elemSep,
   typedef Poco::StringTokenizer Tokenizer;
 
   boost::shared_ptr<Tokenizer> elements;
-
+  
   if (elemSep.find(' ') != std::string::npos) {
     // If element separator contains space character it's a special case,
     // because in that case
@@ -1051,10 +1053,8 @@ std::vector<int> parseRange(const std::string &str, const std::string &elemSep,
     // and we can
     // spot the error. Behaviour is changed in Poco 1.5 and this will not be
     // needed.
-    Tokenizer ranges(str + " ", rangeSep, Tokenizer::TOK_TRIM);
-    std::string new_str =
-        join(ranges.begin(), ranges.end(), rangeSep.substr(0, 1));
-
+    Tokenizer ranges(addSpaceIfNeeded(str), rangeSep, Tokenizer::TOK_TRIM);
+    std::string new_str = join(ranges.begin(), ranges.end(), rangeSep.substr(0, 1));
     elements = boost::make_shared<Tokenizer>(
         new_str, elemSep, Tokenizer::TOK_IGNORE_EMPTY | Tokenizer::TOK_TRIM);
   } else {
@@ -1070,10 +1070,8 @@ std::vector<int> parseRange(const std::string &str, const std::string &elemSep,
   for (Tokenizer::Iterator it = elements->begin(); it != elements->end();
        it++) {
     // See above for the reason space is added
-    Tokenizer rangeElements(*it + " ", rangeSep, Tokenizer::TOK_TRIM);
-
+    Tokenizer rangeElements(addSpaceIfNeeded(*it), rangeSep, Tokenizer::TOK_TRIM);
     size_t noOfRangeElements = rangeElements.count();
-
     // A single element
     if (noOfRangeElements == 1) {
       int element;
