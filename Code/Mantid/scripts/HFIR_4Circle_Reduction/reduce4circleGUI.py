@@ -1,4 +1,11 @@
 #pylint: disable=invalid-name
+################################################################################
+#
+# MainWindow application for reducing HFIR 4-circle 
+#
+################################################################################
+import sys
+import os
 import numpy
 
 from PyQt4 import QtCore, QtGui
@@ -6,15 +13,17 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 
-from matplotlib.pyplot import setp
-import mantid
-import mantid.simpleapi as api
-import mantid.kernel
-from mantid.simpleapi import AnalysisDataService
+try:
+    import mantid
+except ImportError:
+    sys.path.append('/home/wzz/Mantid/Code/debug/bin/')
+    import mantid
+finally:
+    import mantid.simpleapi as api
+    import mantid.kernel
+    from mantid.simpleapi import AnalysisDataService
+    from mantid.kernel import ConfigService
 
-from mantid.kernel import ConfigService
-
-import os
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
@@ -22,7 +31,7 @@ except AttributeError:
     def _fromUtf8(s):
         return s
 
-from FilterEvents.Ui_MainWindow import Ui_MainWindow #import line for the UI python class
+from ui_MainWindow import Ui_MainWindow #import line for the UI python class
 
 class MainWindow(QtGui.QMainWindow):
     """ Class of Main Window (top)
@@ -83,8 +92,8 @@ class MainWindow(QtGui.QMainWindow):
         self._xmlwsbasename = None
         
         # Some configuration
-        self._homeSrcDir = os.path.getcwd()
-        self._homeSaveDir = os.path.getcwd()
+        self._homeSrcDir = os.getcwd()
+        self._homeSaveDir = os.getcwd()
 
         return
 
