@@ -220,9 +220,14 @@ struct ParameterValue {
   operator double() {
     if (info.m_logfileID.empty())
       return boost::lexical_cast<double>(info.m_value);
-    else
+    else {
+      try {
       return info.createParamValue(
           runData.getTimeSeriesProperty<double>(info.m_logfileID));
+      } catch(std::invalid_argument &) { //std::invalid_argument in this case means that it wasn't a time series property
+        return boost::lexical_cast<double>(runData.getProperty(info.m_logfileID)->value());
+      }
+    }
   }
   operator int() { return boost::lexical_cast<int>(info.m_value); }
   operator bool() {
