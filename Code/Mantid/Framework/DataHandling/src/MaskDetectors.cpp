@@ -84,6 +84,9 @@ void MaskDetectors::exec() {
   // Is it a Mask Workspace ?
   MaskWorkspace_sptr isMaskWS = boost::dynamic_pointer_cast<MaskWorkspace>(WS);
 
+  // TODO: Is it an MDEventWorkspace?
+  MDEventWorkspace_sptr isMDEVentWS = boost::dynamic_pointer_cast<MDEventWorkspace>(WS);
+
   std::vector<size_t> indexList = getProperty("WorkspaceIndexList");
   std::vector<specid_t> spectraList = getProperty("SpectraList");
   const std::vector<detid_t> detectorList = getProperty("DetectorList");
@@ -277,6 +280,20 @@ void MaskDetectors::execPeaks(PeaksWorkspace_sptr WS) {
     }
   }
 }
+
+/**
+ * @brief MaskDetectors::execMDWorkspaces
+ */
+MaskDetectors::execMDWorkspaces()
+{
+  size_t numruns = WS->numRuns();
+  for (size_t irun = 0; irun < numruns; ++irun)
+  {
+    WS->getExperimetnInfo(irun)->getIntrument();
+  }
+}
+
+
 /**
  * Convert a list of spectra numbers into the corresponding workspace indices
  * @param indexList :: An output index list from the given spectra list
