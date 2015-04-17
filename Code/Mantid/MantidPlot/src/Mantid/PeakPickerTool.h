@@ -77,7 +77,10 @@ class PeakPickerTool : public QwtPlotPicker, public PlotToolInterface, public Qw
   Q_OBJECT
 public:
   /// Constructor
-  PeakPickerTool(Graph *graph, MantidQt::MantidWidgets::FitPropertyBrowser *fitPropertyBrowser, MantidUI *mantidUI, bool showFitPropertyBrowser=true);
+  PeakPickerTool(
+      Graph *graph, Graph *diffGraph,
+      MantidQt::MantidWidgets::FitPropertyBrowser *fitPropertyBrowser,
+      MantidUI *mantidUI, bool showFitPropertyBrowser = true);
   /// Destructor
   ~PeakPickerTool();
   /// Runtime type identifier
@@ -94,9 +97,6 @@ public:
   void prepareContextMenu(QMenu& menu); 
   /// Was the tool created successfuly?
   bool isInitialized() const {return m_init;}
-
-public slots:
-  void windowStateChanged( Qt::WindowStates oldState, Qt::WindowStates newState );
 
 signals:
   void peakChanged();
@@ -185,10 +185,14 @@ private:
 
   // Set the tool tip text
   void setToolTip(const QString& txt);
+  // Create the resuals graph layer
+  void createDiffGraph();
 
+  /// A Graph for plotting the residuals.
+  Graph *m_diffGraph;
   /// Creates a pointer to fitPropertyBrowser
   MantidQt::MantidWidgets::FitPropertyBrowser* m_fitPropertyBrowser;
-
+  /// Mantid UI
   MantidUI *m_mantidUI;
 
   /// Workspace name

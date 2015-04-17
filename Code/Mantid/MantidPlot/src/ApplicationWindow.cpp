@@ -8174,15 +8174,32 @@ void ApplicationWindow::selectMultiPeak(MultiLayer* plot, bool showFitPropertyBr
   }
 
   QList<Graph *> layers = plot->layersList();
-  foreach(Graph *g, layers){
-    if (g->isPiePlot() || !g->curves())
+
+  if (layers.isEmpty() ){
+    return;
+  }
+
+
+  {Graph *mainGraph = layers.front();
+
+    if (mainGraph->isPiePlot() || !mainGraph->curves())
     {
-      continue;
+      return;
     }
-    if (g->validCurvesDataSize())
+    if (mainGraph->validCurvesDataSize())
     {
+      // Check if the residuals graph already exist.
+      Graph *diffGraph = NULL;
+      if (layers.size() > 1)
+      {
+        auto dg = layers[1];
+        if ( !dg->isPiePlot() )
+        {
+          diffGraph = dg;
+        }
+      }
       //Called when setting up usual peakPickerTool
-      PeakPickerTool* ppicker = new PeakPickerTool(g, mantidUI->fitFunctionBrowser(), mantidUI, showFitPropertyBrowser);
+      PeakPickerTool* ppicker = new PeakPickerTool(mainGraph, diffGraph, mantidUI->fitFunctionBrowser(), mantidUI, showFitPropertyBrowser);
       if ( !ppicker->isInitialized() )
       {
         QMessageBox::warning(this,tr("MantidPlot - Warning"),
@@ -8196,9 +8213,7 @@ void ApplicationWindow::selectMultiPeak(MultiLayer* plot, bool showFitPropertyBr
         mantidUI->fitFunctionBrowser()->setStartX(xmin);
         mantidUI->fitFunctionBrowser()->setEndX(xmax);
       }
-      g->setActiveTool(ppicker);
-      // do we need this? PeakPickerTool::windowStateChanged does nothing
-      //connect(plot,SIGNAL(windowStateChanged(Qt::WindowStates, Qt::WindowStates)),ppicker,SLOT(windowStateChanged(Qt::WindowStates, Qt::WindowStates)));
+      mainGraph->setActiveTool(ppicker);
     }
   }
 

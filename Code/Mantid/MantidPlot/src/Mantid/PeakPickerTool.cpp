@@ -30,13 +30,15 @@ namespace
   Mantid::Kernel::Logger g_log("PeakPickerTool");
 }
 
-PeakPickerTool::PeakPickerTool(Graph *graph, MantidQt::MantidWidgets::FitPropertyBrowser *fitPropertyBrowser, MantidUI *mantidUI, bool showFitPropertyBrowser) :
-QwtPlotPicker(graph->plotWidget()->canvas()),
-PlotToolInterface(graph),
-m_fitPropertyBrowser(fitPropertyBrowser),
-m_mantidUI(mantidUI),
-m_wsName(),m_spec(),m_init(false),
-m_width_set(true),m_width(0),m_addingPeak(false),m_resetting(false),m_shouldBeNormalised(false)
+PeakPickerTool::PeakPickerTool(
+    Graph *graph, Graph *diffGraph,
+    MantidQt::MantidWidgets::FitPropertyBrowser *fitPropertyBrowser,
+    MantidUI *mantidUI, bool showFitPropertyBrowser)
+    : QwtPlotPicker(graph->plotWidget()->canvas()), PlotToolInterface(graph),
+      m_diffGraph(diffGraph),
+      m_fitPropertyBrowser(fitPropertyBrowser), m_mantidUI(mantidUI),
+      m_wsName(), m_spec(), m_init(false), m_width_set(true), m_width(0),
+      m_addingPeak(false), m_resetting(false), m_shouldBeNormalised(false) 
 {
   d_graph->plotWidget()->canvas()->setCursor(Qt::pointingHandCursor);
 
@@ -158,6 +160,8 @@ m_width_set(true),m_width(0),m_addingPeak(false),m_resetting(false),m_shouldBeNo
       m_fitPropertyBrowser->createMatrixFromTableWorkspace()
     );
   }
+
+  createDiffGraph();
 }
 
 PeakPickerTool::~PeakPickerTool()
@@ -347,11 +351,6 @@ bool PeakPickerTool::eventFilter(QObject *obj, QEvent *event)
       break;
   }
   return QwtPlotPicker::eventFilter(obj, event);
-}
-
-void PeakPickerTool::windowStateChanged( Qt::WindowStates, Qt::WindowStates newState )
-{
-  (void) newState;
 }
 
 void PeakPickerTool::functionCleared()
@@ -1079,3 +1078,32 @@ void PeakPickerTool::removeFitCurves()
   }
   m_curveNames.clear();
 }
+
+// Create the resuals graph layer
+void PeakPickerTool::createDiffGraph()
+{
+  if (m_diffGraph != NULL) return;
+
+  double f = 0.25;
+  auto multiLayer = d_graph->multiLayer();
+  m_diffGraph = multiLayer->addLayer();
+
+  auto newSize = d_graph->size();
+  newSize.setHeight( newSize.height() * (1 - f) );
+  d_graph->resize(newSize);
+
+  auto diffSize = d_graph->size();
+  diffSize.setHeight( diffSize.height() * f );
+  m_diffGraph->resize(diffSize);
+  m_diffGraph->move(d_graph->rect().bottomLeft() + QPoint(0,20));
+  m_diffGraph->setTitle("");
+  m_diffGraph->setAxisTitle(QwtPlot::yLeft,"");
+  m_diffGraph->setAxisTitle(QwtPlot::xBottom,"");
+  m_diffGraph->setAxisScale(QwtPlot::xBottom,0,10);
+  auto font = m_diffGraph->axisFont(QwtPlot::xBottom);
+  font.setPixelSize(1);
+  m_diffGraph->setAxisTitleFont(QwtPlot::xBottom,font);
+
+  multiLayer->setActiveGraph(d_graph);
+}
+
