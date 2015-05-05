@@ -1097,7 +1097,7 @@ void PeakPickerTool::createDiffGraph()
   m_diffGraph->resize(diffSize);
   m_diffGraph->move(d_graph->rect().bottomLeft() + QPoint(0,20));
   m_diffGraph->setTitle("");
-  m_diffGraph->setAxisTitle(QwtPlot::yLeft,"");
+  m_diffGraph->setAxisTitle(QwtPlot::yLeft,"Diff");
   m_diffGraph->setAxisTitle(QwtPlot::xBottom,"");
   m_diffGraph->setAxisScale(QwtPlot::xBottom,0,10);
   auto font = m_diffGraph->axisFont(QwtPlot::xBottom);

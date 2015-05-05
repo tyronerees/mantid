@@ -224,7 +224,8 @@ Graph* MultiLayer::addLayer(int x, int y, int width, int height)
 	}
 
 	Graph* g = new Graph(x, y, width, height, canvas);
-    g->show();
+  applicationWindow()->setPreferences(g);
+  g->show();
 	graphsList.append(g);
 
 	active_graph = g;
