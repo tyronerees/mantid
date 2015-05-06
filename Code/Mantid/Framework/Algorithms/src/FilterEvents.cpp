@@ -217,6 +217,9 @@ void FilterEvents::processProperties() {
     g_log.error(errss.str());
     throw std::invalid_argument(errss.str());
   }
+  // Raise exception if input workspace is not TOF.
+  if (m_eventWS->getAxis(0)->unit()->unitID() != "TOF")
+    throw std::invalid_argument("Input workspace for splitting must have unit as TOF.");
 
   // Process splitting workspace (table or data)
   API::Workspace_sptr tempws = this->getProperty("SplitterWorkspace");
@@ -397,6 +400,38 @@ void FilterEvents::processSplittersWorkspace() {
                       << m_informationWS->rowCount() << "). "
                       << "  Information may not be accurate. " << std::endl;
     }
+  }
+
+  return;
+}
+
+/** Process input splitter workspace in table format
+ * @brief FilterEvents::processTableWorkspace
+ */
+void FilterEvents::processTableWorkspace()
+{
+  API::ITableWorkspace_sptr m_tableSplitterWS;
+
+  // Check column
+  size_t numcols = m_tableSplitterWS->columnCount();
+  if (numcols < 3)
+    throw std::invalid_argument("Input splitter table workspace has fewer than 3 columns. ");
+
+  //
+  size_t numrows = m_tableSplitterWS->rowCount();
+
+  // Splitter
+  std::vector<SplittingInterval> vec_splitter(numrows);
+
+  for (size_t ir = 0; ir < numrows; ++ir)
+  {
+    int64_t t_start_ns = m_tableSplitterWS->cell<int64_t>(ir, 0);
+    int64_t t_stop_ns = m_tableSplitterWS->cell<int64_t>(ir, 1);
+    int index = m_tableSplitterWS->cell<int>(ir, 2);
+    Kernel::DateAndTime t_start(t_start_ns);
+    Kernel::DateAndTime t_stop(t_stop_ns);
+    SplittingInterval splitter(t_start, t_stop, index);
+    vec_splitter[ir] = splitter;
   }
 
   return;
