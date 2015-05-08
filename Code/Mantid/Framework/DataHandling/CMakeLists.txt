@@ -12,6 +12,7 @@ set ( SRC_FILES
 	src/DetermineChunking.cpp
 	src/DownloadFile.cpp
 	src/DownloadInstrument.cpp
+	src/ExportSampleLogsToCSVFile.cpp
 	src/ExtractMonitorWorkspace.cpp
 	src/FilterEventsByLogValuePreNexus.cpp
 	src/FindDetectorsInShape.cpp
@@ -166,6 +167,7 @@ set ( INC_FILES
 	inc/MantidDataHandling/DetermineChunking.h
 	inc/MantidDataHandling/DownloadFile.h
 	inc/MantidDataHandling/DownloadInstrument.h
+	inc/MantidDataHandling/ExportSampleLogsToCSVFile.h
 	inc/MantidDataHandling/ExtractMonitorWorkspace.h
 	inc/MantidDataHandling/FilterEventsByLogValuePreNexus.h
 	inc/MantidDataHandling/FindDetectorsInShape.h
@@ -319,6 +321,7 @@ set ( TEST_FILES
 	DetermineChunkingTest.h
 	DownloadFileTest.h
 	DownloadInstrumentTest.h
+	ExportSampleLogsToCSVFileTest.h
 	ExtractMonitorWorkspaceTest.h
 	FilterEventsByLogValuePreNexusTest.h
 	FindDetectorsInShapeTest.h
