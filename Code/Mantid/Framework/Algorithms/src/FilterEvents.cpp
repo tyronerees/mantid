@@ -32,7 +32,7 @@ DECLARE_ALGORITHM(FilterEvents)
 //----------------------------------------------------------------------------------------------
 /** Constructor
  */
-FilterEvents::FilterEvents() {}
+FilterEvents::FilterEvents() : m_convertUnit(false) {}
 
 //----------------------------------------------------------------------------------------------
 /** Destructor
@@ -146,8 +146,10 @@ void FilterEvents::exec() {
   // Parse splitters
   mProgress = 0.0;
   progress(mProgress, "Processing SplittersWorkspace.");
-  if (m_useTableSplitters)
+  if (m_splitterWSType == 0)
     processSplittersWorkspace();
+  else if (m_splitterWSType == 1)
+    processTableWorkspace();
   else
     processMatrixSplitterWorkspace();
 
@@ -169,7 +171,7 @@ void FilterEvents::exec() {
     progressamount = 0.6;
   else
     progressamount = 0.7;
-  if (m_useTableSplitters)
+  if (m_splitterWSType <= 1)
     filterEventsBySplitters(progressamount);
   else
     filterEventsByVectorSplitters(progressamount);
@@ -198,6 +200,19 @@ void FilterEvents::exec() {
   for (miter = m_outputWS.begin(); miter != m_outputWS.end(); ++miter) {
     outputwsnames.push_back(miter->second->name());
   }
+
+  if (m_convertUnit) {
+    IAlgorithm_sptr unitalg = createChildAlgorithm("ConvertUnit", true);
+    unitalg->initialize();
+    unitalg->setProperty("InputWorkspace", m_outputWS);
+    unitalg->setProperty("OutputWorkspace", m_outputWS);
+    unitalg->setProperty("Target", m_originalUnit);
+    unitalg->setProperty("EMode", "Elastic");
+    unitalg->setProperty("PreserverEvents", true);
+    unitalg->execute();
+    m_outputWS = boost::dynamic_pointer_cast<EventWorkspace>(
+        unitalg->getProperty("OuptutWorkspace"));
+  }
   setProperty("OutputWorkspaceNames", outputwsnames);
 
   mProgress = 1.0;
@@ -218,24 +233,39 @@ void FilterEvents::processProperties() {
     throw std::invalid_argument(errss.str());
   }
   // Raise exception if input workspace is not TOF.
-  if (m_eventWS->getAxis(0)->unit()->unitID() != "TOF")
-    throw std::invalid_argument("Input workspace for splitting must have unit as TOF.");
+  if (m_eventWS->getAxis(0)->unit()->unitID() != "TOF") {
+    m_originalUnit = m_eventWS->getAxis(0)->unit()->unitID();
+    IAlgorithm_sptr unitalg = createChildAlgorithm("ConvertUnit", true);
+    unitalg->initialize();
+    unitalg->setProperty("InputWorkspace", m_eventWS);
+    unitalg->setProperty("OutputWorkspace", m_eventWS);
+    unitalg->setProperty("Target", "TOF");
+    unitalg->setProperty("EMode", "Elastic");
+    unitalg->setProperty("PreserverEvents", true);
+    unitalg->execute();
+    m_eventWS = unitalg->getProperty("OuptutWorkspace");
+  }
 
   // Process splitting workspace (table or data)
   API::Workspace_sptr tempws = this->getProperty("SplitterWorkspace");
 
   m_splittersWorkspace =
       boost::dynamic_pointer_cast<SplittersWorkspace>(tempws);
+  m_tableSplitterWS = boost::dynamic_pointer_cast<ITableWorkspace>(tempws);
+  m_matrixSplitterWS = boost::dynamic_pointer_cast<MatrixWorkspace>(tempws);
+
   if (m_splittersWorkspace) {
-    m_useTableSplitters = true;
+    // Splitters workspace
+    m_splitterWSType = 0;
+  } else if (m_tableSplitterWS) {
+    // General table workspace
+    m_splitterWSType = 1;
+  } else if (m_matrixSplitterWS) {
+    // Matrix splitter workspace
+    m_splitterWSType = 2;
   } else {
-    m_matrixSplitterWS = boost::dynamic_pointer_cast<MatrixWorkspace>(tempws);
-    if (m_matrixSplitterWS) {
-      m_useTableSplitters = false;
-    } else {
       throw runtime_error("Invalid type of input workspace, neither "
                           "SplittersWorkspace nor MatrixWorkspace.");
-    }
   }
 
   m_informationWS = this->getProperty("InformationWorkspace");
@@ -410,8 +440,6 @@ void FilterEvents::processSplittersWorkspace() {
  */
 void FilterEvents::processTableWorkspace()
 {
-  API::ITableWorkspace_sptr m_tableSplitterWS;
-
   // Check column
   size_t numcols = m_tableSplitterWS->columnCount();
   if (numcols < 3)

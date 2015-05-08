@@ -81,7 +81,11 @@ private:
   /// Process user input properties
   void processProperties();
 
+  /// Process
   void processSplittersWorkspace();
+
+  /// Process
+  void processTableWorkspace();
 
   ///
   void processMatrixSplitterWorkspace();
@@ -116,11 +120,9 @@ private:
 
   DataObjects::EventWorkspace_sptr m_eventWS;
   DataObjects::SplittersWorkspace_sptr m_splittersWorkspace;
+  API::ITableWorkspace_sptr m_tableSplitterWS;
   API::MatrixWorkspace_const_sptr m_matrixSplitterWS;
   DataObjects::TableWorkspace_sptr m_detCorrectWorkspace;
-
-  /// Flag to use matrix splitters or table splitters
-  bool m_useTableSplitters;
 
   std::set<int> m_workGroupIndexes;
   Kernel::TimeSplitterType m_splitters;
@@ -169,6 +171,13 @@ private:
   EVENTFILTERSKIP m_specSkipType;
   /// Vector for skip information
   std::vector<bool> m_vecSkip;
+
+  /// Flag whether unit should be converted at the end
+  bool m_convertUnit;
+  /// Original unit
+  std::string m_originalUnit;
+  /// Workspace type (0: splitter, 1: table, 2: matrix)
+  short int m_splitterWSType;
 };
 
 } // namespace Algorithms
