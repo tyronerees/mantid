@@ -19,6 +19,7 @@ set ( SRC_FILES
 	src/ConvToMDHistoWS.cpp
 	src/ConvToMDSelector.cpp
 	src/ConvertCWPDMDToSpectra.cpp
+	src/ConvertMDHistoToMDEventWorkspace.cpp
 	src/ConvertMDHistoToMatrixWorkspace.cpp
 	src/ConvertSpiceDataToRealSpace.cpp
 	src/ConvertToDetectorFaceMD.cpp
@@ -136,6 +137,7 @@ set ( INC_FILES
 	inc/MantidMDAlgorithms/CompareMDWorkspaces.h
 	inc/MantidMDAlgorithms/ConvToMDBase.h
 	inc/MantidMDAlgorithms/ConvertCWPDMDToSpectra.h
+	inc/MantidMDAlgorithms/ConvertMDHistoToMDEventWorkspace.h
 	inc/MantidMDAlgorithms/ConvertMDHistoToMatrixWorkspace.h
 	inc/MantidMDAlgorithms/ConvertSpiceDataToRealSpace.h
 	inc/MantidMDAlgorithms/ConvertToDetectorFaceMD.h
@@ -253,6 +255,7 @@ set ( TEST_FILES
 	CompareMDWorkspacesTest.h
 	ConvertCWPDMDToSpectraTest.h
 	ConvertEventsToMDTest.h
+	ConvertMDHistoToMDEventWorkspaceTest.h
 	ConvertMDHistoToMatrixWorkspaceTest.h
 	ConvertSpiceDataToRealSpaceTest.h
 	ConvertToDetectorFaceMDTest.h

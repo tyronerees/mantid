@@ -737,7 +737,7 @@ IntegratePeaksMD2::checkOverlap(int i,
     if (pos1.distance(pos2) < radius) {
       g_log.warning() << " Warning:  Peak integration spheres for peaks " << i
                       << " and " << j << " overlap.  Distance between peaks is "
-                      << pos1.distance(pos2) << std::endl;
+                      << pos1.distance(pos2) <<"  "<<p1.getHKL()<<"  "<<p2.getHKL()<< std::endl;
     }
   }
 }
