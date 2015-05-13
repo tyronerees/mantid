@@ -7,6 +7,7 @@
 #include "MantidKernel/Unit.h"
 #include "MantidAPI/MatrixWorkspace.h"
 #include "MantidMDAlgorithms/MDWSDescription.h"
+#include "MantidDataObjects/Events.h"
 
 namespace Mantid {
 namespace MDAlgorithms {
@@ -80,6 +81,7 @@ public:
                   int Emode, bool forceViaTOF = false);
   void updateConversion(size_t i);
   double convertUnits(double val) const;
+  std::vector<double> convertUnitsLoop(const std::string &unitsTo, size_t i, std::vector<DataObjects::WeightedEventNoTime> &raw_events) const;
 
   bool isUnitConverted() const;
   std::pair<double, double> getConversionRange(double x1, double x2) const;

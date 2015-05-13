@@ -3,6 +3,7 @@
 //
 #include "MantidMDAlgorithms/MDTransfInterface.h"
 #include "MantidMDAlgorithms/MDTransfFactory.h"
+#include "MantidDataObjects/Events.h"
 //
 namespace Mantid {
 namespace MDAlgorithms {
@@ -57,6 +58,9 @@ public:
   bool calcYDepCoordinates(std::vector<coord_t> &Coord, size_t i);
   bool calcMatrixCoord(const double &k0, std::vector<coord_t> &Coord, double &s,
                        double &err) const;
+  std::vector<std::pair<double, Kernel::V3D>> calcMatrixCoordLoop(Kernel::DblMatrix const &UBinv,
+      std::vector<DataObjects::WeightedEventNoTime> &raw_events, size_t i, const std::vector<double> &x);
+
   // constructor;
   MDTransfModQ();
   /* clone method allowing to provide the copy of the particular class */

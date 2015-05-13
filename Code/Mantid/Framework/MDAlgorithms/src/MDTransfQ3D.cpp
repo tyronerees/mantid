@@ -47,7 +47,91 @@ bool MDTransfQ3D::calcMatrixCoord(const double &x, std::vector<coord_t> &Coord,
     return calcMatrixCoord3DInelastic(x, Coord);
   }
 }
+/** Method updates the value of preprocessed detector coordinates in Q-space,
+*used by other functions
+* @param Coord -- vector of MD coordinates with filled in momentum and energy
+*transfer
+* @param i -- index of the detector, which corresponds to the spectra to
+*process.
+*
+*/
+std::vector<std::pair<double, Kernel::V3D>> MDTransfQ3D::calcMatrixCoordLoop(Kernel::DblMatrix const &UBinv,
+    std::vector<DataObjects::WeightedEventNoTime> &raw_events, size_t i, const std::vector<double> &x) {
+  std::vector<std::pair<double, Kernel::V3D>> qList;
+  std::vector<double> buffer(3);
+  std::vector<Mantid::coord_t> locCoord(3, 0.);
+  double ex = (m_DetDirecton + i)->X();
+  double ey = (m_DetDirecton + i)->Y();
+  double ez = (m_DetDirecton + i)->Z();
+  // if input energy changes on each detector (efixed, indirect mode only), then
+  // set up its value
+  double Ei = 0.0, Ki = 0.0;
+  if (m_pEfixedArray) {
+    Ei = double(*(m_pEfixedArray + i));
+    Ki = sqrt(Ei / PhysicalConstants::E_mev_toNeutronWavenumberSq);
+  }
+  // if masks are defined and detector masked -- no further calculations
+  if (m_pDetMasks) {
+    if (*(m_pDetMasks + i) > 0)
+      {std::cout<< "quit 1\n";return qList;}
+  }
+  int index =0;
+  for (auto event = raw_events.begin(); event != raw_events.end(); ++event) {
+    if (m_Emode == Kernel::DeltaEMode::Elastic) {
+      double qx = -ex * x[index];
+      double qy = -ey * x[index];
+      double qz = (1 - ez) * x[index];
 
+      locCoord[0] = (coord_t)(m_RotMat[0] * qx + m_RotMat[1] * qy + m_RotMat[2] * qz);
+      if (locCoord[0] < m_DimMin[0] || locCoord[0] >= m_DimMax[0])
+        {std::cout<< "quit 2\n";return qList;}
+
+      locCoord[1] = (coord_t)(m_RotMat[3] * qx + m_RotMat[4] * qy + m_RotMat[5] * qz);
+      if (locCoord[1] < m_DimMin[1] || locCoord[1] >= m_DimMax[1])
+        {std::cout<< "quit 3\n";return qList;}
+
+      locCoord[2] = (coord_t)(m_RotMat[6] * qx + m_RotMat[7] * qy + m_RotMat[8] * qz);
+      if (locCoord[2] < m_DimMin[2] || locCoord[2] >= m_DimMax[2])
+        {std::cout<< "quit 4\n";return qList;}
+
+    } else {
+      locCoord[3] = (coord_t)x[index];
+      if (locCoord[3] < m_DimMin[3] || locCoord[3] >= m_DimMax[3])
+        {std::cout<< "quit 6\n";return qList;}
+
+      // get module of the wavevector for scattered neutrons
+      double k_tr;
+      if (m_Emode == Kernel::DeltaEMode::Direct) {
+        k_tr = sqrt((Ei - x[index]) / PhysicalConstants::E_mev_toNeutronWavenumberSq);
+      } else {
+        k_tr = sqrt((Ei + x[index]) / PhysicalConstants::E_mev_toNeutronWavenumberSq);
+      }
+
+      double qx = -ex * k_tr;
+      double qy = -ey * k_tr;
+      double qz = Ki - ez * k_tr;
+
+      locCoord[0] = (coord_t)(m_RotMat[0] * qx + m_RotMat[1] * qy + m_RotMat[2] * qz);
+      if (locCoord[0] < m_DimMin[0] || locCoord[0] >= m_DimMax[0])
+        {std::cout<< "quit 8\n";return qList;}
+      locCoord[1] = (coord_t)(m_RotMat[3] * qx + m_RotMat[4] * qy + m_RotMat[5] * qz);
+      if (locCoord[1] < m_DimMin[1] || locCoord[1] >= m_DimMax[1])
+        {std::cout<< "quit 9\n";return qList;}
+      locCoord[2] = (coord_t)(m_RotMat[6] * qx + m_RotMat[7] * qy + m_RotMat[8] * qz);
+      if (locCoord[2] < m_DimMin[2] || locCoord[2] >= m_DimMax[2])
+        {std::cout<< "quit 10\n";return qList;}
+    }
+
+    for (size_t dim = 0; dim < 3; ++dim) {
+      buffer[dim] = locCoord[dim];
+    }
+   Kernel::V3D qVec(buffer[0], buffer[1], buffer[2]);
+    //qVec = UBinv * qVec;
+    qList.push_back(std::make_pair(event->m_weight, qVec));
+    index++;
+  } // end of loop over events in list
+  return qList;
+}
 /** method calculates workspace-dependent coordinates in inelastic case.
 * Namely, it calculates module of Momentum transfer and the Energy
 * transfer and put them into initial positions (0 and 1) in the Coord vector

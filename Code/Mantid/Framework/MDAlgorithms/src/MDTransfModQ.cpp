@@ -81,7 +81,11 @@ bool MDTransfModQ::calcMatrixCoord(const double &x, std::vector<coord_t> &Coord,
     return calcMatrixCoordInelastic(x, Coord);
   }
 }
-
+std::vector<std::pair<double, Kernel::V3D>> MDTransfModQ::calcMatrixCoordLoop(Kernel::DblMatrix const &UBinv,
+    std::vector<DataObjects::WeightedEventNoTime> &raw_events, size_t i, const std::vector<double> &x) {
+  std::vector<std::pair<double, Kernel::V3D>> qList;
+  return qList;
+}
 /** Method fills-in all additional properties requested by user and not defined
 *by matrix workspace itself.
 *  it fills in [nd - (1 or 2 -- depending on emode)] values into Coord vector;

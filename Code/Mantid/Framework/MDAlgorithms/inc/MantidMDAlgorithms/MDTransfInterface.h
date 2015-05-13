@@ -9,6 +9,7 @@
 #include "MantidKernel/DeltaEMode.h"
 
 #include "MantidMDAlgorithms/MDWSDescription.h"
+#include "MantidDataObjects/Events.h"
 
 namespace Mantid {
 namespace MDAlgorithms {
@@ -161,6 +162,8 @@ public:
       * */
   virtual bool calcMatrixCoord(const double &X, std::vector<coord_t> &Coord,
                                double &signal, double &errSq) const = 0;
+  virtual std::vector<std::pair<double, Kernel::V3D>> calcMatrixCoordLoop(Kernel::DblMatrix const &UBinv,
+      std::vector<DataObjects::WeightedEventNoTime> &raw_events, size_t i, const std::vector<double> &x) = 0;
 
   /* clone method allowing to provide the copy of the particular class */
   virtual MDTransfInterface *clone() const = 0;
