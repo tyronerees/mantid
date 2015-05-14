@@ -203,15 +203,18 @@ void FilterEvents::exec() {
 
   if (m_convertUnit) {
     IAlgorithm_sptr unitalg = createChildAlgorithm("ConvertUnit", true);
+    /*
     unitalg->initialize();
     unitalg->setProperty("InputWorkspace", m_outputWS);
-    unitalg->setProperty("OutputWorkspace", m_outputWS);
+    // unitalg->setProperty("OutputWorkspace", m_outputWS);
     unitalg->setProperty("Target", m_originalUnit);
     unitalg->setProperty("EMode", "Elastic");
     unitalg->setProperty("PreserverEvents", true);
     unitalg->execute();
+    throw std::runtime_error("Haven't figured out how to deal with this");
     m_outputWS = boost::dynamic_pointer_cast<EventWorkspace>(
         unitalg->getProperty("OuptutWorkspace"));
+    */
   }
   setProperty("OutputWorkspaceNames", outputwsnames);
 
@@ -235,15 +238,19 @@ void FilterEvents::processProperties() {
   // Raise exception if input workspace is not TOF.
   if (m_eventWS->getAxis(0)->unit()->unitID() != "TOF") {
     m_originalUnit = m_eventWS->getAxis(0)->unit()->unitID();
-    IAlgorithm_sptr unitalg = createChildAlgorithm("ConvertUnit", true);
+    g_log.notice() << "Input workspace has unit " << m_originalUnit
+                   << " to convert to TOF. "
+                   << "\n";
+    IAlgorithm_sptr unitalg = createChildAlgorithm("ConvertUnits", true);
     unitalg->initialize();
     unitalg->setProperty("InputWorkspace", m_eventWS);
-    unitalg->setProperty("OutputWorkspace", m_eventWS);
+    // unitalg->setProperty("OutputWorkspace", m_eventWS);
     unitalg->setProperty("Target", "TOF");
     unitalg->setProperty("EMode", "Elastic");
-    unitalg->setProperty("PreserverEvents", true);
     unitalg->execute();
-    m_eventWS = unitalg->getProperty("OuptutWorkspace");
+    API::MatrixWorkspace_sptr outws = unitalg->getProperty("OutputWorkspace");
+    m_eventWS = boost::dynamic_pointer_cast<EventWorkspace>(outws);
+    // m_eventWS = boost::dynamic_pointer_cast<EventWorkspace>();
   }
 
   // Process splitting workspace (table or data)

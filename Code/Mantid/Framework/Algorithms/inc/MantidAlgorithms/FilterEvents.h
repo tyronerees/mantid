@@ -5,7 +5,7 @@
 #include "MantidAPI/Algorithm.h"
 #include "MantidDataObjects/EventWorkspace.h"
 #include "MantidDataObjects/SplittersWorkspace.h"
-#include "MantidDataObjects/TableWorkspace.h"
+#include "MantidAPI/ITableWorkspace.h"
 #include "MantidAPI/ISplittersWorkspace.h"
 #include "MantidKernel/TimeSplitter.h"
 #include "MantidAPI/ITableWorkspace.h"
