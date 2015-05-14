@@ -2,7 +2,8 @@
 #define MANTID_DATAHANDLING_EXPORTSAMPLELOGSTOCSVFILE_H_
 
 #include "MantidKernel/System.h"
-
+#include "MantidAPI/Algorithm.h"
+#include "MantidAPI/MatrixWorkspace.h"
 
 namespace Mantid
 {
@@ -31,16 +32,41 @@ namespace DataHandling
     File change history is stored at: <https://github.com/mantidproject/mantid>
     Code Documentation is available at: <http://doxygen.mantidproject.org>
   */
-  class DLLExport ExportSampleLogsToCSVFile 
-  {
+class DLLExport ExportSampleLogsToCSVFile : public API::Algorithm {
   public:
     ExportSampleLogsToCSVFile();
     virtual ~ExportSampleLogsToCSVFile();
-    
+
+  private:
+    void init();
+
+    void exec();
+
+    void readSampleLogs(
+        std::map<std::string, std::vector<Kernel::DateAndTime> > &maptimes,
+        std::map<std::string, std::vector<double> > &mapvalues);
+
+    void getProperties();
+
+    /// Input matrix workspace to write logs from
+    API::MatrixWorkspace_sptr m_inputWS;
+
+    /// Output file name
+    std::string m_outputFileName;
+
+    /// Names of the logs to output
+    std::vector<std::string> m_vecLogNames;
+
+    /// Options for header
+    bool m_writeHeader;
+    std::string m_headerContent;
+
+    /// Time
+    double m_timeTol;
   };
 
 
 } // namespace DataHandling
 } // namespace Mantid
 
-#endif  /* MANTID_DATAHANDLING_EXPORTSAMPLELOGSTOCSVFILE_H_ */
+#endif /* MANTID_DATAHANDLING_EXPORTSAMPLELOGSTOCSVFILE_H_ */
