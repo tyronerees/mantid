@@ -38,7 +38,7 @@ const std::size_t DIMS(3);
 
 /**
  * @brief qListFromEventWS creates qlist from events
- * @param integrator : itegrator object on which qlists are accumulated
+ * @param integrator : integrator object on which qlists are accumulated
  * @param prog : progress object
  * @param wksp : input EventWorkspace
  * @param unitConverter : Unit converter
