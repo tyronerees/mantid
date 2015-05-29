@@ -11,7 +11,6 @@
 #include <boost/algorithm/string/split.hpp>
 
 
-
 namespace Mantid {
 namespace MDAlgorithms {
 
@@ -55,9 +54,9 @@ void ConvertMDHistoToMDEventWorkspace::init() {
   declareProperty(new WorkspaceProperty<API::IMDHistoWorkspace>(
                       "InputWorkspace", "", Direction::Input),
                   "An input IMDHistoWorkspace.");
-  declareProperty(new WorkspaceProperty<IMDEventWorkspace>(
-                      "OutputWorkspace", "", Direction::Output),
-                  "An output workspace.");
+  declareProperty(new WorkspaceProperty<API::IMDEventWorkspace>("OutputWorkspace", "",
+                                                   Direction::Output),
+                  "Name of the output MDEventWorkspace.");
 }
 
 /**
@@ -74,6 +73,7 @@ void ConvertMDHistoToMDEventWorkspace::addEventsData(
 
   for (size_t i = 0; i < m_nDataObjects; ++i) {
     float signal = static_cast<float>(ws->getSignalAt(i));
+    if (std::fabs(signal) < 1e-15) continue;
     float error = static_cast<float>(ws->getErrorAt(i));
     uint16_t run_no = 0;
     int32_t detector_no = 0;
@@ -120,14 +120,46 @@ void ConvertMDHistoToMDEventWorkspace::exec() {
     size_t nbins = dim->getNBins();
 
     outWs->addDimension(MDHistoDimension_sptr(new MDHistoDimension(
-        id, name, units, dim->getMinimum(),
+        name, id, units, dim->getMinimum(),
         dim->getMaximum(), nbins)));
   }
 
   CALL_MDEVENT_FUNCTION(this->addEventsData, outWs)
 
-  // set output
-  this->setProperty("OutputWorkspace", outWs);
+  Mantid::API::Algorithm_sptr childAlg =
+      createChildAlgorithm("SliceMD");
+  if (!childAlg)
+    throw(std::runtime_error(
+        "Can not create child ChildAlgorithm to found min/max values"));
+
+  childAlg->setProperty("InputWorkspace", outWs);
+  childAlg->setProperty("OutputWorkspace", outWs);
+  IMDDimension_const_sptr dim = ws->getDimension(0);
+  std::string dimStr = dim->getName() + "," +
+      boost::lexical_cast<std::string>(dim->getMinimum())+ "," +
+      boost::lexical_cast<std::string>(dim->getMaximum()) + "," +
+      boost::lexical_cast<std::string>(dim->getNBins());
+  childAlg->setProperty("AlignedDim0", dimStr);
+  dim = ws->getDimension(1);
+  dimStr = dim->getName() + "," +
+      boost::lexical_cast<std::string>(dim->getMinimum())+ "," +
+      boost::lexical_cast<std::string>(dim->getMaximum()) + "," +
+      boost::lexical_cast<std::string>(dim->getNBins());
+  childAlg->setProperty("AlignedDim1", dimStr);
+  dim = ws->getDimension(2);
+  dimStr = dim->getName() + "," +
+      boost::lexical_cast<std::string>(dim->getMinimum())+ "," +
+      boost::lexical_cast<std::string>(dim->getMaximum()) + "," +
+      boost::lexical_cast<std::string>(dim->getNBins());
+  childAlg->setProperty("AlignedDim2", dimStr);
+  childAlg->execute();
+  if (!childAlg->isExecuted())
+    throw(std::runtime_error("Can not properly execute child algorithm to set "
+                             "boxes"));
+  Workspace_sptr out = childAlg->getProperty("OutputWorkspace");
+  outWs = boost::dynamic_pointer_cast<IMDEventWorkspace>(out);
+// Save it on the output.
+ setProperty("OutputWorkspace", outWs);
 }
 
 } // namespace Mantid
