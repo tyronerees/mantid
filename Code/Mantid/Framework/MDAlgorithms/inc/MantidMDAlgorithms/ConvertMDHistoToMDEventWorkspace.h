@@ -8,11 +8,12 @@
 namespace Mantid {
 namespace MDAlgorithms {
 
-/** ConvertMDHistoToMDEventWorkspace : Loads a file containing dimensionality and data for
-  an MDEventWorkspace. Handles either full mdevents for mdleanevents as input
-  data types.
+/** ConvertMDHistoToMDEventWorkspace : Converts MDHistoWorkspace
+ * to one containing dimensionality and data for
+  an MDEventWorkspace. Writes mdleanevents as output
+  data type.
 
-  @date 2012-07-11
+  @date 2015-06-01
 
   Copyright &copy; 2012 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge
   National Laboratory & European Spallation Source
