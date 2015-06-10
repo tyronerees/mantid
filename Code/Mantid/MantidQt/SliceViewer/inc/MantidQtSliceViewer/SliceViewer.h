@@ -6,10 +6,12 @@
 #include "DllOption.h"
 #include "MantidAPI/IMDIterator.h"
 #include "MantidAPI/IMDWorkspace.h"
-#include "MantidAPI/PeakTransformSelector.h"
+#include "MantidGeometry/Crystal/PeakTransformSelector.h"
 #include "MantidGeometry/MDGeometry/MDHistoDimension.h"
+#include "MantidKernel/Logger.h"
 #include "MantidKernel/VMD.h"
 #include "MantidQtAPI/MantidColorMap.h"
+#include "MantidQtAPI/MdSettings.h"
 #include "MantidQtMantidWidgets/SafeQwtPlot.h"
 #include "MantidQtAPI/SyncedCheckboxes.h"
 #include "MantidQtSliceViewer/LineOverlay.h"
@@ -26,10 +28,20 @@
 #include <qwt_raster_data.h>
 #include <qwt_scale_widget.h>
 #include <vector>
-#include <Poco/NObserver.h>
 #include "MantidAPI/Algorithm.h"
 #include "MantidQtAPI/AlgorithmRunner.h"
+#include <boost/shared_ptr.hpp>
 
+class QDragEnterEvent;
+class QDropEvent;
+
+namespace Mantid
+{
+namespace API
+{
+ class IPeaksWorkspace;
+}
+}
 namespace MantidQt
 {
 namespace SliceViewer
@@ -38,6 +50,21 @@ namespace SliceViewer
 // Forward dec
 class CompositePeaksPresenter;
 class ProxyCompositePeaksPresenter;
+
+// Static Const values
+static const std::string g_iconPathPrefix = ":/SliceViewer/icons/";
+static const std::string g_iconZoomPlus = g_iconPathPrefix + "colour zoom plus scale 32x32.png";
+static const std::string g_iconZoomMinus = g_iconPathPrefix + "colour zoom minus scale 32x32.png";
+static const std::string g_iconViewFull = g_iconPathPrefix + "view-fullscreen.png";
+static const std::string g_iconCutOn = g_iconPathPrefix + "cut on 32x32.png";
+static const std::string g_iconCut = g_iconPathPrefix + "cut 32x32.png";
+static const std::string g_iconGridOn = g_iconPathPrefix + "grid on 32x32.png";
+static const std::string g_iconGrid = g_iconPathPrefix + "grid 32x32.png";
+static const std::string g_iconRebinOn = g_iconPathPrefix + "rebin on 32x32.png";
+static const std::string g_iconRebin = g_iconPathPrefix + "rebin 32x32.png";
+static const std::string g_iconPeakListOn = g_iconPathPrefix + "Peak List on 32x32.png";
+static const std::string g_iconPeakList = g_iconPathPrefix + "Peak List 32x32.png";
+
 
 /** GUI for viewing a 2D slice out of a multi-dimensional workspace.
  * You can select which dimension to plot as X,Y, and the cut point
@@ -105,6 +132,10 @@ public:
   /* -- Methods from implementation of ZoomablePeaksView. --*/
   virtual void zoomToRectangle(const PeakBoundingBox& box);
   virtual void resetView();
+  virtual void detach();
+
+  /* Methods associated with workspace observers. Driven by SliceViewerWindow */
+  void peakWorkspaceChanged(const std::string& wsName, boost::shared_ptr<Mantid::API::IPeaksWorkspace>& changedPeaksWS);
 
 signals:
   /// Signal emitted when the X/Y index of the shown dimensions is changed
@@ -147,6 +178,7 @@ public slots:
   void changeNormalizationNone();
   void changeNormalizationVolume();
   void changeNormalizationNumEvents();
+  void onNormalizationChanged(const QString& normalizationKey);
 
   // Buttons or actions
   void clearLine();
@@ -154,6 +186,7 @@ public slots:
   void saveImage(const QString & filename = QString());
   void copyImageToClipboard();
   void onPeaksViewerOverlayOptions();
+
 
   // Synced checkboxes
   void LineMode_toggled(bool);
@@ -165,9 +198,13 @@ public slots:
   // Dynamic rebinning
   void rebinParamsChanged();
   void dynamicRebinComplete(bool error);
-
   // Peaks overlay
-  void peakOverlay_toggled(bool);
+  void peakOverlay_clicked();
+
+protected:
+
+  void dragEnterEvent(QDragEnterEvent *e);
+  void dropEvent(QDropEvent *e);
 
 private:
   void loadSettings();
@@ -192,8 +229,11 @@ private:
   bool isAutoRebinSet() const;
   void autoRebinIfRequired();
 
+  // helper for saveImage
+  QString ensurePngExtension(const QString& fname) const;
 
 private:
+  
 
   // -------------------------- Widgets ----------------------------
 
@@ -278,7 +318,7 @@ private:
 
   /// Synced menu/buttons
   MantidQt::API::SyncedCheckboxes *m_syncLineMode, *m_syncSnapToGrid,
-    *m_syncRebinMode, *m_syncRebinLock, *m_syncPeakOverlay, *m_syncAutoRebin;
+    *m_syncRebinMode, *m_syncRebinLock, *m_syncAutoRebin;
 
   /// Cached double for infinity
   double m_inf;
@@ -298,6 +338,12 @@ private:
   /// If true, the rebinned overlayWS is locked until refreshed.
   bool m_rebinLocked;
 
+  /// Md Settings for color maps 
+  boost::shared_ptr<MantidQt::API::MdSettings>  m_mdSettings;
+
+  /// Logger
+  Mantid::Kernel::Logger m_logger;
+
   // -------------------------- Controllers ------------------------
   boost::shared_ptr<CompositePeaksPresenter>  m_peaksPresenter;
 
@@ -307,7 +353,12 @@ private:
   DimensionSliceWidget* m_peaksSliderWidget;
 
   /// Object for choosing a PeakTransformFactory based on the workspace type.
-  Mantid::API::PeakTransformSelector m_peakTransformSelector;
+  Mantid::Geometry::PeakTransformSelector m_peakTransformSelector;
+
+  static const QString NoNormalizationKey;
+  static const QString VolumeNormalizationKey;
+  static const QString NumEventsNormalizationKey;
+
 };
 
 } // namespace SliceViewer

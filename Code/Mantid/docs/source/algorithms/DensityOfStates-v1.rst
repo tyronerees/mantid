@@ -12,54 +12,74 @@ Description
 Calculates phonon densities of states, Raman and IR spectrum from the
 output of CASTEP code obtained in the form of .phonon and .castep files.
 
+If the IonTable spectrum type is used then the output workspace will be
+a table workspace containing each ion that is present in a .phonon file.
+
 Usage
 -----
 
-**Example - loading data from phonon & castep files:**  
+**Example - loading data from phonon & castep files:**
 
 .. testcode:: ExDensityOfStatesSimple
 
-    #loading the same data from a castep and phonon file
-    ws1 = DensityOfStates(File='squaricn.phonon', OutputWorkspace='squaricn_phonon')
-    ws2 = DensityOfStates(File='squaricn.castep', OutputWorkspace='squaricn_castep')
+    # Loading the same data from a castep and phonon file
+    phonon_ws = DensityOfStates(File='squaricn.phonon')
+    castep_ws = DensityOfStates(File='squaricn.castep')
 
-    print CheckWorkspacesMatch(ws1, ws2)
+    print CheckWorkspacesMatch(phonon_ws, castep_ws)
 
 Output:
 
 .. testoutput:: ExDensityOfStatesSimple
-  
+
     Success!
 
-**Example - loading partial contributions of ions:**  
+**Example - loading partial contributions of ions:**
 
 .. testcode:: ExDensityOfStatesPartial
 
-    ws1 = DensityOfStates(File='squaricn.phonon',OutputWorkspace='squaricn', Ions=['H', 'C', 'O'])
-    for name in ws1.getNames():
+    squaricn = DensityOfStates(File='squaricn.phonon', Ions=['H', 'C', 'O'])
+
+    for name in squaricn.getNames():
       print name
 
 Output:
 
 .. testoutput:: ExDensityOfStatesPartial
-  
+
     squaricn_H
     squaricn_C
     squaricn_O
 
-**Example - loading summed partial contributions of ions:**  
+**Example - loading summed partial contributions of ions:**
 
 .. testcode:: ExDensityOfStatesPartialSummed
 
-    ws1 = DensityOfStates(File='squaricn.phonon',OutputWorkspace='squaricn_partial_sum', Ions=['H', 'C', 'O'], SumContributions=True)
-    ws2 = DensityOfStates(File='squaricn.phonon',OutputWorkspace='squaricn_total')
+    sum_ws = DensityOfStates(File='squaricn.phonon', Ions=['H', 'C', 'O'], SumContributions=True)
+    total_ws = DensityOfStates(File='squaricn.phonon')
 
-    print CheckWorkspacesMatch(ws1, ws2, Tolerance=1e-12)
+    print CheckWorkspacesMatch(total_ws, sum_ws, Tolerance=1e-12)
 
 Output:
 
 .. testoutput:: ExDensityOfStatesPartialSummed
-  
+
     Success!
+
+**Example - Getting the list of ions in a phonon file:**
+
+.. testcode:: ExDensityOfStatesIonTable
+
+    ion_ws = DensityOfStates(File='squaricn.phonon', SpectrumType='IonTable')
+    for i in range (0, ion_ws.rowCount()):
+        print ion_ws.row(i)['Ion']
+
+Output:
+
+.. testoutput:: ExDensityOfStatesIonTable
+
+    H
+    C
+    O
 
 .. categories::

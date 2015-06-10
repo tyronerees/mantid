@@ -1,3 +1,4 @@
+#pylint: disable=invalid-name
 """
     This class holds all the necessary information to create a reduction script.
 """
@@ -9,10 +10,10 @@ class REFLReductionScripter(BaseReductionScripter):
     """
         Reduction scripter for REFL
     """
-    
+
     def __init__(self, name="REFL"):
-        super(REFLReductionScripter, self).__init__(name=name)        
-    
+        super(REFLReductionScripter, self).__init__(name=name)
+
     def to_script(self, file_name=None):
         """
             Spits out the text of a reduction script with the current state.
@@ -24,7 +25,7 @@ class REFLReductionScripter(BaseReductionScripter):
         """
         script = "# %s reduction script\n" % self.instrument_name
         script += "# Script automatically generated on %s\n\n" % time.ctime(time.time())
-        
+
         script += "import mantid\n"
         script += "from mantid.simpleapi import *\n"
         script += "\n"
@@ -36,7 +37,7 @@ class REFLReductionScripter(BaseReductionScripter):
         script += "    if _mt.find('reflectivity') != -1:\n"
         script += "        AnalysisDataService.remove(_mt)\n"
         script += "\n"
-        
+
         for item in self._observers:
             if item.state() is not None:
                 script += str(item.state())
@@ -47,6 +48,5 @@ class REFLReductionScripter(BaseReductionScripter):
             f.close()
 
         return script
-        
 
-    
+

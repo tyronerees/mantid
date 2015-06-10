@@ -14,13 +14,13 @@
 #include "MantidTestHelpers/WorkspaceCreationHelper.h"
 
 using namespace WorkspaceCreationHelper;
-using namespace Mantid::MDEvents::MDEventsTestHelper;
+using namespace Mantid::DataObjects::MDEventsTestHelper;
 
-BOOST_PYTHON_FUNCTION_OVERLOADS(create2DWorkspaceWithFullInstrument_overloads, create2DWorkspaceWithFullInstrument, 2, 4);
+BOOST_PYTHON_FUNCTION_OVERLOADS(create2DWorkspaceWithFullInstrument_overloads, create2DWorkspaceWithFullInstrument, 2, 4)
 
-BOOST_PYTHON_FUNCTION_OVERLOADS(makeFakeMDHistoWorkspace_overloads, makeFakeMDHistoWorkspace, 2, 7);
+BOOST_PYTHON_FUNCTION_OVERLOADS(makeFakeMDHistoWorkspace_overloads, makeFakeMDHistoWorkspace, 2, 7)
 
-BOOST_PYTHON_FUNCTION_OVERLOADS(create2DWorkspaceWithRectangularInstrument_overloads, create2DWorkspaceWithRectangularInstrument, 3, 3);
+BOOST_PYTHON_FUNCTION_OVERLOADS(create2DWorkspaceWithRectangularInstrument_overloads, create2DWorkspaceWithRectangularInstrument, 3, 3)
 
 namespace
 {
@@ -69,10 +69,12 @@ BOOST_PYTHON_MODULE(WorkspaceCreationHelper)
 
   //=================================== Peak Workspaces ===================================
 
-  // Forces the returns the be IEventWorkspace_sptr
+  // Forces the returns the be IPeaks_sptr
   typedef IPeaksWorkspace_sptr (*Signature1_Peaks)(const int);
+  typedef IPeaksWorkspace_sptr (*Signature2_Peaks)(const int, const bool);
 
   def("createPeaksWorkspace", (Signature1_Peaks)&createPeaksWorkspace);
+  def("createPeaksWorkspace", (Signature2_Peaks)&createPeaksWorkspace);
 
   //=================================== MD Workspaces ===================================
 

@@ -8,10 +8,11 @@
 #include "MantidCrystal/IndexSXPeaks.h"
 #include "MantidCrystal/LoadIsawPeaks.h"
 #include "MantidCrystal/LoadIsawUB.h"
-#include "MantidAPI/IPeak.h"
+#include "MantidGeometry/Crystal/IPeak.h"
 #include <cmath>
 
 using namespace Mantid::API;
+using namespace Mantid::Geometry;
 using namespace Mantid::Crystal;
 using namespace Mantid::DataObjects;
 
@@ -120,7 +121,7 @@ public:
     {
       IPeak& peak = m_masterPeaks->getPeak(i);
       Mantid::Kernel::V3D v(1, 0, 0);
-      peak.setQSampleFrame(v); // Overwrite all Q samples to be co-linear.
+      peak.setQSampleFrame(v, boost::optional<double>()); // Overwrite all Q samples to be co-linear.
     }
 
     TS_ASSERT_THROWS(doTest(6, "1, 2, 3, 4, 5, 6", 14.131, 19.247, 8.606, 90.0, 105.071, 90.0), std::runtime_error);

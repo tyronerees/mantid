@@ -19,7 +19,7 @@ namespace MantidQt
     Provides a translation layer that takes a Poco::Message and converts it
     to a Qt signal.
 
-    Copyright &copy; 2013 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+    Copyright &copy; 2013 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
 
     This file is part of Mantid.
 
@@ -66,7 +66,7 @@ namespace MantidQt
       void messageReceived(const Message & msg);
 
     private:
-      Q_DISABLE_COPY(QtSignalChannel);
+      Q_DISABLE_COPY(QtSignalChannel)
 
       /// Optional source (use std::string to avoid conversion in comparison)
       QString m_source;

@@ -1,6 +1,7 @@
+#pylint: disable=no-init
 from mantid.kernel import *
 from mantid.api import *
-from mantid.simpleapi import LoadAscii
+import mantid.simpleapi
 import math
 
 class PearlMCAbsorption(PythonAlgorithm):
@@ -10,13 +11,13 @@ class PearlMCAbsorption(PythonAlgorithm):
 
     def summary(self):
         return "Loads pre-calculated or measured absorption correction files for Pearl."
-        
+
     def PyInit(self):
         # Input file
         self.declareProperty(FileProperty("Filename","", FileAction.Load, ['.out','.dat']), doc="The name of the input file.")
         # Output workspace
         self.declareProperty(MatrixWorkspaceProperty("OutputWorkspace","", direction=Direction.Output), doc="The name of the input file.")
-        
+
     def PyExec(self):
         filename = self.getProperty("Filename").value
         thickness = self._parseHeader(filename)
@@ -26,23 +27,23 @@ class PearlMCAbsorption(PythonAlgorithm):
             x_unit = 'Wavelength'
         else:
             x_unit = 'dSpacing'
-            
+
         wkspace_name = self.getPropertyValue("OutputWorkspace")
         # Load the file
-        ascii_wkspace = LoadAscii(Filename=filename, OutputWorkspace=wkspace_name, Separator="Space", Unit=x_unit)
+        ascii_wkspace = mantid.simpleapi.LoadAscii(Filename=filename, OutputWorkspace=wkspace_name, Separator="Space", Unit=x_unit)
         if thickness is None:
             coeffs = ascii_wkspace
         else:
             coeffs = self._calculateAbsorption(ascii_wkspace, float(thickness))
-        
+
         coeffs.setYUnitLabel("Attenuation Factor (I/I0)")
-        coeffs.setYUnit("");
+        coeffs.setYUnit("")
         coeffs.setDistribution(True)
         self.setProperty("OutputWorkspace", coeffs)
 
     def _parseHeader(self, filename):
-        """Parses the header in the file. 
-        If the first line contains t= then this is assumed to be measured file else 
+        """Parses the header in the file.
+        If the first line contains t= then this is assumed to be measured file else
         calculated is assumed.
         """
         # Parse some header information to test whether this is a measured or calculated file

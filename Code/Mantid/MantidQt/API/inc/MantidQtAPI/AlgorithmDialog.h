@@ -23,6 +23,7 @@
 // Could have forward declared this but it makes it easier to use from
 // inheriting classes if it is included here
 #include "MantidAPI/IAlgorithm.h"
+#include "MantidAPI/AlgorithmObserver.h"
 
 #include <QDialog>
 #include <QString>
@@ -70,7 +71,7 @@ class InterfaceManager;
     @author Martyn Gigg, Tessella Support Services plc
     @date 24/02/2009
 
-    Copyright &copy; 2009 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+    Copyright &copy; 2009 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
 
     This file is part of Mantid.
 
@@ -143,6 +144,9 @@ protected:
   
   /// Adds a property (name,value) pair to the stored map
   void storePropertyValue(const QString & name, const QString & value);
+
+  /// Removes a property (name, value) pair from the stored map
+  void removePropertyValue(const QString& name);
 
   /// Set properties on this algorithm by pulling values from the tied widgets
   bool setPropertyValues(const QStringList & skipList = QStringList());
@@ -246,6 +250,8 @@ public:
   void setOptionalMessage(const QString & message);
   /// Set comma-separated-list of enabled parameter names
   void addEnabledAndDisableLists(const QStringList & enabled, const QStringList & disabled);
+  /// Add an AlgorithmObserver to the algorithm
+  void addAlgorithmObserver(Mantid::API::AlgorithmObserver *observer);
 
 protected:
 
@@ -300,6 +306,9 @@ protected:
 
   /// A map to keep track of replace workspace button presses
   QHash<QPushButton*, int> m_wsbtn_tracker;
+
+  /// A list of AlgorithmObservers to add to the algorithm prior to execution
+  std::vector<Mantid::API::AlgorithmObserver *> m_observers;
   //@}
 };
 

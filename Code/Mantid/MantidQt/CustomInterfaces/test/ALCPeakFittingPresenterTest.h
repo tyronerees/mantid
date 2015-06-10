@@ -17,6 +17,17 @@ using namespace Mantid;
 using namespace MantidQt::CustomInterfaces;
 using namespace testing;
 
+namespace boost
+{
+  template<class CharType, class CharTrait>
+  std::basic_ostream<CharType, CharTrait>& operator<<(std::basic_ostream<CharType, CharTrait>& out, optional<QString> const& maybe)
+  {
+    if (maybe)
+      out << maybe->toStdString();
+    return out;
+  }
+}
+
 class MockALCPeakFittingView : public IALCPeakFittingView
 {
 public:
@@ -39,6 +50,8 @@ public:
   MOCK_METHOD1(setPeakPicker, void(const IPeakFunction_const_sptr&));
   MOCK_METHOD1(setFunction, void(const IFunction_const_sptr&));
   MOCK_METHOD3(setParameter, void(const QString&, const QString&, double));
+  MOCK_METHOD1(displayError, void(const QString&));
+  MOCK_METHOD0(help, void());
 };
 
 class MockALCPeakFittingModel : public IALCPeakFittingModel
@@ -113,6 +126,14 @@ public:
     ALCPeakFittingPresenter presenter(&view, &model);
     EXPECT_CALL(view, initialize()).Times(1);
     presenter.initialize();
+  }
+
+  void test_fitEmptyFunction()
+  {
+    ON_CALL(*m_view, function(QString(""))).WillByDefault(Return(IFunction_const_sptr()));
+    EXPECT_CALL(*m_view, displayError(QString("Couldn't fit an empty function"))).Times(1);
+
+    m_view->requestFit();
   }
 
   void test_fit()
@@ -246,6 +267,12 @@ public:
     EXPECT_CALL(*m_view, setPeakPicker(_)).Times(0);
 
     m_view->changeParameter(QString("f1"), QString("A0"));
+  }
+
+  void test_helpPage ()
+  {
+    EXPECT_CALL(*m_view, help()).Times(1);
+    m_view->help();
   }
 };
 

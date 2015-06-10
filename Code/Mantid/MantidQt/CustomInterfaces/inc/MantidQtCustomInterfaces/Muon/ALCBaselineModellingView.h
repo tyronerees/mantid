@@ -21,7 +21,7 @@ namespace CustomInterfaces
   /** ALCBaselineModellingView : Widget-based implementation of the ALC Baseline Modelling step
                                  interface.
     
-    Copyright &copy; 2014 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+    Copyright &copy; 2014 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
 
     This file is part of Mantid.
 
@@ -60,13 +60,14 @@ namespace CustomInterfaces
     void setDataCurve(const QwtData& data);
     void setCorrectedCurve(const QwtData& data);
     void setBaselineCurve(const QwtData& data);
-    void setFunction(const QString& func);
+    void setFunction(Mantid::API::IFunction_const_sptr func);
     void setNoOfSectionRows(int rows);
     void setSectionRow(int row, SectionRow values);
     void addSectionSelector(int index, SectionSelector values);
     void deleteSectionSelector(int index);
     void updateSectionSelector(int index, SectionSelector values);
     void displayError(const QString& message);
+    void help();
   // -- End of IALCBaselineModellingView interface -------------------------------------------------
 
   private slots:

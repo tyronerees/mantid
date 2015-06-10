@@ -1,5 +1,8 @@
 #include "MantidVatesSimpleGuiViewWidgets/ThreesliceView.h"
 #include "MantidVatesSimpleGuiViewWidgets/LibHelper.h"
+#include "MantidKernel/ConfigService.h"
+#include "MantidKernel/Logger.h"
+#include <Poco/Path.h>
 
 #if defined(__INTEL_COMPILER)
   #pragma warning disable 1170
@@ -13,6 +16,7 @@
 #include <pqPipelineSource.h>
 #include <pqPluginManager.h>
 #include <pqRenderView.h>
+#include <pqScalarsToColors.h>
 #include <vtkSMPropertyHelper.h>
 #include <vtkSMProxy.h>
 
@@ -23,6 +27,7 @@
 #include <QMessageBox>
 
 #include <iostream>
+#include <string>
 
 namespace Mantid
 {
@@ -30,20 +35,19 @@ namespace Vates
 {
 namespace SimpleGui
 {
-
-ThreeSliceView::ThreeSliceView(QWidget *parent) : ViewBase(parent)
+namespace
 {
-  this->ui.setupUi(this);
+  /// Static logger
+  Kernel::Logger g_log("ThreeSliceView");
+}
 
-  // Need to load plugin
-  pqPluginManager* pm = pqApplicationCore::instance()->getPluginManager();
-  QString error;
-  pm->loadExtension(pqActiveObjects::instance().activeServer(),
-                    QUADVIEW_LIBRARY, &error, false);
 
-  this->mainView = this->createRenderView(this->ui.mainRenderFrame,
-                                          QString("pqQuadView"));
-  pqActiveObjects::instance().setActiveView(this->mainView);
+ThreeSliceView::ThreeSliceView(QWidget *parent, RebinnedSourcesManager* rebinnedSourcesManager) : ViewBase(parent, rebinnedSourcesManager)
+{
+  this->m_ui.setupUi(this);
+  this->m_mainView = this->createRenderView(this->m_ui.mainRenderFrame,
+                                          QString("OrthographicSliceView"));
+  pqActiveObjects::instance().setActiveView(this->m_mainView);
 }
 
 ThreeSliceView::~ThreeSliceView()
@@ -56,12 +60,12 @@ void ThreeSliceView::destroyView()
   // Active source disappears in only this view, so set it from the
   // internal source before destroying view.
   pqActiveObjects::instance().setActiveSource(this->origSrc);
-  builder->destroy(this->mainView);
+  builder->destroy(this->m_mainView);
 }
 
 pqRenderView* ThreeSliceView::getView()
 {
-  return this->mainView.data();
+  return this->m_mainView.data();
 }
 
 void ThreeSliceView::render()
@@ -94,7 +98,7 @@ void ThreeSliceView::makeThreeSlice()
   this->origSrc = src;
 
   pqDataRepresentation *drep = builder->createDataRepresentation(\
-        this->origSrc->getOutputPort(0), this->mainView);
+        this->origSrc->getOutputPort(0), this->m_mainView);
   vtkSMPropertyHelper(drep->getProxy(), "Representation").Set("Slices");
   drep->getProxy()->UpdateVTKObjects();
   this->origRep = qobject_cast<pqPipelineRepresentation*>(drep);
@@ -102,12 +106,12 @@ void ThreeSliceView::makeThreeSlice()
 
 void ThreeSliceView::renderAll()
 {
-  this->mainView->render();
+  this->m_mainView->render();
 }
 
 void ThreeSliceView::resetDisplay()
 {
-  this->mainView->resetDisplay();
+  this->m_mainView->resetDisplay();
 }
 
 /*
@@ -118,13 +122,13 @@ void ThreeSliceView::correctVisibility()
 */
 void ThreeSliceView::correctColorScaleRange()
 {
-  QPair<double, double> range = this->origRep->getColorFieldRange();
+  QPair<double, double> range = this->origRep->getLookupTable()->getScalarRange();
   emit this->dataRange(range.first, range.second);
 }
 
 void ThreeSliceView::resetCamera()
 {
-  this->mainView->resetCamera();
+  this->m_mainView->resetCamera();
 }
 
 }

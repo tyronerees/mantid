@@ -13,8 +13,9 @@ Overview and similar algorithms
 ###############################
 
 This algorithm will integrate disjoint single crystal Bragg peaks by
-summing the number of raw events in a 3D ellipsoidal peak region in
-reciprocal space and subtracting an estimate of the background obtained
+summing the number of raw or weighted events in a 3D ellipsoidal peak region in
+reciprocal space (See *IntegrateInHKL* option for integrating in HKL) 
+and subtracting an estimate of the background obtained
 from an ellipsoidal shell. In some ways it is similar to the
 :ref:`algm-IntegratePeaksMD` algorithm. In particular the size parameters to
 this algorithm are also specified in inverse Angstroms and the
@@ -22,7 +23,7 @@ background subtraction is done in the same way for both the intensity
 and the estimated standard deviations. However, this algorithm differs
 from :ref:`algm-IntegratePeaksMD` in several critical ways.
 
--  This algorithm works directly with raw, un-weighted events 
+-  This algorithm works directly with raw or weighted events 
    while :ref:`algm-IntegratePeaksMD` uses **MDEvents** from 
    `MDEventWorkspace <http://www.mantidproject.org/MDEventWorkspace>`_.
 -  This algorithm uses 3D ellipsoidal regions with aspect ratios that
@@ -44,7 +45,7 @@ Explanation of Inputs
 #####################
 
 -  The event data to be integrated is obtained from an ordinary
-   `EventWorkspace <http://www.mantidproject.org/EventWorkspace>`_ 
+   :ref:`EventWorkspace <EventWorkspace>` 
    with an X-axis in time-of-flight, as loaded from a
    NeXus event file. This algorithm maps the events to reciprocal space 
    using *PeaksWorkwpace* with indexed peaks to determine the parameters 
@@ -91,6 +92,13 @@ Explanation of Inputs
    :math:`0 < PeakSize \leq BackgroundInnerSize` and 
    :math:`BackgroundInnerSize < BackgroundOuterSize \leq RegionRadius`
 
+-  If the *IntegrateInHKL* option is selected, then HKL space is used for
+   the integration instead of reciprocal space.  This option may be useful
+   for large unit cells where the radius of integration needs to be very different
+   for peaks at low Q and high Q.  With this option the *PeakSize*, 
+   *BackgroundInnerSize* and *BackgroundOuterSize* are specified in HKL and they
+   just need to be smaller than 0.5.
+	
 -  The integrated intensities will be set in the specified
    *OutputWorkspace*. If this is different from the input *PeaksWorkspace*,
    the input peaks workspace will be copied to the *OutputWorkspace*
@@ -101,7 +109,7 @@ Detailed Algorithm Description
 
 This algorithm will integrate a list of indexed single-crystal
 diffraction peaks from a *PeaksWorkspace*, using events from an
-( `EventWorkspace <http://www.mantidproject.org/EventWorkspace>`_ ).
+( :ref:`EventWorkspace <EventWorkspace>` ).
 The indexed peaks are first used to determine a UB
 matrix. The inverse of that UB matrix is then used to form lists of
 events that are close to peaks in reciprocal space. An event will be
@@ -110,7 +118,7 @@ added to the list of events for a peak provided that the fractional
 :math:`Q` -vector) is closer to the :math:`h,k,l` of that peak, 
 than to the :math:`h,k,l` of any
 other peak AND the :math:`Q` -vector for that event is within the specified
-radius of the :math:`Q` -vector for that peak.
+radius of the :math:`Q` -vector for that peak. This technique makes the algorithm suitable for nuclear peaks, but may not be suitable for magnetic peaks.
 
 When the lists of events near the peaks have been built, the three
 principal axes of the set of events near each peak are found, and the
@@ -155,12 +163,14 @@ ellipsoid. The outer surface of the background ellipsoidal shell is an
 ellipsoidal surface with the same relative axis lengths as the inner
 surface.
 
+This algorithm uses principle component analysis to determine the principle axis for each peak. For the event list (QLab) associated with each peak, the algorithm determines a covariance matrix, and uses that to establish eigenvectors corresponding to the principle axis (all orthogonal). The sizes of each principle axis are used define the region of which events will be counted/integrated from those already associated with each peak.
+
 Usage
 ------
 
 **Example - IntegrateEllipsoids:**
 
-The code iteslef works but disabled from doc tests as takes too long to complete. User should provide its own 
+The code itself works but disabled from doc tests as takes too long to complete. User should provide its own 
 event nexus file instead of **TOPAZ_3132_event.nxs** used within this example. The original **TOPAZ_3132_event.nxs**
 file is availible in `Mantid system tests repository <https://github.com/mantidproject/systemtests/tree/master/Data/TOPAZ_3132_event.nxs>`_.
 

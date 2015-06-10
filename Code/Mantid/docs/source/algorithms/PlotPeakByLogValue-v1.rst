@@ -16,7 +16,7 @@ defined in the Input property. The Input property expects a list of
 spectra identifiers separated by semicolons (;). An identifier is itself
 a comma-separated list of values. The first value is the name of the
 source. It can be either a workspace name or a name of a file (RAW or
-Nexus). If it is a name of a `WorkspaceGroup <http://www.mantidproject.org/WorkspaceGroup>`_ all its
+Nexus). If it is a name of a :ref:`WorkspaceGroup <WorkspaceGroup>` all its
 members will be included in the fit. The second value selects a spectrum
 within the workspace or file. It is an integer number with a prefix
 defining the meaning of the number: "sp" for a spectrum number, "i" for
@@ -53,7 +53,7 @@ Output workspace format
    :alt: PlotPeakByLogValue_Output.png
 
    PlotPeakByLogValue\_Output.png
-   
+
 In this example a group of three Matrix workspaces were fitted with a
 :ref:`Gaussian <func-Gaussian>` on a linear background.
 
@@ -64,11 +64,33 @@ columns with parameter values and fitting errors. If a parameter was
 fixed or tied the error will be zero. Here is an example of the output
 workspace:
 
+Minimizer setup
+###############
+
+It is possible to supply a fully configured minimizer via the Minimizer
+property, this can also include several flags that are used to indicate the
+workspace name and spectrum index that has been fitted (useful for fitting using
+a minimizer that output workspaces (i.e. FABADA)).
+
+The possible flags are:
+
+:code:`$wsname`
+  The name of the workspace being fitted
+
+:code:`$wsindex`
+  The index of the spectrum being fitted
+
+:code:`$basename`
+  A convinience flag for :code:`$wsname_$wsindex` (the same format the fit
+  result and parameter output takes)
+
+:code:`$outputname`
+  The output workspace name (i.e. the value of the OutputWorkspace property).
 
 Usage
 -----
 
-**Example - fitting a single spectrum of in a workspace:**  
+**Example - fitting a single spectrum of in a workspace:**
 
 .. testcode:: ExPlotPeakByLogValueSimple
 
@@ -76,7 +98,7 @@ Usage
     function = "name=Gaussian,Height=10.0041,PeakCentre=10098.6,Sigma=48.8581;name=FlatBackground,A0=0.3"
     peaks = PlotPeakByLogValue(ws, function, Spectrum=1)
 
-**Example - sequentially fitting a workspace:**  
+**Example - sequentially fitting a workspace:**
 
 .. testcode:: ExPlotPeakByLogValueSeq
 
@@ -101,7 +123,7 @@ Usage
 Output:
 
 .. testoutput:: ExPlotPeakByLogValueSeq
-  
+
     True
 
 .. categories::

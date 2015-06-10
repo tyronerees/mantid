@@ -1,7 +1,8 @@
+#pylint: disable=invalid-name
 #This is an extension of refl_columns.py as that is a auto-generated script form pyqt and shouldn't be edited
 #so this file provides any extra GUI tweaks not easily doable in the designer
 #for the time being this also includes non-GUI behaviour
-import refl_columns
+import ui_refl_columns
 from PyQt4 import QtCore, QtGui
 
 try:
@@ -9,7 +10,7 @@ try:
 except AttributeError:
     _fromUtf8 = lambda s: s
 
-class ReflChoose(QtGui.QDialog, refl_columns.Ui_chooseColumnsDialog):
+class ReflChoose(QtGui.QDialog, ui_refl_columns.Ui_chooseColumnsDialog):
 
 
     visiblestates = {}
@@ -37,4 +38,4 @@ class ReflChoose(QtGui.QDialog, refl_columns.Ui_chooseColumnsDialog):
     def on_buttonsColumns_Clicked(self, button):
         if self.buttonsColumns.button(QtGui.QDialogButtonBox.RestoreDefaults) == button:
             for i in range(self.listColumns.count()):
-                self.listColumns.item(i).setCheckState(2) 
+                self.listColumns.item(i).setCheckState(2)

@@ -3,6 +3,7 @@ set ( SRC_FILES
   src/AlgorithmInputHistory.cpp
   src/AlgorithmPropertiesWidget.cpp
   src/AlgorithmRunner.cpp
+  src/BatchAlgorithmRunner.cpp
   src/BoolPropertyWidget.cpp
   src/FilePropertyWidget.cpp
   src/GenericDialog.cpp
@@ -14,7 +15,11 @@ set ( SRC_FILES
   src/MantidDialog.cpp
   src/MantidHelpInterface.cpp
   src/MantidQwtIMDWorkspaceData.cpp
+  src/MantidQwtWorkspaceData.cpp
   src/MantidWidget.cpp
+  src/MdConstants.cpp
+  src/MdPlottingCmapsProvider.cpp
+  src/MdSettings.cpp
   src/Message.cpp
   src/OptionsPropertyWidget.cpp
   src/PlotAxis.cpp
@@ -40,6 +45,7 @@ set ( MOC_FILES
   inc/MantidQtAPI/AlgorithmDialog.h 
   inc/MantidQtAPI/AlgorithmRunner.h 
   inc/MantidQtAPI/AlgorithmPropertiesWidget.h
+  inc/MantidQtAPI/BatchAlgorithmRunner.h 
   inc/MantidQtAPI/BoolPropertyWidget.h
   inc/MantidQtAPI/FilePropertyWidget.h
   inc/MantidQtAPI/GenericDialog.h
@@ -67,6 +73,7 @@ set ( INC_FILES
   ${MOC_FILES}
   inc/MantidQtAPI/AlgorithmInputHistory.h
   inc/MantidQtAPI/AlgorithmRunner.h
+  inc/MantidQtAPI/BatchAlgorithmRunner.h
   inc/MantidQtAPI/DllOption.h
   inc/MantidQtAPI/FileDialogHandler.h
   inc/MantidQtAPI/GraphOptions.h
@@ -77,6 +84,9 @@ set ( INC_FILES
   inc/MantidQtAPI/MantidColorMap.h
   inc/MantidQtAPI/MantidQwtIMDWorkspaceData.h
   inc/MantidQtAPI/MantidQwtWorkspaceData.h
+  inc/MantidQtAPI/MdConstants.h
+  inc/MantidQtAPI/MdPlottingCmapsProvider.h
+  inc/MantidQtAPI/MdSettings.h
   inc/MantidQtAPI/PropertyWidgetFactory.h
   inc/MantidQtAPI/QwtRasterDataMD.h
   inc/MantidQtAPI/QwtWorkspaceBinData.h
@@ -92,6 +102,7 @@ set ( UI_FILES
 )
 
 set( TEST_FILES
+   BatchAlgorithmRunnerTest.h
    InterfaceManagerTest.h
    MantidColorMapTest.h
    PlotAxisTest.h
@@ -118,7 +129,11 @@ add_library ( MantidQtAPI ${ALL_SRC} ${INC_FILES} ${UI_HDRS} )
 
 set_target_properties ( MantidQtAPI PROPERTIES COMPILE_DEFINITIONS IN_MANTIDQT_API )
 
-target_link_libraries ( MantidQtAPI ${CORE_MANTIDLIBS} ${QT_LIBRARIES} ${QWT_LIBRARIES} )
+if (OSX_VERSION VERSION_GREATER 10.8)
+  set_target_properties ( MantidQtAPI PROPERTIES INSTALL_RPATH "@loader_path/../MacOS")
+endif () 
+
+target_link_libraries ( MantidQtAPI LINK_PRIVATE ${CORE_MANTIDLIBS} ${QT_LIBRARIES} ${QWT_LIBRARIES} ${POCO_LIBRARIES} ${Boost_LIBRARIES} )
 
 ###########################################################################
 # Windows: Generate a qt.conf file so that the dev build finds the qt

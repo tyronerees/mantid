@@ -48,7 +48,9 @@ struct Sqrt
 double InstrumentActor::m_tolerance = 0.00001;
 
 /**
- * Constructor
+ * Constructor. Creates a tree of GLActors. Each actor is responsible for displaying insrument components in 3D.
+ * Some of the components have "pick ID" assigned to them. Pick IDs can be uniquely converted to a RGB colour value
+ * which in turn can be used for picking the component from the screen.
  * @param wsName :: Workspace name
  * @param autoscaling :: True to start with autoscaling option on. If on the min and max of
  *   the colormap scale are defined by the min and max of the data.
@@ -59,6 +61,7 @@ InstrumentActor::InstrumentActor(const QString &wsName, bool autoscaling, double
 m_workspace(AnalysisDataService::Instance().retrieveWS<MatrixWorkspace>(wsName.toStdString())),
 m_ragged(true),
 m_autoscaling(autoscaling),
+m_defaultPos(),
 m_maskedColor(100,100,100),
 m_failedColor(200,200,200)
 {
@@ -93,6 +96,7 @@ m_failedColor(200,200,200)
 
   // this adds actors for all instrument components to the scene and fills in m_detIDs
   m_scene.addActor(new CompAssemblyActor(*this,instrument->getComponentID()));
+  setupPickColors();
 
   if ( !m_showGuides )
   {
@@ -338,12 +342,35 @@ IDetector_const_sptr InstrumentActor::getDetector(size_t i) const
     // Call the local getInstrument, NOT the one on the workspace
     return this->getInstrument()->getDetector(m_detIDs.at(i));
   }
-  catch(...)
-  {
-    return IDetector_const_sptr();
-  }
-  // Add line that can never be reached to quiet compiler complaints
+  catch(...) { };
   return IDetector_const_sptr();
+}
+
+Mantid::detid_t InstrumentActor::getDetID(size_t pickID)const
+{
+  if ( pickID < m_detIDs.size() )
+  {
+    return m_detIDs[pickID];
+  }
+  return -1;
+}
+
+/**
+ * Get a component id of a picked component.
+ */
+Mantid::Geometry::ComponentID InstrumentActor::getComponentID(size_t pickID) const
+{
+  size_t ndet = m_detIDs.size();
+  if ( pickID < ndet )
+  {
+    auto det = getDetector( m_detIDs[pickID] );
+    return det->getComponentID();
+  }
+  else if (pickID < ndet + m_nonDetIDs.size())
+  {
+    return m_nonDetIDs[pickID - ndet];
+  }
+  return Mantid::Geometry::ComponentID();
 }
 
 /** Retrieve the workspace index corresponding to a particular detector
@@ -512,8 +539,8 @@ void InstrumentActor::sumDetectorsRagged(QList<int> &dets, std::vector<double> &
         dws->dataX(nSpec) = ws->readX(index);
         dws->dataY(nSpec) = ws->readY(index);
         dws->dataE(nSpec) = ws->readE(index);
-        double xmin = dws->readX(nSpec)[0];
-        double xmax = dws->readX(nSpec)[size];
+        double xmin = dws->readX(nSpec).front();
+        double xmax = dws->readX(nSpec).back();
         if ( xmin < xStart )
         {
           xStart = xmin;
@@ -550,23 +577,32 @@ void InstrumentActor::sumDetectorsRagged(QList<int> &dets, std::vector<double> &
   std::string params = QString("%1,%2,%3").arg(xStart).arg(dx).arg(xEnd).toStdString();
   std::string outName = "_TMP_sumDetectorsRagged";
 
-  // rebin all spectra to the same binning
-  Mantid::API::IAlgorithm * alg = Mantid::API::FrameworkManager::Instance().createAlgorithm("Rebin",-1);
-  alg->setProperty( "InputWorkspace", dws );
-  alg->setPropertyValue( "OutputWorkspace", outName );
-  alg->setPropertyValue( "Params", params );
-  alg->execute();
-
-  ws = boost::dynamic_pointer_cast<Mantid::API::MatrixWorkspace>(Mantid::API::AnalysisDataService::Instance().retrieve(outName));
-  Mantid::API::AnalysisDataService::Instance().remove( outName );
-
-  x = ws->readX(0);
-  y = ws->readY(0);
-  // add the spectra
-  for(size_t i = 0; i < nSpec; ++i)
+  try
   {
-    const Mantid::MantidVec& Y = ws->readY(i);
-    std::transform( y.begin(), y.end(), Y.begin(), y.begin(), std::plus<double>() );
+    // rebin all spectra to the same binning
+    Mantid::API::IAlgorithm * alg = Mantid::API::FrameworkManager::Instance().createAlgorithm("Rebin",-1);
+    alg->setProperty( "InputWorkspace", dws );
+    alg->setPropertyValue( "OutputWorkspace", outName );
+    alg->setPropertyValue( "Params", params );
+    alg->execute();
+
+    ws = boost::dynamic_pointer_cast<Mantid::API::MatrixWorkspace>(Mantid::API::AnalysisDataService::Instance().retrieve(outName));
+    Mantid::API::AnalysisDataService::Instance().remove( outName );
+
+    x = ws->readX(0);
+    y = ws->readY(0);
+    // add the spectra
+    for(size_t i = 0; i < nSpec; ++i)
+    {
+      const Mantid::MantidVec& Y = ws->readY(i);
+      std::transform( y.begin(), y.end(), Y.begin(), y.begin(), std::plus<double>() );
+    }
+  }
+  catch(std::invalid_argument&)
+  {
+    // wrong Params for any reason
+    x.resize(size,(xEnd + xStart)/2);
+    y.resize(size,0.0);
   }
 
 }
@@ -623,8 +659,10 @@ void InstrumentActor::resetColors()
   }
   if (m_scene.getNumberOfActors() > 0)
   {
-    dynamic_cast<CompAssemblyActor*>(m_scene.getActor(0))->setColors();
-    invalidateDisplayLists();
+    if (auto actor = dynamic_cast<CompAssemblyActor*>(m_scene.getActor(0))) {
+      actor->setColors();
+      invalidateDisplayLists();
+    }
   }
   emit colorMapChanged();
 }
@@ -682,12 +720,38 @@ void InstrumentActor::loadColorMap(const QString& fname,bool reset_colors)
  * @param id :: detector ID to add.
  * @return pick ID of the added detector
  */
-size_t InstrumentActor::push_back_detid(Mantid::detid_t id)const
+size_t InstrumentActor::pushBackDetid(Mantid::detid_t id)const
 {
   m_detIDs.push_back(id);
   return m_detIDs.size() - 1;
 }
 
+//------------------------------------------------------------------------------
+/** Add a non-detector component ID to the pick list (m_nonDetIDs)
+ *
+ * @param actor :: ObjComponentActor for the component added.
+ * @param compID :: component ID to add.
+ */
+void InstrumentActor::pushBackNonDetid(ObjComponentActor* actor, Mantid::Geometry::ComponentID compID)const
+{
+  m_nonDetActorsTemp.push_back(actor);
+  m_nonDetIDs.push_back(compID);
+}
+
+//------------------------------------------------------------------------------
+/**
+ * Set pick colors to non-detectors strored by calls to pushBackNonDetid().
+ */
+void InstrumentActor::setupPickColors()
+{
+  assert( m_nonDetActorsTemp.size() == m_nonDetIDs.size() );
+  auto nDets = m_detIDs.size();
+  for(size_t i = 0; i < m_nonDetActorsTemp.size(); ++i)
+  {
+    m_nonDetActorsTemp[i]->setPickColor( makePickColor(nDets + i) );
+  }
+  m_nonDetActorsTemp.clear();
+}
 
 //------------------------------------------------------------------------------
 /** If needed, cache the detector positions for all detectors.
@@ -716,7 +780,11 @@ void InstrumentActor::cacheDetPos() const
  */
 const Mantid::Kernel::V3D & InstrumentActor::getDetPos(size_t pickID)const
 {
-  return m_detPos.at(pickID);
+  if ( pickID < m_detPos.size() )
+  {
+    return m_detPos.at(pickID);
+  }
+  return m_defaultPos;
 }
 
 /**

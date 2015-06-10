@@ -10,7 +10,7 @@ Description
 -----------
 
 Save an `MDEventWorkspace <http://www.mantidproject.org/MDEventWorkspace>`_ or a
-`MDHistoWorkspace <http://www.mantidproject.org/MDHistoWorkspace>`_ to a .nxs file. The
+:ref:`MDHistoWorkspace <MDHistoWorkspace>` to a .nxs file. The
 workspace's current box structure and entire list of events is
 preserved. The resulting file can be loaded via :ref:`LoadMD <algm-LoadMD>`.
 
@@ -30,7 +30,7 @@ Usage
                                 Extents='-1,1,-1,1', NumberOfBins='3,3', Names='A,B', Units='U,T')
     import os
     savefile = os.path.join(config["default.savedirectory"], "mdhws.nxs")
-    SaveMD(ws, Filename=savefile)
+    SaveMD(ws, Filename=savefile, Version=1)
     print "File created:", os.path.exists(savefile)
 
 Output:

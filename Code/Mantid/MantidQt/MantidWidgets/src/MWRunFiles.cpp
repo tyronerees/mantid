@@ -20,6 +20,7 @@
 #include <Poco/File.h>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/regex.hpp>
 
 using namespace Mantid::Kernel;
 using namespace Mantid::API;
@@ -195,7 +196,7 @@ MWRunFiles::MWRunFiles(QWidget *parent)
   : MantidWidget(parent), m_findRunFiles(true), m_allowMultipleFiles(false), 
     m_isOptional(false), m_multiEntry(false), m_buttonOpt(Text), m_fileProblem(""),
     m_entryNumProblem(""), m_algorithmProperty(""), m_fileExtensions(), m_extsAsSingleOption(true),
-    m_liveButtonState(Hide), m_foundFiles(), m_lastDir(), m_fileFilter()
+    m_liveButtonState(Hide), m_foundFiles(), m_lastFoundFiles(), m_lastDir(), m_fileFilter()
 {
   m_thread = new FindFilesThread(this);
   
@@ -236,10 +237,18 @@ MWRunFiles::MWRunFiles(QWidget *parent)
   setFocusPolicy(Qt::StrongFocus);
   setFocusProxy(m_uiForm.fileEditor);
 
-  // When first used try to starting directory better than the directory MantidPlot
-  // is installed in
-  QStringList datadirs = QString::fromStdString(Mantid::Kernel::ConfigService::Instance().getString("datasearch.directories")).split(";", QString::SkipEmptyParts);
-  if ( ! datadirs.isEmpty() ) m_lastDir = datadirs[0];
+  // When first used try to starting directory better than the directory MantidPlot is installed in
+  // First try default save directory
+  m_lastDir = QString::fromStdString(Mantid::Kernel::ConfigService::Instance().getString("defaultsave.directory"));
+
+  // If that fails pick the first data search directory
+  if(m_lastDir.isEmpty())
+  {
+    QStringList dataDirs = QString::fromStdString(Mantid::Kernel::ConfigService::Instance().getString("datasearch.directories")).split(";", QString::SkipEmptyParts);
+
+    if(!dataDirs.isEmpty())
+      m_lastDir = dataDirs[0];
+  }
 
   //this for accepts drops, but the underlying text input does not.
   this->setAcceptDrops(true);
@@ -692,6 +701,33 @@ void MWRunFiles::setLiveAlgorithm(const IAlgorithm_sptr& monitorLiveData)
   m_monitorLiveData = monitorLiveData;
 }
 
+/**
+ * Gets the instrument currently set by the override property.
+ *
+ * If no override is set then the instrument set by default instrument configurtion
+ * option will be used and this function returns an empty string.
+ *
+ * @return Name of instrument, empty if not set
+ */
+QString MWRunFiles::getInstrumentOverride()
+{
+  return m_defaultInstrumentName;
+}
+
+/**
+ * Sets an instrument to fix the widget to.
+ *
+ * If an instrument name is geven then the widget will only look for files for that
+ * instrument, providing na empty string will remove this restriction and will search
+ * using the default instrument.
+ *
+ * @param instName Name of instrument, empty to disable override
+ */
+void MWRunFiles::setInstrumentOverride(const QString & instName)
+{
+  m_defaultInstrumentName = instName;
+}
+
 /** 
 * Set the file text.  This is different to setText in that it emits findFiles, as well
 * changing the state of the text box widget to "modified = true" which is a prerequisite
@@ -732,8 +768,38 @@ void MWRunFiles::findFiles()
     }
 
     emit findingFiles();
+
     // Set the values for the thread, and start it running.
-    m_thread->set(m_uiForm.fileEditor->text(), isForRunFiles(), this->isOptional(), m_algorithmProperty);
+    QString searchText = m_uiForm.fileEditor->text();
+
+    // If we have an override instrument then add it in appropriate places to the search text
+    if (!m_defaultInstrumentName.isEmpty())
+    {
+      // Regex to match a selection of run numbers as defined here: mantidproject.org/MultiFileLoading
+      // Also allowing spaces between delimiters as this seems to work fine
+      boost::regex runNumbers("([0-9]+)([:+-] ?[0-9]+)? ?(:[0-9]+)?", boost::regex::extended);
+      // Regex to match a list of run numbers delimited by commas
+      boost::regex runNumberList("([0-9]+)(, ?[0-9]+)*", boost::regex::extended);
+
+      // See if we can just prepend the instrument and be done
+      if (boost::regex_match(searchText.toStdString(), runNumbers))
+      {
+        searchText = m_defaultInstrumentName + searchText;
+      }
+      // If it is a list we need to prepend the instrument to all run numbers
+      else if (boost::regex_match(searchText.toStdString(), runNumberList))
+      {
+        QStringList runNumbers = searchText.split(",", QString::SkipEmptyParts);
+        QStringList newRunNumbers;
+
+        for(auto it = runNumbers.begin(); it != runNumbers.end(); ++it)
+          newRunNumbers << m_defaultInstrumentName + (*it).simplified();
+
+        searchText = newRunNumbers.join(",");
+      }
+    }
+
+    m_thread->set(searchText, isForRunFiles(), this->isOptional(), m_algorithmProperty);
     m_thread->start();
   }
   else
@@ -774,6 +840,7 @@ void MWRunFiles::inspectThreadResult()
     return;
   }
 
+  m_lastFoundFiles = m_foundFiles;
   m_foundFiles.clear();
 
   for( size_t i = 0; i < filenames.size(); ++i)
@@ -795,6 +862,7 @@ void MWRunFiles::inspectThreadResult()
 
   // Only emit the signal if file(s) were found
   if ( ! m_foundFiles.isEmpty() ) emit filesFound();
+  if ( m_lastFoundFiles != m_foundFiles ) emit filesFoundChanged();
 }
 
 /**
@@ -933,7 +1001,7 @@ QStringList MWRunFiles::getFileExtensionsFromAlgorithm(const QString & algName, 
   FileProperty *fileProp = dynamic_cast<FileProperty*>(prop);
   MultipleFileProperty *multiFileProp = dynamic_cast<MultipleFileProperty*>(prop);
 
-  std::set<std::string> allowed;
+  std::vector<std::string> allowed;
   QString preferredExt;
 
   if( fileProp )
@@ -951,9 +1019,9 @@ QStringList MWRunFiles::getFileExtensionsFromAlgorithm(const QString & algName, 
     return fileExts;
   }
 
-  std::set<std::string>::const_iterator iend = allowed.end();
+  std::vector<std::string>::const_iterator iend = allowed.end();
   int index(0);
-  for(std::set<std::string>::const_iterator it = allowed.begin(); it != iend; ++it)
+  for(std::vector<std::string>::const_iterator it = allowed.begin(); it != iend; ++it)
   {
     if ( ! it->empty() )
     {

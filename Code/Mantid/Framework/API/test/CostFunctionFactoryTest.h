@@ -16,7 +16,6 @@ using namespace Mantid::API;
 
 class CostFunctionFactoryTest_A: public ICostFunction
 {
-  int m_attr;
 public:
   CostFunctionFactoryTest_A() {}
 
@@ -39,7 +38,7 @@ public:
 
 };
 
-DECLARE_COSTFUNCTION(CostFunctionFactoryTest_A, nedtur);
+DECLARE_COSTFUNCTION(CostFunctionFactoryTest_A, nedtur)
 
 
 class CostFunctionFactoryTest : public CxxTest::TestSuite

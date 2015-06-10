@@ -1,4 +1,5 @@
-################################################################################ 
+#pylint: disable=invalid-name
+################################################################################
 # Advanced Setup Widget
 ################################################################################
 from PyQt4 import QtGui, uic, QtCore
@@ -6,7 +7,7 @@ from functools import partial
 from reduction_gui.widgets.base_widget import BaseWidget
 import reduction_gui.widgets.util as util
 
-from reduction_gui.reduction.diffraction.diffraction_adv_setup_script import AdvancedSetupScript 
+from reduction_gui.reduction.diffraction.diffraction_adv_setup_script import AdvancedSetupScript
 import ui.diffraction.ui_diffraction_adv_setup
 import ui.diffraction.ui_diffraction_info
 
@@ -20,20 +21,20 @@ class AdvancedSetupWidget(BaseWidget):
         """ Initialization
         """
         super(AdvancedSetupWidget, self).__init__(parent, state, settings, data_type=data_type)
-        
-        class AdvancedSetFrame(QtGui.QFrame, ui.diffraction.ui_diffraction_adv_setup.Ui_Frame): 
+
+        class AdvancedSetFrame(QtGui.QFrame, ui.diffraction.ui_diffraction_adv_setup.Ui_Frame):
             """ Define class linked to UI Frame
             """
             def __init__(self, parent=None):
                 QtGui.QFrame.__init__(self, parent)
                 self.setupUi(self)
-                
+
         self._content = AdvancedSetFrame(self)
         self._layout.addWidget(self._content)
         self._instrument_name = settings.instrument_name
         self._facility_name = settings.facility_name
         self.initialize_content()
-        
+
         if state is not None:
             self.set_state(state)
         else:
@@ -50,7 +51,7 @@ class AdvancedSetupWidget(BaseWidget):
         iv4 = QtGui.QIntValidator(self._content.maxchunksize_edit)
         iv4.setBottom(0)
         self._content.maxchunksize_edit.setValidator(iv4)
-        
+
         dv0 = QtGui.QDoubleValidator(self._content.unwrap_edit)
         self._content.unwrap_edit.setValidator(dv0)
 
@@ -83,9 +84,6 @@ class AdvancedSetupWidget(BaseWidget):
 
         self._content.stripvanpeaks_chkbox.setChecked(True)
         self._syncStripVanPeakWidgets(True)
-        # self._content.vanpeakfwhm_edit.setEnabled(False)
-        # self._content.vansmoothpar_edit.setEnabled(False)
-        # self._content.vanpeaktol_edit.setEnabled(False)
 
         self._content.preserveevents_checkbox.setChecked(True)
 
@@ -93,19 +91,20 @@ class AdvancedSetupWidget(BaseWidget):
         dv8.setBottom(0.0)
         self._content.filterbadpulses_edit.setValidator(dv8)
         self._content.filterbadpulses_edit.setText("95.")
-        
-        # Connections from action/event to function to handle 
-        self.connect(self._content.stripvanpeaks_chkbox, QtCore.SIGNAL("clicked()"),
+
+        # Connections from action/event to function to handle
+        self.connect(self._content.stripvanpeaks_chkbox, QtCore.SIGNAL("clicked()"),\
                 self._stripvanpeaks_clicked)
 
-        self.connect(self._content.help_button, QtCore.SIGNAL("clicked()"),
+        self.connect(self._content.help_button, QtCore.SIGNAL("clicked()"),\
                 self._show_help)
         # Hanlder for events
-        
+        # FIXME - Need to add an event hanlder for the change of instrument and facility
+
         # Validated widgets
 
-        return 
-    
+        return
+
     def set_state(self, state):
         """ Populate the UI elements with the data from the given state.
             @param state: RunSetupScript object
@@ -118,7 +117,8 @@ class AdvancedSetupWidget(BaseWidget):
         self._content.maxchunksize_edit.setText(str(state.maxchunksize))
         self._content.scaledata_edit.setText(str(state.scaledata))
         self._content.filterbadpulses_edit.setText(str(state.filterbadpulses))
-        
+        self._content.bkgdsmoothpar_edit.setText(str(state.bkgdsmoothpars))
+
         self._content.stripvanpeaks_chkbox.setChecked(state.stripvanadiumpeaks)
         self._syncStripVanPeakWidgets(state.stripvanadiumpeaks)
         self._content.vanpeakfwhm_edit.setText(str(state.vanadiumfwhm))
@@ -146,7 +146,8 @@ class AdvancedSetupWidget(BaseWidget):
         s.maxchunksize = self._content.maxchunksize_edit.text()
         s.scaledata = self._content.scaledata_edit.text()
         s.filterbadpulses = self._content.filterbadpulses_edit.text()
-        
+        s.bkgdsmoothpars = self._content.bkgdsmoothpar_edit.text()
+
         s.stripvanadiumpeaks = self._content.stripvanpeaks_chkbox.isChecked()
         s.vanadiumfwhm = self._content.vanpeakfwhm_edit.text()
         s.vanadiumpeaktol = self._content.vanpeaktol_edit.text()
@@ -161,7 +162,7 @@ class AdvancedSetupWidget(BaseWidget):
 
 
     def _detinstrumentchange(self):
-        """ 
+        """
         """
         self._instrument_name = str(self._content.instrument_combo.currentText())
 
@@ -171,21 +172,11 @@ class AdvancedSetupWidget(BaseWidget):
         """ Handling if strip-vanadium-peak check box is clicked
         """
         self._syncStripVanPeakWidgets(self._content.stripvanpeaks_chkbox.isChecked())
-        #if self._content.stripvanpeaks_chkbox.isChecked() is True:
-        #    # Enable all the edits
-        #    self._content.vanpeakfwhm_edit.setEnabled(True)
-        #    self._content.vansmoothpar_edit.setEnabled(True)
-        #    self._content.vanpeaktol_edit.setEnabled(True)
-        #else:
-        #    # Disable all the edits
-        #    self._content.vanpeakfwhm_edit.setEnabled(False)
-        #    self._content.vansmoothpar_edit.setEnabled(False)
-        #    self._content.vanpeaktol_edit.setEnabled(False)
 
         return
 
     def _show_help(self):
-        class HelpDialog(QtGui.QDialog, ui.diffraction.ui_diffraction_info.Ui_Dialog): 
+        class HelpDialog(QtGui.QDialog, ui.diffraction.ui_diffraction_info.Ui_Dialog):
             def __init__(self, parent=None):
                 QtGui.QDialog.__init__(self, parent)
                 self.setupUi(self)
@@ -194,7 +185,7 @@ class AdvancedSetupWidget(BaseWidget):
 
         return
 
-    def _syncStripVanPeakWidgets(self, stripvanpeak): 
+    def _syncStripVanPeakWidgets(self, stripvanpeak):
         """ Synchronize the other widgets with vanadium peak
         """
         self._content.vanpeakfwhm_edit.setEnabled(stripvanpeak)

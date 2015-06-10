@@ -3,19 +3,17 @@
 #ifndef MANTID_VATES_VTKDATASETFACTORY_H_
 #define MANTID_VATES_VTKDATASETFACTORY_H_
 
+#include "MantidAPI/IMDWorkspace.h"
 #include "MantidAPI/Workspace.h"
 #include "MantidKernel/System.h"
 #include "vtkDataSet.h"
 #include <boost/shared_ptr.hpp>
+#include <boost/tuple/tuple.hpp>
 #include <string>
 
 class vtkFloatArray;
 namespace Mantid
 {
-  namespace API
-  {
-    class IMDWorkspace;
-  }
 
 namespace VATES
 {
@@ -31,6 +29,8 @@ namespace VATES
     vtkIdType pointId;
   };
 
+
+
 /** Abstract type to generate a vtk dataset on demand from a MDWorkspace.
  Uses Chain Of Responsibility pattern to self-manage and ensure that the workspace rendering is delegated to another factory
  if the present concrete type can't handle it.
@@ -38,7 +38,7 @@ namespace VATES
  @author Owen Arnold, Tessella plc
  @date 24/01/2010
 
- Copyright &copy; 2010 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+ Copyright &copy; 2010 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
 
  This file is part of Mantid.
 
@@ -113,6 +113,8 @@ public:
 
   /// Dimensionalities of interest.
   enum Dimensionality{OneDimensional=1, TwoDimensional=2, ThreeDimensional=3, FourDimensional=4};
+
+  static const std::string ScalarName;
 
 protected:
   
@@ -226,6 +228,7 @@ private:
 };
 
 typedef boost::shared_ptr<vtkDataSetFactory> vtkDataSetFactory_sptr;
+
 
 }
 }

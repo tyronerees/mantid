@@ -1,7 +1,7 @@
 #ifndef MANTIDQTAPI_MANTIDQWTWORKSPACEDATA_H
 #define MANTIDQTAPI_MANTIDQWTWORKSPACEDATA_H
 /**
-  Copyright &copy; 2014 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+  Copyright &copy; 2014 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
 
   This file is part of Mantid.
 
@@ -53,6 +53,9 @@ public:
   virtual double getYMax() const = 0;
   virtual QString getXAxisLabel() const = 0;
   virtual QString getYAxisLabel() const = 0;
+  static void calculateYMinAndMax(const std::vector<double> &yvalues,
+                                  double &yMin, double &yMax,
+                                  double &yMinPositive);
 
 protected:
   // Assignment operator (virtualized).

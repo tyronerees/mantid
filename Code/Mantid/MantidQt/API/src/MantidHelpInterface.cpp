@@ -31,6 +31,21 @@ void MantidHelpInterface::showWikiPage(const std::string &page)
   UNUSED_ARG(page);
 }
 
+void MantidHelpInterface::showWikiPage(const QString &page)
+{
+  UNUSED_ARG(page);
+}
+
+void MantidHelpInterface::showConcept(const std::string &page)
+{
+  UNUSED_ARG(page);
+}
+
+void MantidHelpInterface::showConcept(const QString &page)
+{
+  UNUSED_ARG(page);
+}
+
 void MantidHelpInterface::showAlgorithm(const std::string &name, const int version)
 {
   UNUSED_ARG(name);
@@ -43,6 +58,21 @@ void MantidHelpInterface::showAlgorithm(const QString &name, const int version)
   UNUSED_ARG(version); }
 
 void MantidHelpInterface::showFitFunction(const std::string &name)
+{
+  UNUSED_ARG(name);
+}
+
+void MantidHelpInterface::showFitFunction(const QString &name)
+{
+  UNUSED_ARG(name);
+}
+
+void MantidHelpInterface::showCustomInterface(const std::string &name)
+{
+  UNUSED_ARG(name);
+}
+
+void MantidHelpInterface::showCustomInterface(const QString &name)
 {
   UNUSED_ARG(name);
 }

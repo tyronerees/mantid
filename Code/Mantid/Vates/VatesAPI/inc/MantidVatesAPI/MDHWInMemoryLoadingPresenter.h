@@ -14,7 +14,7 @@ namespace Mantid
     Presenter for loading MDHWs directly from the ADS, does not touch the disk.
     @date 02/12/2011
 
-    Copyright &copy; 2011 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+    Copyright &copy; 2011 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
 
     This file is part of Mantid.
 
@@ -37,7 +37,9 @@ namespace Mantid
 
     class MDLoadingView;
     class WorkspaceProvider;
+    class MetaDataExtractorUtils;
     class vtkDataSetFactory;
+    
     class DLLExport MDHWInMemoryLoadingPresenter : public MDHWLoadingPresenter
     {
     public:

@@ -55,12 +55,24 @@ class PropertiesDirective(AlgorithmBaseDirective):
             # int.
             direction_string = ["Input", "Output", "InOut", "None"]
 
+            #dictionary to convert from property type to link to category page (where possible)
+            property_type_dict = {
+                "Workspace":":ref:`Workspace <Workspace>`",
+                "Workspace2D":":ref:`Workspace2D <Workspace2D>`",
+                "EventWorkspace":":ref:`EventWorkspace <EventWorkspace>`",
+                "MatrixWorkspace":":ref:`MatrixWorkspace <MatrixWorkspace>`",
+                "GroupWorkspace":":ref:`GroupWorkspace <WorkspaceGroup>`",
+                "MDEventWorkspace":":ref:`MDEventWorkspace <MDWorkspace>`",
+                "MDHistoWorkspace":":ref:`MDHistoWorkspace <MDHistoWorkspace>`",
+                "TableWorkspace":":ref:`TableWorkspace <Table Workspaces>`"
+            }
+
             for prop in alg_properties:
                 # Append a tuple of properties to the list.
                 properties.append((
                     str(prop.name),
                     str(direction_string[prop.direction]),
-                    str(prop.type),
+                    property_type_dict.get(str(prop.type),str(prop.type)),
                     str(self._get_default_prop(prop)),
                     str(prop.documentation.replace("\n", " "))
                     ))
@@ -129,7 +141,7 @@ class PropertiesDirective(AlgorithmBaseDirective):
         elif (prop.isValid == ""):
             default_prop = self._create_property_default_string(prop)
         else:
-            default_prop = "Mandatory"
+            default_prop = "*Mandatory*"
         return default_prop
 
     def _create_property_default_string(self, prop):
@@ -150,14 +162,14 @@ class PropertiesDirective(AlgorithmBaseDirective):
         try:
             val = int(default)
             if (val >= 2147483647):
-                defaultstr = "Optional"
+                defaultstr = "*Optional*"
             else:
                 defaultstr = str(val)
         except:
             try:
                 val = float(default)
                 if (val >= 1e+307):
-                    defaultstr = "Optional"
+                    defaultstr = "*Optional*"
                 else:
                     defaultstr = str(val)
             except:
@@ -178,7 +190,7 @@ class PropertiesDirective(AlgorithmBaseDirective):
         if (defaultstr == "8.9884656743115785e+307") or \
            (defaultstr == "1.7976931348623157e+308") or \
            (defaultstr == "2147483647"):
-            defaultstr = "Optional"
+            defaultstr = "*Optional*"
 
         if str(prop.type) == "boolean":
             if defaultstr == "1":

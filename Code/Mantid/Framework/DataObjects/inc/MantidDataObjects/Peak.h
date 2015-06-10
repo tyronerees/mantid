@@ -1,186 +1,222 @@
 #ifndef MANTID_DATAOBJECTS_PEAK_H_
 #define MANTID_DATAOBJECTS_PEAK_H_
 
-#include "MantidAPI/IPeak.h"
+#include "MantidGeometry/Crystal/IPeak.h"
 #include "MantidGeometry/Instrument.h"
+#include "MantidKernel/Logger.h"
 #include "MantidKernel/Matrix.h"
 #include "MantidKernel/V3D.h"
 #include "MantidKernel/PhysicalConstants.h"
 #include "MantidKernel/System.h"
+#include "MantidGeometry/Crystal/PeakShape.h"
+#include <boost/shared_ptr.hpp>
+#include <boost/optional.hpp>
 
 
-namespace Mantid
-{
-namespace DataObjects
-{
+namespace Mantid {
+namespace DataObjects {
 
-  /** Structure describing a single-crystal peak
-   * 
-   * @author Janik Zikovsky
-   * @date 2011-04-15 13:24:07.963491
-   */
-  class DLLExport Peak: public API::IPeak
-  {
-  public:
-    /// Allow PeakColumn class to directly access members.
-    friend class PeakColumn;
+/** Structure describing a single-crystal peak
+ *
+ * @author Janik Zikovsky
+ * @date 2011-04-15 13:24:07.963491
+ */
+class DLLExport Peak : public Geometry::IPeak {
+public:
+  /// Allow PeakColumn class to directly access members.
+  friend class PeakColumn;
 
-    Peak();
-    Peak(Geometry::Instrument_const_sptr m_inst, Mantid::Kernel::V3D QLabFrame, double detectorDistance=1.0);
-    Peak(Geometry::Instrument_const_sptr m_inst, Mantid::Kernel::V3D QSampleFrame, Mantid::Kernel::Matrix<double> goniometer, double detectorDistance=1.0);
-    Peak(Geometry::Instrument_const_sptr m_inst, int m_DetectorID, double m_Wavelength);
-    Peak(Geometry::Instrument_const_sptr m_inst, int m_DetectorID, double m_Wavelength, Mantid::Kernel::V3D HKL);
-    Peak(Geometry::Instrument_const_sptr m_inst, int m_DetectorID, double m_Wavelength, Mantid::Kernel::V3D HKL, Mantid::Kernel::Matrix<double> goniometer);
-    Peak(Geometry::Instrument_const_sptr m_inst, double scattering, double m_Wavelength);
+  Peak();
+  Peak(Geometry::Instrument_const_sptr m_inst, Mantid::Kernel::V3D QLabFrame,
+        boost::optional<double> detectorDistance = boost::optional<double>());
+  Peak(Geometry::Instrument_const_sptr m_inst, Mantid::Kernel::V3D QSampleFrame,
+       Mantid::Kernel::Matrix<double> goniometer,
+       boost::optional<double> detectorDistance = boost::optional<double>());
+  Peak(Geometry::Instrument_const_sptr m_inst, int m_DetectorID,
+       double m_Wavelength);
+  Peak(Geometry::Instrument_const_sptr m_inst, int m_DetectorID,
+       double m_Wavelength, Mantid::Kernel::V3D HKL);
+  Peak(Geometry::Instrument_const_sptr m_inst, int m_DetectorID,
+       double m_Wavelength, Mantid::Kernel::V3D HKL,
+       Mantid::Kernel::Matrix<double> goniometer);
+  Peak(Geometry::Instrument_const_sptr m_inst, double scattering,
+       double m_Wavelength);
 
-    // Construct a peak from a reference to the interface
-    explicit Peak(const API::IPeak & ipeak);
-    virtual ~Peak();
+  /// Copy constructor
+  Peak(const Peak& other);
 
-    void setDetectorID(int id);
-    int getDetectorID() const;
-    void addContributingDetID(const int id);
-    void removeContributingDetector(const int id);
-    const std::set<int> & getContributingDetIDs() const;
+  // Construct a peak from a reference to the interface
 
-    void setInstrument(Geometry::Instrument_const_sptr inst);
-    Geometry::IDetector_const_sptr getDetector() const;
-    Geometry::Instrument_const_sptr getInstrument() const;
+  explicit Peak(const Geometry::IPeak &ipeak);
+  virtual ~Peak();
 
-    bool findDetector();
+  void setDetectorID(int id);
+  int getDetectorID() const;
+  void addContributingDetID(const int id);
+  void removeContributingDetector(const int id);
+  const std::set<int> &getContributingDetIDs() const;
 
-    int getRunNumber() const;
-    void setRunNumber(int m_RunNumber);
+  void setInstrument(Geometry::Instrument_const_sptr inst);
+  Geometry::IDetector_const_sptr getDetector() const;
+  Geometry::Instrument_const_sptr getInstrument() const;
 
-    double getMonitorCount() const;
-    void setMonitorCount( double m_MonitorCount );
+  bool findDetector();
 
-    double getH() const;
-    double getK() const;
-    double getL() const;
-    Mantid::Kernel::V3D getHKL() const;
-    void setH(double m_H);
-    void setK(double m_K);
-    void setL(double m_L);
-    void setBankName(std::string m_BankName);
-    void setHKL(double H, double K, double L);
-    void setHKL(Mantid::Kernel::V3D HKL);
-    void resetHKL();
+  int getRunNumber() const;
+  void setRunNumber(int m_RunNumber);
 
-    Mantid::Kernel::V3D getQLabFrame() const;
-    Mantid::Kernel::V3D getQSampleFrame() const;
-    Mantid::Kernel::V3D getDetectorPosition() const;
-    Mantid::Kernel::V3D getDetectorPositionNoCheck() const;
+  double getMonitorCount() const;
+  void setMonitorCount(double m_MonitorCount);
 
-    void setQSampleFrame(Mantid::Kernel::V3D QSampleFrame, double detectorDistance=1.0);
-    void setQLabFrame(Mantid::Kernel::V3D QLabFrame, double detectorDistance=1.0);
+  double getH() const;
+  double getK() const;
+  double getL() const;
+  Mantid::Kernel::V3D getHKL() const;
+  void setH(double m_H);
+  void setK(double m_K);
+  void setL(double m_L);
+  void setBankName(std::string m_BankName);
+  void setHKL(double H, double K, double L);
+  void setHKL(Mantid::Kernel::V3D HKL);
+  void resetHKL();
 
-    void setWavelength(double wavelength);
-    double getWavelength() const;
-    double getScattering() const;
-    double getDSpacing() const;
-    double getTOF() const;
+  Mantid::Kernel::V3D getQLabFrame() const;
+  Mantid::Kernel::V3D getQSampleFrame() const;
+  Mantid::Kernel::V3D getDetectorPosition() const;
+  Mantid::Kernel::V3D getDetectorPositionNoCheck() const;
 
-    double getInitialEnergy() const;
-    double getFinalEnergy() const;
-    void setInitialEnergy(double m_InitialEnergy);
-    void setFinalEnergy(double m_FinalEnergy);
+  void setQSampleFrame(Mantid::Kernel::V3D QSampleFrame,
+                       boost::optional<double> detectorDistance = boost::optional<double>());
+  void setQLabFrame(Mantid::Kernel::V3D QLabFrame,
+                    boost::optional<double> detectorDistance = boost::optional<double>());
 
-    double getIntensity() const;
-    double getSigmaIntensity() const;
+  void setWavelength(double wavelength);
+  double getWavelength() const;
+  double getScattering() const;
+  double getDSpacing() const;
+  double getTOF() const;
 
-    void setIntensity(double m_Intensity);
-    void setSigmaIntensity(double m_SigmaIntensity);
+  double getInitialEnergy() const;
+  double getFinalEnergy() const;
+  void setInitialEnergy(double m_InitialEnergy);
+  void setFinalEnergy(double m_FinalEnergy);
 
-    double getBinCount() const;
-    void setBinCount(double m_BinCount);
+  double getIntensity() const;
+  double getSigmaIntensity() const;
 
-    Mantid::Kernel::Matrix<double> getGoniometerMatrix() const;
-    void setGoniometerMatrix(Mantid::Kernel::Matrix<double> m_GoniometerMatrix);
+  void setIntensity(double m_Intensity);
+  void setSigmaIntensity(double m_SigmaIntensity);
 
-    std::string getBankName() const;
-    int getRow() const;
-    int getCol() const;
+  double getBinCount() const;
+  void setBinCount(double m_BinCount);
 
-    Mantid::Kernel::V3D getDetPos() const;
-    double getL1() const;
-    double getL2() const;
+  Mantid::Kernel::Matrix<double> getGoniometerMatrix() const;
+  void setGoniometerMatrix(Mantid::Kernel::Matrix<double> m_GoniometerMatrix);
 
-    double getValueByColName(const std::string & name) const;
+  std::string getBankName() const;
+  int getRow() const;
+  int getCol() const;
 
-  private:
-    /// Shared pointer to the instrument (for calculating some values )
-    Geometry::Instrument_const_sptr m_inst;
+  Mantid::Kernel::V3D getDetPos() const;
+  double getL1() const;
+  double getL2() const;
 
-    /// Detector pointed to
-    Geometry::IDetector_const_sptr m_det;
+  double getValueByColName(const std::string &name) const;
 
-    /// Name of the parent bank
-    std::string m_BankName;
+  /// Get the peak shape.
+  const Mantid::Geometry::PeakShape& getPeakShape() const;
 
-    /// ID of the detector
-    int m_DetectorID;
+  /// Set the PeakShape
+  void setPeakShape(Mantid::Geometry::PeakShape* shape);
 
-    /// H of the peak
-    double m_H;
+  /// Set the PeakShape
+  void setPeakShape(Mantid::Geometry::PeakShape_const_sptr shape);
 
-    /// K of the peak
-    double m_K;
+  /// Assignment
+  Peak& operator=(const Peak& other);
 
-    /// L of the peak
-    double m_L;
+private:
 
-    /// Integrated peak intensity
-    double m_Intensity;
+  bool findDetector(const Mantid::Kernel::V3D &beam);
 
-    /// Error (sigma) on peak intensity
-    double m_SigmaIntensity;
+  /// Shared pointer to the instrument (for calculating some values )
+  Geometry::Instrument_const_sptr m_inst;
 
-    /// Count in the bin at the peak
-    double m_BinCount;
+  /// Detector pointed to
+  Geometry::IDetector_const_sptr m_det;
 
-    /// Initial energy of neutrons at the peak
-    double m_InitialEnergy;
+  /// Name of the parent bank
+  std::string m_bankName;
 
-    /// Final energy of the neutrons at peak (normally same as m_InitialEnergy)
-    double m_FinalEnergy;
+  /// ID of the detector
+  int m_detectorID;
 
-    /// Orientation matrix of the goniometer angles.
-    Mantid::Kernel::Matrix<double> m_GoniometerMatrix;
+  /// H of the peak
+  double m_H;
 
-    /// Inverse of the goniometer rotation matrix; used to go from Q in lab frame to Q in sample frame
-    Mantid::Kernel::Matrix<double> m_InverseGoniometerMatrix;
+  /// K of the peak
+  double m_K;
 
-    /// Originating run number for this peak
-    int m_RunNumber;
+  /// L of the peak
+  double m_L;
 
-    /// Integrated monitor count over TOF range for this run
-    double m_MonitorCount;
+  /// Integrated peak intensity
+  double m_intensity;
 
-    /// Cached row in the detector
-    int m_Row;
+  /// Error (sigma) on peak intensity
+  double m_sigmaIntensity;
 
-    /// Cached column in the detector
-    int m_Col;
+  /// Count in the bin at the peak
+  double m_binCount;
 
-    /// Cached source position
-    Mantid::Kernel::V3D sourcePos;
-    /// Cached sample position
-    Mantid::Kernel::V3D samplePos;
-    /// Cached detector position
-    Mantid::Kernel::V3D detPos;
-    
-    /// save values before setHKL is called for use in SortHKL
-    double orig_H;
-    double orig_K;
-    double orig_L;
+  /// Initial energy of neutrons at the peak
+  double m_initialEnergy;
 
-    /// List of contributing detectors IDs
-    std::set<int> m_detIDs;
-  };
+  /// Final energy of the neutrons at peak (normally same as m_InitialEnergy)
+  double m_finalEnergy;
 
+  /// Orientation matrix of the goniometer angles.
+  Mantid::Kernel::Matrix<double> m_GoniometerMatrix;
+
+  /// Inverse of the goniometer rotation matrix; used to go from Q in lab frame
+  /// to Q in sample frame
+  Mantid::Kernel::Matrix<double> m_InverseGoniometerMatrix;
+
+  /// Originating run number for this peak
+  int m_runNumber;
+
+  /// Integrated monitor count over TOF range for this run
+  double m_monitorCount;
+
+  /// Cached row in the detector
+  int m_row;
+
+  /// Cached column in the detector
+  int m_col;
+
+  /// Cached source position
+  Mantid::Kernel::V3D sourcePos;
+  /// Cached sample position
+  Mantid::Kernel::V3D samplePos;
+  /// Cached detector position
+  Mantid::Kernel::V3D detPos;
+
+  /// save values before setHKL is called for use in SortHKL
+  double m_orig_H;
+  double m_orig_K;
+  double m_orig_L;
+
+  /// List of contributing detectors IDs
+  std::set<int> m_detIDs;
+
+  /// Peak shape
+  Mantid::Geometry::PeakShape_const_sptr m_peakShape;
+
+  /// Static logger
+  static Mantid::Kernel::Logger g_log;
+};
 
 } // namespace Mantid
 } // namespace DataObjects
 
-#endif  /* MANTID_DATAOBJECTS_PEAK_H_ */
+#endif /* MANTID_DATAOBJECTS_PEAK_H_ */

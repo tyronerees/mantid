@@ -35,6 +35,7 @@
 #include <QPainter>
 #include <QPolygon>
 #include <QMessageBox>
+#include <QApplication>
 
 #include <qwt_plot.h>
 #include <qwt_scale_widget.h>
@@ -50,7 +51,8 @@ LegendWidget::LegendWidget(Plot *plot):QWidget(plot),
 	d_plot(plot),
 	d_frame (0),
 	d_angle(0),
-	d_fixed_coordinates(false)
+        d_x(0.), d_y(0.),
+        d_fixed_coordinates(false)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
 
@@ -203,9 +205,14 @@ void LegendWidget::drawVector(PlotCurve *c, QPainter *p, int x, int y, int l)
 		return;
 
   VectorCurve *v = dynamic_cast<VectorCurve*>(c);
+  if (!v) return;
+
+  Graph* g = dynamic_cast<Graph *>(d_plot->parent());
+  if (!g) return;
+
 	p->save();
 
-  if ((dynamic_cast<Graph *>(d_plot->parent()))->antialiasing())
+  if (g->antialiasing())
 		p->setRenderHints(QPainter::Antialiasing);
 
 	QPen pen(v->color(), v->width(), Qt::SolidLine);
@@ -242,6 +249,7 @@ void LegendWidget::drawSymbol(PlotCurve *c, int point, QPainter *p, int x, int y
 
 	if (c->type() == Graph::Pie){
     QwtPieCurve *pie = dynamic_cast<QwtPieCurve *>(c);
+    if (!pie) return;
 		const QBrush br = QBrush(pie->color(point), pie->pattern());
 		QPen pen = pie->pen();
 		p->save();
@@ -280,8 +288,10 @@ void LegendWidget::drawText(QPainter *p, const QRect& rect,
 		QwtArray<int> height, int symbolLineLength)
 {
   p->save();
-  if ((dynamic_cast<Graph *>(d_plot->parent()))->antialiasing())
-    p->setRenderHints(QPainter::Antialiasing);
+  if (auto g = dynamic_cast<Graph *>(d_plot->parent())) {
+    if (g->antialiasing())
+      p->setRenderHints(QPainter::Antialiasing);
+  }
 
   // RJT (22/09/09): For remainder of method, copied in code from current 
   // QtiPlot (rev. 1373) to fix infinite loop if closing bracket missing
@@ -568,10 +578,12 @@ QString LegendWidget::parse(const QString& str)
 					if (lst.count() == 1)
 						s = s.replace(pos, pos2-pos+1, c->title().text());
 					else if (lst.count() == 3 && c->type() == Graph::Pie){
-            Table *t = (dynamic_cast<DataCurve *>(c))->table();
-						int col = t->colIndex(c->title().text());
-						int row = lst[2].toInt() - 1;
-						s = s.replace(pos, pos2-pos+1, t->text(row, col));
+            if (auto dc = dynamic_cast<DataCurve *>(c)) {
+              Table *t = dc->table();
+						  int col = t->colIndex(c->title().text());
+						  int row = lst[2].toInt() - 1;
+						  s = s.replace(pos, pos2-pos+1, t->text(row, col));
+            }
 					}
 				}
         	}
@@ -585,70 +597,92 @@ PlotCurve* LegendWidget::getCurve(const QString& s, int &point)
 {
 	point = -1;
 	PlotCurve *curve = 0;
-  Graph *g = dynamic_cast<Graph *>(d_plot->parent());
+  if (Graph *g = dynamic_cast<Graph *>(d_plot->parent())) {
+	  QStringList l = s.split(",");
+      if (l.count() == 2)
+		  point = l[1].toInt() - 1;
 
-	QStringList l = s.split(",");
-    if (l.count() == 2)
-		point = l[1].toInt() - 1;
-
-	if (!l.isEmpty()){
-		l = l[0].split(".");
-    	if (l.count() == 2){
-    		int cv = l[1].toInt() - 1;
-			Graph *layer = g->multiLayer()->layer(l[0].toInt());
-			if (layer && cv >= 0 && cv < layer->curves())
-        return dynamic_cast<PlotCurve*>(layer->curve(cv));
-		} else if (l.count() == 1){
-			int cv = l[0].toInt() - 1;
-			if (cv >= 0 || cv < g->curves())
-        return dynamic_cast<PlotCurve*>(g->curve(cv));
-		}
-	}
+	  if (!l.isEmpty()){
+		  l = l[0].split(".");
+    	  if (l.count() == 2){
+    		  int cv = l[1].toInt() - 1;
+			  Graph *layer = g->multiLayer()->layer(l[0].toInt());
+			  if (layer && cv >= 0 && cv < layer->curves())
+          return dynamic_cast<PlotCurve*>(layer->curve(cv));
+		  } else if (l.count() == 1){
+			  int cv = l[0].toInt() - 1;
+			  if (cv >= 0 || cv < g->curves())
+          return dynamic_cast<PlotCurve*>(g->curve(cv));
+		  }
+	  }
+  }
 	return curve;
 }
 
-void LegendWidget::mousePressEvent (QMouseEvent *)
+void LegendWidget::mousePressEvent (QMouseEvent * /*e*/)
 {
-    if (d_selector){
-        delete d_selector;
-		d_selector = NULL;
-	}
+  if (d_selector)
+  {
+    delete d_selector;
+    d_selector = NULL;
+  }
 
-  (dynamic_cast<Graph *>(d_plot->parent()))->activateGraph();
-  (dynamic_cast<Graph *>(d_plot->parent()))->deselectMarker();
+  Graph *g = (dynamic_cast<Graph*>(d_plot->parent()));
+  if (!g)
+    return;
+  g->activateGraph();
+  g->deselectMarker();
 
-    d_selector = new SelectionMoveResizer(this);
-  connect(d_selector, SIGNAL(targetsChanged()), dynamic_cast<Graph*>(d_plot->parent()), SIGNAL(modifiedGraph()));
-  (dynamic_cast<Graph *>(d_plot->parent()))->setSelectedText(this);
+  // Make sure the target of the new SelectionMoveResizer is the actual object being clicked.
+  // You cannot use 'this', that mixes up the labels and the last legend added (tickets #8891, #8851).
+  // Alternative way of guessing the widget being clicked (we have QMouseEvent* e here): 
+  // qApp->widgetAt(e->globalX(),e->globalY()))
+  if (LegendWidget *clickedWidget = dynamic_cast<LegendWidget*>(qApp->widgetAt(QCursor::pos()))) {
+    d_selector = new SelectionMoveResizer(clickedWidget);
+    connect(d_selector, SIGNAL(targetsChanged()), g, SIGNAL(modifiedGraph()));
+    g->setSelectedText(clickedWidget);
+  }
 }
 
 void LegendWidget::setSelected(bool on)
 {
-	if (on){
-		if (d_selector)
-			return;
-		else {
-			d_selector = new SelectionMoveResizer(this);
-      connect(d_selector, SIGNAL(targetsChanged()), dynamic_cast<Graph*>(d_plot->parent()), SIGNAL(modifiedGraph()));
-      (dynamic_cast<Graph *>(d_plot->parent()))->setSelectedText(this);
-		}
-	} else if (d_selector){
-		d_selector->close();
-		d_selector = NULL;
-    (dynamic_cast<Graph *>(d_plot->parent()))->setSelectedText(NULL);
-	}
+  if (on)
+  {
+    if (d_selector)
+    {
+      return;
+    }
+    else
+    {
+      LegendWidget *clickedWidget = dynamic_cast<LegendWidget*>(qApp->widgetAt(QCursor::pos()));
+      if (!clickedWidget)
+	return;
+      d_selector = new SelectionMoveResizer(clickedWidget);
+      Graph *g = (dynamic_cast<Graph*>(d_plot->parent()));
+      if (!g)
+	return;
+      connect(d_selector, SIGNAL(targetsChanged()), g, SIGNAL(modifiedGraph()));
+      g->setSelectedText(this);
+    }
+  }
+  else if (d_selector)
+  {
+    d_selector->close();
+    d_selector = NULL;
+    Graph *g = (dynamic_cast<Graph*>(d_plot->parent()));
+    if (!g)
+      return;
+    g->setSelectedText(NULL);
+  }
 }
 
 void LegendWidget::showTextEditor()
 {
-  // RJT (22/09/09): The code below caused a warning from the QObject destructor, which can't be good
-  // The d_selector member is completely gone from the current version of this code
-  //if (d_selector){
-  //  delete d_selector;
-  //  d_selector = NULL;
-  //}
+    Graph *g = (dynamic_cast<Graph*>(d_plot->parent()));
+    if (!g)
+      return;
 
-    ApplicationWindow *app = (dynamic_cast<Graph *>(d_plot->parent()))->multiLayer()->applicationWindow();
+    ApplicationWindow *app = g->multiLayer()->applicationWindow();
     if (!app)
         return;
 

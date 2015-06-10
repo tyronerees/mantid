@@ -1,8 +1,9 @@
+#pylint: disable=invalid-name
 # First a function definition for the Loading algorithms which loads the data and immediately aligns the detectors
-def LoadAndAlign(type, outputArea):
-	LoadRawDialog(OutputWorkspace=outputArea, Message = "Enter path to the file containing the " + type)
-	AlignDetectorsDialog(InputWorkspace=outputArea, OutputWorkspace=outputArea,Message="Enter path to calibration file")
-		
+def LoadAndAlign(_type, outputArea):
+    LoadRawDialog(OutputWorkspace=outputArea, Message = "Enter path to the file containing the " + _type)
+    AlignDetectorsDialog(InputWorkspace=outputArea, OutputWorkspace=outputArea,Message="Enter path to calibration file")
+
 # ========== The script starts here ============
 dataWorkspace = "Vanadium"
 LoadAndAlign("data", dataWorkspace)
@@ -14,7 +15,8 @@ Minus(LHSWorkspace=dataWorkspace,RHSWorkspace="Empty",OutputWorkspace=dataWorksp
 transWorkspace="Transmission"
 #The input workspace needs to be in units of wavelength for the CylinderAbsorption algorithm
 ConvertUnits(InputWorkspace=dataWorkspace, OutputWorkspace=dataWorkspace, Target="Wavelength")
-CylinderAbsorptionDialog(InputWorkspace=dataWorkspace, OutputWorkspace=transWorkspace,SampleNumberDensity="0.072",ScatteringXSection="5.08",AttenuationXSection="5.1",Message="Enter size parameters")
+CylinderAbsorptionDialog(InputWorkspace=dataWorkspace, OutputWorkspace=transWorkspace,SampleNumberDensity="0.072",\
+    ScatteringXSection="5.08",AttenuationXSection="5.1",Message="Enter size parameters")
 Divide(dataWorkspace, transWorkspace, OutputWorkspace=dataWorkspace)
 
 # === Save as a Nexus file ===

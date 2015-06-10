@@ -58,7 +58,7 @@ private:
     @author Martyn Gigg, Tessella Support Services plc
     @date 19/08/2009
 
-    Copyright &copy; 2009 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+    Copyright &copy; 2009 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
 
     This file is part of Mantid.
 
@@ -81,7 +81,7 @@ private:
 class EXPORT_OPT_MANTIDQT_MANTIDWIDGETS ScriptEditor : public QsciScintilla
 {
   // Qt macro
-  Q_OBJECT;
+  Q_OBJECT
 
 public:
   /**

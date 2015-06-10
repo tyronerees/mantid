@@ -16,7 +16,6 @@ using namespace Mantid::API;
 
 class FuncMinimizerFactoryTest_A: public IFuncMinimizer
 {
-  int m_attr;
 public:
   FuncMinimizerFactoryTest_A() 
   {
@@ -26,15 +25,15 @@ public:
 
   /// Overloading base class methods
   std::string name()const {return "Boevs";}
-  bool iterate() {return true;}
+  bool iterate(size_t) {return true;}
   int hasConverged() {return 101;}
   double costFunctionVal() {return 5.0;}
-  void initialize(API::ICostFunction_sptr)
+  void initialize(API::ICostFunction_sptr,size_t)
   {
   }
 };
 
-DECLARE_FUNCMINIMIZER(FuncMinimizerFactoryTest_A, nedtur);
+DECLARE_FUNCMINIMIZER(FuncMinimizerFactoryTest_A, nedtur)
 
 
 class FuncMinimizerFactoryTest : public CxxTest::TestSuite

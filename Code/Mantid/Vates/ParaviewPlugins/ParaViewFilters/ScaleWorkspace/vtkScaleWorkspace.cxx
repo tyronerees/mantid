@@ -1,7 +1,9 @@
 #include "vtkScaleWorkspace.h"
 
 #include "MantidVatesAPI/vtkDataSetToScaledDataSet.h"
-
+#include "MantidVatesAPI/FieldDataToMetadata.h"
+#include "MantidVatesAPI/MetadataJsonManager.h"
+#include "MantidVatesAPI/VatesConfigurations.h"
 #include <vtkInformation.h>
 #include <vtkInformationVector.h>
 #include <vtkNew.h>
@@ -9,14 +11,19 @@
 #include <vtkUnstructuredGridAlgorithm.h>
 #include <vtkUnstructuredGrid.h>
 
-vtkStandardNewMacro(vtkScaleWorkspace);
+vtkStandardNewMacro(vtkScaleWorkspace)
 
 using namespace Mantid::VATES;
 
 vtkScaleWorkspace::vtkScaleWorkspace() :
   m_xScaling(1),
   m_yScaling(1),
-  m_zScaling(1)
+  m_zScaling(1),
+  m_minValue(0.1),
+  m_maxValue(0.1),
+  m_specialCoordinates(-1),
+  m_metadataJsonManager(new MetadataJsonManager()),
+  m_vatesConfigurations(new VatesConfigurations())
 {
   this->SetNumberOfInputPorts(1);
   this->SetNumberOfOutputPorts(1);
@@ -38,11 +45,19 @@ int vtkScaleWorkspace::RequestData(vtkInformation*, vtkInformationVector **input
   vtkDataSetToScaledDataSet scaler(inputDataSet, outputDataSet);
   scaler.initialize(m_xScaling, m_yScaling, m_zScaling);
   scaler.execute();
+
+  // Need to call an update on the meta data, as it is not guaranteed that RequestInformation will be called
+  // before we access the metadata.
+  updateMetaData(inputDataSet);
   return 1;
 }
 
-int vtkScaleWorkspace::RequestInformation(vtkInformation*, vtkInformationVector**, vtkInformationVector*)
+int vtkScaleWorkspace::RequestInformation(vtkInformation*, vtkInformationVector** inputVector, vtkInformationVector*)
 {
+  // Set the meta data 
+  vtkInformation *inInfo = inputVector[0]->GetInformationObject(0);
+  vtkUnstructuredGrid *inputDataSet = vtkUnstructuredGrid::SafeDownCast(inInfo->Get(vtkDataObject::DATA_OBJECT()));
+  updateMetaData(inputDataSet);
   return 1;
 }
 
@@ -88,4 +103,57 @@ void vtkScaleWorkspace::SetZScaling(double zScaling)
     this->Modified();
     m_zScaling = zScaling;
   }
+}
+
+/**
+ * Gets the minimum value of the data associated with the 
+ * workspace.
+ * @returns The minimum value of the workspace data.
+ */
+double vtkScaleWorkspace::GetMinValue()
+{
+  return m_minValue;
+}
+
+/**
+ * Gets the maximum value of the data associated with the 
+ * workspace.
+ * @returns The maximum value of the workspace data.
+ */
+double vtkScaleWorkspace::GetMaxValue()
+{
+   return m_maxValue;
+}
+
+/**
+ * Gets the (first) instrument which is associated with the workspace.
+ * @return The name of the instrument.
+ */
+const char* vtkScaleWorkspace::GetInstrument()
+{
+  return m_instrument.c_str();
+}
+
+int vtkScaleWorkspace::GetSpecialCoordinates()
+{
+  return m_specialCoordinates;
+}
+
+/**
+ * Update the metadata fields of the plugin based on the information of the inputDataSet
+ * @param inputDataSet :: the input data set.
+ */
+void vtkScaleWorkspace::updateMetaData(vtkUnstructuredGrid *inputDataSet) {
+  vtkFieldData* fieldData = inputDataSet->GetFieldData();
+  
+  // Extract information for meta data in Json format.
+  FieldDataToMetadata fieldDataToMetadata;
+
+  std::string jsonString = fieldDataToMetadata(fieldData, m_vatesConfigurations->getMetadataIdJson());
+  m_metadataJsonManager->readInSerializedJson(jsonString);
+
+  m_minValue = m_metadataJsonManager->getMinValue();
+  m_maxValue = m_metadataJsonManager->getMaxValue();
+  m_instrument = m_metadataJsonManager->getInstrument();
+  m_specialCoordinates = m_metadataJsonManager->getSpecialCoordinates();
 }

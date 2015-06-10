@@ -9,8 +9,8 @@
 Description
 -----------
 
-Integration sums up spectra in a `Workspace <http://www.mantidproject.org/Workspace>`__ and outputs a
-`Workspace <http://www.mantidproject.org/Workspace>`__ that contains only 1 value per spectrum (i.e.
+Integration sums up spectra in a :ref:`Workspace <Workspace>` and outputs a
+:ref:`Workspace <Workspace>` that contains only 1 value per spectrum (i.e.
 the sum). The associated errors are added in quadrature. The two X
 values per spectrum are set to the limits of the range over which the
 spectrum has been integrated. By default, the entire range is integrated
@@ -37,10 +37,22 @@ workspace.
 EventWorkspaces
 ###############
 
-If an `EventWorkspace <http://www.mantidproject.org/EventWorkspace>`__ is used as the input, the
-output will be a `MatrixWorkspace <http://www.mantidproject.org/MatrixWorkspace>`__.
+If an :ref:`EventWorkspace <EventWorkspace>` is used as the input, the
+output will be a :ref:`MatrixWorkspace <MatrixWorkspace>`.
 :ref:`algm-Rebin` is recommended if you want to keep the workspace as an
 EventWorkspace.
+
+**Integraton for event workspaces refers to internal binning, provided by 
+:ref:`algm-Rebin` or load algorithm and may ignore limits, provided as algorithm 
+input.**  For example, attemtp to integrate loaded ISIS event workspace in the 
+range [18000,20000] yields workspace inegrated in the range [0,200000],
+assuming the data were collected in the time range [0,20000]. This happens because
+the event data would have single hisogram workspace bin in range [0,20000].
+To obtain integral in the desired range, user have to :ref:`algm-Rebin` first, 
+and one of the binning intervals have to start from 18000 and another (or the same) 
+end at 20000.
+
+
 
 Usage
 -----

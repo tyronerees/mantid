@@ -43,7 +43,7 @@ namespace CustomInterfaces
 
     @author Martyn Gigg
 
-    Copyright &copy; 2010 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+    Copyright &copy; 2010 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
 
     This file is part of Mantid.
 
@@ -105,7 +105,7 @@ private:
   enum Tab
   { 
     RUN_NUMBERS, REDUCTION_SETTINGS, GEOMETRY, MASKING, 
-    LOGGING, ADD_RUNS, DIAGNOSTICS, ONE_D_ANALYSIS, 
+    LOGGING, ADD_RUNS, DIAGNOSTICS, ONE_D_ANALYSIS 
   };
 
   /// Initialize the layout
@@ -361,6 +361,7 @@ private:
   bool entriesAreValid(ValMap & vals);
   bool runFilesAreValid();
   QString reduceSingleRun() const;
+  void setValidators();
 
   UserSubWindow * slicingWindow;
 

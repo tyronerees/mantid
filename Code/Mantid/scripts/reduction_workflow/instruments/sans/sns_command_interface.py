@@ -1,7 +1,8 @@
+#pylint: disable=invalid-name,unused-import
 """
     Command set for EQSANS reduction
 """
-# Import the specific commands that we need
+# Import the specific commands that we need - some of these are used in systemtests
 from reduction_workflow.command_interface import *
 
 from hfir_command_interface import DarkCurrent, NoDarkCurrent, NoNormalization
@@ -30,9 +31,9 @@ from hfir_command_interface import Mask, MaskRectangle, MaskDetectors, MaskDetec
 from hfir_command_interface import SetAbsoluteScale, SetDirectBeamAbsoluteScale
 from hfir_command_interface import Stitch
 
-from mantid.api import AlgorithmManager
-from mantid.kernel import Logger
-import mantid.simpleapi as simpleapi
+#from mantid.api import AlgorithmManager
+#from mantid.kernel import Logger
+#import mantid.simpleapi as simpleapi
 from reduction_workflow.find_data import find_data
 
 def EQSANS(keep_events=False, property_manager=None):
@@ -45,7 +46,7 @@ def EQSANS(keep_events=False, property_manager=None):
     AzimuthalAverage()
     if property_manager is not None:
         ReductionSingleton().set_reduction_table_name(property_manager)
-    
+
 def SetBeamCenter(x,y):
     if x==0 and y==0:
         ReductionSingleton().reduction_properties["UseConfigBeam"]=True
@@ -63,45 +64,47 @@ def BeamMonitorNormalization(reference_flux_file):
     reference_flux_file = find_data(reference_flux_file, instrument=ReductionSingleton().get_instrument())
     ReductionSingleton().reduction_properties["Normalisation"]="Monitor"
     ReductionSingleton().reduction_properties["MonitorReferenceFile"]=reference_flux_file
-    
+
 def PerformFlightPathCorrection(do_correction=True):
     ReductionSingleton().reduction_properties["CorrectForFlightPath"]=do_correction
-    
+
 def SetTOFTailsCutoff(low_cut=0.0, high_cut=0.0):
     ReductionSingleton().reduction_properties["LowTOFCut"]=low_cut
     ReductionSingleton().reduction_properties["HighTOFCut"]=high_cut
-    
+
 def UseConfigTOFTailsCutoff(use_config=True):
     ReductionSingleton().reduction_properties["UseConfigTOFCuts"]=use_config
-    
+
+def SkipTOFCorrection(skip=True):
+    ReductionSingleton().reduction_properties["SkipTOFCorrection"]=skip
+
 def UseConfigMask(use_config=True):
     ReductionSingleton().reduction_properties["UseConfigMask"]=use_config
-    
+
 def SetWavelengthStep(step=0.1):
     ReductionSingleton().reduction_properties["WavelengthStep"]=step
-    
+
 def UseConfig(use_config=True):
     ReductionSingleton().reduction_properties["UseConfig"]=use_config
-    
-def AzimuthalAverage(suffix="_Iq", n_bins=100, n_subpix=1, log_binning=False, 
+
+def AzimuthalAverage(suffix="_Iq", n_bins=100, n_subpix=1, log_binning=False,
                      scale=True):
-    # Suffix is no longer used but kept for backward compatibility 
+    # Suffix is no longer used but kept for backward compatibility
     # N_subpix is also no longer used
     ReductionSingleton().reduction_properties["DoAzimuthalAverage"]=True
     ReductionSingleton().reduction_properties["IQNumberOfBins"]=n_bins
     ReductionSingleton().reduction_properties["IQLogBinning"]=log_binning
     ReductionSingleton().reduction_properties["IQScaleResults"]=scale
-    
+
 def CombineTransmissionFits(combine_frames=True):
     ReductionSingleton().reduction_properties["FitFramesTogether"]=combine_frames
 
 def BckCombineTransmissionFits(combine_frames=True):
     ReductionSingleton().reduction_properties["BckFitFramesTogether"]=combine_frames
-    
+
 def Resolution(sample_aperture_diameter=10.0):
     ReductionSingleton().reduction_properties["ComputeResolution"]=True
     ReductionSingleton().reduction_properties["SampleApertureDiameter"]=sample_aperture_diameter
-    
+
 def IndependentBinning(independent_binning=True):
     ReductionSingleton().reduction_properties["IQIndependentBinning"]=independent_binning
-    

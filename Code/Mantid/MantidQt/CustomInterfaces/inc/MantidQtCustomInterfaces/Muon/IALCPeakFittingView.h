@@ -21,7 +21,7 @@ namespace CustomInterfaces
 
   /** IALCPeakFittingView : Interface for ALC Peak Fitting step view.
     
-    Copyright &copy; 2014 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+    Copyright &copy; 2014 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
 
     This file is part of Mantid.
 
@@ -85,6 +85,15 @@ namespace CustomInterfaces
     /// Resize/move PeakPicker so that it represents specified peak
     /// @param peak :: A new peak to represent
     virtual void setPeakPicker(const IPeakFunction_const_sptr& peak) = 0;
+
+    /**
+     * Pops-up an error box
+     * @param message :: Error message to display
+     */
+    virtual void displayError(const QString& message) = 0;
+
+    /// Opens the Mantid Wiki web page
+    virtual void help() = 0;
 
   signals:
     /// Request to perform peak fitting

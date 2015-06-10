@@ -1,7 +1,7 @@
-from mantid.api import PythonAlgorithm, AlgorithmFactory,WorkspaceProperty,PropertyMode
+#pylint: disable=no-init,invalid-name
+from mantid.api import PythonAlgorithm, AlgorithmFactory
 from mantid.kernel import Direction,IntArrayProperty, FloatArrayProperty
 import  mantid,math,numpy
-
 
 
 class SortDetectors(PythonAlgorithm):
@@ -11,35 +11,37 @@ class SortDetectors(PythonAlgorithm):
         """ Return category
         """
         return "PythonAlgorithms;Utility"
-    
+
     def name(self):
         """ Return name
         """
         return "SortDetectors"
- 
+
     def summary(self):
         """ Return summary
         """
         return "Algorithm to sort detectors by distance."
-           
+
     def PyInit(self):
         """ Declare properties
         """
-        self.declareProperty(mantid.api.WorkspaceProperty("Workspace","",direction=mantid.kernel.Direction.Input, validator=mantid.api.InstrumentValidator()), "Input workspace")
-        
-    	self.declareProperty(IntArrayProperty("UpstreamSpectra",Direction.Output))
-    	self.declareProperty(FloatArrayProperty("UpstreamDetectorDistances",Direction.Output))
-        self.declareProperty(IntArrayProperty("DownstreamSpectra",Direction.Output))
-        self.declareProperty(FloatArrayProperty("DownstreamDetectorDistances",Direction.Output))
-        return
-    
+        self.declareProperty(mantid.api.WorkspaceProperty(  "Workspace", "",
+                                                            direction=mantid.kernel.Direction.Input,
+                                                            validator=mantid.api.InstrumentValidator()),
+                             "Input workspace")
+
+        self.declareProperty(IntArrayProperty("UpstreamSpectra", Direction.Output))
+        self.declareProperty(FloatArrayProperty("UpstreamDetectorDistances", Direction.Output))
+        self.declareProperty(IntArrayProperty("DownstreamSpectra", Direction.Output))
+        self.declareProperty(FloatArrayProperty("DownstreamDetectorDistances", Direction.Output))
+
     def PyExec(self):
         """ Main execution body
         """
-        w = self.getProperty("Workspace").value	
-        samplePos=w.getInstrument().getSample().getPos()
-        moderatorPos=w.getInstrument().getSource().getPos()
-        incident=samplePos-moderatorPos
+        workspace = self.getProperty("Workspace").value
+        samplePos = workspace.getInstrument().getSample().getPos()
+        moderatorPos = workspace.getInstrument().getSource().getPos()
+        incident = samplePos - moderatorPos
 
         upstream=[]
         upinds=[]
@@ -47,8 +49,8 @@ class SortDetectors(PythonAlgorithm):
         downstream=[]
         downinds=[]
         downdist=[]
-        for i in range(w.getNumberHistograms()):
-            detPos=w.getDetector(i).getPos()
+        for i in range(workspace.getNumberHistograms()):
+            detPos=workspace.getDetector(i).getPos()
             scattered=detPos-samplePos
             if abs(scattered.angle(incident))>0.999*math.pi:
                 upstream.append((i,scattered.norm()))
@@ -68,5 +70,5 @@ class SortDetectors(PythonAlgorithm):
         self.setProperty("UpstreamDetectorDistances", numpy.array(updist))
         self.setProperty("DownstreamSpectra", numpy.array(downinds))
         self.setProperty("DownstreamDetectorDistances", numpy.array(downdist))
-        
+
 AlgorithmFactory.subscribe(SortDetectors)

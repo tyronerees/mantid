@@ -1,3 +1,4 @@
+#pylint: disable=no-init,invalid-name
 """
 This example reimplements a Gaussian fitting function. It is not meant to
 be used in production for fitting, it is simply provided as a relatively complete
@@ -12,7 +13,9 @@ import math
 import numpy as np
 
 class ExamplePeakFunction(IPeakFunction):
-    
+
+    _nterms = None
+
     def category(self):
         """
         Optional method to return the category that this
@@ -39,17 +42,17 @@ class ExamplePeakFunction(IPeakFunction):
         # It is advisable to look at the setAttributeValue function below and take local copies
         # of attributes so that they do not have to be retrieved repeatedly througout the fitting.
         self.declareAttribute("NTerms", 1)
-       
+
     def functionLocal(self, xvals):
         """
-        Computes the function on the set of values given and returns 
+        Computes the function on the set of values given and returns
         the answer as a numpy array of floats
         """
         # As Fit progresses the declared parameter values will change
         height = self.getParameterValue("Height") # Can also be retrieve by index self.getParameterValue(0)
         peak_centre = self.getParameterValue("PeakCentre")
         sigma = self.getParameterValue("Sigma")
-        weight = math.pow(1./sigma,2);
+        weight = math.pow(1./sigma,2)
 
         # Here you can use the NTerms attr if required by
         #   using self._nterms: see setAttributeValue below or
@@ -58,7 +61,7 @@ class ExamplePeakFunction(IPeakFunction):
         offset_sq=np.square(xvals-peak_centre)
         out=height*np.exp(-0.5*offset_sq*weight)
         return out
-    
+
     def functionDerivLocal(self, xvals, jacobian):
         """
         Computes the partial derivatives of the function on the set of values given
@@ -68,11 +71,11 @@ class ExamplePeakFunction(IPeakFunction):
             ip = The index of the parameter value whose partial derivative this corresponds to
             value = The value of the derivative
         """
-        height = self.getParameterValue("Height");
-        peak_centre = self.getParameterValue("PeakCentre");
+        height = self.getParameterValue("Height")
+        peak_centre = self.getParameterValue("PeakCentre")
         sigma = self.getParameterValue("Sigma")
-        weight = math.pow(1./sigma,2);
-        
+        weight = math.pow(1./sigma,2)
+
         # X index
         i = 0
         for x in xvals:
@@ -114,13 +117,12 @@ class ExamplePeakFunction(IPeakFunction):
         set than that declared
         """
         param_value = value
-        explicit = False
         if index == 2:
             param_value = math.sqrt(math.fabs(1.0/value))
         else:
             param_value = value
         # Final explicit arugment is required to be false here by framework
-        self.setParameter(index, param_value, False) 
+        self.setParameter(index, param_value, False)
 
         param_value = self.getParameterValue(index)
         if index == 2: #Sigma. Actually fit to 1/(sigma^2) for stability

@@ -160,6 +160,8 @@ macro(CXXTEST_ADD_TEST _cxxtest_testname)
         add_test ( NAME ${_cxxtest_separate_name}
                   COMMAND ${CMAKE_COMMAND} -E chdir "${CMAKE_BINARY_DIR}/bin/Testing" 
 		          $<TARGET_FILE:${_cxxtest_testname}> ${_suitename} )
+        set_tests_properties ( ${_cxxtest_separate_name} PROPERTIES
+                               TIMEOUT ${TESTING_TIMEOUT} )
 
 		if (CXXTEST_ADD_PERFORMANCE)
 			# ------ Performance test version -------
@@ -175,6 +177,8 @@ macro(CXXTEST_ADD_TEST _cxxtest_testname)
 				add_test ( NAME ${_cxxtest_separate_name}
 				          COMMAND ${CMAKE_COMMAND} -E chdir "${CMAKE_BINARY_DIR}/bin/Testing" 
 						  $<TARGET_FILE:${_cxxtest_testname}> ${_performance_suite_name} )
+        set_tests_properties ( ${_cxxtest_separate_name} PROPERTIES
+                               TIMEOUT ${TESTING_TIMEOUT} )
 			endif ()
 		endif ()
       endforeach ( part ${ARGN} )
@@ -190,8 +194,8 @@ endmacro(CXXTEST_ADD_TEST)
 #=============================================================
 
 find_path(CXXTEST_INCLUDE_DIR cxxtest/TestSuite.h
-          PATHS ${PROJECT_SOURCE_DIR}/TestingTools/cxxtest
-	        ${PROJECT_SOURCE_DIR}/../TestingTools/cxxtest )
+          PATHS ${PROJECT_SOURCE_DIR}/Testing/Tools/cxxtest
+	        ${PROJECT_SOURCE_DIR}/../Testing/Tools/cxxtest )
 
 find_program(CXXTEST_TESTGEN_EXECUTABLE python/scripts/cxxtestgen
              PATHS ${CXXTEST_INCLUDE_DIR})

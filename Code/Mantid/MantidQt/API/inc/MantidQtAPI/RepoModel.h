@@ -64,7 +64,7 @@ const QString DELETABLEENTRY = "deletable";
      This class should be constructed just once, and as so, the copy constructor and the assignment 
      will be make private to ensure this. 
     
-    Copyright &copy; 2013 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+    Copyright &copy; 2013 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
 
     This file is part of Mantid.
 
@@ -223,7 +223,7 @@ private:
     /// auxiliary method to help populating the model
     RepoItem * getParent(const QString & folder, QList<RepoItem*>&parents);
 
-    Q_DISABLE_COPY(RepoModel);
+    Q_DISABLE_COPY(RepoModel)
     
     /// auxiliary method to deal with exceptions
     void handleExceptions(const Mantid::API::ScriptRepoException & ex, 
@@ -257,7 +257,7 @@ private:
 
   };
 
-}; // namespace API
-};// namespace Mantid
+} // namespace API
+} // namespace Mantid
 
 #endif  /* MANTID_API_SCRIPTREPOSITORYVIEW_H_ */

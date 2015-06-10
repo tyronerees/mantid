@@ -7,7 +7,7 @@
  @author Owen Arnold, Tessella plc
  @date 24/01/2010
 
- Copyright &copy; 2010 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+ Copyright &copy; 2010 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
 
  This file is part of Mantid.
 
@@ -29,6 +29,7 @@
  */
 
 #include "MantidAPI/IMDWorkspace.h"
+#include "MantidVatesAPI/Normalization.h"
 #include "MantidVatesAPI/ThresholdRange.h"
 #include "MantidVatesAPI/vtkDataSetFactory.h"
 #include "MantidVatesAPI/vtkMDHistoHexFactory.h"
@@ -48,7 +49,7 @@ class DLLExport vtkMDHistoHex4DFactory: public vtkMDHistoHexFactory
 public:
 
   /// Constructor
-  vtkMDHistoHex4DFactory(ThresholdRange_scptr thresholdRange, const std::string& scalarname,
+  vtkMDHistoHex4DFactory(ThresholdRange_scptr thresholdRange, const VisualNormalization normalizationOption,
       const double timestep);
 
   /// Assignment operator

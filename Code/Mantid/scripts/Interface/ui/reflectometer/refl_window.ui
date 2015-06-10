@@ -205,32 +205,6 @@
        </widget>
       </item>
       <item>
-       <widget class="QLabel" name="labelDepth">
-        <property name="text">
-         <string>Search Depth (Cycles):</string>
-        </property>
-        <property name="buddy">
-         <cstring>spinDepth</cstring>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QSpinBox" name="spinDepth">
-        <property name="toolTip">
-         <string>The depth in cycles of the serach to to on the archives. A depth of '1' seraches only the most recent cycle.</string>
-        </property>
-        <property name="minimum">
-         <number>1</number>
-        </property>
-        <property name="maximum">
-         <number>99</number>
-        </property>
-        <property name="value">
-         <number>5</number>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QPushButton" name="buttonSearch">
         <property name="text">
          <string>Search</string>
@@ -636,7 +610,7 @@
      <x>0</x>
      <y>0</y>
      <width>1000</width>
-     <height>21</height>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -657,6 +631,7 @@
      <string>Help</string>
     </property>
     <addaction name="actionMantid_Help"/>
+    <addaction name="actionSlit_Calculator"/>
    </widget>
    <widget class="QMenu" name="menuFunction">
     <property name="title">
@@ -843,13 +818,17 @@
     <string>Ctrl+Shift+O</string>
    </property>
   </action>
+  <action name="actionSlit_Calculator">
+   <property name="text">
+    <string>Slit Calculator</string>
+   </property>
+  </action>
  </widget>
  <tabstops>
   <tabstop>comboInstrument</tabstop>
   <tabstop>textRuns</tabstop>
   <tabstop>comboPolarCorrect</tabstop>
   <tabstop>textRB</tabstop>
-  <tabstop>spinDepth</tabstop>
   <tabstop>buttonSearch</tabstop>
   <tabstop>checkTickAll</tabstop>
   <tabstop>buttonAuto</tabstop>

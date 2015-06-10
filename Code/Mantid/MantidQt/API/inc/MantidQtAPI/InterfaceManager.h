@@ -51,7 +51,7 @@ class MantidHelpInterface;
     @author Martyn Gigg, Tessella Support Services plc
     @date 24/02/2009
 
-    Copyright &copy; 2009 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+    Copyright &copy; 2009 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
 
     This file is part of Mantid.
 
@@ -109,6 +109,26 @@ public:
    * @return the help window
    */
   MantidHelpInterface *createHelpWindow() const;
+
+  /// @param url Relative URL of help page to show.
+  void showHelpPage(const QString &url = QString());
+
+  /// @param page Wiki page to show help for
+  void showWikiPage(const QString &page = QString());
+
+  /// @param name of algorithm to show help for
+  /// @param version of algorithm
+  void showAlgorithmHelp(const QString &name, const int version = -1);
+
+  /// @param name of concept to show help for
+  void showConceptHelp(const QString &name);
+
+  /// @param name of fit function to show help for
+  void showFitFunctionHelp(const QString &name = QString());
+
+  /// @param name of interface to show help for
+  void showCustomInterfaceHelp(const QString &name);
+
   /**
    * Registration function for the help window factory.
    * @param factory the factory instance

@@ -1,8 +1,10 @@
 #ifndef VATES_MD_QUAD_FACTORY
 #define VATES_MD_QUAD_FACTORY
 
-#include "MantidVatesAPI/vtkDataSetFactory.h"
+#include "MantidVatesAPI/Normalization.h"
 #include "MantidVatesAPI/ThresholdRange.h"
+#include "MantidVatesAPI/vtkDataSetFactory.h"
+
 #include <boost/shared_ptr.hpp>
 
 namespace Mantid
@@ -15,7 +17,7 @@ namespace Mantid
     
     @date 2012-02-09
 
-    Copyright &copy; 2012 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+    Copyright &copy; 2012 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
 
     This file is part of Mantid.
 
@@ -40,7 +42,7 @@ namespace Mantid
 
     public:
       /// Constructor
-      vtkMDQuadFactory(ThresholdRange_scptr thresholdRange, const std::string& scalarName);
+      vtkMDQuadFactory(ThresholdRange_scptr thresholdRange, const VisualNormalization normalizationOption);
 
       /// Destructor
       virtual ~vtkMDQuadFactory();
@@ -65,7 +67,7 @@ namespace Mantid
       ThresholdRange_scptr m_thresholdRange;
 
       ///Name of the scalar.
-      std::string m_scalarName;
+      const VisualNormalization m_normalizationOption;
 
       /// Data source for the visualisation.
       Mantid::API::Workspace_sptr m_workspace;

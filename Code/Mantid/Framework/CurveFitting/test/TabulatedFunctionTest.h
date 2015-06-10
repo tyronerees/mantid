@@ -50,7 +50,7 @@ public:
     UserFunction fun;
     fun.setAttributeValue("Formula","exp(-x*x)");
     fun.function( x, y );
-    
+
     std::ofstream fil(m_asciiFileName.c_str());
     for(size_t i = 0; i < x.size(); ++i)
     {
@@ -58,11 +58,11 @@ public:
     }
 
   }
-  
+
   ~TabulatedFunctionTest()
   {
     Poco::File hAscii(m_asciiFileName);
-    if( hAscii.exists() ) 
+    if( hAscii.exists() )
     {
       hAscii.remove();
     }
@@ -160,6 +160,7 @@ public:
     fun.setAttributeValue("Workspace","TABULATEDFUNCTIONTEST_WS");
     fun.setAttributeValue("WorkspaceIndex",2);
     TS_ASSERT_EQUALS( fun.getParameter( "Scaling" ), 1.0 );
+    TS_ASSERT_EQUALS( fun.getParameter( "Shift" ), 0.0 );
     FunctionDomain1DVector x(-5.0, 5.0, 83);
     FunctionValues y( x );
     fun.function( x, y );
@@ -202,12 +203,16 @@ public:
     fun.setAttributeValue("Workspace","TABULATEDFUNCTIONTEST_WS");
     fun.setParameter( "Scaling", 3.3 );
     TS_ASSERT_EQUALS( fun.getParameter( "Scaling" ), 3.3 );
+    fun.setParameter( "Shift", 0.0 );
+    TS_ASSERT_EQUALS( fun.getParameter( "Shift" ), 0.0 );
+    fun.setParameter( "XScaling", 1.0 );
+    TS_ASSERT_EQUALS( fun.getParameter( "XScaling" ), 1.0 );
     FunctionDomain1DVector x(-5.0, 5.0, 83);
 
     FunctionValues y( x );
     fun.function( x, y );
 
-    Mantid::CurveFitting::Jacobian jac(x.size(),1);
+    Mantid::CurveFitting::Jacobian jac(x.size(),3);
     fun.functionDeriv(x, jac);
 
     for(size_t i = 0; i < x.size(); ++i)
@@ -236,26 +241,30 @@ public:
 
   void test_factory_create_from_file()
   {
-      std::string inif = "name=TabulatedFunction,FileName=\"" + m_nexusFileName + "\",WorkspaceIndex=17,Scaling=2";
+      std::string inif = "name=TabulatedFunction,FileName=\"" + m_nexusFileName + "\",WorkspaceIndex=17,Scaling=2,Shift=0.02,XScaling=0.2";
       auto funf = Mantid::API::FunctionFactory::Instance().createInitialized(inif);
       TS_ASSERT( funf );
       TS_ASSERT_EQUALS( funf->getAttribute("Workspace").asString(), "");
       TS_ASSERT_EQUALS( funf->getAttribute("WorkspaceIndex").asInt(), 17);
       TS_ASSERT_EQUALS( funf->getAttribute("FileName").asUnquotedString(), m_nexusFileName);
       TS_ASSERT_EQUALS( funf->getParameter("Scaling"), 2.0);
+      TS_ASSERT_EQUALS( funf->getParameter("Shift"), 0.02);
+      TS_ASSERT_EQUALS( funf->getParameter("XScaling"), 0.2);
   }
 
   void test_factory_create_from_workspace()
   {
       auto ws = WorkspaceCreationHelper::Create2DWorkspaceFromFunction(Fun(),1,-5.0,5.0,0.1,false);
       AnalysisDataService::Instance().add( "TABULATEDFUNCTIONTEST_WS", ws );
-      std::string inif = "name=TabulatedFunction,Workspace=TABULATEDFUNCTIONTEST_WS,WorkspaceIndex=71,Scaling=3.14";
+      std::string inif = "name=TabulatedFunction,Workspace=TABULATEDFUNCTIONTEST_WS,WorkspaceIndex=71,Scaling=3.14,Shift=0.02,XScaling=0.2";
       auto funf = Mantid::API::FunctionFactory::Instance().createInitialized(inif);
       TS_ASSERT( funf );
       TS_ASSERT_EQUALS( funf->getAttribute("Workspace").asString(), "TABULATEDFUNCTIONTEST_WS");
       TS_ASSERT_EQUALS( funf->getAttribute("WorkspaceIndex").asInt(), 71);
       TS_ASSERT_EQUALS( funf->getAttribute("FileName").asUnquotedString(), "");
       TS_ASSERT_EQUALS( funf->getParameter("Scaling"), 3.14);
+      TS_ASSERT_EQUALS( funf->getParameter("Shift"), 0.02);
+      TS_ASSERT_EQUALS( funf->getParameter("XScaling"), 0.2);
       AnalysisDataService::Instance().clear();
   }
 

@@ -6,16 +6,15 @@
 #include "MantidAPI/MatrixWorkspace.h"
 #include "MantidAPI/FunctionDomain1D.h"
 
-
-namespace Mantid
-{
-namespace CurveFitting
-{
+namespace Mantid {
+namespace CurveFitting {
 
 /** FunctionDomain1DSpectrumCreator :
 
-    FunctionDomain1DSpectrumCreator creates an FunctionDomain1DSpectrum using a given
-    MatrixWorkspace and workspace index. Currently it does not create an output workspace,
+    FunctionDomain1DSpectrumCreator creates an FunctionDomain1DSpectrum using a
+   given
+    MatrixWorkspace and workspace index. Currently it does not create an output
+   workspace,
     since it is exclusively used in a context where it's not required.
 
       @author Michael Wedel, Paul Scherrer Institut - SINQ
@@ -42,37 +41,33 @@ namespace CurveFitting
     Code Documentation is available at: <http://doxygen.mantidproject.org>
 
   */
-using namespace API;
 
-class DLLExport FunctionDomain1DSpectrumCreator : public IDomainCreator
-{
+class DLLExport FunctionDomain1DSpectrumCreator : public API::IDomainCreator {
 public:
-    FunctionDomain1DSpectrumCreator();
-    virtual ~FunctionDomain1DSpectrumCreator() { }
+  FunctionDomain1DSpectrumCreator();
+  virtual ~FunctionDomain1DSpectrumCreator() {}
 
-    void setMatrixWorkspace(MatrixWorkspace_sptr matrixWorkspace);
-    void setWorkspaceIndex(size_t workspaceIndex);
+  void setMatrixWorkspace(API::MatrixWorkspace_sptr matrixWorkspace);
+  void setWorkspaceIndex(size_t workspaceIndex);
 
-    virtual void createDomain(boost::shared_ptr<FunctionDomain> &domain,
-                         boost::shared_ptr<FunctionValues> &values,
-                         size_t i0 = 0);
+  virtual void createDomain(boost::shared_ptr<API::FunctionDomain> &domain,
+                            boost::shared_ptr<API::FunctionValues> &values,
+                            size_t i0 = 0);
 
-    virtual size_t getDomainSize() const;
+  virtual size_t getDomainSize() const;
 
 protected:
-    void throwIfWorkspaceInvalid() const;
+  void throwIfWorkspaceInvalid() const;
 
-    MantidVec getVectorHistogram() const;
-    MantidVec getVectorNonHistogram() const;
+  MantidVec getVectorHistogram() const;
+  MantidVec getVectorNonHistogram() const;
 
-    MatrixWorkspace_sptr m_matrixWorkspace;
-    size_t m_workspaceIndex;
-    bool m_workspaceIndexIsSet;
-    
+  API::MatrixWorkspace_sptr m_matrixWorkspace;
+  size_t m_workspaceIndex;
+  bool m_workspaceIndexIsSet;
 };
-
 
 } // namespace CurveFitting
 } // namespace Mantid
 
-#endif  /* MANTID_CURVEFITTING_FUNCTIONDOMAIN1DSPECTRUMCREATOR_H_ */
+#endif /* MANTID_CURVEFITTING_FUNCTIONDOMAIN1DSPECTRUMCREATOR_H_ */

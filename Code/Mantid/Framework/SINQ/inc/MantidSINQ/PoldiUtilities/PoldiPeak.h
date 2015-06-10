@@ -37,62 +37,67 @@ namespace Poldi {
     Code Documentation is available at: <http://doxygen.mantidproject.org>
   */
 
-
 class PoldiPeak;
 
 typedef boost::shared_ptr<PoldiPeak> PoldiPeak_sptr;
 
-class MANTID_SINQ_DLL PoldiPeak
-{
+class MANTID_SINQ_DLL PoldiPeak {
 public:
-    enum FwhmRelation {
-        AbsoluteQ,
-        AbsoluteD,
-        Relative
-    };
+  enum FwhmRelation { AbsoluteQ, AbsoluteD, Relative };
 
-    ~PoldiPeak() {}
+  ~PoldiPeak() {}
 
-    const MillerIndices& hkl() const;
-    void setHKL(MillerIndices hkl);
+  PoldiPeak_sptr clone() const;
 
-    UncertainValue d() const;
-    UncertainValue q() const;
-    double twoTheta(double lambda) const;
+  const MillerIndices &hkl() const;
+  void setHKL(MillerIndices hkl);
 
-    UncertainValue fwhm(FwhmRelation relation = AbsoluteQ) const;
-    UncertainValue intensity() const;
+  UncertainValue d() const;
+  UncertainValue q() const;
+  double twoTheta(double lambda) const;
 
-    void setD(UncertainValue d);
-    void setQ(UncertainValue q);
-    void setIntensity(UncertainValue intensity);
-    void setFwhm(UncertainValue fwhm, FwhmRelation relation = AbsoluteQ);
+  UncertainValue fwhm(FwhmRelation relation = AbsoluteQ) const;
+  UncertainValue intensity() const;
 
-    void multiplyErrors(double factor);
+  void setD(UncertainValue d);
+  void setQ(UncertainValue q);
+  void setIntensity(UncertainValue intensity);
+  void setFwhm(UncertainValue fwhm, FwhmRelation relation = AbsoluteQ);
 
-    static PoldiPeak_sptr create(UncertainValue qValue);
-    static PoldiPeak_sptr create(double qValue);
-    static PoldiPeak_sptr create(UncertainValue qValue, UncertainValue intensity);
-    static PoldiPeak_sptr create(double qValue, double intensity);
-    static PoldiPeak_sptr create(MillerIndices hkl, UncertainValue dValue, UncertainValue intensity, UncertainValue fwhmRelative);
+  void multiplyErrors(double factor);
 
-    static bool greaterThan(const PoldiPeak_sptr &first, const PoldiPeak_sptr &second, UncertainValue (PoldiPeak::*function)() const);
-    static bool lessThan(const PoldiPeak_sptr &first, const PoldiPeak_sptr &second, UncertainValue (PoldiPeak::*function)() const);
+  static PoldiPeak_sptr create(UncertainValue qValue);
+  static PoldiPeak_sptr create(double qValue);
+  static PoldiPeak_sptr create(UncertainValue qValue, UncertainValue intensity);
+  static PoldiPeak_sptr create(double qValue, double intensity);
+  static PoldiPeak_sptr create(MillerIndices hkl, double dValue);
+  static PoldiPeak_sptr create(MillerIndices hkl, UncertainValue dValue,
+                               UncertainValue intensity,
+                               UncertainValue fwhmRelative);
+
+  static bool greaterThan(const PoldiPeak_sptr &first,
+                          const PoldiPeak_sptr &second,
+                          UncertainValue (PoldiPeak::*function)() const);
+  static bool lessThan(const PoldiPeak_sptr &first,
+                       const PoldiPeak_sptr &second,
+                       UncertainValue (PoldiPeak::*function)() const);
 
 private:
-    PoldiPeak(UncertainValue d = UncertainValue(), UncertainValue intensity = UncertainValue(), UncertainValue fwhm = UncertainValue(), MillerIndices hkl = MillerIndices());
+  PoldiPeak(UncertainValue d = UncertainValue(),
+            UncertainValue intensity = UncertainValue(),
+            UncertainValue fwhm = UncertainValue(),
+            MillerIndices hkl = MillerIndices());
 
-    static UncertainValue dToQ(UncertainValue d);
-    static UncertainValue qToD(UncertainValue q);
+  static UncertainValue dToQ(UncertainValue d);
+  static UncertainValue qToD(UncertainValue q);
 
-    MillerIndices m_hkl;
+  MillerIndices m_hkl;
 
-    UncertainValue m_d;
-    UncertainValue m_q;
-    UncertainValue m_intensity;
-    UncertainValue m_fwhmRelative;
+  UncertainValue m_d;
+  UncertainValue m_q;
+  UncertainValue m_intensity;
+  UncertainValue m_fwhmRelative;
 };
-
 }
 }
 

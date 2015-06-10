@@ -1,3 +1,4 @@
+#pylint: skip-file
 from mantid import config
 from PyChop import fluxGUI
 from PyChop import PyChopGUI
@@ -6,12 +7,12 @@ import sys
 
 
 def qapp():
-	if QtGui.QApplication.instance():
-		app = QtGui.QApplication.instance()
-	else:
-		app = QtGui.QApplication(sys.argv)
-	return app
- 
+    if QtGui.QApplication.instance():
+        _app = QtGui.QApplication.instance()
+    else:
+        _app = QtGui.QApplication(sys.argv)
+    return _app
+
 app = qapp()
 instr_name = config['default.instrument']
 if instr_name[0:3] == 'LET':

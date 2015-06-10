@@ -1,24 +1,20 @@
 #ifndef MANTID_MDEVENTS_MAKEDIFFRACTIONMDEVENTWORKSPACETEST2_H_
 #define MANTID_MDEVENTS_MAKEDIFFRACTIONMDEVENTWORKSPACETEST2_H_
 
-#include "MantidDataObjects/EventWorkspace.h"
 #include "MantidAPI/FrameworkManager.h"
-#include "MantidKernel/System.h"
-#include "MantidKernel/Timer.h"
+#include "MantidAPI/IAlgorithm.h"
+#include "MantidDataObjects/EventWorkspace.h"
 #include "MantidMDAlgorithms/ConvertToDiffractionMDWorkspace2.h"
 #include "MantidTestHelpers/ComponentCreationHelper.h"
 #include "MantidTestHelpers/MDEventsTestHelper.h"
 #include "MantidTestHelpers/WorkspaceCreationHelper.h"
+
 #include <cxxtest/TestSuite.h>
-#include <iomanip>
-#include <iostream>
-#include "MantidAPI/IAlgorithm.h"
 
 using namespace Mantid;
-using namespace Mantid::Kernel;
 using namespace Mantid::API;
+using namespace Mantid::Kernel;
 using namespace Mantid::DataObjects;
-using namespace Mantid::MDEvents;
 using namespace Mantid::MDAlgorithms;
 
 class ConvertToDiffractionMDWorkspace2Test : public CxxTest::TestSuite
@@ -37,7 +33,7 @@ public:
   /** Test various combinations of OutputDimensions parameter */
   void test_OutputDimensions_Parameter()
   {
-    EventWorkspace_sptr in_ws = Mantid::MDEvents::MDEventsTestHelper::createDiffractionEventWorkspace(10);
+    EventWorkspace_sptr in_ws = Mantid::DataObjects::MDEventsTestHelper::createDiffractionEventWorkspace(10);
     AnalysisDataService::Instance().addOrReplace("testInEW", in_ws);
     IAlgorithm_sptr alg;
 
@@ -52,7 +48,7 @@ public:
     TS_ASSERT(ws);
     if (!ws) return;
     TS_ASSERT_EQUALS( ws->getDimension(0)->getName(), "Q_lab_x");
-    TS_ASSERT_EQUALS( ws->getSpecialCoordinateSystem(), Mantid::API::QLab);
+    TS_ASSERT_EQUALS( ws->getSpecialCoordinateSystem(), Mantid::Kernel::QLab);
 
     //TODO: Now you can add differenc dimension types to each other, but this should be fixed
     alg = FrameworkManager::Instance().exec("ConvertToDiffractionMDWorkspace", 8,
@@ -83,7 +79,7 @@ public:
     TS_ASSERT(ws);
     if (!ws) return;
     TS_ASSERT_EQUALS( ws->getDimension(0)->getName(), "[H,0,0]");
-    TS_ASSERT_EQUALS( ws->getSpecialCoordinateSystem(), Mantid::API::HKL);
+    TS_ASSERT_EQUALS( ws->getSpecialCoordinateSystem(), Mantid::Kernel::HKL);
 
     AnalysisDataService::Instance().remove("testOutMD");
     alg = FrameworkManager::Instance().exec("ConvertToDiffractionMDWorkspace", 6,
@@ -97,15 +93,15 @@ public:
     TS_ASSERT(ws);
     if (!ws) return;
     TS_ASSERT_EQUALS( ws->getDimension(0)->getName(), "Q_sample_x");
-    TS_ASSERT_EQUALS( ws->getSpecialCoordinateSystem(), Mantid::API::QSample);
+    TS_ASSERT_EQUALS( ws->getSpecialCoordinateSystem(), Mantid::Kernel::QSample);
   }
 
   void do_test_MINITOPAZ(EventType type, size_t numTimesToAdd = 1,
-      bool OneEventPerBin=false, bool MakeWorkspace2D = false,size_t nEventsRetrieved=100000)
+      bool OneEventPerBin=false, bool MakeWorkspace2D = false,size_t nEventsRetrieved=400)
   {
 
     int numEventsPer = 100;
-    EventWorkspace_sptr in_ws = Mantid::MDEvents::MDEventsTestHelper::createDiffractionEventWorkspace(numEventsPer);
+    EventWorkspace_sptr in_ws = Mantid::DataObjects::MDEventsTestHelper::createDiffractionEventWorkspace(numEventsPer);
     if (type == WEIGHTED)
       in_ws *= 2.0;
     if (type == WEIGHTED_NOTIME)
@@ -201,7 +197,7 @@ public:
   void test_MINITOPAZ_fromWorkspace2D()
   {
     // this is questionable change, indicating that ConvertToMD and CovertToDiffractionWorkspace treat 0 differently
-    do_test_MINITOPAZ(TOF, 1, false, true,1000);
+    do_test_MINITOPAZ(TOF, 1, false, true,399);
   }
 
 

@@ -10,11 +10,14 @@
 
 namespace Mantid
 {
-  namespace API
-  {
+  namespace Geometry {
+    // Forward dec.
+    class PeakTransform;
+  }
+  namespace API{
     // Forward dec.
     class IPeaksWorkspace;
-    class PeakTransform;
+
   }
 }
 
@@ -63,7 +66,9 @@ namespace SliceViewer
     virtual QColor getForegroundColor() const {throw std::runtime_error("PeaksPresenter getForegroundColour() is not implemented");}
     virtual void zoomToPeak(const int peakIndex) = 0;
     virtual bool isHidden() const = 0;
+    virtual bool contentsDifferent(PeaksPresenter const * other) const = 0;
     virtual ~PeaksPresenter(){};
+    virtual void reInitialize(boost::shared_ptr<Mantid::API::IPeaksWorkspace> peaksWS) = 0;
   };
 
 

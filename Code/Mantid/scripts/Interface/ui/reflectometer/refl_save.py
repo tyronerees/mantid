@@ -1,3 +1,4 @@
+#pylint: disable=invalid-name
 from PyQt4 import QtCore, QtGui
 import os
 from mantid.simpleapi import *
@@ -16,17 +17,17 @@ except AttributeError:
 
 class Ui_SaveWindow(object):
     def __init__(self):
-        
-        self.__has_mount_point = True;
-        
+
+        self.__has_mount_point = True
+
         self.__instrument = config['default.instrument'].strip().upper()
-        
+
         try:
             usersettings = Settings() # This will throw a missing config exception if no config file is available.
             self.__mountpoint = usersettings.get_named_setting("DataMountPoint")
         except KeyError:
             print "DataMountPoint is missing from the config.xml file."
-            self.__has_mount_point = False;
+            self.__has_mount_point = False
 
     def setupUi(self, SaveWindow):
         self.SavePath=""
@@ -74,18 +75,18 @@ class Ui_SaveWindow(object):
         self.filterEdit.setFont(font)
         self.filterEdit.setObjectName(_fromUtf8("filterEdit"))
         self.gridLayout.addWidget(self.filterEdit, 1, 3, 1, 1)
-        
+
         self.regExCheckBox = QtGui.QCheckBox("RegEx", self.centralWidget)
         self.gridLayout.addWidget(self.regExCheckBox, 1, 4, 1, 1)
-        
-        
+
+
 
         self.LogsLabel = QtGui.QLabel("List of logged parameters: ",self.centralWidget)
         self.gridLayout.addWidget(self.LogsLabel,1,6,1,3)
-        
-        
+
+
         self.ListLabel = QtGui.QLabel("List of workspaces: ",self.centralWidget)
-        
+
 # List of workspaces
         self.listWidget = QtGui.QListWidget(self.centralWidget)
         self.listWidget.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
@@ -93,12 +94,12 @@ class Ui_SaveWindow(object):
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.listWidget.sizePolicy().hasHeightForWidth())
-        
+
         self.workspacesLayout = QtGui.QBoxLayout(QtGui.QBoxLayout.TopToBottom)
         self.workspacesLayout.addWidget(self.ListLabel)
         self.workspacesLayout.addWidget(self.listWidget)
         self.gridLayout.addLayout(self.workspacesLayout,2,2,1,3)
-        
+
 # List of Logged Parameters
         self.listWidget2 = QtGui.QListWidget(self.centralWidget)
         self.listWidget2.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
@@ -168,7 +169,7 @@ class Ui_SaveWindow(object):
 
         self.vbox.addWidget(self.groupBox2)
         self.vbox.addStretch(1)
-        #self.groupBox.setCheckable(1)        
+        #self.groupBox.setCheckable(1)
         self.groupBox.setLayout(self.vbox)
         self.gridLayout.addWidget(self.groupBox, 3, 6, 3, 3)
 
@@ -234,10 +235,10 @@ class Ui_SaveWindow(object):
         QtCore.QMetaObject.connectSlotsByName(SaveWindow)
 
     def retranslateUi(self, SaveWindow):
-        SaveWindow.setWindowTitle(QtGui.QApplication.translate("SaveWindow", "SaveWindow", None, QtGui.QApplication.UnicodeUTF8))        
+        SaveWindow.setWindowTitle(QtGui.QApplication.translate("SaveWindow", "SaveWindow", None, QtGui.QApplication.UnicodeUTF8))
         self.pushButton.setText(QtGui.QApplication.translate("SaveWindow", "SAVE", None, QtGui.QApplication.UnicodeUTF8))
         self.pushButton_2.setText(QtGui.QApplication.translate("SaveWindow", "Refresh", None, QtGui.QApplication.UnicodeUTF8))
-        
+
     def filterWksp(self):
         self.listWidget.clear()
         names = mtd.getObjectNames()
@@ -251,7 +252,7 @@ class Ui_SaveWindow(object):
             newList = filtered
         else:
             newList=filter(lambda k: self.filterEdit.text() in k, names)
-        
+
         self.listWidget.insertItems(0, newList)
 
     def setPath():
@@ -272,11 +273,11 @@ class Ui_SaveWindow(object):
             RB_Number=groupGet(names[0],'samp','rb_proposal')
             for ws in names:
                 self.listWidget.addItem(ws)
-                
+
             self.listWidget.setCurrentItem(self.listWidget.item(0))
             # try to get correct user directory
             currentInstrument=config['default.instrument']
-            if (self.SavePath!=''):
+            if self.SavePath!='':
                 self.lineEdit.setText(self.SavePath)
             else:
                 if self.__has_mount_point:
@@ -317,23 +318,23 @@ class Ui_SaveWindow(object):
         for idx in self.listWidget.selectedItems():
             runlist=parseRunList(str(self.spectraEdit.text()))
             fname=os.path.join(self.lineEdit.text(),prefix + idx.text())
-            if (self.comboBox.currentIndex() == 0):
+            if self.comboBox.currentIndex() == 0:
                 print "Custom Ascii format"
-                if (self.radio1.isChecked()):
+                if self.radio1.isChecked():
                     sep=','
-                elif (self.radio2.isChecked()):
+                elif self.radio2.isChecked():
                     sep=' '
-                elif (self.radio3.isChecked()):
+                elif self.radio3.isChecked():
                     sep='\t'
                 else:
                     sep=' '
                 saveCustom(idx,fname,sep,self.listWidget2.selectedItems(),self.titleCheckBox.isChecked(),self.xErrorCheckBox.isChecked())
-            elif (self.comboBox.currentIndex() == 1):
+            elif self.comboBox.currentIndex() == 1:
                 print "Not yet implemented!"
-            elif (self.comboBox.currentIndex() == 2):
+            elif self.comboBox.currentIndex() == 2:
                 print "ANSTO format"
                 saveANSTO(idx,fname)
-            elif (self.comboBox.currentIndex() == 3):
+            elif self.comboBox.currentIndex() == 3:
                 print "ILL MFT format"
                 saveMFT(idx,fname,self.listWidget2.selectedItems())
         # for idx in self.listWidget.selectedItems():
@@ -341,7 +342,7 @@ class Ui_SaveWindow(object):
             # print "FILENAME: ", fname
             # wksp=str(idx.text())
             # SaveAscii(InputWorkspace=wksp,Filename=fname)
-            
+
         self.SavePath=self.lineEdit.text()
 
 def calcRes(run):
@@ -377,16 +378,16 @@ def groupGet(wksp, whattoget, field=''):
     returns information about instrument or sample details for a given workspace wksp,
     also if the workspace is a group (info from first group element)
     '''
-    if (whattoget == 'inst'):
+    if whattoget == 'inst':
         if isinstance(mtd[wksp], WorkspaceGroup):
             return mtd[wksp + '_1'].getInstrument()
         else:
             return mtd[wksp].getInstrument()
-    elif (whattoget == 'samp' and field != ''):
+    elif whattoget == 'samp' and field != '':
         if isinstance(mtd[wksp], WorkspaceGroup):
             try:
                 log = mtd[wksp + '_1'].getRun().getLogData(field).value
-                if (type(log) is int or type(log) is str):
+                if type(log) is int or type(log) is str:
                     res = log
                 else:
                     res = log[len(log) - 1]
@@ -396,7 +397,7 @@ def groupGet(wksp, whattoget, field=''):
         else:
             try:
                 log = mtd[wksp].getRun().getLogData(field).value
-                if (type(log) is int or type(log) is str):
+                if type(log) is int or type(log) is str:
                     res = log
                 else:
                     res = log[len(log) - 1]
@@ -404,7 +405,7 @@ def groupGet(wksp, whattoget, field=''):
                 res = 0
                 print "Block " + field + " not found."
         return res
-    elif (whattoget == 'wksp'):
+    elif whattoget == 'wksp':
         if isinstance(mtd[wksp], WorkspaceGroup):
             return mtd[wksp + '_1'].getNumberHistograms()
         else:

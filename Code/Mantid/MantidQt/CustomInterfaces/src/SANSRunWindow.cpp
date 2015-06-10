@@ -59,7 +59,7 @@ namespace MantidQt
 {
 namespace CustomInterfaces
 {
-  DECLARE_SUBWINDOW(SANSRunWindow);
+  DECLARE_SUBWINDOW(SANSRunWindow)
 
 
 using namespace MantidQt::MantidWidgets;
@@ -156,11 +156,13 @@ SANSRunWindow::SANSRunWindow(QWidget *parent) :
   UserSubWindow(parent), m_addFilesTab(NULL), m_displayTab(NULL), m_diagnosticsTab(NULL),
   m_saveWorkspaces(NULL), m_ins_defdir(""), m_last_dir(""),
   m_cfg_loaded(true), m_userFname(false), m_sample_file(),
+  m_reducemapper(NULL),
   m_warnings_issued(false), m_force_reload(false),
   m_newInDir(*this, &SANSRunWindow::handleInputDirChange),
   m_delete_observer(*this, &SANSRunWindow::handleMantidDeleteWorkspace),
   m_s2d_detlabels(), m_loq_detlabels(), m_allowed_batchtags(),
   m_have_reducemodule(false), m_dirty_batch_grid(false), m_tmp_batchfile(""),
+  m_batch_paste(NULL), m_batch_clear(NULL),
   slicingWindow(NULL)
 {
   ConfigService::Instance().addObserver(m_newInDir);
@@ -307,6 +309,9 @@ void SANSRunWindow::initLayout()
   connect(m_uiForm.phi_max, SIGNAL(editingFinished()), this, SLOT(phiMaskingChanged())); 
   connect(m_uiForm.slicePb, SIGNAL(clicked()), this, SLOT(handleSlicePushButton()));
   connect(m_uiForm.pushButton_Help, SIGNAL(clicked()), this, SLOT(openHelpPage()));
+
+  // Set the validators
+  setValidators();
 
   readSettings();
 }
@@ -918,10 +923,16 @@ bool SANSRunWindow::loadUserFile()
   // from the ticket #5942 both detectors have center coordinates
   dbl_param = runReduceScriptFunction(
     "print i.ReductionSingleton().get_beam_center('rear')[0]").toDouble();
-  m_uiForm.rear_beam_x->setText(QString::number(dbl_param*1000.0));
+  // get the scale factor1 for the beam centre to scale it correctly
+  double dbl_paramsf = runReduceScriptFunction(
+    "print i.ReductionSingleton().get_beam_center_scale_factor1()").toDouble();
+  m_uiForm.rear_beam_x->setText(QString::number(dbl_param*dbl_paramsf));
+  // get scale factor2 for the beam centre to scale it correctly
+  dbl_paramsf = runReduceScriptFunction(
+    "print i.ReductionSingleton().get_beam_center_scale_factor2()").toDouble();
   dbl_param = runReduceScriptFunction(
     "print i.ReductionSingleton().get_beam_center('rear')[1]").toDouble();
-  m_uiForm.rear_beam_y->setText(QString::number(dbl_param*1000.0));
+  m_uiForm.rear_beam_y->setText(QString::number(dbl_param*dbl_paramsf));
   // front
   dbl_param = runReduceScriptFunction(
     "print i.ReductionSingleton().get_beam_center('front')[0]").toDouble();
@@ -943,7 +954,12 @@ bool SANSRunWindow::loadUserFile()
   {
     m_uiForm.gravity_check->setChecked(false);
   }
-  
+
+  // Read the extra length for the gravity correction
+  const double extraLengthParam =  runReduceScriptFunction(
+    "print i.ReductionSingleton().to_Q.get_extra_length()").toDouble();
+  m_uiForm.gravity_extra_length_line_edit->setText(QString::number(extraLengthParam));
+
   ////Detector bank: support REAR, FRONT, HAB, BOTH, MERGED, MERGE options
   QString detName = runReduceScriptFunction(
     "print i.ReductionSingleton().instrument.det_selection").trimmed();
@@ -1854,7 +1870,7 @@ void SANSRunWindow::selectDataDir()
  */
 void SANSRunWindow::selectUserFile()
 {
-  if( !browseForFile("Select a user file", m_uiForm.userfile_edit) )
+  if( !browseForFile("Select a user file", m_uiForm.userfile_edit, "Text files (*.txt)") )
   {
     return;
   }
@@ -2260,7 +2276,9 @@ QString SANSRunWindow::readUserFileGUIChanges(const States type)
   {
     exec_reduce += "False";
   }
-  exec_reduce += ")\n";
+  // Take into acount of the additional length
+  exec_reduce += ", extra_length=" + m_uiForm.gravity_extra_length_line_edit->text().trimmed() + ")\n";
+
   //Sample offset
   exec_reduce += "i.SetSampleOffset('"+
                  m_uiForm.smpl_offset->text()+"')\n";
@@ -3443,7 +3461,7 @@ QStringList SANSRunWindow::getSaveAlgs()
  */
 void SANSRunWindow::handleMantidDeleteWorkspace(Mantid::API::WorkspacePostDeleteNotification_ptr p_dnf)
 {
-  QString wkspName = QString::fromStdString(p_dnf->object_name());
+  QString wkspName = QString::fromStdString(p_dnf->objectName());
   if ( m_workspaceNames.find(wkspName) != m_workspaceNames.end() )
   {
     forceDataReload();
@@ -3789,6 +3807,16 @@ void SANSRunWindow::openHelpPage()
 {
   const auto helpPageUrl = m_helpPageUrls[static_cast<Tab>(m_uiForm.tabWidget->currentIndex())];
   QDesktopServices::openUrl(QUrl(helpPageUrl));
+}
+
+// Set the validators for inputs
+void SANSRunWindow::setValidators()
+{
+  // Validator policies
+  QDoubleValidator* mustBeDouble = new QDoubleValidator(this);
+
+  // For gravity extra length
+  m_uiForm.gravity_extra_length_line_edit->setValidator(mustBeDouble);
 }
 
 } //namespace CustomInterfaces

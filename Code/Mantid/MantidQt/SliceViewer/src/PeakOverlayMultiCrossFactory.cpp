@@ -2,7 +2,7 @@
 #include "MantidQtSliceViewer/PeakOverlayMultiCross.h"
 #include "MantidQtSliceViewer/PhysicalCrossPeak.h"
 #include "MantidKernel/V3D.h"
-#include "MantidAPI/IPeak.h"
+#include "MantidGeometry/Crystal/IPeak.h"
 #include "MantidAPI/IMDWorkspace.h"
 #include "MantidAPI/IMDEventWorkspace.h"
 #include "MantidAPI/IMDHistoWorkspace.h"
@@ -56,7 +56,12 @@ namespace MantidQt
 
     int PeakOverlayMultiCrossFactory::FOM() const
     {
-      return 1; 
+        return 1;
+    }
+
+    void PeakOverlayMultiCrossFactory::swapPeaksWorkspace(boost::shared_ptr<IPeaksWorkspace> &peaksWS)
+    {
+        m_peaksWS = peaksWS;
     }
   }
 }

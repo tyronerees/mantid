@@ -67,7 +67,10 @@
 
 #include <gsl/gsl_vector.h>
 #include "Mantid/MantidMDCurveDialog.h"
+#include "Mantid/MantidWSIndexDialog.h"
 #include "MantidQtSliceViewer/LinePlotOptions.h"
+
+#include "TSVSerialiser.h"
 
 namespace
 {
@@ -98,7 +101,7 @@ void LayerButton::mouseDoubleClickEvent ( QMouseEvent * )
 	emit showCurvesDialog();
 }
 
-MultiLayer::MultiLayer(ApplicationWindow* parent, int layers, int rows, int cols, 
+MultiLayer::MultiLayer(ApplicationWindow* parent, int layers, int rows, int cols,
                        const QString& label, const char* name, Qt::WFlags f)
                          : MdiSubWindow(parent, label, name, f),
                          active_graph(NULL),
@@ -118,6 +121,7 @@ MultiLayer::MultiLayer(ApplicationWindow* parent, int layers, int rows, int cols
                          vert_align(VCenter),
                          d_scale_on_print(true),
                          d_print_cropmarks(false),
+                         d_close_on_empty(false),
                          d_is_waterfall_plot(false),
                          d_waterfall_fill_color(/*Invalid color*/)
 {
@@ -189,7 +193,7 @@ void MultiLayer::insertCurve(MultiLayer* ml, int i)
   if( ml== this ) return;
   Graph *current = activeGraph();
   if( !current ) return;
-  
+
   current->insertCurve(ml->activeGraph(), i);
   current->updatePlot();
 }
@@ -211,10 +215,10 @@ LayerButton* MultiLayer::addLayerButton()
 Graph* MultiLayer::addLayer(int x, int y, int width, int height)
 {
 	addLayerButton();
-	if (!width && !height){		
-		width =	canvas->width() - left_margin - right_margin - (d_cols - 1)*colsSpace; 
+	if (!width && !height){
+		width =	canvas->width() - left_margin - right_margin - (d_cols - 1)*colsSpace;
 		height = canvas->height() - top_margin - left_margin - (d_rows - 1)*rowsSpace;
-		
+
 		int layers = graphsList.size();
 		x = left_margin + (layers % d_cols)*(width + colsSpace);
 	    y = top_margin + (layers / d_cols)*(height + rowsSpace);
@@ -640,9 +644,9 @@ void MultiLayer::arrangeLayers(bool fit, bool userSize)
 
 		this->showNormal();
 		QSize size = canvas->childrenRect().size();
-		this->resize(canvas->x() + size.width() + left_margin + 2*right_margin, 
+		this->resize(canvas->x() + size.width() + left_margin + 2*right_margin,
 					canvas->y() + size.height() + bottom_margin + 2*LayerButton::btnSize());
-		
+
 		foreach (Graph *gr, graphsList)
 			gr->setIgnoreResizeEvents(ignoreResize);
 	}
@@ -915,7 +919,7 @@ void MultiLayer::printAllLayers(QPainter *painter)
 		}
 	}
 	else
-	{	
+	{
 	   	int x_margin = (pageRect.width() - canvasRect.width())/2;
 	   	int y_margin = (pageRect.height() - canvasRect.height())/2;
 		if (d_print_cropmarks)
@@ -923,7 +927,7 @@ void MultiLayer::printAllLayers(QPainter *painter)
 		int margin = (int)((1/2.54)*printer->logicalDpiY()); // 1 cm margins
 		double scaleFactorX=(double)(paperRect.width()-4*margin)/(double)canvasRect.width();
 		double scaleFactorY=(double)(paperRect.height()-4*margin)/(double)canvasRect.height();
-		
+
 		for (int i=0; i<(int)graphsList.count(); i++)
 		{
             Graph *gr = static_cast<Graph *>(graphsList.at(i));
@@ -935,7 +939,7 @@ void MultiLayer::printAllLayers(QPainter *painter)
 			int width=int(size.width()*scaleFactorX);
 			int height=int(size.height()*scaleFactorY);
 			myPlot->print(painter, QRect(pos, QSize(width,height)));
-		
+
 		}
 	}
 	if (d_print_cropmarks)
@@ -1162,39 +1166,6 @@ bool MultiLayer::isEmpty ()
 		return false;
 }
 
-QString MultiLayer::saveToString(const QString& geometry, bool saveAsTemplate)
-{
-    bool notTemplate = !saveAsTemplate;
-	QString s="<multiLayer>\n";
-	if (notTemplate)
-        s+=QString(objectName())+"\t";
-	s+=QString::number(d_cols)+"\t";
-	s+=QString::number(d_rows)+"\t";
-	if (notTemplate)
-        s+=birthDate()+"\n";
-	s+=geometry;
-	if (notTemplate)
-        s+="WindowLabel\t" + windowLabel() + "\t" + QString::number(captionPolicy()) + "\n";
-	s+="Margins\t"+QString::number(left_margin)+"\t"+QString::number(right_margin)+"\t"+
-		QString::number(top_margin)+"\t"+QString::number(bottom_margin)+"\n";
-	s+="Spacing\t"+QString::number(rowsSpace)+"\t"+QString::number(colsSpace)+"\n";
-	s+="LayerCanvasSize\t"+QString::number(l_canvas_width)+"\t"+QString::number(l_canvas_height)+"\n";
-	s+="Alignement\t"+QString::number(hor_align)+"\t"+QString::number(vert_align)+"\n";
-
-  foreach (Graph *g, graphsList)
-    s += g->saveToString(saveAsTemplate);
-
-  if ( d_is_waterfall_plot )
-    s += "<waterfall>1</waterfall>\n";
-
-	return s+"</multiLayer>\n";
-}
-
-QString MultiLayer::saveAsTemplate(const QString& geometryInfo)
-{
-	return saveToString(geometryInfo, true);
-}
-
 void MultiLayer::setMargins (int lm, int rm, int tm, int bm)
 {
 	if (left_margin != lm)
@@ -1323,10 +1294,10 @@ void MultiLayer::dragEnterEvent( QDragEnterEvent * event )
 void MultiLayer::dropEvent( QDropEvent * event )
 {
   MantidTreeWidget * tree = dynamic_cast<MantidTreeWidget*>(event->source());
-  
+
   Graph *g = this->activeGraph();
   if (!g) return; // (shouldn't happen either)
-  
+
   if(g->curves() > 0)
   {
     //Do some capability queries on the base curve.
@@ -1414,10 +1385,12 @@ void MultiLayer::dropOntoMatrixCurve(Graph *g, MantidMatrixCurve* originalCurve,
     // Else we'll just have no error bars.
     errorBars = false;
   }
-  
-  if ( tree == NULL ) return; // (shouldn't happen)
-  QMultiMap<QString,std::set<int> > toPlot = tree->chooseSpectrumFromSelected();
 
+  if ( tree == NULL ) return; // (shouldn't happen)
+  bool waterfallOpt = false;
+  const auto userInput = tree->chooseSpectrumFromSelected(waterfallOpt);
+  const auto toPlot = userInput.plots;
+  
   // Iterate through the selected workspaces adding a set of curves from each
   for(QMultiMap<QString,std::set<int> >::const_iterator it=toPlot.begin();it!=toPlot.end();++it)
   {
@@ -1426,7 +1399,10 @@ void MultiLayer::dropOntoMatrixCurve(Graph *g, MantidMatrixCurve* originalCurve,
     for( ; setIt != it.value().end(); ++setIt)
     {
       try {
-        new MantidMatrixCurve(it.key(),g,(*setIt),MantidMatrixCurve::Spectrum, errorBars); // The graph takes ownership
+        bool isDistribution = originalCurve ? originalCurve->isDistribution() : false;
+        // If the current curve is plotted as a distribution then do so also here
+        new MantidMatrixCurve(it.key(),g,(*setIt),MantidMatrixCurve::Spectrum, errorBars,
+                              isDistribution); // The graph takes ownership
       } catch (Mantid::Kernel::Exception::NotFoundError &) {
         // Get here if workspace name is invalid - shouldn't be possible, but just in case
       } catch (std::invalid_argument&) {
@@ -1494,6 +1470,47 @@ void MultiLayer::maybeNeedToClose()
   }
 }
 
+void MultiLayer::toggleWaterfall(bool on)
+{
+  if(on) convertToWaterfall();
+  else convertFromWaterfall();
+}
+
+/**
+ * Assume we have a standard 1D plot and convert it to a waterfall layout
+ */
+void MultiLayer::convertToWaterfall()
+{
+  Graph *active = activeGraph();
+  if(!active || active->isWaterfallPlot()) return;
+
+  hide();
+  active->setWaterfallOffset(10,20);
+  setWaterfallLayout(true);
+  // Next two lines replace the legend so that it works on reversing the curve order
+  active->removeLegend();
+  active->newLegend();
+  show();
+}
+
+/**
+ * Assume we have a waterfall 1D plot and convert it to a standard overlayed layout
+ */
+void MultiLayer::convertFromWaterfall()
+{
+  Graph *active = activeGraph();
+  if(!active || !active->isWaterfallPlot()) return;
+
+  hide();
+  const bool updateOffset(true);
+  active->setWaterfallOffset(0, 0, updateOffset);
+  setWaterfallLayout(false);
+  // Next two lines replace the legend
+  active->removeLegend();
+  active->newLegend();
+  show();
+}
+
 void MultiLayer::setWaterfallLayout(bool on)
 {
   if (graphsList.isEmpty())
@@ -1505,13 +1522,7 @@ void MultiLayer::setWaterfallLayout(bool on)
     createWaterfallBox();
     updateWaterfalls();
   } else {
-    for (int i = 0; i < waterfallBox->count(); i++){
-      QLayoutItem *item = waterfallBox->itemAt(i);
-      if (item){
-        waterfallBox->removeItem(item);
-        delete item;
-      }
-    }
+    removeWaterfallBox();
   }
 }
 
@@ -1531,6 +1542,17 @@ void MultiLayer::createWaterfallBox()
   btn = new QPushButton(tr("Fill Area..."));
   connect (btn, SIGNAL(clicked()), this, SLOT(showWaterfallFillDialog()));
   waterfallBox->addWidget(btn);
+}
+
+void MultiLayer::removeWaterfallBox()
+{
+  if (waterfallBox->count() == 0)
+    return;
+
+  QLayoutItem *child;
+  while ((child = waterfallBox->takeAt(0)) != 0) {
+    delete child->widget();
+  }
 }
 
 void MultiLayer::updateWaterfalls()
@@ -1608,43 +1630,9 @@ void MultiLayer::showWaterfallFillDialog()
   if (active_graph->curvesList().isEmpty())
     return;
 
-  QDialog *waterfallFillDialog = new QDialog(this);
-  waterfallFillDialog->setWindowTitle(tr("Fill Curves"));
-
-  QGroupBox *gb1 = new QGroupBox(tr("Enable Fill"));
-  gb1->setCheckable(true);
-
-  QGridLayout *hl1 = new QGridLayout(gb1);
-  hl1->addWidget(new QLabel(tr("Fill with Color")), 0, 0);
-  ColorButton *fillColorBox = new ColorButton();
-  hl1->addWidget(fillColorBox, 0, 1);
-
-  QCheckBox *sideLinesBox = new QCheckBox(tr("Side Lines"));
-  //sideLinesBox->setChecked(active_graph->curve(0)->sideLinesEnabled());
-  hl1->addWidget(sideLinesBox, 1, 0);
-  hl1->setRowStretch(2, 1);
-
-  QBrush brush = active_graph->curve(0)->brush();
-  //fillColorBox->setColor(brush.style() != Qt::NoBrush ? brush.color() : d_waterfall_fill_color);
-  fillColorBox->setColor(Qt::white);
-  gb1->setChecked(brush.style() != Qt::NoBrush);
-
-  connect(gb1, SIGNAL(toggled(bool)), active_graph, SLOT(updateWaterfallFill(bool)));
-  connect(fillColorBox, SIGNAL(colorChanged(const QColor&)), this, SLOT(setWaterfallFillColor(const QColor&)));
-  connect(sideLinesBox, SIGNAL(toggled(bool)), active_graph, SLOT(setWaterfallSideLines(bool)));
-
-  QPushButton *closeBtn = new QPushButton(tr("&Close"));
-  connect(closeBtn, SIGNAL(clicked()), waterfallFillDialog, SLOT(reject()));
-
-  QHBoxLayout *hl2 = new QHBoxLayout();
-  hl2->addStretch();
-  hl2->addWidget(closeBtn);
-
-  QVBoxLayout *vl = new QVBoxLayout(waterfallFillDialog);
-  vl->addWidget(gb1);
-  vl->addLayout(hl2);
-  waterfallFillDialog->exec();
+  new WaterfallFillDialog(this, active_graph);
 }
+
 
 void MultiLayer::setWaterfallFillColor(const QColor& c)
 {
@@ -1653,3 +1641,222 @@ void MultiLayer::setWaterfallFillColor(const QColor& c)
     active_graph->setWaterfallFillColor(c);
 }
 
+
+WaterfallFillDialog::WaterfallFillDialog(MultiLayer *parent, Graph *active_graph)
+{
+  this->setParent(parent);
+  this->m_active_graph = active_graph;
+  QDialog *waterfallFillDialog = new QDialog(this);
+  waterfallFillDialog->setWindowTitle(tr("Fill Curves"));
+
+  QGroupBox *enableFillGroup = new QGroupBox(tr("Enable Fill"), waterfallFillDialog);
+  enableFillGroup->setCheckable(true);
+
+  QGridLayout *enableFillLayout =  new QGridLayout(enableFillGroup);
+
+  // use line colour
+  QRadioButton *rLineC = new QRadioButton("Use Line Colour", enableFillGroup);
+  this->m_lineRadioButton = rLineC;
+  enableFillLayout->addWidget(rLineC,0,0);
+
+  // use solid colour
+  QRadioButton *rSolidC = new QRadioButton("Use Solid Colour", enableFillGroup);
+  this->m_solidRadioButton = rSolidC;
+  enableFillLayout->addWidget(rSolidC, 1,0);
+
+  QGroupBox *colourModeGroup = new QGroupBox( tr("Fill with Colour"), enableFillGroup);
+
+  QGridLayout *hl1 = new QGridLayout(colourModeGroup);
+  hl1->addWidget(new QLabel(tr("Colour")), 0, 0);
+  ColorButton *fillColourBox = new ColorButton(colourModeGroup);
+  this->m_colourBox = fillColourBox;
+  fillColourBox->setColor(Qt::white); // Default colour
+  hl1->addWidget(fillColourBox, 0, 1);
+  enableFillLayout->addWidget(colourModeGroup,2,0);
+
+  QCheckBox *sideLinesBox = new QCheckBox(tr("Side Lines"), enableFillGroup);
+  enableFillLayout->addWidget(sideLinesBox, 3, 0);
+
+  QBrush brush = active_graph->curve(0)->brush();
+
+  // check if all curve colours are the same (= solid fill)
+  bool same = brush.style() != Qt::NoBrush; // check isn't first run against graph
+
+  if(same)
+  {
+    int n = active_graph->curvesList().size();
+    for (int i = 0; i < n; i++)
+    {
+      same = same && (active_graph->curve(i)->brush().color() == brush.color());
+    }
+  }
+  // set which is toggled
+  enableFillGroup->setChecked(brush.style() != Qt::NoBrush);
+
+  if(same)
+  {
+    rSolidC->toggle();
+    if(enableFillGroup->isChecked())
+      fillColourBox->setColor(brush.color());
+  }
+  else
+  {
+    rLineC->toggle();
+    if(enableFillGroup->isChecked())
+      active_graph->updateWaterfallFill(true);
+  }
+
+  // If sidelines previously enabled, check it.
+  if (PlotCurve *c = dynamic_cast<PlotCurve*>(active_graph->curve(0))) {
+    sideLinesBox->setChecked(c->sideLinesEnabled());
+  }
+
+  colourModeGroup->setEnabled(rSolidC->isChecked() && enableFillGroup->isChecked());
+
+  connect(enableFillGroup, SIGNAL(toggled(bool)), this, SLOT(enableFill(bool)));
+  connect(fillColourBox, SIGNAL(colorChanged(const QColor&)), active_graph, SLOT(setWaterfallFillColor(const QColor&)));
+  connect(sideLinesBox, SIGNAL(toggled(bool)), active_graph, SLOT(setWaterfallSideLines(bool)));
+  connect(rSolidC, SIGNAL(toggled(bool)), colourModeGroup, SLOT(setEnabled(bool)));
+  connect(rSolidC, SIGNAL(toggled(bool)), this, SLOT(setFillMode()));
+  connect(rLineC, SIGNAL(toggled(bool)), this, SLOT(setFillMode()));
+
+  QPushButton *closeBtn = new QPushButton(tr("&Close"),waterfallFillDialog);
+  connect(closeBtn, SIGNAL(clicked()), waterfallFillDialog, SLOT(reject()));
+
+  QHBoxLayout *hlClose = new QHBoxLayout();
+  hlClose->addStretch();
+  hlClose->addWidget(closeBtn);
+
+  QVBoxLayout *vl = new QVBoxLayout(waterfallFillDialog);
+  vl->addWidget(enableFillGroup);
+  vl->addLayout(hlClose);
+  waterfallFillDialog->exec();
+}
+
+void WaterfallFillDialog::enableFill(bool b)
+{
+  if(b)
+  {
+    WaterfallFillDialog::setFillMode();
+  }
+  else
+  {
+    m_active_graph->curve(0)->setBrush(Qt::BrushStyle::NoBrush);
+    m_active_graph->updateWaterfallFill(false);
+  }
+}
+
+void WaterfallFillDialog::setFillMode()
+{
+  if( m_solidRadioButton->isChecked() )
+  {
+    m_active_graph->setWaterfallFillColor(this->m_colourBox->color());
+  }
+  else if( m_lineRadioButton->isChecked() )
+  {
+    m_active_graph->updateWaterfallFill(true);
+  }
+}
+
+void MultiLayer::loadFromProject(const std::string& lines, ApplicationWindow* app, const int fileVersion)
+{
+  TSVSerialiser tsv(lines);
+
+  if(tsv.hasLine("geometry"))
+    app->restoreWindowGeometry(app, this, QString::fromStdString(tsv.lineAsString("geometry")));
+
+  blockSignals(true);
+
+  if(tsv.selectLine("WindowLabel"))
+  {
+    setWindowLabel(QString::fromUtf8(tsv.asString(1).c_str()));
+    setCaptionPolicy((MdiSubWindow::CaptionPolicy)tsv.asInt(2));
+  }
+
+  if(tsv.selectLine("Margins"))
+  {
+    int left, right, top, bottom;
+    tsv >> left >> right >> top >> bottom;
+    setMargins(left, right, top, bottom);
+  }
+
+  if(tsv.selectLine("Spacing"))
+  {
+    int rowSpace, colSpace;
+    tsv >> rowSpace >> colSpace;
+    setSpacing(rowSpace, colSpace);
+  }
+
+  if(tsv.selectLine("LayerCanvasSize"))
+  {
+    int width, height;
+    tsv >> width >> height;
+    setLayerCanvasSize(width, height);
+  }
+
+  if(tsv.selectLine("Alignement"))
+  {
+    int hor, vert;
+    tsv >> hor >> vert;
+    setAlignement(hor, vert);
+  }
+
+  if(tsv.hasSection("waterfall"))
+  {
+    const std::string wfStr = tsv.sections("waterfall").front();
+
+    if(wfStr == "1")
+      setWaterfallLayout(true);
+    else
+      setWaterfallLayout(false);
+  }
+
+  if(tsv.hasSection("graph"))
+  {
+    std::vector<std::string> graphSections = tsv.sections("graph");
+    for(auto it = graphSections.begin(); it != graphSections.end(); ++it)
+    {
+      const std::string graphLines = *it;
+
+      TSVSerialiser gtsv(graphLines);
+
+      if(gtsv.selectLine("ggeometry"))
+      {
+        int x, y, w, h;
+        gtsv >> x >> y >> w >> h;
+
+        Graph* g = dynamic_cast<Graph*>(addLayer(x,y,w,h));
+        if(g)
+          g->loadFromProject(graphLines, app, fileVersion);
+      }
+    }
+  }
+
+  blockSignals(false);
+}
+
+std::string MultiLayer::saveToProject(ApplicationWindow* app)
+{
+  TSVSerialiser tsv;
+
+  tsv.writeRaw("<multiLayer>");
+
+  tsv.writeLine(objectName().toStdString()) << d_cols << d_rows << birthDate();
+  tsv.writeRaw(app->windowGeometryInfo(this));
+
+  tsv.writeLine("WindowLabel") << windowLabel() << captionPolicy();
+  tsv.writeLine("Margins") << left_margin << right_margin << top_margin << bottom_margin;
+  tsv.writeLine("Spacing") << rowsSpace << colsSpace;
+  tsv.writeLine("LayerCanvasSize") << l_canvas_width << l_canvas_height;
+  tsv.writeLine("Alignement") << hor_align << vert_align;
+
+  foreach(Graph* g, graphsList)
+    tsv.writeSection("graph", g->saveToProject());
+
+  if(d_is_waterfall_plot)
+    tsv.writeInlineSection("waterfall", "1");
+
+  tsv.writeRaw("</multiLayer>");
+
+  return tsv.outputLines();
+}

@@ -1,265 +1,232 @@
 #include "MantidGeometry/Crystal/PointGroup.h"
 #include "MantidKernel/System.h"
 
-namespace Mantid
-{
-namespace Geometry
-{
+#include <set>
+#include <boost/make_shared.hpp>
+#include <boost/algorithm/string.hpp>
+#include <iostream>
+
+#include "MantidGeometry/Crystal/PointGroupFactory.h"
+#include "MantidGeometry/Crystal/SymmetryOperationFactory.h"
+#include "MantidGeometry/Crystal/SymmetryElementFactory.h"
+
+namespace Mantid {
+namespace Geometry {
 using Kernel::V3D;
+using Kernel::IntMatrix;
 
-  std::string PointGroupLaue1::getName()
-  {
-      return "-1 (Triclinic)";
+/**
+ * Returns all equivalent reflections for the supplied hkl.
+ *
+ * This method returns a vector containing all equivalent hkls for the supplied
+ * one. It depends on the internal state of the pointgroup object (e.g. which
+ * symmetry operations and therefore, which transformation matrices are
+ * present). This internal state is unique for each concrete point group and
+ * is set in the constructor.
+ *
+ * The returned vector always contains a set of unique hkls, so for special hkls
+ * like (100), it has fewer entries than for a general hkl. See also
+ * PointGroup::getEquivalentSet.
+ *
+ * @param hkl :: Arbitrary hkl
+ * @return :: std::vector containing all equivalent hkls.
+ */
+std::vector<V3D> PointGroup::getEquivalents(const V3D &hkl) const {
+  return getEquivalentSet(hkl);
+}
+
+/**
+ * Returns the same V3D for all equivalent hkls.
+ *
+ * This method is closely related to PointGroup::getEquivalents. It returns the
+ * same V3D for all hkls of one "family". For example in a cubic point group
+ * it will return (100) for (001), (010), (0-10), etc.
+ *
+ * It can be used to generate a set of symmetry independent hkls, useful for
+ * example in powder diffraction.
+ *
+ * @param hkl :: Arbitrary hkl
+ * @return :: hkl specific to a family of index-triplets
+ */
+V3D PointGroup::getReflectionFamily(const Kernel::V3D &hkl) const {
+  return *getEquivalentSet(hkl).begin();
+}
+
+/// Protected constructor - can not be used directly.
+PointGroup::PointGroup(const std::string &symbolHM, const Group &group,
+                       const std::string &description)
+    : Group(group), m_symbolHM(symbolHM),
+      m_name(symbolHM + " (" + description + ")") {
+  m_crystalSystem = getCrystalSystemFromGroup();
+}
+
+PointGroup::PointGroup(const PointGroup &other)
+    : Group(other), m_symbolHM(other.m_symbolHM), m_name(other.m_name),
+      m_crystalSystem(other.m_crystalSystem) {}
+
+PointGroup &PointGroup::operator=(const PointGroup &other) {
+  Group::operator=(other);
+
+  m_symbolHM = other.m_symbolHM;
+  m_name = other.m_name;
+  m_crystalSystem = other.m_crystalSystem;
+
+  return *this;
+}
+
+/// Hermann-Mauguin symbol
+std::string PointGroup::getSymbol() const { return m_symbolHM; }
+
+bool PointGroup::isEquivalent(const Kernel::V3D &hkl,
+                              const Kernel::V3D &hkl2) const {
+  std::vector<V3D> hklEquivalents = getEquivalentSet(hkl);
+
+  return (std::find(hklEquivalents.begin(), hklEquivalents.end(), hkl2) !=
+          hklEquivalents.end());
+}
+
+/**
+ * Generates a set of hkls
+ *
+ * This method applies all transformation matrices to the supplied hkl and puts
+ * it into a set, which is returned in the end. Using a set ensures that each
+ * hkl occurs once and only once. This set is the set of equivalent hkls,
+ * specific to a concrete point group.
+ *
+ * The symmetry operations need to be set prior to calling this method by a call
+ * to PointGroup::setTransformationMatrices.
+ *
+ * @param hkl :: Arbitrary hkl
+ * @return :: set of hkls.
+ */
+std::vector<V3D> PointGroup::getEquivalentSet(const Kernel::V3D &hkl) const {
+  std::vector<V3D> equivalents;
+  equivalents.reserve(m_allOperations.size());
+
+  for (auto op = m_allOperations.begin(); op != m_allOperations.end(); ++op) {
+    equivalents.push_back((*op).transformHKL(hkl));
   }
 
-  bool PointGroupLaue1::isEquivalent(V3D hkl, V3D hkl2)
-  {
-      double h=hkl[0];
-      double k=hkl[1];
-      double l=hkl[2];
+  std::sort(equivalents.begin(), equivalents.end(), std::greater<V3D>());
 
-      return (hkl2 == V3D(h,k,l)) || (hkl2 == V3D(-h,-k,-l));
+  equivalents.erase(std::unique(equivalents.begin(), equivalents.end()),
+                    equivalents.end());
+
+  return equivalents;
+}
+
+PointGroup::CrystalSystem PointGroup::getCrystalSystemFromGroup() const {
+  std::map<std::string, std::set<V3D> > symbolMap;
+
+  for (auto op = m_allOperations.begin(); op != m_allOperations.end(); ++op) {
+    SymmetryElementWithAxis_sptr element =
+        boost::dynamic_pointer_cast<SymmetryElementWithAxis>(
+            SymmetryElementFactory::Instance().createSymElement(*op));
+
+    if (element) {
+      std::string symbol = element->hmSymbol();
+      V3D axis = element->getAxis();
+
+      symbolMap[symbol].insert(axis);
+    }
   }
 
-  std::string PointGroupLaue2::getName()
-  {
-      return "1 2/m 1 (Monoclinic, unique axis b)";
+  if (symbolMap["3"].size() == 4) {
+    return Cubic;
   }
 
-  bool PointGroupLaue2::isEquivalent(V3D hkl, V3D hkl2)
-  {
-      double h=hkl[0];
-      double k=hkl[1];
-      double l=hkl[2];
-
-      return (hkl2 == V3D(h,k,l)) || (hkl2 == V3D(-h,-k,-l)) || (hkl2 == V3D(-h,k,-l)) || (hkl2 == V3D(h,-k,l));
+  if (symbolMap["6"].size() == 1 || symbolMap["-6"].size() == 1) {
+    return Hexagonal;
   }
 
-  std::string PointGroupLaue3::getName()
-  {
-      return "1 1 2/m (Monoclinic, unique axis c)";
+  if (symbolMap["3"].size() == 1) {
+    return Trigonal;
   }
 
-  bool PointGroupLaue3::isEquivalent(V3D hkl, V3D hkl2)
-  {
-      double h=hkl[0];
-      double k=hkl[1];
-      double l=hkl[2];
-
-      return (hkl2 == V3D(h,k,l)) || (hkl2 == V3D(-h,-k,l)) || (hkl2 == V3D(-h,-k,-l)) || (hkl2 == V3D(h,k,-l));
+  if (symbolMap["4"].size() == 1 || symbolMap["-4"].size() == 1) {
+    return Tetragonal;
   }
 
-  std::string PointGroupLaue4::getName()
-  {
-      return "mmm (Orthorombic)";
+  if (symbolMap["2"].size() == 3 ||
+      (symbolMap["2"].size() == 1 && symbolMap["m"].size() == 2)) {
+    return Orthorhombic;
   }
 
-  bool PointGroupLaue4::isEquivalent(V3D hkl, V3D hkl2)
-  {
-      double h=hkl[0];
-      double k=hkl[1];
-      double l=hkl[2];
-
-      return (hkl2 == V3D(h,k,l)) || (hkl2 == V3D(-h,-k,l)) || (hkl2 == V3D(-h,k,-l))
-              || (hkl2 == V3D(h,-k,-l)) || (hkl2 == V3D(-h,-k,-l)) || (hkl2 == V3D(h,k,-l))
-              || (hkl2 == V3D(h,-k,l)) || (hkl2 == V3D(-h,k,l));
+  if (symbolMap["2"].size() == 1 || symbolMap["m"].size() == 1) {
+    return Monoclinic;
   }
 
-  std::string PointGroupLaue5::getName()
-  {
-      return "4/m (Tetragonal)";
+  return Triclinic;
+}
+
+/** @return a vector with all possible PointGroup objects */
+std::vector<PointGroup_sptr> getAllPointGroups() {
+  std::vector<std::string> allSymbols =
+      PointGroupFactory::Instance().getAllPointGroupSymbols();
+
+  std::vector<PointGroup_sptr> out;
+  for (auto it = allSymbols.begin(); it != allSymbols.end(); ++it) {
+    out.push_back(PointGroupFactory::Instance().createPointGroup(*it));
   }
 
-  bool PointGroupLaue5::isEquivalent(V3D hkl, V3D hkl2)
-  {
-      double h=hkl[0];
-      double k=hkl[1];
-      double l=hkl[2];
+  return out;
+}
 
-      return (hkl2 == V3D(h,k,l)) || (hkl2 == V3D(-h,-k,l)) || (hkl2 == V3D(-k,h,l))
-              || (hkl2 == V3D(k,-h,l)) || (hkl2 == V3D(-h,-k,-l)) || (hkl2 == V3D(h,k,-l))
-              || (hkl2 == V3D(k,-h,-l)) || (hkl2 == V3D(-k,h,-l));
+PointGroupCrystalSystemMap getPointGroupsByCrystalSystem() {
+  PointGroupCrystalSystemMap map;
+
+  std::vector<PointGroup_sptr> pointGroups = getAllPointGroups();
+  for (size_t i = 0; i < pointGroups.size(); ++i) {
+    map.insert(std::make_pair(pointGroups[i]->crystalSystem(), pointGroups[i]));
   }
 
-  std::string PointGroupLaue6::getName()
-  {
-      return "4/mmm (Tetragonal)";
+  return map;
+}
+
+/// Return a human-readable string for the given crystal system
+std::string
+getCrystalSystemAsString(const PointGroup::CrystalSystem &crystalSystem) {
+  switch (crystalSystem) {
+  case PointGroup::Cubic:
+    return "Cubic";
+  case PointGroup::Tetragonal:
+    return "Tetragonal";
+  case PointGroup::Hexagonal:
+    return "Hexagonal";
+  case PointGroup::Trigonal:
+    return "Trigonal";
+  case PointGroup::Orthorhombic:
+    return "Orthorhombic";
+  case PointGroup::Monoclinic:
+    return "Monoclinic";
+  default:
+    return "Triclinic";
   }
+}
 
-  bool PointGroupLaue6::isEquivalent(V3D hkl, V3D hkl2)
-  {
-      double h=hkl[0];
-      double k=hkl[1];
-      double l=hkl[2];
+PointGroup::CrystalSystem
+getCrystalSystemFromString(const std::string &crystalSystem) {
+  std::string crystalSystemLC = boost::algorithm::to_lower_copy(crystalSystem);
 
-      return (hkl2 == V3D(h,k,l)) || (hkl2 == V3D(-h,-k,l)) || (hkl2 == V3D(-k,h,l))
-              || (hkl2 == V3D(k,-h,l)) || (hkl2 == V3D(-h,k,-l)) || (hkl2 == V3D(h,-k,-l))
-              || (hkl2 == V3D(k,h,-l)) || (hkl2 == V3D(-k,-h,-l)) || (hkl2 == V3D(-h,-k,-l))
-              || (hkl2 == V3D(h,k,-l)) || (hkl2 == V3D(k,-h,-l)) || (hkl2 == V3D(-k,h,-l))
-              || (hkl2 == V3D(h,-k,l)) || (hkl2 == V3D(-h,k,l)) || (hkl2 == V3D(-k,-h,l))
-              || (hkl2 == V3D(k,h,l));
+  if (crystalSystemLC == "cubic") {
+    return PointGroup::Cubic;
+  } else if (crystalSystemLC == "tetragonal") {
+    return PointGroup::Tetragonal;
+  } else if (crystalSystemLC == "hexagonal") {
+    return PointGroup::Hexagonal;
+  } else if (crystalSystemLC == "trigonal") {
+    return PointGroup::Trigonal;
+  } else if (crystalSystemLC == "orthorhombic") {
+    return PointGroup::Orthorhombic;
+  } else if (crystalSystemLC == "monoclinic") {
+    return PointGroup::Monoclinic;
+  } else if (crystalSystemLC == "triclinic") {
+    return PointGroup::Triclinic;
+  } else {
+    throw std::invalid_argument("Not a valid crystal system: '" +
+                                crystalSystem + "'.");
   }
-
-  std::string PointGroupLaue7::getName()
-  {
-      return "-3 (Trigonal - Hexagonal)";
-  }
-
-  bool PointGroupLaue7::isEquivalent(V3D hkl, V3D hkl2)
-  {
-      double h=hkl[0];
-      double k=hkl[1];
-      double l=hkl[2];
-
-      return (hkl2 == V3D(h,k,l)) || (hkl2 == V3D(-k,h-k,l)) || (hkl2 == V3D(-h+k,-h,l))
-              || (hkl2 == V3D(-h,-k,-l)) || (hkl2 == V3D(k,-h+k,-l)) || (hkl2 == V3D(h-k,h,-l));
-  }
-
-  std::string PointGroupLaue8::getName()
-  {
-      return "-3m1 (Trigonal - Rhombohedral)";
-  }
-
-  bool PointGroupLaue8::isEquivalent(V3D hkl, V3D hkl2)
-  {
-      double h=hkl[0];
-      double k=hkl[1];
-      double l=hkl[2];
-
-      return (hkl2 == V3D(h,k,l)) || (hkl2 == V3D(-k,h-k,l)) || (hkl2 == V3D(-h+k,-h,l))
-              || (hkl2 == V3D(-k,-h,-l)) || (hkl2 == V3D(-h+k,k,-l)) || (hkl2 == V3D(h,h-k,-l))
-              || (hkl2 == V3D(-h,-k,-l)) || (hkl2 == V3D(k,-h+k,-l)) || (hkl2 == V3D(h-k,h,-l))
-              || (hkl2 == V3D(k,h,l)) || (hkl2 == V3D(h-k,-k,l)) || (hkl2 == V3D(-h,-h+k,l));
-  }
-
-  std::string PointGroupLaue9::getName()
-  {
-      return "-31m (Trigonal - Rhombohedral)";
-  }
-
-  bool PointGroupLaue9::isEquivalent(V3D hkl, V3D hkl2)
-  {
-      double h=hkl[0];
-      double k=hkl[1];
-      double l=hkl[2];
-
-      return (hkl2 == V3D(h,k,l)) || (hkl2 == V3D(-k,h-k,l)) || (hkl2 == V3D(-h+k,-h,l))
-              || (hkl2 == V3D(-k,-h,-l)) || (hkl2 == V3D(-h+k,k,-l)) || (hkl2 == V3D(h,h-k,-l))
-              || (hkl2 == V3D(-h,-k,-l)) || (hkl2 == V3D(k,-h+k,-l)) || (hkl2 == V3D(h-k,h,-l))
-              || (hkl2 == V3D(k,h,l)) || (hkl2 == V3D(h-k,-k,l)) || (hkl2 == V3D(-h,-h+k,l));
-  }
-
-  std::string PointGroupLaue10::getName()
-  {
-      return "6/m (Hexagonal)";
-  }
-
-  bool PointGroupLaue10::isEquivalent(V3D hkl, V3D hkl2)
-  {
-      double h=hkl[0];
-      double k=hkl[1];
-      double l=hkl[2];
-
-      return (hkl2 == V3D(h,k,l)) || (hkl2 == V3D(-k,h-k,l)) || (hkl2 == V3D(-h+k,-h,l))
-              || (hkl2 == V3D(-h,-k,l)) || (hkl2 == V3D(k,-h+k,l)) || (hkl2 == V3D(h-k,h,l))
-              || (hkl2 == V3D(-h,-k,-l)) || (hkl2 == V3D(k,-h+k,-l)) || (hkl2 == V3D(h-k,h,-l))
-              || (hkl2 == V3D(h,k,-l)) || (hkl2 == V3D(-k,h-k,-l)) || (hkl2 == V3D(-h+k,-h,-l));
-  }
-
-  std::string PointGroupLaue11::getName()
-  {
-      return "6/mmm (Hexagonal)";
-  }
-
-  bool PointGroupLaue11::isEquivalent(V3D hkl, V3D hkl2)
-  {
-      double h=hkl[0];
-      double k=hkl[1];
-      double l=hkl[2];
-
-      return (hkl2 == V3D(h,k,l)) || (hkl2 == V3D(-k,h-k,l)) || (hkl2 == V3D(-h+k,-h,l))
-              || (hkl2 == V3D(-h,-k,l)) || (hkl2 == V3D(k,-h+k,l)) || (hkl2 == V3D(h-k,h,l))
-              || (hkl2 == V3D(k,h,-l)) || (hkl2 == V3D(h-k,-k,-l)) || (hkl2 == V3D(-h,-h+k,-l))
-              || (hkl2 == V3D(-k,-h,-l)) || (hkl2 == V3D(-h+k,k,-l)) || (hkl2 == V3D(h,h-k,-l))
-              || (hkl2 == V3D(-h,-k,-l)) || (hkl2 == V3D(k,-h+k,-l)) || (hkl2 == V3D(h-k,h,-l))
-              || (hkl2 == V3D(h,k,-l)) || (hkl2 == V3D(-k,h-k,-l)) || (hkl2 == V3D(-h+k,-h,-l))
-              || (hkl2 == V3D(-k,-h,l)) || (hkl2 == V3D(-h+k,k,l)) || (hkl2 == V3D(h,h-k,l))
-              || (hkl2 == V3D(k,h,l)) || (hkl2 == V3D(h-k,-k,l)) || (hkl2 == V3D(-h,-h+k,l));
-  }
-
-  std::string PointGroupLaue12::getName()
-  {
-      return "m-3 (Cubic)";
-  }
-
-  bool PointGroupLaue12::isEquivalent(V3D hkl, V3D hkl2)
-  {
-      double h=hkl[0];
-      double k=hkl[1];
-      double l=hkl[2];
-
-      return (hkl2 == V3D(h,k,l)) || (hkl2 == V3D(-h,-k,l)) || (hkl2 == V3D(-h,k,-l))
-              || (hkl2 == V3D(h,-k,-l)) || (hkl2 == V3D(l,h,k)) || (hkl2 == V3D(l,-h,-k))
-              || (hkl2 == V3D(-l,-h,k)) || (hkl2 == V3D(-l,h,-k)) || (hkl2 == V3D(k,l,h))
-              || (hkl2 == V3D(-k,l,-h)) || (hkl2 == V3D(k,-l,-h)) || (hkl2 == V3D(-k,-l,h))
-              || (hkl2 == V3D(-h,-k,-l)) || (hkl2 == V3D(h,k,-l)) || (hkl2 == V3D(h,-k,l))
-              || (hkl2 == V3D(-h,k,l)) || (hkl2 == V3D(-l,-h,-k)) || (hkl2 == V3D(-l,h,k))
-              || (hkl2 == V3D(l,h,-k)) || (hkl2 == V3D(l,-h,k)) || (hkl2 == V3D(-k,-l,-h))
-              || (hkl2 == V3D(k,-l,h)) || (hkl2 == V3D(-k,l,h)) || (hkl2 == V3D(k,l,-h));
-  }
-
-  std::string PointGroupLaue13::getName()
-  {
-      return "m-3m (Cubic)";
-  }
-
-  bool PointGroupLaue13::isEquivalent(V3D hkl, V3D hkl2)
-  {
-      double h=hkl[0];
-      double k=hkl[1];
-      double l=hkl[2];
-
-      return (hkl2 == V3D(h,k,l)) || (hkl2 == V3D(-h,-k,l)) || (hkl2 == V3D(-h,k,-l))
-              || (hkl2 == V3D(h,-k,-l)) || (hkl2 == V3D(l,h,k)) || (hkl2 == V3D(l,-h,-k))
-              || (hkl2 == V3D(-l,-h,k)) || (hkl2 == V3D(-l,h,-k)) || (hkl2 == V3D(k,l,h))
-              || (hkl2 == V3D(-k,l,-h)) || (hkl2 == V3D(k,-l,-h)) || (hkl2 == V3D(-k,-l,h))
-              || (hkl2 == V3D(k,h,-l)) || (hkl2 == V3D(-k,-h,-l)) || (hkl2 == V3D(k,-h,l))
-              || (hkl2 == V3D(-k,h,l)) || (hkl2 == V3D(h,l,-k)) || (hkl2 == V3D(-h,l,k))
-              || (hkl2 == V3D(-h,-l,-k)) || (hkl2 == V3D(h,-l,k)) || (hkl2 == V3D(l,k,-h))
-              || (hkl2 == V3D(l,-k,h)) || (hkl2 == V3D(-l,k,h)) || (hkl2 == V3D(-l,-k,-h))
-              || (hkl2 == V3D(-h,-k,-l)) || (hkl2 == V3D(h,k,-l)) || (hkl2 == V3D(h,-k,l))
-              || (hkl2 == V3D(-h,k,l)) || (hkl2 == V3D(-l,-h,-k)) || (hkl2 == V3D(-l,h,k))
-              || (hkl2 == V3D(l,h,-k)) || (hkl2 == V3D(l,-h,k)) || (hkl2 == V3D(-k,-l,-h))
-              || (hkl2 == V3D(k,-l,h)) || (hkl2 == V3D(-k,l,h)) || (hkl2 == V3D(k,l,-h))
-              || (hkl2 == V3D(-k,-h,l)) || (hkl2 == V3D(k,h,l)) || (hkl2 == V3D(-k,h,-l))
-              || (hkl2 == V3D(k,-h,-l)) || (hkl2 == V3D(-h,-l,k)) || (hkl2 == V3D(h,-l,-k))
-              || (hkl2 == V3D(h,l,k)) || (hkl2 == V3D(-h,l,-k)) || (hkl2 == V3D(-l,-k,h))
-              || (hkl2 == V3D(-l,k,-h)) || (hkl2 == V3D(l,-k,-h)) || (hkl2 == V3D(l,k,h));
-  }
-
-  /** @return a vector with all possible PointGroup objects */
-  std::vector<PointGroup_sptr> getAllPointGroups()
-  {
-    std::vector<PointGroup_sptr> out;
-    out.push_back(PointGroup_sptr(new PointGroupLaue1() ));
-    out.push_back(PointGroup_sptr(new PointGroupLaue2() ));
-    out.push_back(PointGroup_sptr(new PointGroupLaue3() ));
-    out.push_back(PointGroup_sptr(new PointGroupLaue4() ));
-    out.push_back(PointGroup_sptr(new PointGroupLaue5() ));
-    out.push_back(PointGroup_sptr(new PointGroupLaue6() ));
-    out.push_back(PointGroup_sptr(new PointGroupLaue7() ));
-    out.push_back(PointGroup_sptr(new PointGroupLaue8() ));
-    out.push_back(PointGroup_sptr(new PointGroupLaue9() ));
-    out.push_back(PointGroup_sptr(new PointGroupLaue10() ));
-    out.push_back(PointGroup_sptr(new PointGroupLaue11() ));
-    out.push_back(PointGroup_sptr(new PointGroupLaue12() ));
-    out.push_back(PointGroup_sptr(new PointGroupLaue13() ));
-    return out;
-  }
-
-
-
+}
 
 } // namespace Mantid
 } // namespace Geometry
-

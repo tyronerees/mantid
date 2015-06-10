@@ -19,7 +19,7 @@ namespace CustomInterfaces
 
   /** ALCPeakFittingView : Qt implementation of the ALC Peak Fitting step interface.
     
-    Copyright &copy; 2014 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+    Copyright &copy; 2014 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
 
     This file is part of Mantid.
 
@@ -59,6 +59,8 @@ namespace CustomInterfaces
     void setParameter(const QString& funcIndex, const QString& paramName, double value);
     void setPeakPickerEnabled(bool enabled);
     void setPeakPicker(const IPeakFunction_const_sptr& peak);
+    void displayError(const QString& message);
+    void help();
 
     // -- End of IALCPeakFitting interface ---------------------------------------------------------
 

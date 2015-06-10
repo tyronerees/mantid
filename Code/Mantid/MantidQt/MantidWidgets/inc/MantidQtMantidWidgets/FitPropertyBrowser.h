@@ -143,6 +143,8 @@ public:
   std::string costFunction()const;
   /// Get the "ConvolveMembers" option
   bool convolveMembers()const;
+  /// Set if the data must be normalised before fitting
+  void normaliseData(bool on) {m_shouldBeNormalised = on;}
 
   /// Get the start X
   double startX()const;
@@ -224,7 +226,7 @@ public:
 
 
 public slots:
-  virtual void fit(){ doFit(500); }
+  virtual void fit();
   virtual void sequentialFit();
   void undoFit();
   void clear();
@@ -379,6 +381,7 @@ protected:
   QtProperty *m_minimizer;
   QtProperty *m_ignoreInvalidData;
   QtProperty *m_costFunction;
+  QtProperty *m_maxIterations;
   QtProperty *m_logValue;
   QtProperty *m_plotDiff;
   QtProperty *m_plotCompositeMembers;
@@ -544,6 +547,9 @@ private:
 
   /// store current workspace name
   std::string m_storedWorkspaceName;
+
+  /// Should the data be normalised before fitting?
+  bool m_shouldBeNormalised;
 
   friend class PropertyHandler;
   friend class CreateAttributeProperty;

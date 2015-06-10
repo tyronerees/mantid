@@ -13,6 +13,7 @@
 #include "ApplicationWindow.h"
 
 // MantidQt
+#include "MantidQtAPI/HelpWindow.h"
 #include "MantidQtMantidWidgets/ScriptEditor.h"
 
 //Qt
@@ -98,6 +99,12 @@ void ScriptingWindow::saveSettings()
   settings.setValue("/LastDirectoryVisited", m_manager->m_last_dir);
   settings.setValue("/RecentScripts",m_manager->recentScripts());
   settings.setValue("/ZoomLevel",m_manager->globalZoomLevel());
+  settings.setValue("/ShowWhitespace", m_toggleWhitespace->isChecked());
+  settings.setValue("/ReplaceTabs", m_manager->m_replaceTabs);
+  settings.setValue("/TabWhitespaceCount", m_manager->m_tabWhitespaceCount);
+  settings.setValue("/ScriptFontFamily", m_manager->m_fontFamily);
+  settings.setValue("/CodeFolding", m_toggleFolding->isChecked());
+
   settings.endGroup();
 }
 
@@ -118,6 +125,13 @@ void ScriptingWindow::readSettings()
   m_toggleProgress->setChecked(settings.value("ProgressArrow", true).toBool());
   m_manager->setRecentScripts(settings.value("/RecentScripts").toStringList());
   m_manager->m_globalZoomLevel = settings.value("ZoomLevel",0).toInt();
+  m_toggleFolding->setChecked(settings.value("CodeFolding", false).toBool());
+  m_toggleWhitespace->setChecked(settings.value("ShowWhitespace", false).toBool());
+
+  m_manager->m_showWhitespace = m_toggleWhitespace->isChecked();
+  m_manager->m_replaceTabs = settings.value("ReplaceTabs", true ).toBool();
+  m_manager->m_tabWhitespaceCount = settings.value("TabWhitespaceCount", 4).toInt();
+  m_manager->m_fontFamily = settings.value("ScriptFontFamily","").toString();
 
   settings.endGroup();
 
@@ -131,7 +145,7 @@ void ScriptingWindow::closeEvent(QCloseEvent *event)
 {
   // We ideally don't want a close button but are force by some window managers.
   // Therefore if someone clicks close and MantidPlot is not quitting then we will just hide
-  if( !m_acceptClose ) 
+  if( !m_acceptClose )
   {
     emit hideMe();
     //this->hide();
@@ -156,7 +170,6 @@ void ScriptingWindow::showEvent(QShowEvent *event)
   }
   event->accept();
 }
-
 
 /**
  * Open a script directly. This is here for backwards compatability with the old ScriptWindow
@@ -223,7 +236,6 @@ void ScriptingWindow::populateRecentScriptsMenu()
   }
 }
 
-
 /// Populate edit menu
 void ScriptingWindow::populateEditMenu()
 {
@@ -235,8 +247,17 @@ void ScriptingWindow::populateEditMenu()
   m_editMenu->addAction(m_paste);
 
   m_editMenu->insertSeparator();
+  m_editMenu->addAction(m_comment);
+  m_editMenu->addAction(m_uncomment);
+
+  m_editMenu->insertSeparator();
+  m_editMenu->addAction(m_tabsToSpaces);
+  m_editMenu->addAction(m_spacesToTabs);
+
+  m_editMenu->insertSeparator();
   m_editMenu->addAction(m_find);
 }
+
 /// Populate execute menu
 void ScriptingWindow::populateExecMenu()
 {
@@ -271,15 +292,27 @@ void ScriptingWindow::populateWindowMenu()
     m_windowMenu->addAction(m_zoomIn);
     m_windowMenu->addAction(m_zoomOut);
     m_windowMenu->addAction(m_resetZoom);
+    m_windowMenu->addAction(m_selectFont);
 
     m_windowMenu->insertSeparator();
     m_windowMenu->addAction(m_toggleProgress);
     m_windowMenu->addAction(m_toggleFolding);
+    m_windowMenu->addAction(m_toggleWhitespace);
+
+    m_windowMenu->insertSeparator();
+    m_windowMenu->addAction(m_openConfigTabs);
   }
 }
 
+/// Populate help menu
+void ScriptingWindow::populateHelpMenu()
+{
+  m_helpMenu->clear();
+  m_helpMenu->addAction(m_showHelp);
+  m_helpMenu->addAction(m_showPythonHelp);
+}
+
 /**
- *
  */
 void ScriptingWindow::updateWindowFlags()
 {
@@ -363,7 +396,24 @@ void ScriptingWindow::clearScriptVariables()
 }
 
 /**
- * calls MultiTabScriptInterpreter saveToString and  
+ * Opens the Qt help windows for the scripting window.
+ */
+void ScriptingWindow::showHelp()
+{
+  MantidQt::API::HelpWindow::showCustomInterface(NULL, QString("ScriptingWindow"));
+}
+
+
+/**
+ * Opens the Qt help windows for the Python API.
+ */
+void ScriptingWindow::showPythonHelp()
+{
+  MantidQt::API::HelpWindow::showPage(NULL, QString("qthelp://org.mantidproject/doc/api/python/index.html"));
+}
+
+/**
+ * calls MultiTabScriptInterpreter saveToString and
  *  saves the currently opened script file names to a string
  */
 QString ScriptingWindow::saveToString()
@@ -372,7 +422,7 @@ QString ScriptingWindow::saveToString()
 }
 
 /**
- * Saves scripts file names to a string 
+ * Saves scripts file names to a string
  * @param value If true a future close event will be accepted otherwise it will be ignored
  */
 void ScriptingWindow::acceptCloseEvent(const bool value)
@@ -410,6 +460,9 @@ void ScriptingWindow::initMenus()
   m_windowMenu = menuBar()->addMenu(tr("&Window"));
   connect(m_windowMenu, SIGNAL(aboutToShow()), this, SLOT(populateWindowMenu()));
 
+  m_helpMenu = menuBar()->addMenu(tr("&Help"));
+  connect(m_windowMenu, SIGNAL(aboutToShow()), this, SLOT(populateHelpMenu()));
+
   connect(m_manager, SIGNAL(tabCountChanged(int)), this, SLOT(setMenuStates(int)));
 
   // The menu items must be populated for the shortcuts to work
@@ -417,11 +470,12 @@ void ScriptingWindow::initMenus()
   populateEditMenu();
   populateExecMenu();
   populateWindowMenu();
+  populateHelpMenu();
   connect(m_manager, SIGNAL(tabCountChanged(int)), this, SLOT(populateFileMenu()));
   connect(m_manager, SIGNAL(tabCountChanged(int)), this, SLOT(populateEditMenu()));
   connect(m_manager, SIGNAL(tabCountChanged(int)), this, SLOT(populateExecMenu()));
   connect(m_manager, SIGNAL(tabCountChanged(int)), this, SLOT(populateWindowMenu()));
-
+  connect(m_manager, SIGNAL(tabCountChanged(int)), this, SLOT(populateHelpMenu()));
 }
 
 
@@ -434,6 +488,7 @@ void ScriptingWindow::initActions()
   initEditMenuActions();
   initExecMenuActions();
   initWindowMenuActions();
+  initHelpMenuActions();
 }
 
 /**
@@ -459,7 +514,7 @@ void ScriptingWindow::initFileMenuActions()
 
   m_saveAs = new QAction(tr("&Save As"), this);
   connect(m_saveAs, SIGNAL(triggered()), m_manager, SLOT(saveAs()));
-  m_saveAs->setShortcut(tr("Ctrl+Shift+S"));  
+  m_saveAs->setShortcut(tr("Ctrl+Shift+S"));
 
   m_print = new QAction(tr("&Print script"), this);
   connect(m_print, SIGNAL(triggered()), m_manager, SLOT(print()));
@@ -500,8 +555,22 @@ void ScriptingWindow::initEditMenuActions()
   connect(m_paste, SIGNAL(triggered()), m_manager, SLOT(paste()));
   m_paste->setShortcut(QKeySequence::Paste);
 
+  m_comment = new QAction(tr("Co&mment"), this);
+  connect(m_comment, SIGNAL(triggered()), m_manager, SLOT(comment()));
+  m_comment->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_M));
+
+  m_uncomment = new QAction(tr("Uncomment"), this);
+  connect(m_uncomment, SIGNAL(triggered()), m_manager, SLOT(uncomment()));
+  m_uncomment->setShortcut(QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_M));
+
+  m_tabsToSpaces = new QAction(tr("Tabs to Spaces"), this);
+  connect(m_tabsToSpaces, SIGNAL(triggered()), m_manager, SLOT(tabsToSpaces()));
+
+  m_spacesToTabs = new QAction(tr("Spaces to Tabs"), this);
+  connect(m_spacesToTabs, SIGNAL(triggered()), m_manager, SLOT(spacesToTabs()));
+
   m_find = new QAction(tr("&Find/Replace"), this);
-  connect(m_find, SIGNAL(triggered()), m_manager, 
+  connect(m_find, SIGNAL(triggered()), m_manager,
           SLOT(showFindReplaceDialog()));
   m_find->setShortcut(QKeySequence::Find);
 }
@@ -575,6 +644,10 @@ void ScriptingWindow::initWindowMenuActions()
   m_resetZoom = new QAction(("&Reset font size"), this);
   connect(m_resetZoom, SIGNAL(triggered()), m_manager, SLOT(resetZoom()));
 
+  // Show font selection dialog
+  m_selectFont = new QAction(tr("Select Font"), this);
+  connect(m_selectFont, SIGNAL(triggered()), m_manager, SLOT(showSelectFont()));
+
   // Toggle the progress arrow
   m_toggleProgress = new QAction(tr("&Progress Reporting"), this);
   m_toggleProgress->setCheckable(true);
@@ -584,6 +657,29 @@ void ScriptingWindow::initWindowMenuActions()
   m_toggleFolding = new QAction(tr("Code &Folding"), this);
   m_toggleFolding->setCheckable(true);
   connect(m_toggleFolding, SIGNAL(toggled(bool)), m_manager, SLOT(toggleCodeFolding(bool)));
+
+  // Toggle the whitespace arrow
+  m_toggleWhitespace = new QAction(tr("&Show Whitespace"), this);
+  m_toggleWhitespace->setCheckable(true);
+  connect(m_toggleWhitespace, SIGNAL(toggled(bool)), m_manager, SLOT(toggleWhitespace(bool)));
+
+  // Open Config Tabs dialog
+  m_openConfigTabs = new QAction(tr("Configure Tabs"), this);
+  connect(m_openConfigTabs, SIGNAL(triggered()), m_manager, SLOT(openConfigTabs()));
+}
+
+/**
+ * Create the help menu actions
+ */
+void ScriptingWindow::initHelpMenuActions()
+{
+  // Show Qt help window
+  m_showHelp = new QAction(tr("Scripting Window Help"), this);
+  connect(m_showHelp, SIGNAL(triggered()), this, SLOT(showHelp()));
+
+  // Show Qt help window for Python API
+  m_showPythonHelp = new QAction(tr("Python API Help"), this);
+  connect(m_showPythonHelp, SIGNAL(triggered()), this, SLOT(showPythonHelp()));
 }
 
 /**
@@ -615,7 +711,7 @@ void ScriptingWindow::customEvent(QEvent *event)
  */
 void ScriptingWindow::dragMoveEvent(QDragMoveEvent *de)
 {
-  const QMimeData *mimeData = de->mimeData();  
+  const QMimeData *mimeData = de->mimeData();
   if (mimeData->hasUrls())
   {
     if (extractPyFiles(mimeData->urls()).size() > 0)
@@ -624,14 +720,14 @@ void ScriptingWindow::dragMoveEvent(QDragMoveEvent *de)
     }
   }
 }
- 
+
 /**
  * Accept a drag enter event and selects whether to accept the action
  * @param de :: The drag enter event
  */
 void ScriptingWindow::dragEnterEvent(QDragEnterEvent *de)
 {
-  const QMimeData *mimeData = de->mimeData();  
+  const QMimeData *mimeData = de->mimeData();
   if (mimeData->hasUrls())
   {
     if (extractPyFiles(mimeData->urls()).size() > 0)
@@ -640,20 +736,20 @@ void ScriptingWindow::dragEnterEvent(QDragEnterEvent *de)
     }
   }
 }
- 
+
 /**
  * Accept a drag drop event and process the data appropriately
  * @param de :: The drag drop event
  */
 void ScriptingWindow::dropEvent(QDropEvent *de)
 {
-  const QMimeData *mimeData = de->mimeData();  
-  if (mimeData->hasUrls()) 
+  const QMimeData *mimeData = de->mimeData();
+  if (mimeData->hasUrls())
   {
     QStringList filenames = extractPyFiles(mimeData->urls());
     de->acceptProposedAction();
 
-    for (int i = 0; i < filenames.size(); ++i) 
+    for (int i = 0; i < filenames.size(); ++i)
     {
       m_manager->openInNewTab(filenames[i]);
     }
@@ -663,13 +759,13 @@ void ScriptingWindow::dropEvent(QDropEvent *de)
 QStringList ScriptingWindow::extractPyFiles(const QList<QUrl>& urlList) const
 {
   QStringList filenames;
-  for (int i = 0; i < urlList.size(); ++i) 
+  for (int i = 0; i < urlList.size(); ++i)
   {
     QString fName = urlList[i].toLocalFile();
     if (fName.size()>0)
     {
       QFileInfo fi(fName);
-      
+
       if (fi.suffix().upper()=="PY")
       {
         filenames.append(fName);

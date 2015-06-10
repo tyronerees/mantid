@@ -35,7 +35,7 @@ pointing along the beam, and Axis2 tied to "phi", pointing vertically
 upward.
 
 SetGoniometer(w,"Universal") is the same as
-SetGoniometer(w,Axis0="omega,0,1,0,1",Axis1="chi,0,0,1,1",Axis1="phi,0,1,0,1")
+SetGoniometer(w,Axis0="omega,0,1,0,1",Axis1="chi,0,0,1,1",Axis2="phi,0,1,0,1")
 
 
 
@@ -50,6 +50,9 @@ Usage
 
     print "Log values:",wg.getRun().keys()
     print "Goniometer angles: ",wg.getRun().getGoniometer().getEulerAngles('YZY')
+    print "Clearing goniometer up"
+    SetGoniometer(wg) 
+    print "Goniometer angles: ",wg.getRun().getGoniometer().getEulerAngles('YZY')    
 
 .. testcleanup:: SetGoniometer
 
@@ -61,7 +64,9 @@ Output:
 
     Log values: ['Motor1', 'GoniometerAxis1_FixedValue']
     Goniometer angles:  [50,0,0]
-   
+    Clearing goniometer up
+    Goniometer angles:  [0,0,0]    
+ 
 
 
 .. categories::

@@ -10,7 +10,7 @@
   @author Janik Zikovsky
   @date 06/24/2011
 
-  Copyright &copy; 2010 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+  Copyright &copy; 2010 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
 
   This file is part of Mantid.
 
@@ -34,6 +34,8 @@
 #include "MantidAPI/IMDWorkspace.h"
 #include "MantidAPI/IPeaksWorkspace.h"
 #include "MantidVatesAPI/vtkDataSetFactory.h"
+
+class vtkPolyData;
 
 namespace Mantid
 {
@@ -70,7 +72,7 @@ public:
   virtual void initialize(Mantid::API::Workspace_sptr workspace);
 
   /// Factory method
-  vtkDataSet* create(ProgressAction& progressUpdating) const;
+  vtkPolyData* create(ProgressAction& progressUpdating) const;
 
   virtual std::string getFactoryTypeName() const
   {
@@ -88,7 +90,6 @@ protected:
   virtual void validate() const;
 
 private:
-
   void validateWsNotNull() const;
 
   void validateDimensionsPresent() const;
@@ -104,7 +105,6 @@ private:
 
   /// peak radius value.
   double m_peakRadius; 
-
 };
 }
 }

@@ -3,6 +3,11 @@
 
 #include <cxxtest/TestSuite.h>
 
+#include "MantidAPI/FrameworkManager.h"
+#include "MantidGeometry/Instrument.h"
+#include "MantidGeometry/IComponent.h"
+#include "MantidGeometry/Instrument/ReferenceFrame.h"
+#include "MantidGeometry/Instrument/RectangularDetector.h"
 #include "MantidAlgorithms/CreateSampleWorkspace.h"
 #include "MantidDataObjects/Workspace2D.h"
 #include "MantidDataObjects/EventWorkspace.h"
@@ -21,6 +26,9 @@ public:
   static CreateSampleWorkspaceTest *createSuite() { return new CreateSampleWorkspaceTest(); }
   static void destroySuite( CreateSampleWorkspaceTest *suite ) { delete suite; }
 
+  CreateSampleWorkspaceTest() {
+    FrameworkManager::Instance();
+  }
 
   void test_Init()
   {
@@ -79,6 +87,87 @@ public:
 
     return ws;
   }
+
+  void test_default_pixel_spacing()
+  {
+      CreateSampleWorkspace alg;
+      alg.setChild(true);
+      alg.initialize();
+      alg.setPropertyValue("OutputWorkspace", "dummy");
+      alg.execute();
+      MatrixWorkspace_sptr outWS = alg.getProperty("OutputWorkspace");
+
+      const auto instrument = outWS->getInstrument();
+      auto bank1 = boost::dynamic_pointer_cast<const RectangularDetector>(instrument->getComponentByName("bank1"));
+      TSM_ASSERT_EQUALS("PixelSpacing on the bank is not the same as the expected default in x", 0.008, bank1->xstep());
+      TSM_ASSERT_EQUALS("PixelSpacing on the bank is not the same as the expected default in y", 0.008, bank1->ystep());
+  }
+
+  void test_apply_pixel_spacing()
+  {
+      // Set the spacing we want
+      const double pixelSpacing = 0.01;
+
+      CreateSampleWorkspace alg;
+      alg.setChild(true);
+      alg.initialize();
+      alg.setProperty("PixelSpacing", pixelSpacing);
+      alg.setPropertyValue("OutputWorkspace", "dummy");
+      alg.execute();
+      MatrixWorkspace_sptr outWS = alg.getProperty("OutputWorkspace");
+
+      const auto instrument = outWS->getInstrument();
+      auto bank1 = boost::dynamic_pointer_cast<const RectangularDetector>(instrument->getComponentByName("bank1"));
+      TSM_ASSERT_EQUALS("Not the specified pixel spacing in x", pixelSpacing, bank1->xstep());
+      TSM_ASSERT_EQUALS("Not the specified pixel spacing in y", pixelSpacing, bank1->ystep());
+  }
+
+  void test_default_instrument_bank_setup()
+  {
+      CreateSampleWorkspace alg;
+      alg.setChild(true);
+      alg.initialize();
+      alg.setPropertyValue("OutputWorkspace", "dummy");
+      alg.execute();
+      MatrixWorkspace_sptr outWS = alg.getProperty("OutputWorkspace");
+
+      const auto instrument = outWS->getInstrument();
+      const auto bank1 = instrument->getComponentByName("bank1");
+      const auto bank2 = instrument->getComponentByName("bank2");
+      const auto sample = instrument->getComponentByName("sample");
+
+      const V3D bank1ToSample = bank1->getPos() - sample->getPos();
+      const V3D bank2ToSample = bank2->getPos() - sample->getPos();
+      auto refFrame = instrument->getReferenceFrame();
+      TSM_ASSERT_EQUALS("By default bank1 should be offset from the sample in the beam direction by 5m", 5.0, refFrame->vecPointingAlongBeam().scalar_prod(bank1ToSample));
+      TSM_ASSERT_EQUALS("By default bank2 should be offset from the sample in the beam direction by 2 * 5m", 10.0, refFrame->vecPointingAlongBeam().scalar_prod(bank2ToSample));
+  }
+
+  void test_apply_offset_instrument_banks()
+  {
+      // Set the offset we want
+      const double bankToSampleDistance = 4.0;
+
+      CreateSampleWorkspace alg;
+      alg.setChild(true);
+      alg.initialize();
+      alg.setPropertyValue("OutputWorkspace", "dummy");
+      alg.setProperty("BankDistanceFromSample", bankToSampleDistance);
+      alg.execute();
+      MatrixWorkspace_sptr outWS = alg.getProperty("OutputWorkspace");
+
+      const auto instrument = outWS->getInstrument();
+      const auto bank1 = instrument->getComponentByName("bank1");
+      const auto bank2 = instrument->getComponentByName("bank2");
+      const auto sample = instrument->getComponentByName("sample");
+
+      const V3D bank1ToSample = bank1->getPos() - sample->getPos();
+      const V3D bank2ToSample = bank2->getPos() - sample->getPos();
+      auto refFrame = instrument->getReferenceFrame();
+      TSM_ASSERT_EQUALS("Wrong offset applied for bank1", bankToSampleDistance, refFrame->vecPointingAlongBeam().scalar_prod(bank1ToSample));
+      TSM_ASSERT_EQUALS("Wrong offset applied for bank2", bankToSampleDistance * 2, refFrame->vecPointingAlongBeam().scalar_prod(bank2ToSample));
+  }
+
   
   void test_histogram_defaults()
   {
@@ -93,7 +182,7 @@ public:
     TS_ASSERT_DELTA(ws->readY(0)[50], 10.3,0.0001);
     TS_ASSERT_DELTA(ws->readY(0)[60], 0.3,0.0001);
     TS_ASSERT_DELTA(ws->readY(0)[80], 0.3,0.0001);
-    
+
     // Remove workspace from the data service.
     AnalysisDataService::Instance().remove(outWSName);
   }
@@ -231,6 +320,70 @@ public:
     // Remove workspace from the data service.
     AnalysisDataService::Instance().remove(outWSName);
   }
+
+  void test_units()
+  {
+    // Name of the output workspace.
+    std::string outWSName("CreateSampleWorkspaceTest_units");
+  
+    /* Equivalent of this python command:
+      ws=CreateSampleWorkspace(WorkspaceType="Event",Function="One Peak",
+      NumBanks=1,BankPixelWidth=2,NumEvents=50,Random=True,
+      XUnit="dSpacing",XMin=0, XMax=8, BinWidth=0.1)
+    */
+    MatrixWorkspace_sptr ws = createSampleWorkspace(outWSName,"Event","One Peak","",1,2,50,true,"dSpacing",0,8,0.1);
+    if (!ws) return;
+    // Remove workspace from the data service.
+    AnalysisDataService::Instance().remove(outWSName);
+
+    ws = createSampleWorkspace(outWSName,"Event","One Peak","",1,2,50,true,"Wavelength",0,8,0.1);
+    if (!ws) return;
+    // Remove workspace from the data service.
+    AnalysisDataService::Instance().remove(outWSName);
+
+    ws = createSampleWorkspace(outWSName,"Event","One Peak","",1,2,50,true,"Energy",100,1000,10);
+    if (!ws) return;
+    // Remove workspace from the data service.
+    AnalysisDataService::Instance().remove(outWSName);
+
+    ws = createSampleWorkspace(outWSName,"Event","One Peak","",1,2,50,true,"QSquared",0,800,10);
+    if (!ws) return;
+    // Remove workspace from the data service.
+    AnalysisDataService::Instance().remove(outWSName);
+  }
+  
+  void test_failure_due_to_bad_bin_width()
+  {
+    /* Equivalent of this python command:
+      mono_ws = CreateSampleWorkspace(NumBanks=1, BankPixelWidth=4, NumEvents=10000,XUnit='DeltaE',XMin=-5,XMax=15)
+    */
+    std::string outWSName = "CreateSampleWorkspaceTest_test_failure_due_to_bad_bin_width";
+    CreateSampleWorkspace alg;
+    TS_ASSERT_THROWS_NOTHING( alg.initialize() );
+    TS_ASSERT( alg.isInitialized() );
+    alg.setPropertyValue("OutputWorkspace", outWSName);
+    TS_ASSERT_THROWS_NOTHING( alg.setProperty("NumBanks", 1) );
+    TS_ASSERT_THROWS_NOTHING( alg.setProperty("BankPixelWidth", 4) );
+    TS_ASSERT_THROWS_NOTHING( alg.setProperty("NumEvents", 10000) );
+    TS_ASSERT_THROWS_NOTHING( alg.setPropertyValue("XUnit", "DeltaE") );
+    TS_ASSERT_THROWS_NOTHING( alg.setProperty("XMin", -5.0) );
+    TS_ASSERT_THROWS_NOTHING( alg.setProperty("XMax", 15.0) );
+    //leave the default bin width of 200, which is inappropriate
+    
+    TS_ASSERT_THROWS_NOTHING( alg.execute(); );
+    TS_ASSERT( alg.isExecuted() );
+
+    // Retrieve the workspace from data service. TODO: Change to your desired type
+    MatrixWorkspace_sptr ws;
+    TS_ASSERT_THROWS_NOTHING( ws = AnalysisDataService::Instance().retrieveWS<MatrixWorkspace>(outWSName) );
+    TS_ASSERT(ws);
+    //just one bin
+    TS_ASSERT_EQUALS(ws->blocksize(),1);
+
+    // Remove workspace from the data service.
+    AnalysisDataService::Instance().remove(outWSName);
+  }
+
 };
 
 

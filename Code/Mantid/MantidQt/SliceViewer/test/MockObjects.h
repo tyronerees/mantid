@@ -3,14 +3,14 @@
 
 #include "MantidAPI/IMDWorkspace.h"
 #include "MantidAPI/IPeaksWorkspace.h"
-#include "MantidAPI/PeakTransform.h"
-#include "MantidAPI/PeakTransformFactory.h"
+#include "MantidGeometry/Crystal/PeakTransform.h"
+#include "MantidGeometry/Crystal/PeakTransformFactory.h"
 #include "MantidQtSliceViewer/PeaksPresenter.h"
 #include "MantidQtSliceViewer/PeakOverlayView.h"
 #include "MantidQtSliceViewer/PeakOverlayViewFactory.h"
 #include "MantidQtSliceViewer/ZoomablePeaksView.h"
 #include "MantidQtSliceViewer/UpdateableOnDemand.h"
-#include "MantidAPI/IPeak.h"
+#include "MantidGeometry/Crystal/IPeak.h"
 #include "MantidKernel/UnitLabel.h"
 #include <boost/regex.hpp>
 #include <gmock/gmock.h>
@@ -18,6 +18,7 @@
 
 using namespace MantidQt::SliceViewer;
 using namespace Mantid::API;
+using namespace Mantid::Geometry;
 using namespace Mantid;
 using boost::regex;
 
@@ -32,6 +33,7 @@ namespace
   public:
     MOCK_METHOD1(zoomToRectangle, void(const PeakBoundingBox&));
     MOCK_METHOD0(resetView, void());
+    MOCK_METHOD0(detach, void());
     virtual ~MockZoomablePeaksView(){}
   };
 
@@ -61,6 +63,9 @@ namespace
     MOCK_CONST_METHOD0(getShowBackground, bool());
     MOCK_METHOD1(zoomToPeak, void(const int));
     MOCK_CONST_METHOD0(isHidden, bool());
+    MOCK_METHOD1(reInitialize, void(boost::shared_ptr<Mantid::API::IPeaksWorkspace> peaksWS));
+    MOCK_CONST_METHOD1(contentsDifferent,
+          bool(const PeaksPresenter*  other));
     virtual ~MockPeaksPresenter(){}
   };
 
@@ -77,7 +82,7 @@ namespace
   /*------------------------------------------------------------
   Mock Peak Transform
   ------------------------------------------------------------*/
-  class MockPeakTransform : public PeakTransform 
+  class MockPeakTransform : public Geometry::PeakTransform
   {
   public:
     MockPeakTransform()
@@ -89,15 +94,15 @@ namespace
     }
     MOCK_CONST_METHOD0(clone, PeakTransform_sptr());
     MOCK_CONST_METHOD1(transform, Mantid::Kernel::V3D(const Mantid::Kernel::V3D&));
-    MOCK_CONST_METHOD1(transformPeak, Mantid::Kernel::V3D(const Mantid::API::IPeak&)); 
+    MOCK_CONST_METHOD1(transformPeak, Mantid::Kernel::V3D(const Mantid::Geometry::IPeak&));
     MOCK_CONST_METHOD0(getFriendlyName, std::string());
-    MOCK_CONST_METHOD0(getCoordinateSystem, Mantid::API::SpecialCoordinateSystem());
+    MOCK_CONST_METHOD0(getCoordinateSystem, Mantid::Kernel::SpecialCoordinateSystem());
   };
 
   /*------------------------------------------------------------
   Mock Peak Transform Factory
   ------------------------------------------------------------*/
-class MockPeakTransformFactory : public PeakTransformFactory 
+class MockPeakTransformFactory : public Geometry::PeakTransformFactory
 {
  public:
   MOCK_CONST_METHOD0(createDefaultTransform, PeakTransform_sptr());
@@ -143,13 +148,14 @@ class MockPeakTransformFactory : public PeakTransformFactory
     MOCK_CONST_METHOD0(getPlotYLabel, std::string());
     MOCK_METHOD0(updateView, void());
     MOCK_CONST_METHOD0(FOM, int());
+    MOCK_METHOD1(swapPeaksWorkspace, void(boost::shared_ptr<Mantid::API::IPeaksWorkspace>&));
   };
   
   
   /*------------------------------------------------------------
   Mock IPeak
   ------------------------------------------------------------*/
-  class MockIPeak : public Mantid::API::IPeak 
+  class MockIPeak : public Mantid::Geometry::IPeak
   {
   public:
     MOCK_METHOD1(setInstrument,
@@ -195,9 +201,9 @@ class MockPeakTransformFactory : public PeakTransformFactory
     MOCK_METHOD0(findDetector,
       bool());
     MOCK_METHOD2(setQSampleFrame,
-      void(Mantid::Kernel::V3D QSampleFrame, double detectorDistance));
+      void(Mantid::Kernel::V3D QSampleFrame, boost::optional<double> detectorDistance));
     MOCK_METHOD2(setQLabFrame,
-      void(Mantid::Kernel::V3D QLabFrame, double detectorDistance));
+      void(Mantid::Kernel::V3D QLabFrame, boost::optional<double> detectorDistance));
     MOCK_METHOD1(setWavelength,
       void(double wavelength));
     MOCK_CONST_METHOD0(getWavelength,
@@ -248,7 +254,8 @@ class MockPeakTransformFactory : public PeakTransformFactory
       Mantid::Kernel::V3D());
     MOCK_CONST_METHOD0(getDetectorPositionNoCheck,
           Mantid::Kernel::V3D());
-  };
+    MOCK_CONST_METHOD0(getPeakShape, const Mantid::Geometry::PeakShape&());
+};
 
   /*------------------------------------------------------------
   Mock MDGeometry

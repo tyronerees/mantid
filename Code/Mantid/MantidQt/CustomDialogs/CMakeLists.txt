@@ -6,14 +6,13 @@ set ( SRC_FILES src/CatalogPublishDialog.cpp
                 src/LoadDialog.cpp
                 src/LoadAsciiDialog.cpp
                 src/LoadDAEDialog.cpp
-                src/LoadInstrumentDialog.cpp               
                 src/LoadRawDialog.cpp
                 src/LOQScriptInputDialog.cpp
                 src/MantidGLWidget.cpp
                 src/PlotAsymmetryByLogValueDialog.cpp
                 src/SampleShapeHelpers.cpp
-                src/SlicingAlgorithmDialog.cpp
                 src/SmoothNeighboursDialog.cpp
+                src/SortTableWorkspaceDialog.cpp
 )
 
 set ( SRC_UNITY_IGNORE_FILES )
@@ -27,14 +26,13 @@ set ( MOC_FILES inc/MantidQtCustomDialogs/CatalogPublishDialog.h
                 inc/MantidQtCustomDialogs/LoadDialog.h
                 inc/MantidQtCustomDialogs/LoadAsciiDialog.h
                 inc/MantidQtCustomDialogs/LoadDAEDialog.h
-                inc/MantidQtCustomDialogs/LoadInstrumentDialog.h               
                 inc/MantidQtCustomDialogs/LoadRawDialog.h
                 inc/MantidQtCustomDialogs/LOQScriptInputDialog.h
                 inc/MantidQtCustomDialogs/MantidGLWidget.h
                 inc/MantidQtCustomDialogs/PlotAsymmetryByLogValueDialog.h
                 inc/MantidQtCustomDialogs/SampleShapeHelpers.h
-                inc/MantidQtCustomDialogs/SlicingAlgorithmDialog.h
                 inc/MantidQtCustomDialogs/SmoothNeighboursDialog.h
+                inc/MantidQtCustomDialogs/SortTableWorkspaceDialog.h
 )
 
 # Include files aren't required, but this makes them appear in Visual Studio
@@ -49,10 +47,9 @@ set ( UI_FILES inc/MantidQtCustomDialogs/CatalogPublishDialog.ui
                inc/MantidQtCustomDialogs/LOQScriptInputDialog.ui
                inc/MantidQtCustomDialogs/PlotAsymmetryByLogValueDialog.ui
                inc/MantidQtCustomDialogs/LoadDialog.ui
-               inc/MantidQtCustomDialogs/LoadInstrumentDialog.ui              
                inc/MantidQtCustomDialogs/StartLiveDataDialog.ui
-               inc/MantidQtCustomDialogs/SlicingAlgorithmDialog.ui
                inc/MantidQtCustomDialogs/FitDialog.ui
+               inc/MantidQtCustomDialogs/SortTableWorkspaceDialog.ui
 )
 
 include_directories ( inc )
@@ -75,7 +72,19 @@ add_library ( CustomDialogs ${ALL_SRC} ${INC_FILES} ${UI_HDRS} )
 # Set the name of the generated library
 set_target_properties ( CustomDialogs PROPERTIES OUTPUT_NAME MantidQtCustomDialogs )
 
-target_link_libraries ( CustomDialogs MantidQtAPI MantidWidgets )
+if (OSX_VERSION VERSION_GREATER 10.8)
+  set_target_properties ( CustomDialogs PROPERTIES INSTALL_RPATH "@loader_path/../../../Contents/MacOS")
+endif () 
+
+target_link_libraries ( CustomDialogs LINK_PRIVATE 
+            MantidQtAPI
+            MantidWidgets
+            ${CORE_MANTIDLIBS}
+            ${QT_LIBRARIES}
+            ${POCO_LIBRARIES}
+            ${Boost_LIBRARIES}
+            ${OPENGL_LIBRARIES}
+            )
 
 ###########################################################################
 # Installation settings

@@ -15,7 +15,7 @@
    The class inherits from QwtColorMap and implements reading a color color map from a file. 
    There is also a mode which indicates the scale type. 
 
-   Copyright &copy; 2009 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+   Copyright &copy; 2009 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
    
    This file is part of Mantid.
    
@@ -70,6 +70,24 @@ public:
     return m_scale_type;
   }
 
+   /**
+   * Retrieve the map name
+   * @returns the map name
+   */
+  QString getName() const
+  {
+    return m_name;
+  }
+
+  /**
+   * Retrieve the map name
+   * @returns the map name
+   */
+  QString getFilePath() const
+  {
+    return m_path;
+  }
+
   /**
    * Get the number of colors in this map
    */
@@ -105,6 +123,11 @@ private:
   /// Cached NAN value
   double m_nan;
 
+  ///the name of the color map
+  QString m_name;
+
+  ///the path to the map file
+  QString m_path;
 };
 
 

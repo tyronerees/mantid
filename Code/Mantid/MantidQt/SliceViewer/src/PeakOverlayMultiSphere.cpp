@@ -7,7 +7,7 @@
 #include <QMouseEvent>
 
 using namespace Mantid::Kernel;
-using namespace Mantid::API;
+using namespace Mantid::Geometry;
 
 namespace MantidQt
 {
@@ -38,7 +38,7 @@ namespace MantidQt
     {
       m_viewablePeaks = viewablePeaks;
       for(size_t i = 0; i < m_viewablePeaks.size(); ++i)
-      { 
+      {
         if(m_viewablePeaks[i])
         {
           m_physicalPeaks[i]->setSlicePoint(z);

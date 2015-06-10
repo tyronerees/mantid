@@ -26,9 +26,10 @@ set ( SRC_FILES
 	src/SANSBeamFluxCorrection.cpp
 	src/SANSSensitivityCorrection.cpp
 	src/SANSSolidAngleCorrection.cpp
+	src/SendUsage.cpp
 	src/SetupEQSANSReduction.cpp
-	src/SetupILLD33Reduction.cpp
 	src/SetupHFIRReduction.cpp
+	src/SetupILLD33Reduction.cpp
 	src/StepScan.cpp
 	src/WorkflowAlgorithmHelpers.cpp
 )
@@ -65,9 +66,10 @@ set ( INC_FILES
 	inc/MantidWorkflowAlgorithms/SANSBeamFluxCorrection.h
 	inc/MantidWorkflowAlgorithms/SANSSensitivityCorrection.h
 	inc/MantidWorkflowAlgorithms/SANSSolidAngleCorrection.h
+	inc/MantidWorkflowAlgorithms/SendUsage.h
 	inc/MantidWorkflowAlgorithms/SetupEQSANSReduction.h
-	inc/MantidWorkflowAlgorithms/SetupILLD33Reduction.h
 	inc/MantidWorkflowAlgorithms/SetupHFIRReduction.h
+	inc/MantidWorkflowAlgorithms/SetupILLD33Reduction.h
 	inc/MantidWorkflowAlgorithms/StepScan.h
 	inc/MantidWorkflowAlgorithms/WorkflowAlgorithmHelpers.h
 )
@@ -76,6 +78,7 @@ set ( TEST_FILES
 	MuonCalculateAsymmetryTest.h
 	MuonLoadTest.h
 	SANSSolidAngleCorrectionTest.h
+	SendUsageTest.h
 	StepScanTest.h
 )
 
@@ -83,6 +86,12 @@ set ( TEST_PY_FILES
   EQSANSQ2DTest.py 
   SANSBeamFluxCorrectionTest.py 
 )
+
+if (COVERALLS)
+    foreach( loop_var ${SRC_FILES} ${INC_FILES})
+      set_property(GLOBAL APPEND PROPERTY COVERAGE_SRCS "${CMAKE_CURRENT_SOURCE_DIR}/${loop_var}")
+    endforeach(loop_var)
+endif()
 
 if(UNITY_BUILD)
   include(UnityBuild)
@@ -96,12 +105,17 @@ enable_precompiled_headers( inc/MantidWorkflowAlgorithms/PrecompiledHeader.h SRC
 add_library ( WorkflowAlgorithms ${SRC_FILES} ${INC_FILES})
 # Set the name of the generated library
 set_target_properties ( WorkflowAlgorithms PROPERTIES OUTPUT_NAME MantidWorkflowAlgorithms )
+
+if (OSX_VERSION VERSION_GREATER 10.8)
+  set_target_properties ( WorkflowAlgorithms PROPERTIES INSTALL_RPATH "@loader_path/../Contents/MacOS")
+endif ()
+ 
 # Add to the 'Framework' group in VS
 set_property ( TARGET WorkflowAlgorithms PROPERTY FOLDER "MantidFramework" )
 
 include_directories ( inc ../Nexus/inc )
 
-target_link_libraries ( WorkflowAlgorithms ${MANTIDLIBS} Nexus ${GSL_LIBRARIES} )
+target_link_libraries ( WorkflowAlgorithms LINK_PRIVATE ${MANTIDLIBS} Nexus ${GSL_LIBRARIES} )
 
 # Add the unit tests directory
 add_subdirectory ( test )

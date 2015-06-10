@@ -1,8 +1,9 @@
+#pylint: disable=no-init,invalid-name
 '''
 @author Spencer Howells, ISIS
 @date December 05, 2013
 
-Copyright &copy; 2007-8 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+Copyright &copy; 2007-8 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
 
 This file is part of Mantid.
 
@@ -24,11 +25,10 @@ Code Documentation is available at: <http://doxygen.mantidproject.org>
 '''
 
 from mantid.api import IFunction1D, FunctionFactory
-from mantid import logger
 import math, numpy as np
 
 class ChudleyElliot(IFunction1D):
-    
+
     def category(self):
         return "QuasiElastic"
 
@@ -36,7 +36,7 @@ class ChudleyElliot(IFunction1D):
         # Active fitting parameters
         self.declareParameter("Tau", 1.0, 'Residence time')
         self.declareParameter("L", 1.5, 'Jump length')
-       
+
     def function1D(self, xvals):
         tau = self.getParameterValue("Tau")
         length = self.getParameterValue("L")
@@ -45,7 +45,7 @@ class ChudleyElliot(IFunction1D):
         hwhm = (1.0 - np.sin(xvals * length) / (xvals * length)) / tau
 
         return hwhm
-    
+
     def functionDeriv1D(self, xvals, jacobian):
         tau = self.getParameterValue("Tau")
         length = self.getParameterValue("L")
@@ -53,8 +53,8 @@ class ChudleyElliot(IFunction1D):
         for x in xvals:
             s = math.sin(x*length)/(x*length)
             h = (1.0-s)/tau
-            jacobian.set(i,0,-h/tau);
-            jacobian.set(i,1,(math.cos(x*length)-s)/(length*tau));
+            jacobian.set(i,0,-h/tau)
+            jacobian.set(i,1,(math.cos(x*length)-s)/(length*tau))
             i += 1
 
 # Required to have Mantid recognise the new function

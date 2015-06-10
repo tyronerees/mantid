@@ -1,185 +1,89 @@
 #ifndef MANTID_GEOMETRY_POINTGROUP_H_
 #define MANTID_GEOMETRY_POINTGROUP_H_
-    
+
 #include "MantidGeometry/DllConfig.h"
 #include "MantidKernel/V3D.h"
+#include "MantidKernel/Matrix.h"
 #ifndef Q_MOC_RUN
-# include <boost/shared_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 #endif
 #include <vector>
 #include <string>
+#include <set>
 
-namespace Mantid
-{
-namespace Geometry
-{
+#include "MantidGeometry/Crystal/SymmetryOperation.h"
+#include "MantidGeometry/Crystal/Group.h"
 
-  /** A class containing the Point Groups for a crystal.
-   * 
-   * @author Vickie Lynch
-   * @date 2012-02-02
-   */
-  class MANTID_GEOMETRY_DLL PointGroup 
-  {
-  public:
-    PointGroup() {}
-    virtual ~PointGroup() {}
-    /// Name of the point group
-    virtual std::string getName() = 0;
-    /// Return true if the hkls are in same group
-    virtual bool isEquivalent(Kernel::V3D hkl, Kernel::V3D hkl2) = 0;
+namespace Mantid {
+namespace Geometry {
+
+/** A class containing the Point Groups for a crystal.
+ *
+ * @author Vickie Lynch
+ * @date 2012-02-02
+ */
+class MANTID_GEOMETRY_DLL PointGroup : public Group {
+public:
+  enum CrystalSystem {
+    Triclinic,
+    Monoclinic,
+    Orthorhombic,
+    Tetragonal,
+    Hexagonal,
+    Trigonal,
+    Cubic
   };
 
-  //------------------------------------------------------------------------
-  /** -1 (Triclinic) PointGroup */
-  class MANTID_GEOMETRY_DLL PointGroupLaue1 : public PointGroup
-  {
-  public:
-    /// Name of the point group
-    virtual std::string getName();
-    /// Return true if the hkls are equivalent.
-    virtual bool isEquivalent(Kernel::V3D hkl, Kernel::V3D hkl2);
-  };
+  PointGroup(const std::string &symbolHM, const Group &group,
+             const std::string &description = "");
 
-  //------------------------------------------------------------------------
-  /** 1 2/m 1 (Monoclinic, unique axis b) PointGroup */
-  class MANTID_GEOMETRY_DLL PointGroupLaue2 : public PointGroup
-  {
-  public:
-    /// Name of the point group
-    virtual std::string getName();
-    /// Return true if the hkls are equivalent.
-    virtual bool isEquivalent(Kernel::V3D hkl, Kernel::V3D hkl2);
-  };
+  PointGroup(const PointGroup &other);
+  PointGroup &operator=(const PointGroup &other);
 
-  //------------------------------------------------------------------------
-  /** 1 1 2/m (Monoclinic, unique axis c) PointGroup */
-  class MANTID_GEOMETRY_DLL PointGroupLaue3 : public PointGroup
-  {
-  public:
-    /// Name of the point group
-    virtual std::string getName();
-    /// Return true if the hkls are equivalent.
-    virtual bool isEquivalent(Kernel::V3D hkl, Kernel::V3D hkl2);
-  };
+  virtual ~PointGroup() {}
+  /// Name of the point group
+  std::string getName() const { return m_name; }
+  /// Hermann-Mauguin symbol
+  std::string getSymbol() const;
 
-  //------------------------------------------------------------------------
-  /** mmm (Orthorombic) PointGroup */
-  class MANTID_GEOMETRY_DLL PointGroupLaue4 : public PointGroup
-  {
-  public:
-    /// Name of the point group
-    virtual std::string getName();
-    /// Return true if the hkls are equivalent.
-    virtual bool isEquivalent(Kernel::V3D hkl, Kernel::V3D hkl2);
-  };
+  CrystalSystem crystalSystem() const { return m_crystalSystem; }
 
-  //------------------------------------------------------------------------
-  /** 4/m (Tetragonal) PointGroup */
-  class MANTID_GEOMETRY_DLL PointGroupLaue5 : public PointGroup
-  {
-  public:
-    /// Name of the point group
-    virtual std::string getName();
-    /// Return true if the hkls are equivalent.
-    virtual bool isEquivalent(Kernel::V3D hkl, Kernel::V3D hkl2);
-  };
+  /// Return true if the hkls are in same group
+  bool isEquivalent(const Kernel::V3D &hkl, const Kernel::V3D &hkl2) const;
 
-  //------------------------------------------------------------------------
-  /** 4/mmm (Tetragonal) PointGroup */
-  class MANTID_GEOMETRY_DLL PointGroupLaue6 : public PointGroup
-  {
-  public:
-    /// Name of the point group
-    virtual std::string getName();
-    /// Return true if the hkls are equivalent.
-    virtual bool isEquivalent(Kernel::V3D hkl, Kernel::V3D hkl2);
-  };
+  /// Returns a vector with all equivalent hkls
+  std::vector<Kernel::V3D> getEquivalents(const Kernel::V3D &hkl) const;
+  /// Returns the same hkl for all equivalent hkls
+  Kernel::V3D getReflectionFamily(const Kernel::V3D &hkl) const;
 
-  //------------------------------------------------------------------------
-  /** -3 (Trigonal - Hexagonal) PointGroup */
-  class MANTID_GEOMETRY_DLL PointGroupLaue7 : public PointGroup
-  {
-  public:
-    /// Name of the point group
-    virtual std::string getName();
-    /// Return true if the hkls are equivalent.
-    virtual bool isEquivalent(Kernel::V3D hkl, Kernel::V3D hkl2);
-  };
+protected:
+  std::vector<Kernel::V3D> getEquivalentSet(const Kernel::V3D &hkl) const;
 
-  //------------------------------------------------------------------------
-  /** -3m1 (Trigonal - Rhombohedral) PointGroup */
-  class MANTID_GEOMETRY_DLL PointGroupLaue8 : public PointGroup
-  {
-  public:
-    /// Name of the point group
-    virtual std::string getName();
-    /// Return true if the hkls are equivalent.
-    virtual bool isEquivalent(Kernel::V3D hkl, Kernel::V3D hkl2);
-  };
+  CrystalSystem getCrystalSystemFromGroup() const;
 
-  //------------------------------------------------------------------------
-  /** -31m (Trigonal - Rhombohedral) PointGroup */
-  class MANTID_GEOMETRY_DLL PointGroupLaue9 : public PointGroup
-  {
-  public:
-    /// Name of the point group
-    virtual std::string getName();
-    /// Return true if the hkls are equivalent.
-    virtual bool isEquivalent(Kernel::V3D hkl, Kernel::V3D hkl2);
-  };
+  std::string m_symbolHM;
+  std::string m_name;
+  CrystalSystem m_crystalSystem;
+};
 
-  //------------------------------------------------------------------------
-  /**  6/m (Hexagonal) PointGroup */
-  class MANTID_GEOMETRY_DLL PointGroupLaue10 : public PointGroup
-  {
-  public:
-    /// Name of the point group
-    virtual std::string getName();
-    /// Return true if the hkls are equivalent.
-    virtual bool isEquivalent(Kernel::V3D hkl, Kernel::V3D hkl2);
-  };
+/// Shared pointer to a PointGroup
+typedef boost::shared_ptr<PointGroup> PointGroup_sptr;
 
-  //------------------------------------------------------------------------
-  /** 6/mmm (Hexagonal) PointGroup */
-  class MANTID_GEOMETRY_DLL PointGroupLaue11 : public PointGroup
-  {
-  public:
-    /// Name of the point group
-    virtual std::string getName();
-    /// Return true if the hkls are equivalent.
-    virtual bool isEquivalent(Kernel::V3D hkl, Kernel::V3D hkl2);
-  };
+MANTID_GEOMETRY_DLL std::vector<PointGroup_sptr> getAllPointGroups();
 
-  //------------------------------------------------------------------------
-  /** m-3 (Cubic) PointGroup */
-  class MANTID_GEOMETRY_DLL PointGroupLaue12 : public PointGroup
-  {
-  public:
-    /// Name of the point group
-    virtual std::string getName();
-    /// Return true if the hkls are equivalent.
-    virtual bool isEquivalent(Kernel::V3D hkl, Kernel::V3D hkl2);
-  };
+typedef std::multimap<PointGroup::CrystalSystem, PointGroup_sptr>
+PointGroupCrystalSystemMap;
+MANTID_GEOMETRY_DLL PointGroupCrystalSystemMap getPointGroupsByCrystalSystem();
 
-  //------------------------------------------------------------------------
-  /** m-3m (Cubic) PointGroup */
-  class MANTID_GEOMETRY_DLL PointGroupLaue13 : public PointGroup
-  {
-  public:
-    /// Name of the point group
-    virtual std::string getName();
-    /// Return true if the hkls are equivalent.
-    virtual bool isEquivalent(Kernel::V3D hkl, Kernel::V3D hkl2);
-  };
+MANTID_GEOMETRY_DLL
+std::string
+getCrystalSystemAsString(const PointGroup::CrystalSystem &crystalSystem);
 
-
-  /// Shared pointer to a PointGroup
-  typedef boost::shared_ptr<PointGroup> PointGroup_sptr;
-
-  MANTID_GEOMETRY_DLL std::vector<PointGroup_sptr> getAllPointGroups();
+MANTID_GEOMETRY_DLL
+PointGroup::CrystalSystem
+getCrystalSystemFromString(const std::string &crystalSystem);
 
 } // namespace Mantid
 } // namespace Geometry
 
-#endif  /* MANTID_GEOMETRY_POINTGROUP_H_ */
+#endif /* MANTID_GEOMETRY_POINTGROUP_H_ */

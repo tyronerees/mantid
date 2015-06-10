@@ -31,6 +31,7 @@
 #include <QCheckBox>
 #include <QtGui>
 
+#include <Poco/AbstractObserver.h>
 #include <Poco/ActiveResult.h>
 
 using namespace MantidQt::API;
@@ -262,6 +263,17 @@ void AlgorithmDialog::storePropertyValue(const QString & name, const QString & v
   m_propertyValueMap.insert(name, value);
 }
 
+//-------------------------------------------------------------------------------------------------
+/**
+ * Adds a property (name,value) pair to the stored map.
+ * @param name :: The name of the property.
+ */
+void AlgorithmDialog::removePropertyValue(const QString& name)
+{
+  if( name.isEmpty() ) return;
+  m_propertyValueMap.remove(name);
+}
+
 
 //-------------------------------------------------------------------------------------------------
 /** Show the validators for all the properties */
@@ -289,7 +301,6 @@ void AlgorithmDialog::showValidators()
       }
     } // widget is tied
   } // for each property
-
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -610,9 +621,9 @@ void AlgorithmDialog::fillAndSetComboBox(const QString & propName, QComboBox* op
   Mantid::Kernel::Property *property = getAlgorithmProperty(propName);
   if( !property ) return;
 
-  std::set<std::string> items = property->allowedValues();
-  std::set<std::string>::const_iterator vend = items.end();
-  for(std::set<std::string>::const_iterator vitr = items.begin(); vitr != vend;
+  std::vector<std::string> items = property->allowedValues();
+  std::vector<std::string>::const_iterator vend = items.end();
+  for(std::vector<std::string>::const_iterator vitr = items.begin(); vitr != vend;
       ++vitr)
   {
     optionsBox->addItem(QString::fromStdString(*vitr));
@@ -761,7 +772,12 @@ void AlgorithmDialog::executeAlgorithmAsync()
 {
   try
   {
+    // Add AlgorithmObservers to the algorithm
+    for(auto it = m_observers.begin(); it != m_observers.end(); ++it)
+      (*it)->observeAll(m_algorithm);
+
     m_algorithm->executeAsync();
+    m_observers.clear();
   }
   catch (Poco::NoThreadAvailableException &)
   {
@@ -1041,4 +1057,16 @@ void AlgorithmDialog::setPreviousValue(QWidget* widget, const QString& propName)
   QMessageBox::warning(this, windowTitle(),
                QString("Cannot set value for ") + widget->metaObject()->className() +
                ". Update AlgorithmDialog::setValue() to cope with this widget.");
+}
+
+/**
+ * Observer the execution of the algorithm using an AlgorithmObserver.
+ *
+ * All notifications will be observed.
+ *
+ * @param observer Pointer to the AlgorithmObserver to add.
+ */
+void AlgorithmDialog::addAlgorithmObserver(Mantid::API::AlgorithmObserver *observer)
+{
+  m_observers.push_back(observer);
 }

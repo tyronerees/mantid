@@ -129,6 +129,7 @@ set ( QTIPLOT_SRCS src/ApplicationWindow.cpp
                    src/TiledWindow.cpp
                    src/TitlePicker.cpp
                    src/TranslateCurveTool.cpp
+                   src/TSVSerialiser.cpp
                    src/UserFunction.cpp
                    src/VectorCurve.cpp
                    src/origin/OPJFile.cpp
@@ -181,13 +182,13 @@ set ( MANTID_SRCS  src/Mantid/AlgorithmMonitor.cpp
                    src/Mantid/MantidMDCurveDialog.cpp
                    src/Mantid/MantidMatrixDialog.cpp
                    src/Mantid/MantidSampleLogDialog.cpp
+                   src/Mantid/MantidSampleMaterialDialog.cpp
                    src/Mantid/MantidUI.cpp
                    src/Mantid/MantidTable.cpp
                    src/Mantid/MantidWSIndexDialog.cpp
                    src/Mantid/PeakPickerTool.cpp
                    src/Mantid/Preferences.cpp
                    src/Mantid/RemoveErrorsDialog.cpp
-                   src/Mantid/SetUpParaview.cpp
                    src/Mantid/UserFitFunctionDialog.cpp
                    src/Mantid/WorkspaceIcons.cpp
                    src/Mantid/InstrumentWidget/BinDialog.cpp
@@ -372,6 +373,7 @@ set ( QTIPLOT_HDRS src/ApplicationWindow.h
                    src/TiledWindow.h
                    src/TitlePicker.h
                    src/TranslateCurveTool.h
+                   src/TSVSerialiser.h
                    src/UserFunction.h
                    src/VectorCurve.h
                    src/analysis/fft2D.h
@@ -417,13 +419,13 @@ set ( MANTID_HDRS  src/Mantid/AlgorithmMonitor.h
                    src/Mantid/MantidMatrixFunction.h
                    src/Mantid/MantidAlgorithmMetatype.h
                    src/Mantid/MantidSampleLogDialog.h
+                   src/Mantid/MantidSampleMaterialDialog.h
                    src/Mantid/MantidUI.h
                    src/Mantid/MantidWSIndexDialog.h
                    src/Mantid/MantidTable.h
                    src/Mantid/PeakPickerTool.h
                    src/Mantid/Preferences.h
                    src/Mantid/RemoveErrorsDialog.h
-                   src/Mantid/SetUpParaview.h
                    src/Mantid/UserFitFunctionDialog.h
                    src/Mantid/WorkspaceIcons.h
                    src/Mantid/InstrumentWidget/BinDialog.h
@@ -471,6 +473,7 @@ set ( MANTID_HDRS  src/Mantid/AlgorithmMonitor.h
                    src/Mantid/InstrumentWidget/Viewport.h
                    src/Mantid/InstrumentWidget/DetXMLFile.h
                    src/Mantid/InstrumentWidget/UCorrectionDialog.h
+                   src/Mantid/IProjectSerialisable.h
 )
 
 ###########################################################################
@@ -543,7 +546,7 @@ add_custom_command ( OUTPUT ${SIP_SRC}
 )
 
 # Needed for sip.h header that can end up in a different place to to the main Python include directory
-include_directories ( ${SIP_INCLUDE_DIR} )
+include_directories ( SYSTEM ${SIP_INCLUDE_DIR} )
 # Needed for sip generated files to find includes in src
 include_directories ( ${CMAKE_CURRENT_SOURCE_DIR} )
 
@@ -689,12 +692,12 @@ set ( MANTID_MOC_FILES src/Mantid/AlgorithmMonitor.h
                        src/Mantid/MantidMatrix.h
                        src/Mantid/MantidMatrixFunction.h
                        src/Mantid/MantidSampleLogDialog.h
+                       src/Mantid/MantidSampleMaterialDialog.h
                        src/Mantid/MantidUI.h
                        src/Mantid/MantidWSIndexDialog.h
                        src/Mantid/MantidTable.h
                        src/Mantid/PeakPickerTool.h
                        src/Mantid/RemoveErrorsDialog.h
-                       src/Mantid/SetUpParaview.h
                        src/Mantid/UserFitFunctionDialog.h
                        src/Mantid/InstrumentWidget/XIntegrationControl.h
                        src/Mantid/InstrumentWidget/BinDialog.h
@@ -725,11 +728,11 @@ set ( UI_FILES src/SendToProgramDialog.ui
                src/Mantid/UserFitFunctionDialog.ui
                src/Mantid/MantidAbout.ui
                src/Mantid/RemoveErrorsDialog.ui
-               src/Mantid/SetUpParaview.ui
                src/Mantid/ManageCustomMenus.ui
                src/Mantid/ManageInterfaceCategories.ui
                src/Mantid/MantidMDCurveDialog.ui
-			   src/Mantid/InstrumentWidget/UCorrectionDialog.ui
+               src/Mantid/MantidSampleMaterialDialog.ui
+      			   src/Mantid/InstrumentWidget/UCorrectionDialog.ui
 )
 
 qt4_wrap_cpp ( MOCCED_FILES ${QTIPLOT_MOC_FILES} ${MANTID_MOC_FILES} )
@@ -757,8 +760,10 @@ include_directories ( ${CMAKE_CURRENT_BINARY_DIR} )
 ###########################################################################
 
 qt4_add_resources ( RES_FILES ${PROJECT_SOURCE_DIR}/Images/images.qrc )
+qt4_add_resources ( RES_FILES ${PROJECT_SOURCE_DIR}/Images//fonts/fonts.qrc )
 qt4_add_resources ( RES_FILES ${CMAKE_CURRENT_SOURCE_DIR}/icons/icons.qrc )
 qt4_add_resources ( RES_FILES ${PROJECT_SOURCE_DIR}/MantidQt/SliceViewer/icons/SliceViewerIcons.qrc )
+qt4_add_resources ( RES_FILES ${PROJECT_SOURCE_DIR}/MantidQt/CustomInterfaces/icons/CustomInterfacesIcons.qrc )
 qt4_add_resources ( RES_FILES ${PROJECT_SOURCE_DIR}/Vates/VatesSimpleGui/ViewWidgets/icons/ViewWidgetsIcons.qrc )
 
 ###########################################################################
@@ -818,23 +823,40 @@ if ( APPLE )
 endif ()
 
 ###########################################################################
+# Config reset scripts
+###########################################################################
+
+if ( WIN32 )
+  set ( CONFIG_RESET_SCRIPT mantid_reset_settings.bat )
+else ()
+  set ( CONFIG_RESET_SCRIPT mantid_reset_settings.sh )
+endif ()
+
+copy_files_to_dir ( "${CONFIG_RESET_SCRIPT}"
+                     ${CMAKE_CURRENT_SOURCE_DIR}
+                     ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR}
+                     CONFIG_RESET_SCRIPT_FILE )
+
+###########################################################################
 # Required Python config files
 ###########################################################################
 
 # Top-level python scripts
-set( PY_FILES mantidplotrc.py mantidplot.py )
-copy_python_files_to_dir ( "${PY_FILES}"
+set( PY_FILES mantidplot.py mantidplotrc.py mantid_qt_settings_editor.py)
+copy_files_to_dir ( "${PY_FILES}"
                             ${CMAKE_CURRENT_SOURCE_DIR}
                             ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR}
                             PYTHON_INSTALL_FILES )
-# mantidplot.py package
+# mantidplot package
 set( MTDPLOTPY_FILES
   __init__.py
   proxies.py
+  pyplot.py
+  qtiplot.py
 )
-copy_python_files_to_dir ( "${MTDPLOTPY_FILES}"
-                            ${CMAKE_CURRENT_SOURCE_DIR}/mantidplotpy
-                            ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR}/mantidplotpy
+copy_files_to_dir ( "${MTDPLOTPY_FILES}"
+                            ${CMAKE_CURRENT_SOURCE_DIR}/pymantidplot
+                            ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR}/pymantidplot
                             MTDPLOT_INSTALL_FILES )
 
 # IPython scripts
@@ -842,10 +864,10 @@ set( IPY_FILES
   __init__.py
   mantid_ipython_widget.py
 )
-copy_python_files_to_dir ( "${IPY_FILES}"
-                            ${CMAKE_CURRENT_SOURCE_DIR}/ipython_widget
-                            ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR}/ipython_widget
-                            IPYTHON_INSTALL_FILES )
+copy_files_to_dir ( "${IPY_FILES}"
+                     ${CMAKE_CURRENT_SOURCE_DIR}/ipython_widget
+                     ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_CFG_INTDIR}/ipython_widget
+                     IPYTHON_INSTALL_FILES )
 
 ###########################################################################
 # MantidPlot executable
@@ -854,23 +876,41 @@ copy_python_files_to_dir ( "${IPY_FILES}"
 add_executable ( MantidPlot ${WIN_CONSOLE} MACOSX_BUNDLE ${ALL_SRC} src/main.cpp
 							${INC_FILES} ${QTIPLOT_C_SRC} ${UI_HDRS}
 							${RES_FILES} ${MANTID_RC_FILE}
-							${PYTHON_INSTALL_FILES} ${MTDPLOT_INSTALL_FILES} ${IPYTHON_INSTALL_FILES}
+							${PYTHON_INSTALL_FILES} ${MTDPLOT_INSTALL_FILES} ${CONFIG_RESET_SCRIPT_FILE} ${IPYTHON_INSTALL_FILES}
 )
 
 # Library dependencies
-target_link_libraries ( MantidPlot
-                        ${CORE_MANTIDLIBS}
-                        MantidQtAPI MantidWidgets MantidQtSliceViewer MantidQtFactory
-                        MantidQtSpectrumViewer
-                        QtPropertyBrowser ${QT_LIBRARIES}
-                        ${QWT_LIBRARIES} ${QWTPLOT3D_LIBRARIES}
-                        ${QSCINTILLA_LIBRARIES}
-                        ${PYTHON_LIBRARIES}
-                        ${ZLIB_LIBRARIES}
+target_link_libraries ( MantidPlot LINK_PRIVATE 
+            ${CORE_MANTIDLIBS}
+            MantidQtAPI
+            MantidWidgets
+            MantidQtSliceViewer
+            MantidQtFactory
+            MantidQtSpectrumViewer
+            QtPropertyBrowser
+            ${Boost_LIBRARIES}
+            ${POCO_LIBRARIES}
+            ${GSL_LIBRARIES}
+            ${MUPARSER_LIBRARIES}
+            ${QT_LIBRARIES}
+            ${QWT_LIBRARIES}
+            ${QWTPLOT3D_LIBRARIES}
+            ${QSCINTILLA_LIBRARIES}
+            ${PYTHON_LIBRARIES}
+            ${ZLIB_LIBRARIES}
+            ${OPENGL_LIBRARIES}
 )
-# Plugin dependencies
-add_dependencies( MantidPlot mantidqtpython )
 
+if (WITH_ASAN)
+  target_link_libraries ( MantidPlot LINK_PRIVATE -lasan )
+endif ()
+
+# Plugin dependencies
+add_dependencies( MantidPlot mantidqtpython CompilePyUI )
+
+if (OSX_VERSION VERSION_GREATER 10.8)
+  set_target_properties(MantidPlot PROPERTIES INSTALL_RPATH "@executable_path/")
+endif ()
 
 ###########################################################################
 # Custom Info.plist file for OS X
@@ -918,14 +958,16 @@ endif( WIN32 )
 set ( MANTIDPLOT_TEST_PY_FILES
     MantidPlotAlgorithmDialogTest.py
     MantidPlotInstrumentViewTest.py
-	MantidPlotSliceViewerTest.py
-	MantidPlot1DPlotTest.py
-  MantidPlot2DPlotTest.py
-  MantidPlotProxiesTest.py
-	MantidPlotPythonImportTest.py
-	MantidPlotFoldersTest.py 
-	MantidPlotMdiSubWindowTest.py 
-	MantidPlotTiledWindowTest.py 
+    MantidPlotSliceViewerTest.py
+    MantidPlot1DPlotTest.py
+    MantidPlot2DPlotTest.py
+    MantidPlotProxiesTest.py
+    MantidPlotPythonImportTest.py
+    MantidPlotFoldersTest.py
+    MantidPlotMdiSubWindowTest.py
+    MantidPlotTiledWindowTest.py
+    MantidPlotInputArgsCheck.py
+    MantidPlotPyplotGeneralTest.py
 )
 
 if ( 0 )
@@ -967,9 +1009,12 @@ else ()
 	# Make a ctest target for each file
 	foreach  ( PYFILE ${MANTIDPLOT_TEST_PY_FILES} )
 	 	# Add the test. Name of test = name of the file
-		ADD_TEST( ${PYFILE} ${MANTIDPLOT_PATH} -xq ${CMAKE_CURRENT_SOURCE_DIR}/test/${PYFILE} )
+		add_test ( ${PYFILE} ${MANTIDPLOT_PATH} -xq ${CMAKE_CURRENT_SOURCE_DIR}/test/${PYFILE} )
 		# Set the previously-built environment
-		set_tests_properties( ${PYFILE} PROPERTIES ENVIRONMENT "${TEST_ENVIRONMENT}")
+		set_tests_properties ( ${PYFILE} PROPERTIES
+                           RUN_SERIAL 1
+                           ENVIRONMENT "${TEST_ENVIRONMENT}"
+                           TIMEOUT ${TESTING_TIMEOUT} )
 	endforeach ()
 
     add_dependencies( GUITests MantidPlot )
@@ -986,17 +1031,37 @@ install ( TARGETS MantidPlot RUNTIME DESTINATION ${BIN_DIR}
 # Ship required files. Explicit so some can be disabled easily if necessary
 install ( FILES ${PY_FILES} DESTINATION ${BIN_DIR} )
 foreach(PY_FILE ${MTDPLOTPY_FILES} )
-  install ( FILES mantidplotpy/${PY_FILE} DESTINATION ${BIN_DIR}/mantidplotpy )
+  install ( FILES pymantidplot/${PY_FILE} DESTINATION ${BIN_DIR}/pymantidplot )
 endforeach()
 foreach(PY_FILE ${IPY_FILES} )
   install ( FILES ipython_widget/${PY_FILE} DESTINATION ${BIN_DIR}/ipython_widget )
 endforeach()
+install ( FILES ${CONFIG_RESET_SCRIPT} DESTINATION ${BIN_DIR} )
 
+# file make_package.rb contains hard-coded path to the libraries
+# this causes fail of the installation with macports
+# therefore MACPORTS option is introduced
 if ( APPLE )
-  configure_file ( ${CMAKE_CURRENT_SOURCE_DIR}/FixBundle.cmake.in
+  if (OSX_VERSION VERSION_LESS 10.9)
+    configure_file ( ${CMAKE_CURRENT_SOURCE_DIR}/FixBundle.cmake.in
                    ${CMAKE_CURRENT_BINARY_DIR}/FixBundle.cmake
-                   @ONLY
-  )
+                   @ONLY )
 
-  install ( SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/FixBundle.cmake )
+    install ( SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/FixBundle.cmake )
+  elseif (MACPORTS)
+        install ( FILES  package_python_macports.py DESTINATION MantidPlot.app/ )
+        configure_file ( ${CMAKE_CURRENT_SOURCE_DIR}/FixMacportsBundle.cmake.in
+                   ${CMAKE_CURRENT_BINARY_DIR}/FixMacportsBundle.cmake
+                   @ONLY )
+        install ( SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/FixMacportsBundle.cmake )
+  else ()
+    configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/make_package.rb.in
+                   ${CMAKE_CURRENT_BINARY_DIR}/make_package.rb
+                   @ONLY )
+    install ( FILES  ${CMAKE_CURRENT_BINARY_DIR}/make_package.rb DESTINATION MantidPlot.app/ )
+    configure_file ( ${CMAKE_CURRENT_SOURCE_DIR}/FixMavericksBundle.cmake.in
+                   ${CMAKE_CURRENT_BINARY_DIR}/FixMavericksBundle.cmake
+                   @ONLY )
+    install ( SCRIPT ${CMAKE_CURRENT_BINARY_DIR}/FixMavericksBundle.cmake )
+  endif ()
 endif ()

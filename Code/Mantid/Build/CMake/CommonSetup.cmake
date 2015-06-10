@@ -36,8 +36,12 @@ if ( stdint )
   add_definitions ( -DHAVE_STDINT_H )
 endif ( stdint )
 
+# Configure a variable to hold the required test timeout value for all tests
+set ( TESTING_TIMEOUT 300 CACHE INTEGER
+      "Timeout in seconds for each test (default 300=5minutes)")
+
 ###########################################################################
-# Look for dependencies - bail out if any not found
+# Look for dependencies
 ###########################################################################
 
 set ( Boost_NO_BOOST_CMAKE TRUE )
@@ -47,13 +51,16 @@ add_definitions ( -DBOOST_ALL_DYN_LINK )
 # Need this defined globally for our log time values
 add_definitions ( -DBOOST_DATE_TIME_POSIX_TIME_STD_CONFIG )
 
-find_package ( Poco REQUIRED )
+find_package ( Poco 1.4.2 REQUIRED )
 include_directories( SYSTEM ${POCO_INCLUDE_DIRS} )
 
-find_package ( Nexus 4.3.0 REQUIRED )
+find_package ( Nexus 4.3.1 REQUIRED )
 include_directories ( SYSTEM ${NEXUS_INCLUDE_DIR} )
 
 find_package ( MuParser REQUIRED )
+
+find_package ( JsonCPP REQUIRED )
+include_directories ( SYSTEM ${JSONCPP_INCLUDE_DIR} )
 
 find_package ( Doxygen ) # optional
 
@@ -64,6 +71,14 @@ set ( MAIN_CMAKE_INCLUDE_PATH ${CMAKE_INCLUDE_PATH} )
 set ( CMAKE_INCLUDE_PATH ${CMAKE_INCLUDE_PATH}/zlib123 )
 find_package ( ZLIB REQUIRED )
 set ( CMAKE_INCLUDE_PATH ${MAIN_CMAKE_INCLUDE_PATH} )
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows" OR (APPLE AND OSX_VERSION VERSION_LESS 10.9))
+  set (HDF5_DIR "${CMAKE_MODULE_PATH}")
+  find_package ( HDF5 COMPONENTS HL REQUIRED
+    CONFIGS hdf5-config.cmake )
+else()
+  find_package ( HDF5 COMPONENTS HL REQUIRED )
+endif()
 
 find_package ( PythonInterp )
 
@@ -235,12 +250,22 @@ endif ()
 ###########################################################################
 if ( CMAKE_COMPILER_IS_GNUCXX )
   include ( GNUSetup )
+elseif ( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" )
+  # Remove once clang warnings have been fixed. 
+  if ( NOT APPLE)
+    include ( GNUSetup )
+  endif ()
 endif ()
 
 ###########################################################################
 # Setup cppcheck
 ###########################################################################
 include ( CppCheckSetup )
+
+###########################################################################
+# Setup pylint
+###########################################################################
+include ( PylintSetup )
 
 ###########################################################################
 # Set up the unit tests target
@@ -283,6 +308,13 @@ if ( SQUISH_FOUND )
   message ( STATUS "Found Squish for GUI testing" )
 else()
   message ( STATUS "Could not find Squish - GUI testing not available. Try specifying your SQUISH_INSTALL_DIR cmake variable." )
+endif()
+
+###########################################################################
+# External Data for testing
+###########################################################################
+if ( CXXTEST_FOUND OR PYUNITTEST_FOUND )
+  include( SetupDataTargets )
 endif()
 
 ###########################################################################

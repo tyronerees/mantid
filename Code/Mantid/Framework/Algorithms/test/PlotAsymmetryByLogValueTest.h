@@ -29,7 +29,7 @@ public:
   static void destroySuite( PlotAsymmetryByLogValueTest *suite ) { delete suite; }
 
   PlotAsymmetryByLogValueTest()
-    :firstRun("MUSR00015189.nxs"),lastRun("MUSR00015193.nxs")
+    :firstRun("MUSR00015189.nxs"),lastRun("MUSR00015190.nxs")
   {
   }
 
@@ -52,14 +52,11 @@ public:
       );
 
     TS_ASSERT(outWS);
-    TS_ASSERT_EQUALS(outWS->blocksize(),5);
+    TS_ASSERT_EQUALS(outWS->blocksize(),2);
     TS_ASSERT_EQUALS(outWS->getNumberHistograms(),4);
     const Mantid::MantidVec& Y = outWS->readY(0);
     TS_ASSERT_DELTA(Y[0],0.0128845,0.001);
     TS_ASSERT_DELTA(Y[1],0.0224898,0.00001);
-    TS_ASSERT_DELTA(Y[2],0.0387179,0.00001);
-    TS_ASSERT_DELTA(Y[3],0.0545464,0.00001);
-    TS_ASSERT_DELTA(Y[4],0.0906989,0.00001);
 
     const TextAxis* axis = dynamic_cast<const TextAxis*>(outWS->getAxis(1));
     TS_ASSERT(axis);
@@ -94,14 +91,11 @@ public:
       );
 
     TS_ASSERT(outWS);
-    TS_ASSERT_EQUALS(outWS->blocksize(),5);
+    TS_ASSERT_EQUALS(outWS->blocksize(),2);
     TS_ASSERT_EQUALS(outWS->getNumberHistograms(),4);
     const Mantid::MantidVec& Y = outWS->readY(0);
     TS_ASSERT_DELTA(Y[0],-0.01236,0.001);
     TS_ASSERT_DELTA(Y[1],0.019186,0.00001);
-    TS_ASSERT_DELTA(Y[2],0.020093,0.00001);
-    TS_ASSERT_DELTA(Y[3],0.037658,0.00001);
-    TS_ASSERT_DELTA(Y[4],0.085060,0.00001);
 
     AnalysisDataService::Instance().clear();
   }
@@ -213,16 +207,13 @@ public:
       AnalysisDataService::Instance().retrieve(ws));
 
     TS_ASSERT(outWs);
-    TS_ASSERT_EQUALS(outWs->blocksize(), 5);
+    TS_ASSERT_EQUALS(outWs->blocksize(), 2);
     TS_ASSERT_EQUALS(outWs->getNumberHistograms(),1);
 
     const Mantid::MantidVec& Y = outWs->readY(0);
 
     TS_ASSERT_DELTA(Y[0], 0.15108, 0.00001);
     TS_ASSERT_DELTA(Y[1], 0.14389, 0.00001);
-    TS_ASSERT_DELTA(Y[2], 0.12929, 0.00001);
-    TS_ASSERT_DELTA(Y[3], 0.10982, 0.00001);
-    TS_ASSERT_DELTA(Y[4], 0.07581, 0.00001);
 
     AnalysisDataService::Instance().remove(ws);
     AnalysisDataService::Instance().remove(deadTimeWs);
@@ -252,18 +243,69 @@ public:
       AnalysisDataService::Instance().retrieve(ws));
 
     TS_ASSERT(outWs);
-    TS_ASSERT_EQUALS(outWs->blocksize(), 5);
+    TS_ASSERT_EQUALS(outWs->blocksize(), 2);
     TS_ASSERT_EQUALS(outWs->getNumberHistograms(),1);
 
     const Mantid::MantidVec& Y = outWs->readY(0);
 
     TS_ASSERT_DELTA(Y[0], 0.150616, 0.00001);
     TS_ASSERT_DELTA(Y[1], 0.143444, 0.00001);
-    TS_ASSERT_DELTA(Y[2], 0.128855, 0.00001);
-    TS_ASSERT_DELTA(Y[3], 0.109394, 0.00001);
-    TS_ASSERT_DELTA(Y[4], 0.075398, 0.00001);
 
     AnalysisDataService::Instance().remove(ws);
+  }
+
+  void test_LogValueFunction ()
+  {
+    const std::string ws = "Test_LogValueFunction";
+
+    PlotAsymmetryByLogValue alg;
+
+    TS_ASSERT_THROWS_NOTHING(alg.initialize());
+
+    alg.setPropertyValue("FirstRun", firstRun);
+    alg.setPropertyValue("LastRun", lastRun);
+    alg.setPropertyValue("OutputWorkspace", ws);
+    // We use 'beamlog_current' as log value because 
+    // we want to test the 'Mean' function below and this is 
+    // one of the few properties that contains different values over time
+    alg.setPropertyValue("LogValue","beamlog_current");
+    alg.setPropertyValue("Function","Mean");
+    alg.setPropertyValue("DeadTimeCorrType","None");
+
+    TS_ASSERT_THROWS_NOTHING(alg.execute());
+    TS_ASSERT(alg.isExecuted());
+
+    MatrixWorkspace_sptr outWs = boost::dynamic_pointer_cast<MatrixWorkspace>(
+      AnalysisDataService::Instance().retrieve(ws));
+
+    TS_ASSERT(outWs);
+    TS_ASSERT_EQUALS(outWs->blocksize(), 2);
+    TS_ASSERT_EQUALS(outWs->getNumberHistograms(),1);
+
+    // Now we want to test X values (log values) in the output workspace
+    // rather than asymmetry (Y values)
+    const Mantid::MantidVec& X = outWs->readX(0);
+
+    TS_ASSERT_DELTA(X[0], 178.740476, 0.00001);
+    TS_ASSERT_DELTA(X[1], 178.849998, 0.00001);
+
+    AnalysisDataService::Instance().remove(ws);
+  }
+
+  void test_invalidRunNumbers ()
+  {
+    const std::string ws = "Test_LogValueFunction";
+
+    PlotAsymmetryByLogValue alg;
+
+    TS_ASSERT_THROWS_NOTHING(alg.initialize());
+
+    alg.setPropertyValue("FirstRun", lastRun);
+    alg.setPropertyValue("LastRun", firstRun);
+    alg.setPropertyValue("OutputWorkspace", ws);
+
+    TS_ASSERT_THROWS (alg.execute(),std::runtime_error);
+    TS_ASSERT (!alg.isExecuted());
   }
 
 private:

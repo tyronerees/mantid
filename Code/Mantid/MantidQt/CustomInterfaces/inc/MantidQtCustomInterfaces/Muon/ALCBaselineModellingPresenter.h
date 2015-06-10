@@ -16,7 +16,7 @@ namespace CustomInterfaces
 
   /** ALCBaselineModellingPresenter : Presenter for ALC Baseline Modelling step
     
-    Copyright &copy; 2014 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+    Copyright &copy; 2014 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
 
     This file is part of Mantid.
 
@@ -72,9 +72,6 @@ namespace CustomInterfaces
 
     /// Updates function in the view from the model
     void updateFunction();
-
-    /// Removes all section rows / section selectors
-    void clearSections();
 
   private:
     /// Associated view

@@ -8,11 +8,13 @@ set ( SRC_FILES
 	src/CPUTimer.cpp
 	src/CatalogInfo.cpp
 	src/CompositeValidator.cpp
+	src/ComputeResourceInfo.cpp
 	src/ConfigService.cpp
+	src/ChecksumHelper.cpp
 	src/DataItem.cpp
 	src/DateAndTime.cpp
-	src/DateValidator.cpp
 	src/DateTimeValidator.cpp
+	src/DateValidator.cpp
 	src/DeltaEMode.cpp
 	src/DirectoryValidator.cpp
 	src/DiskBuffer.cpp
@@ -32,6 +34,7 @@ set ( SRC_FILES
 	src/IPropertyManager.cpp
 	src/ISaveable.cpp
 	src/InstrumentInfo.cpp
+	src/InternetHelper.cpp
 	src/Interpolation.cpp
 	src/LibraryManager.cpp
 	src/LibraryWrapper.cpp
@@ -65,6 +68,7 @@ set ( SRC_FILES
 	src/PropertyManager.cpp
 	src/PropertyManagerOwner.cpp
 	src/PropertyWithValue.cpp
+	src/ProxyInfo.cpp
 	src/PseudoRandomNumberGenerator.cpp
 	src/Quat.cpp
 	src/ReadLock.cpp
@@ -125,12 +129,14 @@ set ( INC_FILES
 	inc/MantidKernel/Cache.h
 	inc/MantidKernel/CatalogInfo.h
 	inc/MantidKernel/CompositeValidator.h
+	inc/MantidKernel/ComputeResourceInfo.h
 	inc/MantidKernel/ConfigService.h
+	inc/MantidKernel/ChecksumHelper.h
 	inc/MantidKernel/DataItem.h
 	inc/MantidKernel/DataService.h
 	inc/MantidKernel/DateAndTime.h
-	inc/MantidKernel/DateValidator.h
 	inc/MantidKernel/DateTimeValidator.h
+	inc/MantidKernel/DateValidator.h
 	inc/MantidKernel/DeltaEMode.h
 	inc/MantidKernel/DirectoryValidator.h
 	inc/MantidKernel/DiskBuffer.h
@@ -159,6 +165,7 @@ set ( INC_FILES
 	inc/MantidKernel/IValidator.h
 	inc/MantidKernel/Instantiator.h
 	inc/MantidKernel/InstrumentInfo.h
+	inc/MantidKernel/InternetHelper.h
 	inc/MantidKernel/Interpolation.h
 	inc/MantidKernel/LibraryManager.h
 	inc/MantidKernel/LibraryWrapper.h
@@ -185,11 +192,13 @@ set ( INC_FILES
 	inc/MantidKernel/MultiThreaded.h
 	inc/MantidKernel/NDPseudoRandomNumberGenerator.h
 	inc/MantidKernel/NDRandomNumberGenerator.h
+	inc/MantidKernel/NetworkProxy.h
 	inc/MantidKernel/NeutronAtom.h
 	inc/MantidKernel/NexusDescriptor.h
 	inc/MantidKernel/NullValidator.h
 	inc/MantidKernel/ParaViewVersion.h
 	inc/MantidKernel/PhysicalConstants.h
+        inc/MantidKernel/PocoVersion.h
 	inc/MantidKernel/ProgressBase.h
 	inc/MantidKernel/ProgressText.h
 	inc/MantidKernel/Property.h
@@ -197,6 +206,7 @@ set ( INC_FILES
 	inc/MantidKernel/PropertyManager.h
 	inc/MantidKernel/PropertyManagerOwner.h
 	inc/MantidKernel/PropertyWithValue.h
+	inc/MantidKernel/ProxyInfo.h
 	inc/MantidKernel/PseudoRandomNumberGenerator.h
 	inc/MantidKernel/QuasiRandomNumberSequence.h
 	inc/MantidKernel/Quat.h
@@ -207,6 +217,7 @@ set ( INC_FILES
 	inc/MantidKernel/RemoteJobManager.h
 	inc/MantidKernel/SingletonHolder.h
 	inc/MantidKernel/SobolSequence.h
+        inc/MantidKernel/SpecialCoordinateSystem.h
 	inc/MantidKernel/StartsWithValidator.h
 	inc/MantidKernel/Statistics.h
 	inc/MantidKernel/StdoutChannel.h
@@ -255,7 +266,9 @@ set ( TEST_FILES
 	CacheTest.h
 	CatalogInfoTest.h
 	CompositeValidatorTest.h
+	ComputeResourceInfoTest.h
 	ConfigServiceTest.h
+	ChecksumHelperTest.h
 	DataServiceTest.h
 	DateAndTimeTest.h
 	DateTimeValidatorTest.h
@@ -281,6 +294,7 @@ set ( TEST_FILES
 	ISaveableTest.h
 	IValidatorTest.h
 	InstrumentInfoTest.h
+	InternetHelperTest.h
 	InterpolationTest.h
 	ListValidatorTest.h
 	LogFilterTest.h
@@ -310,6 +324,7 @@ set ( TEST_FILES
 	PropertyManagerTest.h
 	PropertyTest.h
 	PropertyWithValueTest.h
+	ProxyInfoTest.h
 	QuatTest.h
 	ReadLockTest.h
 	RebinHistogramTest.h
@@ -317,7 +332,8 @@ set ( TEST_FILES
 	RegexStringsTest.h
 	SLSQPMinimizerTest.h
 	SobolSequenceTest.h
-	StartsWithValidatorTest.h
+	SpecialCoordinateSystemTest.h
+        StartsWithValidatorTest.h
 	StatisticsTest.h
 	StdoutChannelTest.h
 	StringsTest.h
@@ -344,6 +360,22 @@ set ( TEST_FILES
 	WriteLockTest.h
 )
 
+if (COVERALLS)
+    foreach( loop_var ${SRC_FILES} ${INC_FILES})
+      set_property(GLOBAL APPEND PROPERTY COVERAGE_SRCS "${CMAKE_CURRENT_SOURCE_DIR}/${loop_var}")
+    endforeach(loop_var)
+endif()
+
+if ( ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    LIST( APPEND SRC_FILES src/NetworkProxyOSX.cpp )
+    SET( NETWORK_LIBRARIES "-framework SystemConfiguration" "-framework CoreFoundation"  "-framework CoreServices")
+elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    LIST( APPEND SRC_FILES src/NetworkProxyWin.cpp )
+    SET( NETWORK_LIBRARIES Winhttp )
+else()
+    LIST( APPEND SRC_FILES src/NetworkProxyLinux.cpp )
+endif()
+
 if(UNITY_BUILD)
   include(UnityBuild)
   enable_unity_build(Kernel SRC_FILES SRC_UNITY_IGNORE_FILES 10)
@@ -359,12 +391,26 @@ add_library ( Kernel ${SRC_FILES} ${INC_FILES} )
 set_target_properties ( Kernel PROPERTIES OUTPUT_NAME MantidKernel
                                           COMPILE_DEFINITIONS "IN_MANTID_KERNEL;PSAPI_VERSION=1" )
 
+if (OSX_VERSION VERSION_GREATER 10.8)
+  set_target_properties ( Kernel PROPERTIES INSTALL_RPATH "@loader_path/../MacOS")
+endif ()
+
 # Add to the 'Framework' group in VS
 set_property ( TARGET Kernel PROPERTY FOLDER "MantidFramework" )
 
-target_link_libraries ( Kernel ${MANTIDLIBS} ${GSL_LIBRARIES} ${NEXUS_LIBRARIES} )
+# For older gcc versions (<4.5) if we do not put stdc++ first then things crash when an exceptions are
+# thrown in Python.
+if ( GCC_COMPILER_VERSION AND GCC_COMPILER_VERSION VERSION_LESS "4.5" )
+ target_link_libraries ( Kernel LINK_PRIVATE stdc++ )
+endif()
+target_link_libraries ( Kernel LINK_PRIVATE ${NEXUS_LIBRARIES} ${GSL_LIBRARIES} ${MANTIDLIBS} ${NETWORK_LIBRARIES} )
+
+if (WITH_ASAN)
+  target_link_libraries ( Kernel LINK_PRIVATE -lasan )
+endif ()
+
 if ( WIN32 )
-  target_link_libraries ( Kernel Psapi.lib ) # For memory usage queries
+  target_link_libraries ( Kernel LINK_PRIVATE Psapi.lib ) # For memory usage queries
 endif()
 
 # Add the unit tests directory
@@ -383,6 +429,13 @@ if ( NOT NOT_GIT_REPO OR NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/MantidVersio
                    ${CMAKE_CURRENT_SOURCE_DIR}/src/MantidVersion.cpp
   )
 endif ()
+
+###########################################################################
+# This section deals with creating the PocoVersion implementation
+###########################################################################
+configure_file ( ${CMAKE_CURRENT_SOURCE_DIR}/inc/MantidKernel/PocoVersion.h.in
+                 ${CMAKE_CURRENT_SOURCE_DIR}/inc/MantidKernel/PocoVersion.h
+)
 
 ###########################################################################
 # This section deals with creating the ParaViewVersion implementation
@@ -404,11 +457,17 @@ if ( ${CMAKE_PROJECT_NAME} STREQUAL "MantidFramework" )
 endif ()
 
 set ( PLUGINS "." )
-set ( PV_PLUGINS "./pvplugins" )
+if ( MAKE_VATES )
+  set ( PV_PLUGINS "./${PVPLUGINS_DIR}" )
+else ()
+  set ( PV_PLUGINS "" )
+endif ()
 set ( IGNORE_PARAVIEW "0" )
 set ( QTPLUGINS "." )
+set ( UPDATE_INSTRUMENT_DEFINTITIONS "0" )
+set ( ENABLE_USAGE_REPORTS "0" )
 set ( PYTHONPLUGIN_DIRS "${MANTID_ROOT}/Framework/PythonInterface/plugins" )
-set ( DATADIRS ${MANTID_ROOT}/../../Test/AutoTestData;${MANTID_ROOT}/../../Test/AutoTestData/UsageData;${MANTID_ROOT}/instrument )
+set ( DATADIRS ${ExternalData_BINARY_ROOT}/Testing/Data/UnitTest;${ExternalData_BINARY_ROOT}/Testing/Data/DocTest;${MANTID_ROOT}/instrument )
 set ( COLORMAPS_FOLDER ${MANTID_ROOT}/Installers/colormaps/ )
 set ( MANTIDPUBLISHER "http://upload.mantidproject.org/scriptrepository/payload/publish_debug" )
 set ( HTML_ROOT ${DOCS_BUILDDIR}/html )
@@ -483,6 +542,8 @@ endif ()
 
 set ( PLUGINS ${MANTID_ROOT}/plugins )
 set ( PYTHONPLUGIN_DIRS "${PLUGINS}/python" )
+set ( UPDATE_INSTRUMENT_DEFINTITIONS "1" )
+set ( ENABLE_USAGE_REPORTS "1" )
 set ( DATADIRS "" )
 set ( MANTIDPUBLISHER "http://upload.mantidproject.org/scriptrepository/payload/publish" )
 set ( HTML_ROOT ../share/doc/html )

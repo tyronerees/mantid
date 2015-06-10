@@ -3,7 +3,7 @@
 
 #include "MantidAPI/IPeaksWorkspace.h"
 #include "MantidVatesAPI/vtkPeakMarkerFactory.h"
-#include "vtkPolyDataAlgorithm.h"
+#include "MantidVatesAPI/vtkPolyDataAlgorithm_Silent.h"
 #include <string>
 
 /**
@@ -12,7 +12,7 @@
 
     @date 06/10/2011
 
-    Copyright &copy; 2007-11 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+    Copyright &copy; 2007-11 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
 
     This file is part of Mantid.
 
@@ -39,7 +39,7 @@ class VTK_EXPORT vtkPeaksSource : public vtkPolyDataAlgorithm
 {
 public:
   static vtkPeaksSource *New();
-  vtkTypeMacro(vtkPeaksSource,vtkPolyDataAlgorithm);
+  vtkTypeMacro(vtkPeaksSource,vtkPolyDataAlgorithm)
   void PrintSelf(ostream& os, vtkIndent indent);
   
   void SetWsName(std::string wsName);
@@ -52,6 +52,8 @@ public:
   const char* GetWorkspaceName();
   /// Getter for the workspace type
   char* GetWorkspaceTypeName();
+  /// Getter for the instrument associated with the workspace
+  const char* GetInstrument();
 
 protected:
   vtkPeaksSource();
@@ -74,6 +76,9 @@ private:
 
   /// Cached workspace.
   Mantid::API::IPeaksWorkspace_sptr m_PeakWS;
+
+  /// Instrument name.
+  std::string m_instrument;
 
   vtkPeaksSource(const vtkPeaksSource&);
   void operator = (const vtkPeaksSource&);

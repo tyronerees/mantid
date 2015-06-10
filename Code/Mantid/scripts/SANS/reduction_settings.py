@@ -58,7 +58,7 @@ between reduction steps.  The benefits to this new method are as follows:
    of the ReductionStep in the PropertyManager.
 
 4) It gets us slightly nearer to the "modern" way of way of reducing data
-   in Mantid, namely "workflow" algorithms which call child algorithms, 
+   in Mantid, namely "workflow" algorithms which call child algorithms,
    passing settings to each other via PropertyManager objects.
 """
 
@@ -79,7 +79,7 @@ def get_settings_object(settings_prop_man_name=REDUCTION_SETTINGS_OBJ_NAME):
     the ISIS SANS reduction code.  Please make a single call to this function
     and then pass around the returned object to wherever it is needed.
     """
-    class PropertyManagerPicklableWrapper:
+    class PropertyManagerPicklableWrapper(object):
         """
         Pickling has not been enabled for PropertyManager, and this is needed
         in the Reducer so that the "deep copy" stuff does not complain.  This
