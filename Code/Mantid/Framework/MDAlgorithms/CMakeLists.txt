@@ -108,7 +108,6 @@ set ( SRC_FILES
 	src/SliceMD.cpp
 	src/SlicingAlgorithm.cpp
 	src/SmoothMDHisto.cpp
-	src/Stitch1DMD.cpp
 	src/SmoothMD.cpp
 	src/ThresholdMD.cpp
 	src/TransformMD.cpp
@@ -229,7 +228,6 @@ set ( INC_FILES
 	inc/MantidMDAlgorithms/SliceMD.h
 	inc/MantidMDAlgorithms/SlicingAlgorithm.h
 	inc/MantidMDAlgorithms/SmoothMDHisto.h
-	inc/MantidMDAlgorithms/Stitch1DMD.h
 	inc/MantidMDAlgorithms/SmoothMD.h
 	inc/MantidMDAlgorithms/ThresholdMD.h
 	inc/MantidMDAlgorithms/TransformMD.h
@@ -293,7 +291,6 @@ set ( TEST_FILES
 	InvalidParameterParserTest.h
 	InvalidParameterTest.h
 	LessThanMDTest.h
-	LoadILLAsciiTest.h
 	LoadMDTest.h
 	LoadSQWTest.h
 	LogarithmMDTest.h
@@ -334,7 +331,6 @@ set ( TEST_FILES
 	SliceMDTest.h
 	SlicingAlgorithmTest.h
 	SmoothMDHistoTest.h
-	Stitch1DMDTest.h
 	SmoothMDTest.h
 	Strontium122Test.h
 	ThresholdMDTest.h

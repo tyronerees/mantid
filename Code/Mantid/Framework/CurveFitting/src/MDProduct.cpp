@@ -1,4 +1,4 @@
-#include "MantidMDEvents/MDProduct.h"
+#include "MantidCurveFitting/MDProduct.h"
 #include "MantidAPI/IMDIterator.h"
 #include "MantidAPI/FunctionDomainMD.h"
 #include "MantidAPI/FunctionDomain1D.h"
@@ -8,7 +8,7 @@
 
 namespace Mantid
 {
-namespace MDEvents
+namespace CurveFitting
 {
 
 using namespace API;
@@ -141,5 +141,5 @@ void MDProduct::calcMDIndex(size_t linearIndex, std::vector<size_t>& mdIndex) co
   }
 }
 
-} // namespace MDEvents
+} // namespace CurveFitting
 } // namespace Mantid

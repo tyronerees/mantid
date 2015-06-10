@@ -1,5 +1,5 @@
-#ifndef MANTID_MDEVENTS_MDPRODUCT_H_
-#define MANTID_MDEVENTS_MDPRODUCT_H_
+#ifndef MANTID_CURVEFITTING_MDPRODUCT_H_
+#define MANTID_CURVEFITTING_MDPRODUCT_H_
 
 #include "MantidKernel/System.h"
 #include "MantidAPI/CompositeFunction.h"
@@ -7,7 +7,7 @@
 
 namespace Mantid
 {
-namespace MDEvents
+namespace CurveFitting
 {
 
   /** MDProduct : TODO: DESCRIPTION
@@ -52,7 +52,7 @@ namespace MDEvents
   };
 
 
-} // namespace MDEvents
+} // namespace CurveFitting
 } // namespace Mantid
 
-#endif  /* MANTID_MDEVENTS_MDPRODUCT_H_ */
+#endif  /* MANTID_CURVEFITTING_MDPRODUCT_H_ */

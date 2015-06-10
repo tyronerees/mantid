@@ -66,6 +66,7 @@ set ( SRC_FILES
 	src/LogNormal.cpp
 	src/Lorentzian.cpp
 	src/Lorentzian1D.cpp
+	src/MDProduct.cpp
 	src/MSVesuvioHelpers.cpp
 	src/MultiDomainCreator.cpp
 	src/MuonFInteraction.cpp
@@ -186,6 +187,7 @@ set ( INC_FILES
 	inc/MantidCurveFitting/LogNormal.h
 	inc/MantidCurveFitting/Lorentzian.h
 	inc/MantidCurveFitting/Lorentzian1D.h
+	inc/MantidCurveFitting/MDProduct.h
 	inc/MantidCurveFitting/MSVesuvioHelpers.h
 	inc/MantidCurveFitting/MultiDomainCreator.h
 	inc/MantidCurveFitting/MuonFInteraction.h
