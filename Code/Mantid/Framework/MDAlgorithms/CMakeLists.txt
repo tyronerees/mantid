@@ -19,7 +19,7 @@ set ( SRC_FILES
 	src/ConvToMDHistoWS.cpp
 	src/ConvToMDSelector.cpp
 	src/ConvertCWPDMDToSpectra.cpp
-	src/IntegrateNormalizedMDHistoWorkspace.cpp
+	src/ConvertCWSDExpToMomentum.cpp
 	src/ConvertMDHistoToMatrixWorkspace.cpp
 	src/ConvertSpiceDataToRealSpace.cpp
 	src/ConvertToDetectorFaceMD.cpp
@@ -50,6 +50,7 @@ set ( SRC_FILES
 	src/IntegrateEllipsoids.cpp
 	src/IntegrateFlux.cpp
 	src/IntegrateMDHistoWorkspace.cpp
+	src/IntegrateNormalizedMDHistoWorkspace.cpp
 	src/IntegratePeaksMD.cpp
 	src/IntegratePeaksMD2.cpp
 	src/InvalidParameter.cpp
@@ -137,7 +138,7 @@ set ( INC_FILES
 	inc/MantidMDAlgorithms/CompareMDWorkspaces.h
 	inc/MantidMDAlgorithms/ConvToMDBase.h
 	inc/MantidMDAlgorithms/ConvertCWPDMDToSpectra.h
-	inc/MantidMDAlgorithms/IntegrateNormalizedMDHistoWorkspace.h
+	inc/MantidMDAlgorithms/ConvertCWSDExpToMomentum.h
 	inc/MantidMDAlgorithms/ConvertMDHistoToMatrixWorkspace.h
 	inc/MantidMDAlgorithms/ConvertSpiceDataToRealSpace.h
 	inc/MantidMDAlgorithms/ConvertToDetectorFaceMD.h
@@ -170,6 +171,7 @@ set ( INC_FILES
 	inc/MantidMDAlgorithms/IntegrateEllipsoids.h
 	inc/MantidMDAlgorithms/IntegrateFlux.h
 	inc/MantidMDAlgorithms/IntegrateMDHistoWorkspace.h
+	inc/MantidMDAlgorithms/IntegrateNormalizedMDHistoWorkspace.h
 	inc/MantidMDAlgorithms/IntegratePeaksMD.h
 	inc/MantidMDAlgorithms/IntegratePeaksMD2.h
 	inc/MantidMDAlgorithms/InvalidParameter.h
@@ -254,8 +256,8 @@ set ( TEST_FILES
 	CloneMDWorkspaceTest.h
 	CompareMDWorkspacesTest.h
 	ConvertCWPDMDToSpectraTest.h
+	ConvertCWSDExpToMomentumTest.h
 	ConvertEventsToMDTest.h
-	IntegrateNormalizedMDHistoWorkspaceTest.h
 	ConvertMDHistoToMatrixWorkspaceTest.h
 	ConvertSpiceDataToRealSpaceTest.h
 	ConvertToDetectorFaceMDTest.h
@@ -287,6 +289,7 @@ set ( TEST_FILES
 	IntegrateEllipsoidsTest.h
 	IntegrateFluxTest.h
 	IntegrateMDHistoWorkspaceTest.h
+	IntegrateNormalizedMDHistoWorkspaceTest.h
 	IntegratePeaksMD2Test.h
 	IntegratePeaksMDTest.h
 	InvalidParameterParserTest.h
@@ -324,8 +327,8 @@ set ( TEST_FILES
 	ReflectometryTransformQxQzTest.h
 	ResolutionConvolvedCrossSectionTest.h
 	SaveIsawQvectorTest.h
-	SaveMDTest.h
 	SaveMD2Test.h
+	SaveMDTest.h
 	SaveZODSTest.h
 	SetMDUsingMaskTest.h
 	SimulateResolutionConvolvedModelTest.h
