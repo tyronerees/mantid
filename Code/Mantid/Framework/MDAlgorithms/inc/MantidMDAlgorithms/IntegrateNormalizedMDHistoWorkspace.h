@@ -1,14 +1,15 @@
-#ifndef MANTID_MDALGORITHMS_ConvertMDHistoToMDEventWorkspace_H_
-#define MANTID_MDALGORITHMS_ConvertMDHistoToMDEventWorkspace_H_
+#ifndef MANTID_MDALGORITHMS_IntegrateNormalizedMDHistoWorkspace_H_
+#define MANTID_MDALGORITHMS_IntegrateNormalizedMDHistoWorkspace_H_
 
 #include "MantidAPI/Algorithm.h"
 #include "MantidDataObjects/MDEventWorkspace.h"
+#include "MantidDataObjects/PeaksWorkspace.h"
 #include <deque>
 
 namespace Mantid {
 namespace MDAlgorithms {
 
-/** ConvertMDHistoToMDEventWorkspace : Converts MDHistoWorkspace
+/** IntegrateNormalizedMDHistoWorkspace : Converts MDHistoWorkspace
  * to one containing dimensionality and data for
   an MDEventWorkspace. Writes mdleanevents as output
   data type.
@@ -36,10 +37,10 @@ namespace MDAlgorithms {
   File change history is stored at: <https://github.com/mantidproject/mantid>
   Code Documentation is available at: <http://doxygen.mantidproject.org>
 */
-class DLLExport ConvertMDHistoToMDEventWorkspace : public API::Algorithm {
+class DLLExport IntegrateNormalizedMDHistoWorkspace : public API::Algorithm {
 public:
-  ConvertMDHistoToMDEventWorkspace();
-  virtual ~ConvertMDHistoToMDEventWorkspace();
+  IntegrateNormalizedMDHistoWorkspace();
+  virtual ~IntegrateNormalizedMDHistoWorkspace();
 
   virtual const std::string name() const;
   /// Summary of algorithms purpose
@@ -64,9 +65,11 @@ private:
 
   void init();
   void exec();
+  API::IMDEventWorkspace_sptr convertToMDEvents( API::IMDHistoWorkspace_sptr inWS);
+  DataObjects::PeaksWorkspace_sptr integrate(API::IMDEventWorkspace_sptr inWS, DataObjects::PeaksWorkspace_sptr peaks, double radius);
 };
 
 } // namespace MDAlgorithms
 } // namespace Mantid
 
-#endif /* MANTID_MDALGORITHMS_ConvertMDHistoToMDEventWorkspace_H_ */
+#endif /* MANTID_MDALGORITHMS_IntegrateNormalizedMDHistoWorkspace_H_ */
