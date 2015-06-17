@@ -22,23 +22,10 @@
     </type>
     
     <type name="chopperSlit" />
-    
-    <type name="detector">
-        <component type="element" idlist="detector-elements-idlist">
-            <locations r="2.0000" t="75.0" t-end="103.0" p="0" n-elements="400" name="element" />
-        </component>
-    </type>
-    
-    <type name="element" is="Detector" />
-    
-    <idlist idname="detector-elements-idlist">
-        <id start="0" end="399" />
-    </idlist>
-    
     <type name="sample" is="SamplePos" />
     
     <component type="source" name="source">
-        <location z="-12.0000" />
+        <location z="-11.8000" />
         <parameter name="PoldiSpectrum:WavelengthDistribution" type="fitting">
             <!--
                 This is the POLDI neutron wavelength distribution. The intensities
@@ -250,7 +237,7 @@
     </component>
 
     <component type="chopper" name="chopper">
-        <location />
+        <location z="-11.8"/>
         <parameter name="z">
             <value val="-11.8000" />
         </parameter>
@@ -258,11 +245,44 @@
             <logfile id="chopperspeed" extract-single-value-as="first_value" />
         </parameter>
     </component>
-    
+
     <component type="sample" name="sample">
         <location x="0.0" y="0.0" z="0.0" />
     </component>
     
+    <type name="detector">
+        <component type="element" idlist="detector-elements-idlist">
+            <locations r="3.0000" t="-9.52542334404993584577" t-end="9.52542334404993584577" p="0" n-elements="400" name="element" />
+        </component>
+    </type>
+
+    <type name="element" is="Detector">
+        <cylinder id="he3">
+            <centre-of-bottom-base x="0.0" y="-0.1" z="0.0" />
+            <axis x="0.0" y="1.0" z="0.0" />
+            <radius val="0.00125" />
+            <height val="0.2" />
+        </cylinder>
+    </type>
+
+    <idlist idname="detector-elements-idlist">
+        <id start="0" end="399" />
+    </idlist>
+
+    <component type="detector" name="detector_1">
+        <location />
+        <parameter name="radius">
+            <value val="3.0000" />
+        </parameter>
+        <parameter name="element_separation">
+            <value val="0.0025" />
+        </parameter>
+        <parameter name="efficiency">
+            <value val="0.88" />
+        </parameter>
+    </component>
+
+    <!-- This is required for compatibility with older versions of Mantid (3.2 - 3.4) -->
     <component type="detector" name="detector">
         <location />
         <parameter name="radius">

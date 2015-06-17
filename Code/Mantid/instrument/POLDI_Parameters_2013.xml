@@ -9,7 +9,20 @@
             <value val="-0.60" />
         </parameter>
     </component-link>
-    
+
+    <component-link name="detector_1">
+        <parameter name="roty">
+            <value val="72.19802995789072153203" />
+        </parameter>
+        <parameter name="z">
+            <value val="-0.93147" />
+        </parameter>
+        <parameter name="x">
+            <value val="-0.860" />
+        </parameter>
+    </component-link>
+
+    <!-- This is required for compatibility with older versions of Mantid (3.2 - 3.4) -->
     <component-link name="detector">
         <parameter name="two_theta" type="number">
             <value val="90.41" />
@@ -21,8 +34,8 @@
             <value val="-0.860" />
         </parameter>
     </component-link>
-    
-    <!-- dead wires !-->    
+
+    <!-- dead wires !-->
     <component-link name="detector/element0">
         <parameter name="masked" type="bool">
             <value val="true" />
@@ -90,6 +103,79 @@
     </component-link>
 
     <component-link name="detector/element399">
+        <parameter name="masked" type="bool">
+            <value val="true" />
+        </parameter>
+    </component-link>
+
+    <!-- dead wires !-->
+    <component-link name="detector_1/element0">
+        <parameter name="masked" type="bool">
+            <value val="true" />
+        </parameter>
+    </component-link>
+
+    <component-link name="detector_1/element1">
+        <parameter name="masked" type="bool">
+            <value val="true" />
+        </parameter>
+    </component-link>
+
+    <component-link name="detector_1/element2">
+        <parameter name="masked" type="bool">
+            <value val="true" />
+        </parameter>
+    </component-link>
+
+    <component-link name="detector_1/element3">
+        <parameter name="masked" type="bool">
+            <value val="true" />
+        </parameter>
+    </component-link>
+
+    <component-link name="detector_1/element4">
+        <parameter name="masked" type="bool">
+            <value val="true" />
+        </parameter>
+    </component-link>
+
+    <component-link name="detector_1/element5">
+        <parameter name="masked" type="bool">
+            <value val="true" />
+        </parameter>
+    </component-link>
+
+    <component-link name="detector_1/element394">
+        <parameter name="masked" type="bool">
+            <value val="true" />
+        </parameter>
+    </component-link>
+
+    <component-link name="detector_1/element395">
+        <parameter name="masked" type="bool">
+            <value val="true" />
+        </parameter>
+    </component-link>
+
+    <component-link name="detector_1/element396">
+        <parameter name="masked" type="bool">
+            <value val="true" />
+        </parameter>
+    </component-link>
+
+    <component-link name="detector_1/element397">
+        <parameter name="masked" type="bool">
+            <value val="true" />
+        </parameter>
+    </component-link>
+
+    <component-link name="detector_1/element398">
+        <parameter name="masked" type="bool">
+            <value val="true" />
+        </parameter>
+    </component-link>
+
+    <component-link name="detector_1/element399">
         <parameter name="masked" type="bool">
             <value val="true" />
         </parameter>
