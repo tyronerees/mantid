@@ -1,5 +1,5 @@
-#ifndef POLDIABSTRACTDETECTOR_H
-#define POLDIABSTRACTDETECTOR_H
+#ifndef PoldiDetectorAdapter_H
+#define PoldiDetectorAdapter_H
 
 #include "MantidSINQ/DllConfig.h"
 
@@ -12,7 +12,7 @@
 namespace Mantid {
 namespace Poldi {
 
-/** PoldiAbstractDetector :
+/** PoldiDetectorAdapter :
  *
   Abstract representation of detector, used for POLDI related calculations.
  Calculation
@@ -42,9 +42,9 @@ namespace Poldi {
   Code Documentation is available at: <http://doxygen.mantidproject.org>
 */
 
-class MANTID_SINQ_DLL PoldiAbstractDetector {
+class MANTID_SINQ_DLL PoldiDetectorAdapter {
 public:
-  virtual ~PoldiAbstractDetector() {}
+  virtual ~PoldiDetectorAdapter() {}
 
   virtual void
   loadConfiguration(Geometry::Instrument_const_sptr poldiInstrument) = 0;
@@ -63,10 +63,10 @@ public:
                                             double lambdaMax) = 0;
 
 protected:
-  PoldiAbstractDetector() {}
+  PoldiDetectorAdapter() {}
 };
 
-typedef boost::shared_ptr<PoldiAbstractDetector> PoldiAbstractDetector_sptr;
+typedef boost::shared_ptr<PoldiDetectorAdapter> PoldiDetectorAdapter_sptr;
 }
 }
-#endif // POLDIABSTRACTDETECTOR_H
+#endif // PoldiDetectorAdapter_H

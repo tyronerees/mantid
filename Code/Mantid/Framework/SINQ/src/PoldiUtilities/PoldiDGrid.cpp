@@ -4,7 +4,7 @@
 namespace Mantid {
 namespace Poldi {
 
-PoldiDGrid::PoldiDGrid(boost::shared_ptr<PoldiAbstractDetector> detector,
+PoldiDGrid::PoldiDGrid(boost::shared_ptr<PoldiDetectorAdapter> detector,
                        boost::shared_ptr<PoldiAbstractChopper> chopper,
                        double deltaT, std::pair<double, double> wavelengthRange)
     : m_detector(detector), m_chopper(chopper), m_deltaT(deltaT),
@@ -12,7 +12,7 @@ PoldiDGrid::PoldiDGrid(boost::shared_ptr<PoldiAbstractDetector> detector,
       m_dgrid(), m_hasCachedCalculation(false) {}
 
 void
-PoldiDGrid::setDetector(boost::shared_ptr<PoldiAbstractDetector> newDetector) {
+PoldiDGrid::setDetector(boost::shared_ptr<PoldiDetectorAdapter> newDetector) {
   m_detector = newDetector;
 }
 

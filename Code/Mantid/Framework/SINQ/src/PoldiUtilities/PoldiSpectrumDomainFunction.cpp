@@ -221,7 +221,7 @@ void PoldiSpectrumDomainFunction::initializeInstrumentParameters(
 
   m_2dHelpers.clear();
 
-  PoldiAbstractDetector_sptr detector = poldiInstrument->detector();
+  PoldiDetectorAdapter_sptr detector = poldiInstrument->detector();
   PoldiAbstractChopper_sptr chopper = poldiInstrument->chopper();
 
   std::pair<double, double> qLimits = detector->qLimits(1.1, 5.0);

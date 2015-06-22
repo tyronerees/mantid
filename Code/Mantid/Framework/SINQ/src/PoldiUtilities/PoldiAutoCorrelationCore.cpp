@@ -29,11 +29,11 @@ PoldiAutoCorrelationCore::PoldiAutoCorrelationCore(Kernel::Logger &g_log)
   *probably be one with a DeadWireDecorator so dead wires are taken into account
   *properly.
   *
-  * @param detector :: Instance of PoldiAbstractDetector.
+  * @param detector :: Instance of PoldiDetectorAdapter.
   * @param chopper :: Instance of PoldiAbstractChopper.
   */
 void PoldiAutoCorrelationCore::setInstrument(
-    const PoldiAbstractDetector_sptr &detector,
+    const PoldiDetectorAdapter_sptr &detector,
     const PoldiAbstractChopper_sptr &chopper) {
   m_detector = detector;
   m_chopper = chopper;
@@ -589,7 +589,7 @@ std::vector<double> PoldiAutoCorrelationCore::getTofsFor1Angstrom(
   std::vector<double> twoThetas(elements.size());
   std::transform(
       elements.begin(), elements.end(), twoThetas.begin(),
-      boost::bind(&PoldiAbstractDetector::twoTheta, m_detector, _1));
+      boost::bind(&PoldiDetectorAdapter::twoTheta, m_detector, _1));
 
   // We will need sin(Theta) anyway, so we might just calculate those as well
   std::vector<double> sinThetas;

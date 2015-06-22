@@ -3,7 +3,7 @@
 
 #include <cxxtest/TestSuite.h>
 #include "MantidAPI/TableRow.h"
-#include "MantidSINQ/PoldiUtilities/PoldiAbstractDetector.h"
+#include "MantidSINQ/PoldiUtilities/PoldiDetectorAdapter.h"
 #include "MantidSINQ/PoldiUtilities/PoldiHeliumDetector.h"
 #include "MantidSINQ/PoldiUtilities/PoldiMockInstrumentHelpers.h"
 
@@ -34,7 +34,7 @@ public:
         PoldiHeliumDetector *heliumDetector = new PoldiHeliumDetector();
         TS_ASSERT(heliumDetector);
 
-        PoldiAbstractDetector *abstractDetector = static_cast<PoldiAbstractDetector *>(heliumDetector);
+        PoldiDetectorAdapter *abstractDetector = static_cast<PoldiDetectorAdapter *>(heliumDetector);
         TS_ASSERT(abstractDetector);
 
         PoldiHeliumDetector *reCastHeliumDetector = dynamic_cast<PoldiHeliumDetector *>(abstractDetector);

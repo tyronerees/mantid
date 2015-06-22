@@ -24,7 +24,7 @@ public:
     {
         PoldiDetectorFactory detectorFactory;
 
-        PoldiAbstractDetector *detector = detectorFactory.createDetector(std::string("any"));
+        PoldiDetectorAdapter *detector = detectorFactory.createDetector(std::string("any"));
         TS_ASSERT(detector);
 
         PoldiHeliumDetector *heliumDetector = dynamic_cast<PoldiHeliumDetector *>(detector);
@@ -37,14 +37,14 @@ public:
     {
         PoldiDetectorFactory detectorFactory;
 
-        PoldiAbstractDetector *detector = detectorFactory.createDetector(from_string("2014/05/12"));
+        PoldiDetectorAdapter *detector = detectorFactory.createDetector(from_string("2014/05/12"));
         TS_ASSERT(detector);
         PoldiHeliumDetector *heliumDetector = dynamic_cast<PoldiHeliumDetector *>(detector);
         TS_ASSERT(heliumDetector);
 
         delete detector;
 
-        PoldiAbstractDetector *newDetector = detectorFactory.createDetector(from_string("2016/05/12"));
+        PoldiDetectorAdapter *newDetector = detectorFactory.createDetector(from_string("2016/05/12"));
         TS_ASSERT(!newDetector);
     }
 

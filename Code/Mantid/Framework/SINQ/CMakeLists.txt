@@ -61,12 +61,12 @@ set ( INC_FILES
 	inc/MantidSINQ/PoldiUtilities/MillerIndicesIO.h
 	inc/MantidSINQ/PoldiUtilities/Poldi2DFunction.h
 	inc/MantidSINQ/PoldiUtilities/PoldiAbstractChopper.h
-	inc/MantidSINQ/PoldiUtilities/PoldiAbstractDetector.h
 	inc/MantidSINQ/PoldiUtilities/PoldiAutoCorrelationCore.h
 	inc/MantidSINQ/PoldiUtilities/PoldiBasicChopper.h
 	inc/MantidSINQ/PoldiUtilities/PoldiChopperFactory.h
         inc/MantidSINQ/PoldiUtilities/PoldiConversions.h
 	inc/MantidSINQ/PoldiUtilities/PoldiDeadWireDecorator.h
+        inc/MantidSINQ/PoldiUtilities/PoldiDetectorAdapter.h
 	inc/MantidSINQ/PoldiUtilities/PoldiDetectorDecorator.h
 	inc/MantidSINQ/PoldiUtilities/PoldiDetectorFactory.h
         inc/MantidSINQ/PoldiUtilities/PoldiDGrid.h

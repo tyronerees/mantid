@@ -6,19 +6,19 @@ namespace Poldi {
 using namespace Geometry;
 
 PoldiDetectorDecorator::PoldiDetectorDecorator(
-    boost::shared_ptr<PoldiAbstractDetector> decoratedDetector)
-    : PoldiAbstractDetector(), m_decoratedDetector() {
+    boost::shared_ptr<PoldiDetectorAdapter> decoratedDetector)
+    : PoldiDetectorAdapter(), m_decoratedDetector() {
   setDecoratedDetector(decoratedDetector);
 }
 
 void PoldiDetectorDecorator::setDecoratedDetector(
-    boost::shared_ptr<PoldiAbstractDetector> detector) {
+    boost::shared_ptr<PoldiDetectorAdapter> detector) {
   m_decoratedDetector = detector;
 
   detectorSetHook();
 }
 
-boost::shared_ptr<PoldiAbstractDetector>
+boost::shared_ptr<PoldiDetectorAdapter>
 PoldiDetectorDecorator::decoratedDetector() {
   return m_decoratedDetector;
 }

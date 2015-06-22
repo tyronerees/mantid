@@ -3,7 +3,7 @@
 
 #include "MantidSINQ/DllConfig.h"
 
-#include "MantidSINQ/PoldiUtilities/PoldiAbstractDetector.h"
+#include "MantidSINQ/PoldiUtilities/PoldiDetectorAdapter.h"
 #include "boost/date_time/gregorian/gregorian.hpp"
 
 namespace Mantid {
@@ -41,8 +41,8 @@ public:
   PoldiDetectorFactory();
   virtual ~PoldiDetectorFactory() {}
 
-  virtual PoldiAbstractDetector *createDetector(std::string detectorType);
-  virtual PoldiAbstractDetector *
+  virtual PoldiDetectorAdapter *createDetector(std::string detectorType);
+  virtual PoldiDetectorAdapter *
   createDetector(boost::gregorian::date experimentDate);
 
 protected:

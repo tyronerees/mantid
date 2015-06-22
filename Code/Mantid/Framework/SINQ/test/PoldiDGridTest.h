@@ -17,7 +17,7 @@ using namespace Mantid::Poldi;
 class TestablePoldiDGrid : public PoldiDGrid {
     friend class PoldiDGridTest;
 
-    TestablePoldiDGrid(boost::shared_ptr<PoldiAbstractDetector> detector = boost::shared_ptr<PoldiAbstractDetector>(),
+    TestablePoldiDGrid(boost::shared_ptr<PoldiDetectorAdapter> detector = boost::shared_ptr<PoldiDetectorAdapter>(),
                        boost::shared_ptr<PoldiAbstractChopper> chopper = boost::shared_ptr<PoldiAbstractChopper>(),
                        double deltaT = 0.0,
                        std::pair<double, double> wavelengthRange = std::pair<double, double>())
@@ -38,7 +38,7 @@ public:
     {
         TestablePoldiDGrid grid;
 
-        TS_ASSERT_EQUALS(grid.m_detector, boost::shared_ptr<PoldiAbstractDetector>());
+        TS_ASSERT_EQUALS(grid.m_detector, boost::shared_ptr<PoldiDetectorAdapter>());
         TS_ASSERT_EQUALS(grid.m_chopper, boost::shared_ptr<PoldiAbstractChopper>());
         TS_ASSERT_EQUALS(grid.m_deltaT, 0.0);
         TS_ASSERT_EQUALS(grid.m_wavelengthRange, std::make_pair(0.0, 0.0));

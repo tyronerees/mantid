@@ -20,7 +20,7 @@ void PoldiTimeTransformer::initializeFromPoldiInstrument(
         "Cannot initialize PoldiTimeTransformer from null-instrument.");
   }
 
-  PoldiAbstractDetector_sptr detector = poldiInstrument->detector();
+  PoldiDetectorAdapter_sptr detector = poldiInstrument->detector();
   PoldiAbstractChopper_sptr chopper = poldiInstrument->chopper();
 
   m_spectrum = boost::const_pointer_cast<const PoldiSourceSpectrum>(
@@ -65,7 +65,7 @@ size_t PoldiTimeTransformer::detectorElementCount() const {
 
 std::vector<DetectorElementData_const_sptr>
 PoldiTimeTransformer::getDetectorElementData(
-    const PoldiAbstractDetector_sptr &detector,
+    const PoldiDetectorAdapter_sptr &detector,
     const PoldiAbstractChopper_sptr &chopper) {
   std::vector<DetectorElementData_const_sptr> data(detector->elementCount());
 
@@ -82,7 +82,7 @@ PoldiTimeTransformer::getDetectorElementData(
 
 DetectorElementCharacteristics
 PoldiTimeTransformer::getDetectorCenterCharacteristics(
-    const PoldiAbstractDetector_sptr &detector,
+    const PoldiDetectorAdapter_sptr &detector,
     const PoldiAbstractChopper_sptr &chopper) {
   return DetectorElementCharacteristics(
       static_cast<int>(detector->centralElement()), detector, chopper);

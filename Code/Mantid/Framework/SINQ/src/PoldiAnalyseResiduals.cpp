@@ -210,7 +210,7 @@ void PoldiAnalyseResiduals::exec() {
   PoldiInstrumentAdapter_sptr poldiInstrument =
       boost::make_shared<PoldiInstrumentAdapter>(measured);
   // Dead wires need to be taken into account
-  PoldiAbstractDetector_sptr deadWireDetector =
+  PoldiDetectorAdapter_sptr deadWireDetector =
       boost::make_shared<PoldiDeadWireDecorator>(measured->getInstrument(),
                                                  poldiInstrument->detector());
 

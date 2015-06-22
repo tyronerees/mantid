@@ -9,7 +9,7 @@
 
 #include <map>
 
-#include "MantidSINQ/PoldiUtilities/PoldiAbstractDetector.h"
+#include "MantidSINQ/PoldiUtilities/PoldiDetectorAdapter.h"
 #include "MantidSINQ/PoldiUtilities/PoldiAbstractChopper.h"
 #include "MantidSINQ/PoldiUtilities/PoldiSourceSpectrum.h"
 
@@ -96,7 +96,7 @@ public:
   virtual ~PoldiInstrumentAdapter();
 
   PoldiAbstractChopper_sptr chopper() const;
-  PoldiAbstractDetector_sptr detector() const;
+  PoldiDetectorAdapter_sptr detector() const;
   PoldiSourceSpectrum_sptr spectrum() const;
 
 protected:
@@ -124,7 +124,7 @@ protected:
   void setSpectrum(const Geometry::Instrument_const_sptr &mantidInstrument);
 
   PoldiAbstractChopper_sptr m_chopper;
-  PoldiAbstractDetector_sptr m_detector;
+  PoldiDetectorAdapter_sptr m_detector;
   PoldiSourceSpectrum_sptr m_spectrum;
 
   static const std::string m_chopperSpeedPropertyName;

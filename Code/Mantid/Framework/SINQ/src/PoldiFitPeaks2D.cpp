@@ -844,7 +844,7 @@ MatrixWorkspace_sptr PoldiFitPeaks2D::get1DSpectrum(
     throw std::runtime_error("No POLDI instrument available.");
   }
 
-  PoldiAbstractDetector_sptr detector(new PoldiDeadWireDecorator(
+  PoldiDetectorAdapter_sptr detector(new PoldiDeadWireDecorator(
       workspace->getInstrument(), m_poldiInstrument->detector()));
   std::vector<int> indices = detector->availableElements();
 

@@ -71,7 +71,7 @@ PoldiAbstractChopper_sptr PoldiInstrumentAdapter::chopper() const {
   *
   * @return Abstract detector, configured with the data in instrument.
   */
-PoldiAbstractDetector_sptr PoldiInstrumentAdapter::detector() const {
+PoldiDetectorAdapter_sptr PoldiInstrumentAdapter::detector() const {
   return m_detector;
 }
 
@@ -111,7 +111,7 @@ void PoldiInstrumentAdapter::initializeFromInstrumentAndRun(
 
 /** Constructs a detector and stores it
   *
-  * A PoldiAbstractDetector is constructed through PoldiDetectorFactory.
+  * A PoldiDetectorAdapter is constructed through PoldiDetectorFactory.
   *Currently, the He3-detector
   * is hard-coded at this place, but as soon as the new detector is available
   *and tests
@@ -122,7 +122,7 @@ void PoldiInstrumentAdapter::initializeFromInstrumentAndRun(
 void PoldiInstrumentAdapter::setDetector(
     const Instrument_const_sptr &mantidInstrument) {
   PoldiDetectorFactory detectorFactory;
-  m_detector = PoldiAbstractDetector_sptr(
+  m_detector = PoldiDetectorAdapter_sptr(
       detectorFactory.createDetector(std::string("helium3-detector")));
   m_detector->loadConfiguration(mantidInstrument);
 }

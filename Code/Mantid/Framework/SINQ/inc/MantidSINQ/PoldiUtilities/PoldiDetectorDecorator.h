@@ -4,7 +4,7 @@
 #include "MantidKernel/System.h"
 #include "MantidSINQ/DllConfig.h"
 
-#include "MantidSINQ/PoldiUtilities/PoldiAbstractDetector.h"
+#include "MantidSINQ/PoldiUtilities/PoldiDetectorAdapter.h"
 
 namespace Mantid {
 namespace Poldi {
@@ -38,16 +38,16 @@ namespace Poldi {
     File change history is stored at: <https://github.com/mantidproject/mantid>
     Code Documentation is available at: <http://doxygen.mantidproject.org>
   */
-class MANTID_SINQ_DLL PoldiDetectorDecorator : public PoldiAbstractDetector {
+class MANTID_SINQ_DLL PoldiDetectorDecorator : public PoldiDetectorAdapter {
 public:
   PoldiDetectorDecorator(
-      boost::shared_ptr<PoldiAbstractDetector> decoratedDetector =
-          boost::shared_ptr<PoldiAbstractDetector>());
+      boost::shared_ptr<PoldiDetectorAdapter> decoratedDetector =
+          boost::shared_ptr<PoldiDetectorAdapter>());
 
   virtual ~PoldiDetectorDecorator() {}
 
-  void setDecoratedDetector(boost::shared_ptr<PoldiAbstractDetector> detector);
-  boost::shared_ptr<PoldiAbstractDetector> decoratedDetector();
+  void setDecoratedDetector(boost::shared_ptr<PoldiDetectorAdapter> detector);
+  boost::shared_ptr<PoldiDetectorAdapter> decoratedDetector();
 
   virtual void
   loadConfiguration(Geometry::Instrument_const_sptr poldiInstrument);
@@ -67,7 +67,7 @@ public:
 protected:
   virtual void detectorSetHook();
 
-  boost::shared_ptr<PoldiAbstractDetector> m_decoratedDetector;
+  boost::shared_ptr<PoldiDetectorAdapter> m_decoratedDetector;
 };
 
 } // namespace Poldi

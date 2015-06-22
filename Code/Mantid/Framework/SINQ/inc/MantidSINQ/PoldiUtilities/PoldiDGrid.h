@@ -3,7 +3,7 @@
 
 #include "MantidSINQ/DllConfig.h"
 
-#include "MantidSINQ/PoldiUtilities/PoldiAbstractDetector.h"
+#include "MantidSINQ/PoldiUtilities/PoldiDetectorAdapter.h"
 #include "MantidSINQ/PoldiUtilities/PoldiAbstractChopper.h"
 
 #include <vector>
@@ -42,15 +42,15 @@ namespace Poldi {
 
 class MANTID_SINQ_DLL PoldiDGrid {
 public:
-  PoldiDGrid(boost::shared_ptr<PoldiAbstractDetector> detector =
-                 boost::shared_ptr<PoldiAbstractDetector>(),
+  PoldiDGrid(boost::shared_ptr<PoldiDetectorAdapter> detector =
+                 boost::shared_ptr<PoldiDetectorAdapter>(),
              boost::shared_ptr<PoldiAbstractChopper> chopper =
                  boost::shared_ptr<PoldiAbstractChopper>(),
              double deltaT = 0.0, std::pair<double, double> wavelengthRange =
                                       std::pair<double, double>());
   ~PoldiDGrid() {}
 
-  void setDetector(boost::shared_ptr<PoldiAbstractDetector> newDetector);
+  void setDetector(boost::shared_ptr<PoldiDetectorAdapter> newDetector);
   void setChopper(boost::shared_ptr<PoldiAbstractChopper> newChopper);
   void setDeltaT(double newDeltaT);
   void setWavelengthRange(std::pair<double, double> wavelengthRange);
@@ -63,7 +63,7 @@ protected:
   double calculateDeltaD();
   void createGrid();
 
-  boost::shared_ptr<PoldiAbstractDetector> m_detector;
+  boost::shared_ptr<PoldiDetectorAdapter> m_detector;
   boost::shared_ptr<PoldiAbstractChopper> m_chopper;
   double m_deltaT;
   std::pair<double, double> m_wavelengthRange;

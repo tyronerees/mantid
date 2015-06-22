@@ -11,7 +11,7 @@ namespace Poldi {
 using namespace Geometry;
 
 PoldiHeliumDetector::PoldiHeliumDetector()
-    : PoldiAbstractDetector(), m_radius(0.0), m_elementCount(0),
+    : PoldiDetectorAdapter(), m_radius(0.0), m_elementCount(0),
       m_centralElement(0), m_elementWidth(0.0), m_angularResolution(0.0),
       m_totalOpeningAngle(0.0), m_availableElements(), m_efficiency(0.0),
       m_calibratedPosition(0.0, 0.0), m_vectorAngle(0.0),

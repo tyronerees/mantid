@@ -5,7 +5,7 @@
 
 #include "MantidSINQ/DllConfig.h"
 
-#include "MantidSINQ/PoldiUtilities/PoldiAbstractDetector.h"
+#include "MantidSINQ/PoldiUtilities/PoldiDetectorAdapter.h"
 #include "MantidSINQ/PoldiUtilities/PoldiAbstractChopper.h"
 #include "MantidSINQ/PoldiUtilities/UncertainValue.h"
 
@@ -63,7 +63,7 @@ public:
   PoldiAutoCorrelationCore(Kernel::Logger &g_log);
   virtual ~PoldiAutoCorrelationCore() {}
 
-  void setInstrument(const PoldiAbstractDetector_sptr &detector,
+  void setInstrument(const PoldiDetectorAdapter_sptr &detector,
                      const PoldiAbstractChopper_sptr &chopper);
   void setWavelengthRange(double lambdaMin, double lambdaMax);
 
@@ -111,7 +111,7 @@ protected:
   finalizeCalculation(const std::vector<double> &correctedCorrelatedIntensities,
                       const std::vector<double> &dValues) const;
 
-  boost::shared_ptr<PoldiAbstractDetector> m_detector;
+  boost::shared_ptr<PoldiDetectorAdapter> m_detector;
   boost::shared_ptr<PoldiAbstractChopper> m_chopper;
 
   std::pair<double, double> m_wavelengthRange;

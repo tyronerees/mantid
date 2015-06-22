@@ -44,7 +44,7 @@ struct DetectorElementCharacteristics {
         cosTheta(1.0), tof1A(0.0) {}
 
   DetectorElementCharacteristics(int element,
-                                 const PoldiAbstractDetector_sptr &detector,
+                                 const PoldiDetectorAdapter_sptr &detector,
                                  const PoldiAbstractChopper_sptr &chopper) {
     distance = detector->distanceFromSample(element);
     totalDistance =
@@ -66,7 +66,7 @@ struct DetectorElementCharacteristics {
 class DetectorElementData {
 public:
   DetectorElementData(int element, const DetectorElementCharacteristics &center,
-                      const PoldiAbstractDetector_sptr &detector,
+                      const PoldiDetectorAdapter_sptr &detector,
                       const PoldiAbstractChopper_sptr &chopper) {
     DetectorElementCharacteristics current(element, detector, chopper);
 
@@ -114,10 +114,10 @@ public:
 
 protected:
   std::vector<DetectorElementData_const_sptr>
-  getDetectorElementData(const PoldiAbstractDetector_sptr &detector,
+  getDetectorElementData(const PoldiDetectorAdapter_sptr &detector,
                          const PoldiAbstractChopper_sptr &chopper);
   DetectorElementCharacteristics
-  getDetectorCenterCharacteristics(const PoldiAbstractDetector_sptr &detector,
+  getDetectorCenterCharacteristics(const PoldiDetectorAdapter_sptr &detector,
                                    const PoldiAbstractChopper_sptr &chopper);
 
   DetectorElementCharacteristics m_detectorCenter;

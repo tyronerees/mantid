@@ -8,7 +8,7 @@
 
 #include "MantidSINQ/PoldiUtilities/PoldiAutoCorrelationCore.h"
 
-#include "MantidSINQ/PoldiUtilities/PoldiAbstractDetector.h"
+#include "MantidSINQ/PoldiUtilities/PoldiDetectorAdapter.h"
 #include "MantidSINQ/PoldiUtilities/PoldiAbstractChopper.h"
 #include "MantidSINQ/PoldiUtilities/PoldiDeadWireDecorator.h"
 #include "MantidSINQ/PoldiUtilities/PoldiDGrid.h"
@@ -40,7 +40,7 @@ class PoldiAutoCorrelationCoreTest : public CxxTest::TestSuite
 private:
     TestablePoldiAutoCorrelationCore getCorrelationCoreWithInstrument()
     {
-        boost::shared_ptr<PoldiAbstractDetector> detector(new ConfiguredHeliumDetector);
+        boost::shared_ptr<PoldiDetectorAdapter> detector(new ConfiguredHeliumDetector);
 
         int deadWires [] = {0, 1, 2, 3, 4, 5, 394, 395, 396, 397, 398, 399 };
         boost::shared_ptr<PoldiDeadWireDecorator> deadWireDecorator(
@@ -87,7 +87,7 @@ public:
 
     void testgetTOFsFor1Angstrom()
     {
-        boost::shared_ptr<PoldiAbstractDetector> detector(new ConfiguredHeliumDetector);
+        boost::shared_ptr<PoldiDetectorAdapter> detector(new ConfiguredHeliumDetector);
 
         boost::shared_ptr<MockChopper> mockChopper(new MockChopper);
 
@@ -106,7 +106,7 @@ public:
 
     void testgetDistances()
     {
-        boost::shared_ptr<PoldiAbstractDetector> detector(new ConfiguredHeliumDetector);
+        boost::shared_ptr<PoldiDetectorAdapter> detector(new ConfiguredHeliumDetector);
 
         boost::shared_ptr<MockChopper> mockChopper(new MockChopper);
 

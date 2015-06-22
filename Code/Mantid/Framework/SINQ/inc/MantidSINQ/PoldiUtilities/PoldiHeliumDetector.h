@@ -2,7 +2,7 @@
 #define POLDIHELIUMDETECTOR_H
 
 #include "MantidSINQ/DllConfig.h"
-#include "MantidSINQ/PoldiUtilities/PoldiAbstractDetector.h"
+#include "MantidSINQ/PoldiUtilities/PoldiDetectorAdapter.h"
 
 #include "MantidKernel/V2D.h"
 
@@ -11,7 +11,7 @@ namespace Poldi {
 
 /** PoldiHeliumDetector :
  *
-  Implementation of PoldiAbstractDetector for the currently (2014) installed
+  Implementation of PoldiDetectorAdapter for the currently (2014) installed
  He3-based
   detector at the POLDI instrument.
 
@@ -40,7 +40,7 @@ namespace Poldi {
 */
 using namespace Kernel;
 
-class MANTID_SINQ_DLL PoldiHeliumDetector : public PoldiAbstractDetector {
+class MANTID_SINQ_DLL PoldiHeliumDetector : public PoldiDetectorAdapter {
 public:
   PoldiHeliumDetector();
   ~PoldiHeliumDetector() {}

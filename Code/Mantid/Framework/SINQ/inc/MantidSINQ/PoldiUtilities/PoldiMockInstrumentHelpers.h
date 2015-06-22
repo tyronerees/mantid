@@ -4,7 +4,7 @@
 #include "MantidSINQ/DllConfig.h"
 #include <gmock/gmock.h>
 #include <algorithm>
-#include "MantidSINQ/PoldiUtilities/PoldiAbstractDetector.h"
+#include "MantidSINQ/PoldiUtilities/PoldiDetectorAdapter.h"
 #include "MantidSINQ/PoldiUtilities/PoldiAbstractChopper.h"
 #include "MantidSINQ/PoldiUtilities/PoldiSourceSpectrum.h"
 #include "MantidSINQ/PoldiUtilities/PoldiInstrumentAdapter.h"
@@ -35,12 +35,12 @@ using namespace Geometry;
 
 typedef std::pair<double, double> DoublePair;
 
-class MockDetector : public PoldiAbstractDetector {
+class MockDetector : public PoldiDetectorAdapter {
 protected:
   std::vector<int> m_availableElements;
 
 public:
-  MockDetector() : PoldiAbstractDetector() {
+  MockDetector() : PoldiDetectorAdapter() {
     m_availableElements.resize(400);
     for (int i = 0; i < static_cast<int>(m_availableElements.size()); ++i) {
       m_availableElements[i] = i;
@@ -375,7 +375,7 @@ public:
   FakePoldiInstrumentAdapter() : PoldiInstrumentAdapter() {
     MockChopper *chopper = new MockChopper;
     m_chopper = PoldiAbstractChopper_sptr(chopper);
-    m_detector = PoldiAbstractDetector_sptr(new ConfiguredHeliumDetector);
+    m_detector = PoldiDetectorAdapter_sptr(new ConfiguredHeliumDetector);
     m_spectrum = PoldiSourceSpectrum_sptr(new ConfiguredSpectrum);
 
     EXPECT_CALL(*chopper, distanceFromSample()).WillRepeatedly(Return(11800.0));

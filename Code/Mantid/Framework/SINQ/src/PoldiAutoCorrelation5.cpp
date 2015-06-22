@@ -80,7 +80,7 @@ void PoldiAutoCorrelation5::exec() {
   PoldiInstrumentAdapter instrumentAdapter(localWorkspace);
   PoldiAbstractChopper_sptr chopper = instrumentAdapter.chopper();
 
-  PoldiAbstractDetector_sptr detector = instrumentAdapter.detector();
+  PoldiDetectorAdapter_sptr detector = instrumentAdapter.detector();
   boost::shared_ptr<PoldiDeadWireDecorator> cleanDetector(
       new PoldiDeadWireDecorator(localWorkspace->getInstrument(), detector));
 
