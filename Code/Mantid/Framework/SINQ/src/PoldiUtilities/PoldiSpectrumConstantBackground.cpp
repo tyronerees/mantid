@@ -50,7 +50,7 @@ size_t PoldiSpectrumConstantBackground::getTimeBinCount() const {
 }
 
 void PoldiSpectrumConstantBackground::poldiFunction1D(
-    const std::vector<int> &indices, const API::FunctionDomain1D &domain,
+    const std::vector<size_t> &indices, const API::FunctionDomain1D &domain,
     API::FunctionValues &values) const {
   if (m_flatBackground) {
     double backgroundDetector = m_flatBackground->getParameter(0);

@@ -43,7 +43,7 @@ struct DetectorElementCharacteristics {
       : distance(0.0), totalDistance(0.0), twoTheta(0.0), sinTheta(0.0),
         cosTheta(1.0), tof1A(0.0) {}
 
-  DetectorElementCharacteristics(int element,
+  DetectorElementCharacteristics(size_t element,
                                  const PoldiDetectorAdapter_sptr &detector,
                                  const PoldiAbstractChopper_sptr &chopper) {
     distance = detector->distanceFromSample(element);
@@ -65,7 +65,7 @@ struct DetectorElementCharacteristics {
 
 class DetectorElementData {
 public:
-  DetectorElementData(int element, const DetectorElementCharacteristics &center,
+  DetectorElementData(size_t element, const DetectorElementCharacteristics &center,
                       const PoldiDetectorAdapter_sptr &detector,
                       const PoldiAbstractChopper_sptr &chopper) {
     DetectorElementCharacteristics current(element, detector, chopper);

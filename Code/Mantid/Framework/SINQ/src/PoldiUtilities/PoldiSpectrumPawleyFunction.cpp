@@ -59,7 +59,7 @@ void PoldiSpectrumPawleyFunction::functionDeriv1DSpectrum(
 
 /// Calculate 1D function by adding the functions calculated for each index.
 void
-PoldiSpectrumPawleyFunction::poldiFunction1D(const std::vector<int> &indices,
+PoldiSpectrumPawleyFunction::poldiFunction1D(const std::vector<size_t> &indices,
                                              const FunctionDomain1D &domain,
                                              FunctionValues &values) const {
   FunctionValues localValues(domain);

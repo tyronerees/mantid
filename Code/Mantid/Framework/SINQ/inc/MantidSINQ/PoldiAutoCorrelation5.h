@@ -12,7 +12,7 @@
 
 #include "MantidKernel/PhysicalConstants.h"
 #include "MantidSINQ/PoldiUtilities/PoldiAutoCorrelationCore.h"
-#include "MantidSINQ/PoldiUtilities/PoldiDeadWireDecorator.h"
+#include "MantidSINQ/PoldiUtilities/PoldiDetectorAdapter.h"
 
 namespace Mantid {
 namespace Poldi {
@@ -79,7 +79,7 @@ protected:
   void exec();
 
   void logConfigurationInformation(
-      boost::shared_ptr<PoldiDeadWireDecorator> cleanDetector,
+      PoldiDetectorAdapter_sptr cleanDetector,
       PoldiAbstractChopper_sptr chopper);
 
 private:

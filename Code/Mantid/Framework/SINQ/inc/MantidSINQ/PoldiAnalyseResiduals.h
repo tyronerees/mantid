@@ -51,17 +51,17 @@ public:
 
 protected:
   double sumCounts(const DataObjects::Workspace2D_sptr &workspace,
-                   const std::vector<int> &workspaceIndices) const;
+                   const std::vector<size_t> &workspaceIndices) const;
   size_t numberOfPoints(const DataObjects::Workspace2D_sptr &workspace,
-                        const std::vector<int> &workspaceIndices) const;
+                        const std::vector<size_t> &workspaceIndices) const;
   void addValue(DataObjects::Workspace2D_sptr &workspace, double value,
-                const std::vector<int> &workspaceIndices) const;
+                const std::vector<size_t> &workspaceIndices) const;
 
   DataObjects::Workspace2D_sptr
   calculateResidualWorkspace(const DataObjects::Workspace2D_sptr &measured,
                              const DataObjects::Workspace2D_sptr &calculated);
   void normalizeResiduals(DataObjects::Workspace2D_sptr &residuals,
-                          const std::vector<int> &validWorkspaceIndices);
+                          const std::vector<size_t> &validWorkspaceIndices);
   double relativeCountChange(const DataObjects::Workspace2D_sptr &sum,
                              double totalMeasuredCounts);
 

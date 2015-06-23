@@ -14,7 +14,7 @@
 #include "MantidSINQ/PoldiUtilities/IPoldiFunction1D.h"
 #include "MantidSINQ/PoldiUtilities/PoldiPeakCollection.h"
 #include "MantidSINQ/PoldiUtilities/PoldiInstrumentAdapter.h"
-#include "MantidSINQ/PoldiUtilities/PoldiDeadWireDecorator.h"
+#include "MantidSINQ/PoldiUtilities/PoldiDetectorAdapter.h"
 
 #include "MantidAPI/ILatticeFunction.h"
 #include "MantidAPI/IPeakFunction.h"
@@ -844,9 +844,8 @@ MatrixWorkspace_sptr PoldiFitPeaks2D::get1DSpectrum(
     throw std::runtime_error("No POLDI instrument available.");
   }
 
-  PoldiDetectorAdapter_sptr detector(new PoldiDeadWireDecorator(
-      workspace->getInstrument(), m_poldiInstrument->detector()));
-  std::vector<int> indices = detector->availableElements();
+  PoldiDetectorAdapter_sptr detector = m_poldiInstrument->detector();
+  std::vector<size_t> indices = detector->availableElements();
 
   // Create the grid for the diffractogram and corresponding domain/values
   double lambdaMin = getProperty("LambdaMin");

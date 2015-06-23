@@ -45,7 +45,7 @@ public:
       double sinTheta = 0.70942287322834615878;
       double cosTheta = 0.70478307793280472246;
 
-      DetectorElementCharacteristics characteristics(static_cast<int>(m_detector->centralElement()), m_detector, m_chopper);
+      DetectorElementCharacteristics characteristics(m_detector->centralElement(), m_detector, m_chopper);
 
       TS_ASSERT_DELTA(characteristics.twoTheta, twoTheta, 1e-6);
       TS_ASSERT_DELTA(characteristics.distance, distance, 1e-3);

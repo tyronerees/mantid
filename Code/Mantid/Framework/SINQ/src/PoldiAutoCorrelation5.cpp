@@ -7,7 +7,6 @@
 #include "MantidDataObjects/MaskWorkspace.h"
 #include "MantidDataObjects/TableWorkspace.h"
 
-#include "MantidSINQ/PoldiUtilities/PoldiDeadWireDecorator.h"
 #include "MantidSINQ/PoldiUtilities/PoldiInstrumentAdapter.h"
 
 #include <boost/shared_ptr.hpp>
@@ -81,14 +80,12 @@ void PoldiAutoCorrelation5::exec() {
   PoldiAbstractChopper_sptr chopper = instrumentAdapter.chopper();
 
   PoldiDetectorAdapter_sptr detector = instrumentAdapter.detector();
-  boost::shared_ptr<PoldiDeadWireDecorator> cleanDetector(
-      new PoldiDeadWireDecorator(localWorkspace->getInstrument(), detector));
 
   // log configuration information
-  logConfigurationInformation(cleanDetector, chopper);
+  logConfigurationInformation(detector, chopper);
 
   // putting together POLDI instrument for calculations
-  m_core->setInstrument(cleanDetector, chopper);
+  m_core->setInstrument(detector, chopper);
   m_core->setWavelengthRange(wlen_min, wlen_max);
 
   try {
@@ -97,18 +94,19 @@ void PoldiAutoCorrelation5::exec() {
 
     setProperty("OutputWorkspace",
                 boost::dynamic_pointer_cast<Workspace>(outputws));
-
-  } catch (Mantid::Kernel::Exception::NotFoundError &) {
+  }
+  catch (Mantid::Kernel::Exception::NotFoundError &) {
     throw std::runtime_error("Error when saving the PoldiIPP Results data to "
                              "Workspace : NotFoundError");
-  } catch (std::runtime_error &) {
+  }
+  catch (std::runtime_error &) {
     throw std::runtime_error("Error when saving the PoldiIPP Results data to "
                              "Workspace : runtime_error");
   }
 }
 
 void PoldiAutoCorrelation5::logConfigurationInformation(
-    boost::shared_ptr<PoldiDeadWireDecorator> cleanDetector,
+    PoldiDetectorAdapter_sptr cleanDetector,
     PoldiAbstractChopper_sptr chopper) {
   if (cleanDetector && chopper) {
     g_log.information()
@@ -149,6 +147,7 @@ void PoldiAutoCorrelation5::logConfigurationInformation(
                         << cleanDetector->distanceFromSample(199) << " mm"
                         << std::endl;
 
+    /*
     std::set<int> deadWires = cleanDetector->deadWires();
     g_log.information() << "_Poldi -     Number of dead wires: "
                         << deadWires.size() << std::endl;
@@ -158,6 +157,7 @@ void PoldiAutoCorrelation5::logConfigurationInformation(
       g_log.information() << *dw << " ";
     }
     g_log.information() << std::endl;
+    */
   }
 }
 

@@ -154,7 +154,7 @@ void PoldiSpectrumDomainFunction::functionDeriv1DSpectrum(
 }
 
 void
-PoldiSpectrumDomainFunction::poldiFunction1D(const std::vector<int> &indices,
+PoldiSpectrumDomainFunction::poldiFunction1D(const std::vector<size_t> &indices,
                                              const FunctionDomain1D &domain,
                                              FunctionValues &values) const {
 
@@ -229,7 +229,7 @@ void PoldiSpectrumDomainFunction::initializeInstrumentParameters(
   double dMin = Conversions::qToD(qLimits.second);
   double dMax = Conversions::dToQ(qLimits.first);
 
-  for (int i = 0; i < static_cast<int>(detector->elementCount()); ++i) {
+  for (size_t i = 0; i < detector->allElementCount(); ++i) {
     double sinTheta = sin(detector->twoTheta(i) / 2.0);
     double distance =
         detector->distanceFromSample(i) + chopper->distanceFromSample();

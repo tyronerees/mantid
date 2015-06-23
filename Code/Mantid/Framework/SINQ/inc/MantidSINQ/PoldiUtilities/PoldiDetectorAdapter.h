@@ -4,8 +4,9 @@
 #include "MantidSINQ/DllConfig.h"
 
 #include "MantidGeometry/Instrument.h"
+#include "MantidGeometry/Instrument/DetectorGroup.h"
 
-#include "MantidKernel/V2D.h"
+#include "MantidKernel/V3D.h"
 
 #include <utility>
 
@@ -44,26 +45,36 @@ namespace Poldi {
 
 class MANTID_SINQ_DLL PoldiDetectorAdapter {
 public:
+  PoldiDetectorAdapter(const Geometry::IComponent_const_sptr &detector);
   virtual ~PoldiDetectorAdapter() {}
 
-  virtual void
-  loadConfiguration(Geometry::Instrument_const_sptr poldiInstrument) = 0;
+  virtual double efficiency() const;
 
-  virtual double efficiency() = 0;
+  virtual double twoTheta(size_t elementIndex) const;
+  virtual double distanceFromSample(size_t elementIndex) const;
 
-  virtual double twoTheta(int elementIndex) = 0;
-  virtual double distanceFromSample(int elementIndex) = 0;
+  virtual size_t elementCount() const;
+  virtual size_t allElementCount() const;
 
-  virtual size_t elementCount() = 0;
-  virtual size_t centralElement() = 0;
+  virtual size_t centralElement() const;
 
-  virtual const std::vector<int> &availableElements() = 0;
+
+  virtual const std::vector<size_t> &availableElements() const;
 
   virtual std::pair<double, double> qLimits(double lambdaMin,
-                                            double lambdaMax) = 0;
+                                            double lambdaMax) const;
 
 protected:
-  PoldiDetectorAdapter() {}
+  std::vector<size_t> getNonMaskedDetectorIds(
+      const std::vector<Geometry::IDetector_const_sptr> &detectors) const;
+
+  Geometry::DetectorGroup_const_sptr m_detector;
+  std::vector<Geometry::IDetector_const_sptr> m_detectors;
+  std::vector<size_t> m_availableDetectors;
+  double m_efficiency;
+
+  Kernel::V3D m_samplePosition;
+  Kernel::V3D m_beamDirection;
 };
 
 typedef boost::shared_ptr<PoldiDetectorAdapter> PoldiDetectorAdapter_sptr;

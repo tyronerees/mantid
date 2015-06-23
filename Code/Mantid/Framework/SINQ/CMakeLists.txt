@@ -19,11 +19,8 @@ set ( SRC_FILES
 	src/PoldiUtilities/PoldiBasicChopper.cpp
 	src/PoldiUtilities/PoldiChopperFactory.cpp
         src/PoldiUtilities/PoldiConversions.cpp
-	src/PoldiUtilities/PoldiDeadWireDecorator.cpp
-	src/PoldiUtilities/PoldiDetectorDecorator.cpp
-	src/PoldiUtilities/PoldiDetectorFactory.cpp
+        src/PoldiUtilities/PoldiDetectorAdapter.cpp
         src/PoldiUtilities/PoldiDGrid.cpp
-	src/PoldiUtilities/PoldiHeliumDetector.cpp
         src/PoldiUtilities/PoldiInstrumentAdapter.cpp
 	src/PoldiUtilities/PoldiPeak.cpp
 	src/PoldiUtilities/PoldiPeakCollection.cpp
@@ -65,12 +62,8 @@ set ( INC_FILES
 	inc/MantidSINQ/PoldiUtilities/PoldiBasicChopper.h
 	inc/MantidSINQ/PoldiUtilities/PoldiChopperFactory.h
         inc/MantidSINQ/PoldiUtilities/PoldiConversions.h
-	inc/MantidSINQ/PoldiUtilities/PoldiDeadWireDecorator.h
         inc/MantidSINQ/PoldiUtilities/PoldiDetectorAdapter.h
-	inc/MantidSINQ/PoldiUtilities/PoldiDetectorDecorator.h
-	inc/MantidSINQ/PoldiUtilities/PoldiDetectorFactory.h
         inc/MantidSINQ/PoldiUtilities/PoldiDGrid.h
-	inc/MantidSINQ/PoldiUtilities/PoldiHeliumDetector.h
         inc/MantidSINQ/PoldiUtilities/PoldiInstrumentAdapter.h
 	inc/MantidSINQ/PoldiUtilities/PoldiMockInstrumentHelpers.h
 	inc/MantidSINQ/PoldiUtilities/PoldiPeak.h
@@ -102,11 +95,7 @@ set ( TEST_FILES
 	PoldiChopperFactoryTest.h
         PoldiConversionsTest.h
 	PoldiCreatePeaksFromCellTest.h
-	PoldiDeadWireDecoratorTest.h
-	PoldiDetectorDecoratorTest.h
         PoldiDGridTest.h
-	PoldiDetectorFactoryTest.h
-	PoldiDetectorTest.h
 	PoldiFitPeaks1DTest.h
         PoldiFitPeaks1D2Test.h
         PoldiFitPeaks2DTest.h

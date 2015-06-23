@@ -10,7 +10,6 @@
 #include "MantidSINQ/PoldiUtilities/PoldiInstrumentAdapter.h"
 #include "MantidSINQ/PoldiUtilities/PoldiPeakCollection.h"
 
-#include "MantidSINQ/PoldiUtilities/PoldiHeliumDetector.h"
 #include "MantidSINQ/PoldiUtilities/PoldiConversions.h"
 #include "MantidGeometry/Instrument.h"
 #include "MantidGeometry/Instrument/FitParameter.h"
@@ -37,45 +36,33 @@ typedef std::pair<double, double> DoublePair;
 
 class MockDetector : public PoldiDetectorAdapter {
 protected:
-  std::vector<int> m_availableElements;
+  std::vector<size_t> m_availableElements;
 
 public:
   MockDetector() : PoldiDetectorAdapter() {
     m_availableElements.resize(400);
-    for (int i = 0; i < static_cast<int>(m_availableElements.size()); ++i) {
+    for (size_t i = 0; i < m_availableElements.size(); ++i) {
       m_availableElements[i] = i;
     }
   }
 
   ~MockDetector() {}
 
-  void loadConfiguration(Instrument_const_sptr poldiInstrument) {
-    UNUSED_ARG(poldiInstrument);
-  }
+  MOCK_CONST_METHOD0(efficiency, double());
+  MOCK_CONST_METHOD1(twoTheta, double(size_t elementIndex));
+  MOCK_CONST_METHOD1(distanceFromSample, double(size_t elementIndex));
+  MOCK_CONST_METHOD0(elementCount, size_t());
+  MOCK_CONST_METHOD0(centralElement, size_t());
+  MOCK_CONST_METHOD2(qLimits, DoublePair(double lambdaMin, double lambdaMax));
 
-  MOCK_METHOD0(efficiency, double());
-  MOCK_METHOD1(twoTheta, double(int elementIndex));
-  MOCK_METHOD1(distanceFromSample, double(int elementIndex));
-  MOCK_METHOD0(elementCount, size_t());
-  MOCK_METHOD0(centralElement, size_t());
-  MOCK_METHOD2(qLimits, DoublePair(double lambdaMin, double lambdaMax));
-
-  const std::vector<int> &availableElements() { return m_availableElements; }
+  const std::vector<size_t> &availableElements() { return m_availableElements; }
 };
 
-class ConfiguredHeliumDetector : public PoldiHeliumDetector {
+class ConfiguredHeliumDetector : public PoldiDetectorAdapter {
 public:
-  ConfiguredHeliumDetector() : PoldiHeliumDetector() {
-    loadConfiguration(Instrument_const_sptr());
+  ConfiguredHeliumDetector() {
   }
-
-  void loadConfiguration(Instrument_const_sptr poldiInstrument) {
-    UNUSED_ARG(poldiInstrument);
-
-    initializeFixedParameters(3000.0, static_cast<size_t>(400), 2.5, 0.88);
-    initializeCalibratedParameters(Kernel::V2D(-931.47, -860.0),
-                                   Conversions::degToRad(90.41));
-  }
+  ~ConfiguredHeliumDetector() {}
 };
 
 class MockChopper : public PoldiAbstractChopper {
@@ -85,13 +72,13 @@ protected:
 
 public:
   MockChopper() : PoldiAbstractChopper() {
-    double slits[] = {0.000000, 0.162156, 0.250867, 0.3704,
-                      0.439811, 0.588455, 0.761389, 0.895667};
+    double slits[] = { 0.000000, 0.162156, 0.250867, 0.3704,
+                       0.439811, 0.588455, 0.761389, 0.895667 };
     m_slitPositions =
         std::vector<double>(slits, slits + sizeof(slits) / sizeof(slits[0]));
 
-    double times[] = {0.000000, 243.234, 376.3,   555.6,
-                      659.716,  882.682, 1142.08, 1343.5};
+    double times[] = { 0.000000, 243.234, 376.3,   555.6,
+                       659.716,  882.682, 1142.08, 1343.5 };
     m_slitTimes =
         std::vector<double>(times, times + sizeof(times) / sizeof(times[0]));
   }
@@ -421,31 +408,19 @@ public:
                                               "Gaussian");
 
     API::TableRow newRow = tableWs->appendRow();
-    newRow << "0 0 0"
-           << 1.108644 << 0.0
-           << 5.667449 << 0.0
-           << 3286.152 << 0.0
+    newRow << "0 0 0" << 1.108644 << 0.0 << 5.667449 << 0.0 << 3286.152 << 0.0
            << 0.002475747 << 0.0;
 
     newRow = tableWs->appendRow();
-    newRow << "0 0 0"
-           << 1.637539 << 0.0
-           << 3.836968 << 0.0
-           << 2951.696 << 0.0
+    newRow << "0 0 0" << 1.637539 << 0.0 << 3.836968 << 0.0 << 2951.696 << 0.0
            << 0.002516417 << 0.0;
 
     newRow = tableWs->appendRow();
-    newRow << "0 0 0"
-           << 1.920200 << 0.0
-           << 3.272152 << 0.0
-           << 3238.473 << 0.0
+    newRow << "0 0 0" << 1.920200 << 0.0 << 3.272152 << 0.0 << 3238.473 << 0.0
            << 0.002444439 << 0.0;
 
     newRow = tableWs->appendRow();
-    newRow << "0 0 0"
-           << 1.245958 << 0.0
-           << 5.042856 << 0.0
-           << 2219.592 << 0.0
+    newRow << "0 0 0" << 1.245958 << 0.0 << 5.042856 << 0.0 << 2219.592 << 0.0
            << 0.002696334 << 0.0;
 
     return tableWs;

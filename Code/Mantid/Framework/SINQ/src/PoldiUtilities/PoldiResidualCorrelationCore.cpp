@@ -126,8 +126,8 @@ void PoldiResidualCorrelationCore::correctCountData() const {
   double ratio = sumOfResiduals / numberOfCells;
 
   PARALLEL_FOR_NO_WSP_CHECK()
-  for (int i = 0; i < static_cast<int>(m_detectorElements.size()); ++i) {
-    int element = m_detectorElements[i];
+  for (size_t i = 0; i < m_detectorElements.size(); ++i) {
+    size_t element = m_detectorElements[i];
     for (int j = 0; j < m_timeBinCount; ++j) {
       addToCountData(element, j, -ratio);
     }
@@ -174,7 +174,7 @@ DataObjects::Workspace2D_sptr PoldiResidualCorrelationCore::finalizeCalculation(
 }
 
 /// Adds the supplied value to each data point.
-void PoldiResidualCorrelationCore::addToCountData(int x, int y,
+void PoldiResidualCorrelationCore::addToCountData(size_t x, int y,
                                                   double newCounts) const {
   m_countData->dataY(x)[y] += newCounts;
 }

@@ -61,7 +61,7 @@ public:
   functionDeriv1DSpectrum(const API::FunctionDomain1DSpectrum &domain,
                           API::Jacobian &jacobian);
 
-  virtual void poldiFunction1D(const std::vector<int> &indices,
+  virtual void poldiFunction1D(const std::vector<size_t> &indices,
                                const API::FunctionDomain1D &domain,
                                API::FunctionValues &values) const;
 

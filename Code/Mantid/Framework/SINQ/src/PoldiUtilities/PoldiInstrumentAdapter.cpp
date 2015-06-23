@@ -1,7 +1,6 @@
 #include "MantidSINQ/PoldiUtilities/PoldiInstrumentAdapter.h"
 
 #include "MantidAPI/MatrixWorkspace.h"
-#include "MantidSINQ/PoldiUtilities/PoldiDetectorFactory.h"
 #include "MantidSINQ/PoldiUtilities/PoldiChopperFactory.h"
 #include "MantidSINQ/PoldiUtilities/PoldiSourceSpectrum.h"
 
@@ -20,13 +19,13 @@ const std::string PoldiInstrumentAdapter::m_chopperSpeedTargetPropertyName =
     "ChopperSpeedTarget";
 
 std::map<std::string, AbstractDoubleValueExtractor_sptr>
-    PoldiInstrumentAdapter::m_extractors = boost::assign::map_list_of(
-        "dbl list", boost::static_pointer_cast<AbstractDoubleValueExtractor>(
-                        boost::make_shared<VectorDoubleValueExtractor>()))(
-        "int list", boost::static_pointer_cast<AbstractDoubleValueExtractor>(
-                        boost::make_shared<VectorIntValueExtractor>()))(
-        "number", boost::static_pointer_cast<AbstractDoubleValueExtractor>(
-                      boost::make_shared<NumberDoubleValueExtractor>()));
+PoldiInstrumentAdapter::m_extractors = boost::assign::map_list_of(
+    "dbl list", boost::static_pointer_cast<AbstractDoubleValueExtractor>(
+                    boost::make_shared<VectorDoubleValueExtractor>()))(
+    "int list", boost::static_pointer_cast<AbstractDoubleValueExtractor>(
+                    boost::make_shared<VectorIntValueExtractor>()))(
+    "number", boost::static_pointer_cast<AbstractDoubleValueExtractor>(
+                  boost::make_shared<NumberDoubleValueExtractor>()));
 
 /** Constructor with workspace argument
   *
@@ -121,10 +120,8 @@ void PoldiInstrumentAdapter::initializeFromInstrumentAndRun(
   */
 void PoldiInstrumentAdapter::setDetector(
     const Instrument_const_sptr &mantidInstrument) {
-  PoldiDetectorFactory detectorFactory;
-  m_detector = PoldiDetectorAdapter_sptr(
-      detectorFactory.createDetector(std::string("helium3-detector")));
-  m_detector->loadConfiguration(mantidInstrument);
+  m_detector = boost::make_shared<PoldiDetectorAdapter>(
+      mantidInstrument->getComponentByName("detector_1"));
 }
 
 /** Constructs a chopper and stores it
@@ -179,8 +176,8 @@ PoldiInstrumentAdapter::getCleanChopperSpeed(double rawChopperSpeed) const {
  *chopper speed.
  * @return Chopper speed as stored in run information
  */
-double PoldiInstrumentAdapter::getChopperSpeedFromRun(
-    const Run &runInformation) const {
+double PoldiInstrumentAdapter::getChopperSpeedFromRun(const Run &runInformation)
+    const {
   return extractPropertyFromRun(runInformation, m_chopperSpeedPropertyName);
 }
 
@@ -230,7 +227,8 @@ PoldiInstrumentAdapter::chopperSpeedMatchesTarget(const Run &runInformation,
     }
 
     return true;
-  } catch (std::runtime_error) {
+  }
+  catch (std::runtime_error) {
     // Old data files don't have information on target chopper speed. Do
     // nothing.
     return true;

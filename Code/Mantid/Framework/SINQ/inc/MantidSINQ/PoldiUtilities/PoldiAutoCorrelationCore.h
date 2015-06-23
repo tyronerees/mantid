@@ -87,9 +87,9 @@ protected:
   reduceChopperSlitList(const std::vector<UncertainValue> &valuesWithSigma,
                         double weight) const;
 
-  std::vector<double> getDistances(const std::vector<int> &elements) const;
+  std::vector<double> getDistances(const std::vector<size_t> &elements) const;
   std::vector<double>
-  getTofsFor1Angstrom(const std::vector<int> &elements) const;
+  getTofsFor1Angstrom(const std::vector<size_t> &elements) const;
 
   double getCounts(int x, int y) const;
   virtual double getNormCounts(int x, int y) const;
@@ -97,7 +97,7 @@ protected:
   int getElementFromIndex(int index) const;
   double getTofFromIndex(int index) const;
   double getSumOfCounts(int timeBinCount,
-                        const std::vector<int> &detectorElements) const;
+                        const std::vector<size_t> &detectorElements) const;
 
   int cleanIndex(int index, int maximum) const;
 
@@ -119,12 +119,12 @@ protected:
   double m_deltaT;
   double m_deltaD;
   int m_timeBinCount;
-  std::vector<int> m_detectorElements;
+  std::vector<size_t> m_detectorElements;
 
   std::vector<double> m_weightsForD;
   std::vector<double> m_tofsFor1Angstrom;
 
-  std::vector<int> m_indices;
+  std::vector<size_t> m_indices;
 
   DataObjects::Workspace2D_sptr m_countData;
   DataObjects::Workspace2D_sptr m_normCountData;

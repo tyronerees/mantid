@@ -67,12 +67,12 @@ std::vector<DetectorElementData_const_sptr>
 PoldiTimeTransformer::getDetectorElementData(
     const PoldiDetectorAdapter_sptr &detector,
     const PoldiAbstractChopper_sptr &chopper) {
-  std::vector<DetectorElementData_const_sptr> data(detector->elementCount());
+  std::vector<DetectorElementData_const_sptr> data(detector->allElementCount());
 
   DetectorElementCharacteristics center =
       getDetectorCenterCharacteristics(detector, chopper);
 
-  for (int i = 0; i < static_cast<int>(detector->elementCount()); ++i) {
+  for (size_t i = 0; i < detector->allElementCount(); ++i) {
     data[i] =
         boost::make_shared<DetectorElementData>(i, center, detector, chopper);
   }
@@ -84,8 +84,8 @@ DetectorElementCharacteristics
 PoldiTimeTransformer::getDetectorCenterCharacteristics(
     const PoldiDetectorAdapter_sptr &detector,
     const PoldiAbstractChopper_sptr &chopper) {
-  return DetectorElementCharacteristics(
-      static_cast<int>(detector->centralElement()), detector, chopper);
+  return DetectorElementCharacteristics(detector->centralElement(), detector,
+                                        chopper);
 }
 
 } // namespace Poldi

@@ -67,7 +67,7 @@ protected:
       const std::vector<double> &dValues) const;
   void correctCountData() const;
 
-  void addToCountData(int x, int y, double delta) const;
+  void addToCountData(size_t x, int y, double delta) const;
 
   double m_weight;
 };

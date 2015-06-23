@@ -3,7 +3,6 @@
 #include "MantidAPI/AlgorithmFactory.h"
 #include "MantidAPI/WorkspaceFactory.h"
 #include "MantidSINQ/PoldiUtilities/PoldiResidualCorrelationCore.h"
-#include "MantidSINQ/PoldiUtilities/PoldiDeadWireDecorator.h"
 
 #include <numeric>
 
@@ -51,7 +50,7 @@ const std::string PoldiAnalyseResiduals::summary() const {
 /// indices.
 double PoldiAnalyseResiduals::sumCounts(
     const DataObjects::Workspace2D_sptr &workspace,
-    const std::vector<int> &workspaceIndices) const {
+    const std::vector<size_t> &workspaceIndices) const {
   double sum = 0.0;
   for (size_t i = 0; i < workspaceIndices.size(); ++i) {
     const MantidVec &counts = workspace->readY(workspaceIndices[i]);
@@ -65,7 +64,7 @@ double PoldiAnalyseResiduals::sumCounts(
 /// workspace indices.
 size_t PoldiAnalyseResiduals::numberOfPoints(
     const DataObjects::Workspace2D_sptr &workspace,
-    const std::vector<int> &workspaceIndices) const {
+    const std::vector<size_t> &workspaceIndices) const {
   size_t sum = 0;
   for (size_t i = 0; i < workspaceIndices.size(); ++i) {
     const MantidVec &counts = workspace->readY(workspaceIndices[i]);
@@ -79,7 +78,7 @@ size_t PoldiAnalyseResiduals::numberOfPoints(
 /// indices.
 void PoldiAnalyseResiduals::addValue(
     DataObjects::Workspace2D_sptr &workspace, double value,
-    const std::vector<int> &workspaceIndices) const {
+    const std::vector<size_t> &workspaceIndices) const {
   for (size_t i = 0; i < workspaceIndices.size(); ++i) {
     MantidVec &counts = workspace->dataY(workspaceIndices[i]);
     for (size_t j = 0; j < counts.size(); ++j) {
@@ -129,7 +128,7 @@ DataObjects::Workspace2D_sptr PoldiAnalyseResiduals::calculateResidualWorkspace(
 /// the sum is 0 afterwards.
 void PoldiAnalyseResiduals::normalizeResiduals(
     DataObjects::Workspace2D_sptr &residuals,
-    const std::vector<int> &validWorkspaceIndices) {
+    const std::vector<size_t> &validWorkspaceIndices) {
   double sumOfResiduals = sumCounts(residuals, validWorkspaceIndices);
   double dataPointCount =
       static_cast<double>(numberOfPoints(residuals, validWorkspaceIndices));
@@ -210,14 +209,12 @@ void PoldiAnalyseResiduals::exec() {
   PoldiInstrumentAdapter_sptr poldiInstrument =
       boost::make_shared<PoldiInstrumentAdapter>(measured);
   // Dead wires need to be taken into account
-  PoldiDetectorAdapter_sptr deadWireDetector =
-      boost::make_shared<PoldiDeadWireDecorator>(measured->getInstrument(),
-                                                 poldiInstrument->detector());
+  PoldiDetectorAdapter_sptr detector = poldiInstrument->detector();
 
   // Since the valid workspace indices are required for some calculations, we
   // extract and keep them
-  const std::vector<int> &validWorkspaceIndices =
-      deadWireDetector->availableElements();
+  const std::vector<size_t> &validWorkspaceIndices =
+      detector->availableElements();
 
   // Subtract calculated from measured to get residuals
   DataObjects::Workspace2D_sptr residuals =
@@ -228,7 +225,7 @@ void PoldiAnalyseResiduals::exec() {
 
   // Residual correlation core which will be used iteratively.
   PoldiResidualCorrelationCore core(g_log, 0.1);
-  core.setInstrument(deadWireDetector, poldiInstrument->chopper());
+  core.setInstrument(detector, poldiInstrument->chopper());
 
   double lambdaMin = getProperty("LambdaMin");
   double lambdaMax = getProperty("LambdaMax");

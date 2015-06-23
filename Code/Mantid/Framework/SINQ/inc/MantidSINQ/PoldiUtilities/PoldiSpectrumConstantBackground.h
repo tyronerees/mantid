@@ -54,7 +54,7 @@ public:
   virtual void setWorkspace(boost::shared_ptr<const API::Workspace> ws);
   size_t getTimeBinCount() const;
 
-  virtual void poldiFunction1D(const std::vector<int> &indices,
+  virtual void poldiFunction1D(const std::vector<size_t> &indices,
                                const API::FunctionDomain1D &domain,
                                API::FunctionValues &values) const;
 

@@ -68,7 +68,7 @@ void Poldi2DFunction::function1DSpectrum(const FunctionDomain1DSpectrum &domain,
  * @param domain :: d-based 1D-domain.
  * @param values :: Function values.
  */
-void Poldi2DFunction::poldiFunction1D(const std::vector<int> &indices,
+void Poldi2DFunction::poldiFunction1D(const std::vector<size_t> &indices,
                                       const FunctionDomain1D &domain,
                                       FunctionValues &values) const {
   for (size_t i = 0; i < nFunctions(); ++i) {
