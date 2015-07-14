@@ -17,6 +17,11 @@ algorithm which are then merged into a single run using :ref:`MergeRuns
 <algm-MergeRuns>`, a flat background is then calculated and normalised to give
 the output workspace.
 
+Workflow
+--------
+
+.. diagram:: IndirectCalibration-v1_wkflw.dot
+
 Usage
 -----
 
@@ -42,3 +47,5 @@ Output:
    Calibration workspace has 1 bin(s) and 51 spectra.
 
 .. categories::
+
+.. sourcelink::

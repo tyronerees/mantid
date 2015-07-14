@@ -20,8 +20,8 @@ using namespace API;
 using namespace DataObjects;
 
 LoadTOFRawNexus::LoadTOFRawNexus(): m_numPixels(0), m_signalNo(0), pulseTimes(0),
-    m_numBins(0), m_spec_min(0), m_dataField(""), m_axisField(""), m_xUnits(""),
-    m_fileMutex(), m_assumeOldFile(false) {
+    m_numBins(0), m_spec_min(0), m_spec_max(0), m_dataField(""), m_axisField(""),
+    m_xUnits(""), m_fileMutex(), m_assumeOldFile(false) {
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -518,7 +518,9 @@ void LoadTOFRawNexus::exec() {
   prog->doReport("Loading DAS logs");
   g_log.debug() << "Loading DAS logs" << std::endl;
 
-  LoadEventNexus::runLoadNexusLogs(filename, WS, *this, false);
+  int nPeriods = 1; // Unused
+  std::unique_ptr<const TimeSeriesProperty<int> > periodLog(new const TimeSeriesProperty<int>("period_log")); // Unused
+  LoadEventNexus::runLoadNexusLogs(filename, WS, *this, false, nPeriods, periodLog);
 
   // Load the instrument
   prog->report("Loading instrument");

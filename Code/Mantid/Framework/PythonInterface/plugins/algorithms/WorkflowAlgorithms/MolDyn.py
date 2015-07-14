@@ -59,7 +59,7 @@ def _make_list(a, l1, l2):
         alist = data.split(',')
     return alist
 
-
+#pylint: disable=too-many-instance-attributes
 class MolDyn(PythonAlgorithm):
 
     _plot = None
@@ -130,7 +130,7 @@ class MolDyn(PythonAlgorithm):
 
         return issues
 
-
+    #pylint: disable=too-many-branches
     def PyExec(self):
         from IndirectImport import import_mantidplot
 
@@ -172,12 +172,14 @@ class MolDyn(PythonAlgorithm):
                     # as the Symmetrise algorithm will do this
                     if self._symmetrise:
                         # Symmetrise the sample workspace in x=0
-                        Symmetrise(Sample=ws_name, XMin=0, XMax=e_max,
-                                   Plot=False, Save=False,
+                        Symmetrise(InputWorkspace=ws_name,
+                                   XMin=0,
+                                   XMax=e_max,
                                    OutputWorkspace=ws_name)
 
                     elif self._emax is not None:
-                        CropWorkspace(InputWorkspace=ws_name, OutputWorkspace=ws_name,
+                        CropWorkspace(InputWorkspace=ws_name,
+                                      OutputWorkspace=ws_name,
                                       XMax=self._emax)
 
         # Do convolution if given a resolution workspace
@@ -306,7 +308,7 @@ class MolDyn(PythonAlgorithm):
 
         return num_q, num_t, num_f
 
-
+    #pylint: disable=too-many-locals,too-many-branches
     def _cdl_import(self, data, name):
         """
         Import data from CDL file.
@@ -428,7 +430,7 @@ class MolDyn(PythonAlgorithm):
 
         GroupWorkspaces(InputWorkspaces=output_ws_list, OutputWorkspace=self._out_ws)
 
-
+    #pylint: disable=too-many-locals
     def _ascii_import(self, data, name):
         """
         Import ASCII data.
@@ -461,7 +463,7 @@ class MolDyn(PythonAlgorithm):
 
         xT = np.array(x)
         eZero = np.zeros(nX)
-        Qaxis = ''
+        #Qaxis = ''
         for m in range(0, nQ):
             logger.information('Q[' + str(m + 1) + '] : ' + str(Q[m]))
 
@@ -470,12 +472,12 @@ class MolDyn(PythonAlgorithm):
                 S.append(y[n][m])
 
             if m == 0:
-                Qaxis += str(Q[m])
+                #Qaxis += str(Q[m])
                 xDat = xT
                 yDat = np.array(S)
                 eDat = eZero
             else:
-                Qaxis += ',' + str(Q[m])
+                #Qaxis += ',' + str(Q[m])
                 xDat = np.append(xDat, xT)
                 yDat = np.append(yDat, np.array(S))
                 eDat = np.append(eDat, eZero)

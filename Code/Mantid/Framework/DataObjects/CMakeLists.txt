@@ -13,6 +13,7 @@ set ( SRC_FILES
 	src/EventWorkspaceMRU.cpp
 	src/Events.cpp
 	src/FakeMD.cpp
+	src/FractionalRebinning.cpp
 	src/GroupingWorkspace.cpp
 	src/Histogram1D.cpp
 	src/MDBin.cpp
@@ -41,6 +42,7 @@ set ( SRC_FILES
 	src/PeakShapeSphericalFactory.cpp
 	src/PeaksWorkspace.cpp
 	src/RebinnedOutput.cpp
+	src/ReflectometryTransform.cpp
 	src/SpecialWorkspace2D.cpp
 	src/SplittersWorkspace.cpp
 	src/TableColumn.cpp
@@ -60,6 +62,8 @@ set ( INC_FILES
 	inc/MantidDataObjects/AffineMatrixParameter.h
 	inc/MantidDataObjects/AffineMatrixParameterParser.h
 	inc/MantidDataObjects/BoxControllerNeXusIO.h
+	inc/MantidDataObjects/CalculateReflectometry.h
+	inc/MantidDataObjects/CalculateReflectometryQxQz.h
 	inc/MantidDataObjects/CoordTransformAffine.h
 	inc/MantidDataObjects/CoordTransformAffineParser.h
 	inc/MantidDataObjects/CoordTransformAligned.h
@@ -72,6 +76,7 @@ set ( INC_FILES
 	inc/MantidDataObjects/EventWorkspaceMRU.h
 	inc/MantidDataObjects/Events.h
 	inc/MantidDataObjects/FakeMD.h
+	inc/MantidDataObjects/FractionalRebinning.h
 	inc/MantidDataObjects/GroupingWorkspace.h
 	inc/MantidDataObjects/Histogram1D.h
 	inc/MantidDataObjects/MDBin.h
@@ -103,6 +108,7 @@ set ( INC_FILES
 	inc/MantidDataObjects/PeakShapeSphericalFactory.h
 	inc/MantidDataObjects/PeaksWorkspace.h
 	inc/MantidDataObjects/RebinnedOutput.h
+	inc/MantidDataObjects/ReflectometryTransform.h
 	inc/MantidDataObjects/SpecialWorkspace2D.h
 	inc/MantidDataObjects/SplittersWorkspace.h
 	inc/MantidDataObjects/TableColumn.h
@@ -178,6 +184,12 @@ if(UNITY_BUILD)
   enable_unity_build(DataObjects SRC_FILES SRC_UNITY_IGNORE_FILES 10)
 endif(UNITY_BUILD)
 
+if (COVERALLS)
+    foreach( loop_var ${SRC_FILES} ${INC_FILES})
+      set_property(GLOBAL APPEND PROPERTY COVERAGE_SRCS "${CMAKE_CURRENT_SOURCE_DIR}/${loop_var}")
+    endforeach(loop_var)
+endif()
+
 # Use a precompiled header where they are supported
 enable_precompiled_headers( inc/MantidDataObjects/PrecompiledHeader.h SRC_FILES )
 # Add the target for this directory
@@ -199,7 +211,7 @@ endif ()
 # Add to the 'Framework' group in VS
 set_property ( TARGET DataObjects PROPERTY FOLDER "MantidFramework" )
 
-target_link_libraries ( DataObjects ${MANTIDLIBS} )
+target_link_libraries ( DataObjects LINK_PRIVATE ${MANTIDLIBS} ${JSONCPP_LIBRARIES} ${NEXUS_LIBRARIES} )
 
 # Add the unit tests directory
 add_subdirectory ( test )

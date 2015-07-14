@@ -1,8 +1,9 @@
-#pylint: disable=no-init
+#pylint: disable=no-init, unused-variable
+# we need to disable unused_variable because ws.dataY(n) returns a reference  to the underlying c++ object
+# that can be modified inplace
 from mantid.kernel import *
 from mantid.api import *
-from mantid.simpleapi import (CropWorkspace, LoadEmptyInstrument, LoadRaw, Plus,
-                              DeleteWorkspace)
+import mantid.simpleapi as ms
 
 import copy
 import numpy as np
@@ -32,6 +33,7 @@ IP_HEADERS = {5:"spectrum,theta,t0,-,R", 6:"spectrum,-,theta,t0,-,R"}
 # Child Algorithm logging
 _LOGGING_ = False
 
+#pylint: disable=too-many-instance-attributes
 class LoadVesuvio(PythonAlgorithm):
 
     _ws_index = None
@@ -118,6 +120,7 @@ class LoadVesuvio(PythonAlgorithm):
                              doc="The name of the output workspace.")
 
 #----------------------------------------------------------------------------------------
+
     def PyExec(self):
         self._load_inst_parameters()
         self._retrieve_input()
@@ -181,8 +184,8 @@ class LoadVesuvio(PythonAlgorithm):
             run_str = runs[0]
 
         all_spectra = [item for sublist in self._spectra for item in sublist]
-        LoadRaw(Filename=run_str, OutputWorkspace=SUMMED_WS, SpectrumList=all_spectra,
-                EnableLogging=_LOGGING_)
+        ms.LoadRaw(Filename=run_str, OutputWorkspace=SUMMED_WS, SpectrumList=all_spectra,
+                   EnableLogging=_LOGGING_)
         raw_group = mtd[SUMMED_WS]
         self._nperiods = raw_group.size()
         first_ws = raw_group[0]
@@ -214,10 +217,14 @@ class LoadVesuvio(PythonAlgorithm):
             np.sqrt(dataE, dataE)
             foil_out.setX(ws_index, x_values)
 
+        ip_file = self.getPropertyValue(INST_PAR_PROP)
+        if len(ip_file) > 0:
+            self._load_ip_file(ip_file)
+
         if self._sumspectra:
             self._sum_all_spectra()
 
-        DeleteWorkspace(Workspace=SUMMED_WS)
+        ms.DeleteWorkspace(Workspace=SUMMED_WS)
         self._store_results()
 
 #----------------------------------------------------------------------------------------
@@ -231,7 +238,7 @@ class LoadVesuvio(PythonAlgorithm):
         inst_name = "VESUVIO"
         inst_dir = config.getInstrumentDirectory()
         inst_file = os.path.join(inst_dir, inst_name + "_Definition.xml")
-        __empty_vesuvio_ws = LoadEmptyInstrument(Filename=inst_file, EnableLogging=_LOGGING_)
+        __empty_vesuvio_ws = ms.LoadEmptyInstrument(Filename=inst_file, EnableLogging=_LOGGING_)
         empty_vesuvio = __empty_vesuvio_ws.getInstrument()
 
         def to_int_list(str_param):
@@ -277,9 +284,10 @@ class LoadVesuvio(PythonAlgorithm):
         self._forw_period_sum2 = to_range_tuple(self.forward_period_sum2)
         self._forw_foil_out_norm = to_range_tuple(self.forward_foil_out_norm)
 
-        DeleteWorkspace(__empty_vesuvio_ws,EnableLogging=_LOGGING_)
+        ms.DeleteWorkspace(__empty_vesuvio_ws,EnableLogging=_LOGGING_)
 
 #----------------------------------------------------------------------------------------
+
     def _retrieve_input(self):
         self._diff_opt = self.getProperty(MODE_PROP).value
 
@@ -323,6 +331,7 @@ class LoadVesuvio(PythonAlgorithm):
         self.delta_tmon = (mon_raw_t[1:] - mon_raw_t[:-1])
 
 #----------------------------------------------------------------------------------------
+
     def _load_and_sum_runs(self, spectra):
         """Load the input set of runs & sum them if there
         is more than one.
@@ -342,22 +351,22 @@ class LoadVesuvio(PythonAlgorithm):
             else:
                 out_name, out_mon = SUMMED_WS+'tmp', SUMMED_MON + 'tmp'
             # Load data
-            LoadRaw(Filename=run, SpectrumList=spectra,
-                    OutputWorkspace=out_name, LoadMonitors='Exclude',EnableLogging=_LOGGING_)
-            LoadRaw(Filename=run,SpectrumList=self._mon_spectra,
-                    OutputWorkspace=out_mon,EnableLogging=_LOGGING_)
+            ms.LoadRaw(Filename=run, SpectrumList=spectra,
+                       OutputWorkspace=out_name, LoadMonitors='Exclude',EnableLogging=_LOGGING_)
+            ms.LoadRaw(Filename=run,SpectrumList=self._mon_spectra,
+                       OutputWorkspace=out_mon,EnableLogging=_LOGGING_)
             if index > 0: # sum
-                Plus(LHSWorkspace=SUMMED_WS, RHSWorkspace=out_name,
-                     OutputWorkspace=SUMMED_WS,EnableLogging=_LOGGING_)
-                Plus(LHSWorkspace=SUMMED_MON, RHSWorkspace=out_mon,
-                     OutputWorkspace=SUMMED_MON,EnableLogging=_LOGGING_)
-                DeleteWorkspace(out_name,EnableLogging=_LOGGING_)
-                DeleteWorkspace(out_mon,EnableLogging=_LOGGING_)
+                ms.Plus(LHSWorkspace=SUMMED_WS, RHSWorkspace=out_name,
+                        OutputWorkspace=SUMMED_WS,EnableLogging=_LOGGING_)
+                ms.Plus(LHSWorkspace=SUMMED_MON, RHSWorkspace=out_mon,
+                        OutputWorkspace=SUMMED_MON,EnableLogging=_LOGGING_)
+                ms.DeleteWorkspace(out_name,EnableLogging=_LOGGING_)
+                ms.DeleteWorkspace(out_mon,EnableLogging=_LOGGING_)
 
-        CropWorkspace(Inputworkspace= SUMMED_WS, OutputWorkspace= SUMMED_WS,
-                      XMax=self._tof_max,EnableLogging=_LOGGING_)
-        CropWorkspace(Inputworkspace= SUMMED_MON, OutputWorkspace= SUMMED_MON,
-                      XMax=self._mon_tof_max, EnableLogging=_LOGGING_)
+        ms.CropWorkspace(Inputworkspace= SUMMED_WS, OutputWorkspace= SUMMED_WS,
+                         XMax=self._tof_max,EnableLogging=_LOGGING_)
+        ms.CropWorkspace(Inputworkspace= SUMMED_MON, OutputWorkspace= SUMMED_MON,
+                         XMax=self._mon_tof_max, EnableLogging=_LOGGING_)
         return mtd[SUMMED_WS], mtd[SUMMED_MON]
 
 #----------------------------------------------------------------------------------------
@@ -379,6 +388,7 @@ class LoadVesuvio(PythonAlgorithm):
             runs = [run_str]
 
         return runs
+
 #----------------------------------------------------------------------------------------
 
     def _set_spectra_type(self, spectrum_no):
@@ -403,8 +413,8 @@ class LoadVesuvio(PythonAlgorithm):
             self._period_sum2_start, self._period_sum2_end = self._forw_period_sum2
             self._foil_out_norm_start, self._foil_out_norm_end = self._forw_foil_out_norm
 
-
 #----------------------------------------------------------------------------------------
+
     def _integrate_periods(self):
         """
             Calculates 2 arrays of sums, 1 per period, of the Y values from
@@ -496,6 +506,7 @@ class LoadVesuvio(PythonAlgorithm):
                             foil_thick_periods, mon_thick_periods)
 
 #----------------------------------------------------------------------------------------
+
     def _get_foil_periods(self):
         """
         Return the period numbers (starting from 1) that contribute to the
@@ -528,6 +539,8 @@ class LoadVesuvio(PythonAlgorithm):
         return foil_out_periods, foil_thin_periods, foil_thick_periods
 
 #----------------------------------------------------------------------------------------
+
+    #pylint: disable=too-many-arguments
     def _sum_foils(self, foil_ws, mon_ws, sum_index, foil_periods, mon_periods=None):
         """
         Sums the counts from the given foil periods in the raw data group
@@ -565,6 +578,7 @@ class LoadVesuvio(PythonAlgorithm):
         outY /= self.delta_tmon
 
 #----------------------------------------------------------------------------------------
+
     def _normalise_by_monitor(self):
         """
             Normalises by the monitor counts between mon_norm_start & mon_norm_end
@@ -592,6 +606,8 @@ class LoadVesuvio(PythonAlgorithm):
         if self._nperiods != 2:
             monitor_normalization(self.foil_thick, self.mon_thick)
 
+#----------------------------------------------------------------------------------------
+
     def _normalise_to_foil_out(self):
         """
             Normalises the thin/thick foil counts to the
@@ -608,8 +624,7 @@ class LoadVesuvio(PythonAlgorithm):
             values = foil_ws.dataY(wsindex)
             sum_values = np.sum(values[range_indices])
             if sum_values == 0.0:
-                self.getLogger().warning("No counts in %s foil spectrum %d." % (
-                                          foil_type,self._spectrum_no))
+                self.getLogger().warning("No counts in %s foil spectrum %d." % (foil_type,self._spectrum_no))
                 sum_values = 1.0
             norm_factor = (sum_out/sum_values)
             values *= norm_factor
@@ -619,6 +634,7 @@ class LoadVesuvio(PythonAlgorithm):
         normalise_to_out(self.foil_thin, "thin")
         if self._nperiods != 2:
             normalise_to_out(self.foil_thick, "thick")
+
 #----------------------------------------------------------------------------------------
 
     def _calculate_diffs(self):
@@ -637,6 +653,7 @@ class LoadVesuvio(PythonAlgorithm):
             raise RuntimeError("Unknown difference type requested: %d" % self._diff_opt)
 
         self.foil_out.setX(wsindex, self.pt_times)
+
 #----------------------------------------------------------------------------------------
 
     def _calculate_thin_difference(self, ws_index):
@@ -660,6 +677,7 @@ class LoadVesuvio(PythonAlgorithm):
         np.sqrt((eout**2 + ethin**2), eout) # The second argument makes it happen in place
 
 #----------------------------------------------------------------------------------------
+
     def _calculate_double_difference(self, ws_index):
         """
             Calculates the difference between the foil out, thin & thick foils
@@ -682,6 +700,7 @@ class LoadVesuvio(PythonAlgorithm):
         np.sqrt((one_min_beta*eout)**2 + ethin**2 + (self._beta**2)*ethick**2, eout)
 
 #----------------------------------------------------------------------------------------
+
     def _calculate_thick_difference(self, ws_index):
         """
             Calculates the difference between the foil out & thick foils
@@ -698,6 +717,7 @@ class LoadVesuvio(PythonAlgorithm):
         np.sqrt((eout**2 + ethick**2), eout) # The second argument makes it happen in place
 
 #----------------------------------------------------------------------------------------
+
     def _load_ip_file(self, ip_file):
         """
             If provided, load the instrument parameter file into the result
@@ -753,6 +773,7 @@ class LoadVesuvio(PythonAlgorithm):
         self.foil_out = ws_out
 
 #----------------------------------------------------------------------------------------
+
     def _get_header_format(self, ip_filename):
         """
             Returns the header format to be used for the given
@@ -772,6 +793,7 @@ class LoadVesuvio(PythonAlgorithm):
                              "variants. ncols=%d" % (len(columns)))
 
 #----------------------------------------------------------------------------------------
+
     def _store_results(self):
         """
            Sets the values of the output workspace properties
@@ -783,9 +805,9 @@ class LoadVesuvio(PythonAlgorithm):
             Clean up the raw data files
         """
         if SUMMED_WS in mtd:
-            DeleteWorkspace(SUMMED_WS,EnableLogging=_LOGGING_)
+            ms.DeleteWorkspace(SUMMED_WS,EnableLogging=_LOGGING_)
         if SUMMED_MON in mtd:
-            DeleteWorkspace(SUMMED_MON,EnableLogging=_LOGGING_)
+            ms.DeleteWorkspace(SUMMED_MON,EnableLogging=_LOGGING_)
 
 #########################################################################################
 
@@ -816,6 +838,8 @@ class SpectraToFoilPeriodMap(object):
             raise RuntimeError("Unsupported number of periods given: " + str(nperiods) +
                                ". Supported number of periods=2,3,6,9")
 
+#----------------------------------------------------------------------------------------
+
     def reorder(self, arr):
         """
            Orders the given array by increasing value. At the same time
@@ -831,6 +855,8 @@ class SpectraToFoilPeriodMap(object):
             self._one_to_one[index+1] = int(val)
         return arr
 
+#----------------------------------------------------------------------------------------
+
     def get_foilout_periods(self, spectrum_no):
         """Returns a list of the foil-out periods for the given
         spectrum number. Note that these start from 1 not zero
@@ -839,6 +865,8 @@ class SpectraToFoilPeriodMap(object):
         """
         return self.get_foil_periods(spectrum_no, state=0)
 
+#----------------------------------------------------------------------------------------
+
     def get_foilin_periods(self, spectrum_no):
         """Returns a list of the foil-out periods for the given
         spectrum number. Note that these start from 1 not zero
@@ -846,6 +874,8 @@ class SpectraToFoilPeriodMap(object):
             @returns A list of period numbers for foil out state
         """
         return self.get_foil_periods(spectrum_no, state=1)
+
+#----------------------------------------------------------------------------------------
 
     def get_foil_periods(self, spectrum_no, state):
         """Returns a list of the periods for the given
@@ -869,6 +899,8 @@ class SpectraToFoilPeriodMap(object):
             foil_periods = [1,3,5] if foil_out else [2,4,6]
         return foil_periods
 
+#----------------------------------------------------------------------------------------
+
     def get_indices(self, spectrum_no, foil_state_numbers):
         """
         Returns a tuple of indices that can be used to access the Workspace within
@@ -882,6 +914,8 @@ class SpectraToFoilPeriodMap(object):
         for state in foil_state_numbers:
             indices.append(self.get_index(spectrum_no, state))
         return tuple(indices)
+
+#----------------------------------------------------------------------------------------
 
     def get_index(self, spectrum_no, foil_state_no):
         """Returns an index that can be used to access the Workspace within
@@ -910,10 +944,14 @@ class SpectraToFoilPeriodMap(object):
         foil_period_no = foil_periods[foil_state_no]
         return foil_period_no - 1 # Minus 1 to get to WorkspaceGroup index
 
+#----------------------------------------------------------------------------------------
+
     def _validate_foil_number(self, foil_number):
         if foil_number < 1 or foil_number > 9:
             raise ValueError("Invalid foil state given, expected a number between "
                              "1 and 9. number=%d" % foil_number)
+
+#----------------------------------------------------------------------------------------
 
     def _validate_spectrum_number(self, spectrum_no):
         if spectrum_no < 1 or spectrum_no > 198:

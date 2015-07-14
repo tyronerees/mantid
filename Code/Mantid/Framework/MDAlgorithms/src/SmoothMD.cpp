@@ -117,7 +117,7 @@ SmoothMD::hatSmooth(IMDHistoWorkspace_const_sptr toSmooth,
   uint64_t nPoints = toSmooth->getNPoints();
   Progress progress(this, 0, 1, size_t(double(nPoints) * 1.1));
   // Create the output workspace.
-  IMDHistoWorkspace_sptr outWS = toSmooth->clone();
+  IMDHistoWorkspace_sptr outWS(toSmooth->clone().release());
   progress.reportIncrement(
       size_t(double(nPoints) * 0.1)); // Report ~10% progress
 
@@ -132,6 +132,11 @@ SmoothMD::hatSmooth(IMDHistoWorkspace_const_sptr toSmooth,
     PARALLEL_START_INTERUPT_REGION
     boost::scoped_ptr<MDHistoWorkspaceIterator> iterator(
         dynamic_cast<MDHistoWorkspaceIterator *>(iterators[it]));
+
+    if (!iterator) {
+      throw std::logic_error(
+          "Failed to cast IMDIterator to MDHistoWorkspaceIterator");
+    }
 
     do {
       // Gets all vertex-touching neighbours

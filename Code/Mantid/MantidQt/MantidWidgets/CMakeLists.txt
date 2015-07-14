@@ -6,6 +6,7 @@ set ( SRC_FILES
     src/CheckboxHeader.cpp
     src/DataSelector.cpp
     src/DiagResults.cpp
+    src/ErrorCurve.cpp
     src/FilenameDialogEditor.cpp
     src/FindDialog.cpp
     src/FindReplaceDialog.cpp
@@ -16,6 +17,7 @@ set ( SRC_FILES
     src/HintingLineEdit.cpp
     src/InstrumentSelector.cpp
     src/IndirectInstrumentConfig.cpp
+    src/InputController.cpp
     src/MantidHelpWindow.cpp
     src/MWDiag.cpp
     src/MWRunFiles.cpp
@@ -65,6 +67,7 @@ set ( MOC_FILES
     inc/MantidQtMantidWidgets/CatalogSelector.h
     inc/MantidQtMantidWidgets/InstrumentSelector.h
     inc/MantidQtMantidWidgets/IndirectInstrumentConfig.h
+    inc/MantidQtMantidWidgets/InputController.h
     inc/MantidQtMantidWidgets/MantidHelpWindow.h
     inc/MantidQtMantidWidgets/MessageDisplay.h
     inc/MantidQtMantidWidgets/MultifitSetupDialog.h
@@ -101,6 +104,7 @@ set ( INC_FILES
     ${MOC_FILES}
     inc/MantidQtMantidWidgets/AlgorithmHintStrategy.h
     inc/MantidQtMantidWidgets/CatalogHelper.h
+    inc/MantidQtMantidWidgets/ErrorCurve.h
     inc/MantidQtMantidWidgets/WidgetDllOption.h
     inc/MantidQtMantidWidgets/HintStrategy.h
 )
@@ -145,7 +149,6 @@ set ( ALL_SRC ${SRC_FILES} ${MOCCED_FILES} )
 
 qt4_wrap_ui ( UI_HDRS ${UI_FILES} ) 
 
-find_package ( QScintilla REQUIRED )
 include_directories ( ${QSCINTILLA_INCLUDE_DIR} )
 add_definitions ( -DQSCINTILLA_DLL )     # Will only have an effect on Windows (as is desired)
 
@@ -160,10 +163,15 @@ if (OSX_VERSION VERSION_GREATER 10.8)
   set_target_properties ( MantidWidgets PROPERTIES INSTALL_RPATH "@loader_path/../MacOS")
 endif ()
 
-target_link_libraries ( MantidWidgets MantidQtAPI QtPropertyBrowser 
-    ${QT_LIBRARIES} ${QWT_LIBRARIES} 
-    ${QSCINTILLA_LIBRARIES}
-    )
+target_link_libraries ( MantidWidgets LINK_PRIVATE 
+            MantidQtAPI
+            QtPropertyBrowser
+            ${CORE_MANTIDLIBS}
+            ${QT_LIBRARIES} ${QWT_LIBRARIES}
+            ${QSCINTILLA_LIBRARIES}
+            ${POCO_LIBRARIES}
+            ${Boost_LIBRARIES}
+            )
 
 ###########################################################################
 # Testing

@@ -1,9 +1,9 @@
 #ifndef MANTIDQTCUSTOMINTERFACESIDA_APPLYCORR_H_
 #define MANTIDQTCUSTOMINTERFACESIDA_APPLYCORR_H_
 
-#include "MantidAPI/MatrixWorkspace.h"
+#include "MantidAPI/MatrixWorkspace_fwd.h"
 #include "ui_ApplyCorr.h"
-#include "IDATab.h"
+#include "CorrectionsTab.h"
 
 namespace MantidQt
 {
@@ -11,7 +11,7 @@ namespace CustomInterfaces
 {
 namespace IDA
 {
-  class DLLExport ApplyCorr : public IDATab
+  class DLLExport ApplyCorr : public CorrectionsTab
   {
     Q_OBJECT
 

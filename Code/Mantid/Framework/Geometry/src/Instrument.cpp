@@ -4,7 +4,6 @@
 #include "MantidGeometry/Instrument/ReferenceFrame.h"
 #include "MantidGeometry/Instrument/RectangularDetector.h"
 
-#include <Poco/Path.h>
 #include <queue>
 
 using namespace Mantid::Kernel;
@@ -1060,12 +1059,16 @@ void Instrument::saveNexus(::NeXus::File *file,
 
   // XML contents of instrument, as a NX note
   file->makeGroup("instrument_xml", "NXnote", true);
-  file->writeData("data", getXmlText());
+  const std::string& xmlText = getXmlText();
+  if (xmlText.empty())
+    g_log.warning() << "Saving Instrument with no XML data. Mantid might NOT be"
+                    << " able to re-open the resulting Nexus file. This should"
+                    << " never happen. Please notify the Mantid development"
+                    << " team." << std::endl;
+  file->writeData("data", xmlText);
   file->writeData("type", "text/xml"); // mimetype
   file->writeData("description", "XML contents of the instrument IDF file.");
   file->closeGroup();
-
-  file->writeData("instrument_source", Poco::Path(getFilename()).getFileName());
 
   // Now the parameter map, as a NXnote via its saveNexus method
   if (isParametrized()) {

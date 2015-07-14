@@ -2,9 +2,9 @@
 #define MANTIDQTCUSTOMINTERFACESIDA_IQTFIT_H_
 
 #include "ui_IqtFit.h"
-#include "IDATab.h"
+#include "IndirectDataAnalysisTab.h"
 #include "MantidAPI/CompositeFunction.h"
-#include "MantidAPI/MatrixWorkspace.h"
+#include "MantidAPI/MatrixWorkspace_fwd.h"
 
 namespace Mantid
 {
@@ -21,7 +21,7 @@ namespace CustomInterfaces
 {
 namespace IDA
 {
-  class DLLExport IqtFit : public IDATab
+  class DLLExport IqtFit : public IndirectDataAnalysisTab
   {
     Q_OBJECT
 
@@ -43,12 +43,14 @@ namespace IDA
     void xMinSelected(double val);
     void xMaxSelected(double val);
     void backgroundSelected(double val);
-    void propertyChanged(QtProperty*, double);
+    void propertyChanged(QtProperty *, double);
+    void checkBoxUpdate(QtProperty * prop, bool checked);
     void singleFit();
     void plotGuess(QtProperty*);
     void fitContextMenu(const QPoint &);
     void fixItem();
     void unFixItem();
+    void singleFitComplete(bool error);
 
   private:
     boost::shared_ptr<Mantid::API::CompositeFunction> createFunction(bool tie=false);
@@ -58,6 +60,7 @@ namespace IDA
     void setDefaultParameters(const QString& name);
     QString fitTypeString() const;
     void constrainIntensities(Mantid::API::CompositeFunction_sptr func);
+    QString minimizerString(QString outputName) const;
 
     Ui::IqtFit m_uiForm;
     QtStringPropertyManager* m_stringManager;
@@ -68,6 +71,8 @@ namespace IDA
     Mantid::API::MatrixWorkspace_sptr m_ffOutputWS;
     QString m_ffInputWSName;
     QString m_ties;
+    Mantid::API::IAlgorithm_sptr m_singleFitAlg;
+    QString m_singleFitOutputName;
 
   };
 } // namespace IDA

@@ -195,7 +195,7 @@ Symmetry elements
 
 Sometimes it's easier to describe symmetry in terms of the symmetry element that is associated to an operation. Several notation systems exist for these elements, but Hermann-Mauguin symbols are most commonly used in crystallography. Information on how to read these symbols can be found in ITA. Except identity, inversions and translations, all symmetry elements have a characteristic axis. In case of mirror and glide planes, this axis is perpendicular to the plane.
 
-Section 11.2 in the same book describes how to derive symmetry elements from matrix and vector pairs. The algorithms from that text are implemented in Mantid as well, so after a symmetry operation has been created using the factory, another factory can be used to generate the symmetry element corresponding to the operation. The resulting object can be queried for its Hermann-Mauguin symbol and its axis. For identity, inversion and translation this returns ``[0, 0, 0]``.
+Section 11.2 in the same book describes how to derive symmetry elements from matrix and vector pairs. The algorithms from that text are implemented in Mantid as well, so after a symmetry operation has been created using the factory, another factory can be used to generate the symmetry element corresponding to the operation. The resulting object can be queried for its Hermann-Mauguin symbol, its axis and its rotation sense (only for rotation axes). For identity, inversion and translation this returns ``[0, 0, 0]``.
 
 .. testcode :: ExSymmetryElement
 
@@ -206,6 +206,7 @@ Section 11.2 in the same book describes how to derive symmetry elements from mat
 
     print "The element corresponding to 'x,y,-z' has the following symbol:", element.getHMSymbol()
     print "The mirror plane is perpendicular to:", element.getAxis()
+    print "Sense of rotation (or None):", element.getRotationSense()
     
 In this case, it's a mirror plane perpendicular to the :math:`z`-axis:
     
@@ -213,6 +214,7 @@ In this case, it's a mirror plane perpendicular to the :math:`z`-axis:
 
     The element corresponding to 'x,y,-z' has the following symbol: m
     The mirror plane is perpendicular to: [0,0,1]
+    Sense of rotation (or None): None
     
 Symmetry groups
 ---------------
@@ -255,8 +257,74 @@ As more operations are added to a group, it can be useful to display the group i
       - :math:`2`
       - :math:`\bar{1}`
       - :math:`1`
-      
-Combining the symmetry operations does not result into any new operations, so the group is closed. Each element has an inverse (in this case, each element is its own inverse). :math:` and an identity element exists (all elements in the first row are the same as in the header row).
+
+Combining the symmetry operations does not result into any new operations, so the group is closed. Each element has an inverse (in this case, each element is its own inverse). :math:` and an identity element exists (all elements in the first row are the same as in the header row). Groups are available through the Python interface of Mantid. The following code generates the group in the table above (with the y-axis being characteristic for rotation and mirror symmetry) and checks whether this set of symmetry operations is indeed a Group:
+
+.. testcode:: ExSymmetryGroup
+
+    from mantid.geometry import Group
+
+    group = Group("x,y,z; -x,-y,-z; -x,y,-z; x,-y,z")
+
+    print "Order of group:", group.getOrder()
+    print "Fulfills group axioms:", group.isGroup()
+
+This code confirms what was demonstrated by the group table above, the specified set of symmetry operations fulfills the group axioms:
+
+.. testoutput:: ExSymmetryGroup
+
+    Order of group: 4
+    Fulfills group axioms: True
+
+For more fine-grained information, the four axioms can also be checked separately. Please note that the associativity axiom is always fulfilled due to the way the binary operation for symmetry operations is defined, it's included for completeness reasons. In the next example, the inversion operation is removed and the four axioms are checked:
+
+.. testcode:: ExSymmetryGroupAxioms
+
+    from mantid.geometry import Group, GroupAxiom
+
+    group = Group("x,y,z; -x,y,-z; x,-y,z")
+
+    print "Group axioms fulfilled:"
+    print "  1. Closure:", group.fulfillsAxiom(GroupAxiom.Closure)
+    print "  2. Associativity:", group.fulfillsAxiom(GroupAxiom.Associativity)
+    print "  3. Identity:", group.fulfillsAxiom(GroupAxiom.Identity)
+    print "  4. Inversion:", group.fulfillsAxiom(GroupAxiom.Inversion)
+
+The code reveals that axioms 2 - 4 are fulfilled, but that the group is not closed:
+
+.. testoutput:: ExSymmetryGroupAxioms
+
+    Group axioms fulfilled:
+      1. Closure: False
+      2. Associativity: True
+      3. Identity: True
+      4. Inversion: True
+
+Looking into the group table above shows the reason: The combination of a mirror plane and a two-fold rotation axis implies the the presence of an inversion center. Similarly, the identity can be removed:
+
+.. testcode:: ExSymmetryGroupAxiomsIdentity
+
+    from mantid.geometry import Group, GroupAxiom
+
+    group = Group("-x,-y,-z; -x,y,-z; x,-y,z")
+
+    print "Group axioms fulfilled:"
+    print "  1. Closure:", group.fulfillsAxiom(GroupAxiom.Closure)
+    print "  2. Associativity:", group.fulfillsAxiom(GroupAxiom.Associativity)
+    print "  3. Identity:", group.fulfillsAxiom(GroupAxiom.Identity)
+    print "  4. Inversion:", group.fulfillsAxiom(GroupAxiom.Inversion)
+
+In contrast to removing the inversion, the group now also lacks an identity element:
+
+.. testoutput:: ExSymmetryGroupAxiomsIdentity
+
+    Group axioms fulfilled:
+      1. Closure: False
+      2. Associativity: True
+      3. Identity: False
+      4. Inversion: True
+
+Using these specific checks can be helpful for finding out why a certain set of symmetry operations is not a group.
 
 Some groups are so called cyclic groups, all elements of the group can be expressed as powers of one symmetry operation (which are explained above) from 0 to :math:`k-1`, where `k` is the order of the operation. The group with elements :math:`1` and :math:`2` is an example for such a cyclic group, it can be expressed as :math:`2^0 = 1` and :math:`2^1 = 2`.
 
