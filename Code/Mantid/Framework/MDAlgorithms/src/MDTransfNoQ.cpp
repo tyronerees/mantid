@@ -81,11 +81,7 @@ bool MDTransfNoQ::calcMatrixCoord(const double &X, std::vector<coord_t> &Coord,
   Coord[0] = (coord_t)X;
   return true;
 }
-std::vector<std::pair<double, Kernel::V3D>> MDTransfNoQ::calcMatrixCoordLoop(Kernel::DblMatrix const &UBinv,
-    std::vector<DataObjects::WeightedEventNoTime> &raw_events, size_t i, const std::vector<double> &x) {
-  std::vector<std::pair<double, Kernel::V3D>> qList;
-  return qList;
-}
+
 std::vector<double> MDTransfNoQ::getExtremumPoints(const double xMin,
                                                    const double xMax,
                                                    size_t det_num) const {

@@ -340,66 +340,6 @@ double UnitsConversionHelper::convertUnits(double val) const {
         "updateConversion: unknown type of conversion requested");
   }
 }
-/** do actual unit conversion from  input to oputput data
-@param   unitsTo  -- the unts to be converted to
-@param   i  -- the spectrum number
-@param   val  -- the input value which has to be converted
-@return          the input vector converted into the units requested.
-*/
-std::vector<double> UnitsConversionHelper::convertUnitsLoop(const std::string &unitsTo, size_t i, std::vector<DataObjects::WeightedEventNoTime> &raw_events) const {
-
-  Kernel::Unit_sptr thread_TargetUnit = Kernel::UnitFactory::Instance().create(unitsTo);
-  Kernel::Unit_sptr thread_SourceWSUnit = Kernel::UnitFactory::Instance().create("TOF");
-  std::vector<double> momentum;
-  switch (m_UnitCnvrsn) {
-     case (CnvrtToMD::ConvertNo): {
-       for (auto event = raw_events.begin(); event != raw_events.end(); ++event) {
-         double val = event->tof();
-          momentum.push_back( val );
-       }
-       break;
-    }
-     case (CnvrtToMD::ConvertFast): {
-       for (auto event = raw_events.begin(); event != raw_events.end(); ++event) {
-         double val = event->tof();
-         momentum.push_back(  m_Factor * std::pow(val, m_Power) );
-       }
-       break;
-    }
-     case (CnvrtToMD::ConvertFromTOF): {
-        double delta(std::numeric_limits<double>::quiet_NaN());
-        double Efix = m_Efix;
-        if (m_pEfixedArray)
-          Efix = (double)(*(m_pEfixedArray + i));
-        thread_TargetUnit->initialize(m_L1,  (*m_pL2s)[i], (*m_pTwoThetas)[i], m_Emode, Efix, delta);
-        for (auto event = raw_events.begin(); event != raw_events.end(); ++event) {
-          double val = event->tof();
-          momentum.push_back(  thread_TargetUnit->singleFromTOF(val) );
-        }
-        break;
-     }
-     case (CnvrtToMD::ConvertByTOF): {
-        double delta(std::numeric_limits<double>::quiet_NaN());
-        double Efix = m_Efix;
-        if (m_pEfixedArray)
-          Efix = (double)(*(m_pEfixedArray + i));
-
-        thread_TargetUnit->initialize(m_L1,  (*m_pL2s)[i], (*m_pTwoThetas)[i], m_Emode, Efix, delta);
-        thread_SourceWSUnit->initialize(m_L1,  (*m_pL2s)[i], (*m_pTwoThetas)[i], m_Emode, Efix, delta);
-        for (auto event = raw_events.begin(); event != raw_events.end(); ++event) {
-          double val = event->tof();
-          double tof = thread_SourceWSUnit->singleToTOF(val);
-          momentum.push_back(  thread_TargetUnit->singleFromTOF(tof) );
-        }
-        break;
-     }
-     default: {
-        throw std::runtime_error(
-            "updateConversion: unknown type of conversion requested");
-      }
-    }
-  return momentum;
-}
 // copy constructor;
 UnitsConversionHelper::UnitsConversionHelper(
     const UnitsConversionHelper &another) {

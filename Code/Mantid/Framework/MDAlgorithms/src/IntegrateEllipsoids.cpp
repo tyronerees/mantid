@@ -41,23 +41,28 @@ const std::size_t DIMS(3);
  * @param integrator : integrator object on which qlists are accumulated
  * @param prog : progress object
  * @param wksp : input EventWorkspace
- * @param unitConverter : Unit converter
- * @param qConverter : Q converter
  * @param UBinv : inverse of UB matrix
  * @param hkl_integ ; boolean for integrating in HKL space
  */
 void IntegrateEllipsoids::qListFromEventWS(Integrate3DEvents &integrator, Progress &prog,
                       EventWorkspace_sptr &wksp,
-                      UnitsConversionHelper &unitConverter,
-                      MDTransf_sptr &qConverter, DblMatrix const &UBinv, bool hkl_integ) {
+                      DblMatrix const &UBinv, bool hkl_integ) {
   // loop through the eventlists
 
   int numSpectra = static_cast<int>(wksp->getNumberHistograms());
-  //PARALLEL_FOR1(wksp)
+  PARALLEL_FOR1(wksp)
   for (int i = 0; i < numSpectra; ++i) {
-    //PARALLEL_START_INTERUPT_REGION
+    PARALLEL_START_INTERUPT_REGION
 
-    //std::vector<double> buffer(DIMS);
+    // units conversion helper
+    UnitsConversionHelper unitConverter;
+    unitConverter.initialize(m_targWSDescr, "Momentum");
+
+    // initialize the MD coordinates conversion class
+    MDTransfQ3D qConverter;
+    qConverter.initialize(m_targWSDescr);
+
+    std::vector<double> buffer(DIMS);
     // get a reference to the event list
     EventList &events = wksp->getEventList(i);
 
@@ -70,38 +75,34 @@ void IntegrateEllipsoids::qListFromEventWS(Integrate3DEvents &integrator, Progre
     }
 
     // update which pixel is being converted
-    //std::vector<Mantid::coord_t> locCoord(DIMS, 0.);
-    //unitConverter.updateConversion(i);
-    //qConverter->calcYDepCoordinates(locCoord, i);
+    std::vector<Mantid::coord_t> locCoord(DIMS, 0.);
+    unitConverter.updateConversion(i);
+    qConverter.calcYDepCoordinates(locCoord, i);
 
     // loop over the events
-    //double signal(1.);  // ignorable garbage
-    //double errorSq(1.); // ignorable garbage
-    std::vector<WeightedEventNoTime> &raw_events =
+    double signal(1.);  // ignorable garbage
+    double errorSq(1.); // ignorable garbage
+    const std::vector<WeightedEventNoTime> &raw_events =
         events.getWeightedEventsNoTime();
-    std::vector<double> momentum = unitConverter.convertUnitsLoop("Momentum", i, raw_events);
-    std::vector<std::pair<double, V3D>> qList = qConverter->calcMatrixCoordLoop(UBinv, raw_events, i, momentum);
-    //std::vector<std::pair<double, V3D>> qList;
-    //int i=0;
-    //for (auto event = raw_events.begin(); event != raw_events.end(); ++event) {
-      //double val = unitConverter.convertUnits(event->tof());
-      //qConverter->calcMatrixCoord(momentum[i], locCoord, signal, errorSq);
-      //i++;
-      //for (size_t dim = 0; dim < DIMS; ++dim) {
-        //buffer[dim] = locCoord[dim];
-      //}
-     //V3D qVec(buffer[0], buffer[1], buffer[2]);
-      //if (hkl_integ) qVec = UBinv * qVec;
-      //qList.push_back(std::make_pair(event->m_weight, qVec));
-    //} // end of loop over events in list
-    //PARALLEL_CRITICAL(addEvents){
+    std::vector<std::pair<double, V3D>> qList;
+    for (auto event = raw_events.begin(); event != raw_events.end(); ++event) {
+      double val = unitConverter.convertUnits(event->tof());
+      qConverter.calcMatrixCoord(val, locCoord, signal, errorSq);
+      for (size_t dim = 0; dim < DIMS; ++dim) {
+        buffer[dim] = locCoord[dim];
+      }
+      V3D qVec(buffer[0], buffer[1], buffer[2]);
+      if (hkl_integ) qVec = UBinv * qVec;
+      qList.push_back(std::make_pair(event->m_weight, qVec));
+    } // end of loop over events in list
+    PARALLEL_CRITICAL(addEvents){
       integrator.addEvents(qList, hkl_integ);
-    //}
+    }
 
     prog.report();
-    //PARALLEL_END_INTERUPT_REGION
+    PARALLEL_END_INTERUPT_REGION
   } // end of loop over spectra
-  //PARALLEL_CHECK_INTERUPT_REGION
+  PARALLEL_CHECK_INTERUPT_REGION
 }
 
 /**
@@ -110,23 +111,28 @@ void IntegrateEllipsoids::qListFromEventWS(Integrate3DEvents &integrator, Progre
  * @param integrator : itegrator object on which qlists are accumulated
  * @param prog : progress object
  * @param wksp : input Workspace2D
- * @param unitConverter : Unit converter
- * @param qConverter : Q converter
  * @param UBinv : inverse of UB matrix
  * @param hkl_integ ; boolean for integrating in HKL space
  */
 void IntegrateEllipsoids::qListFromHistoWS(Integrate3DEvents &integrator, Progress &prog,
                       Workspace2D_sptr &wksp,
-                      UnitsConversionHelper &unitConverter,
-                      MDTransf_sptr &qConverter, DblMatrix const &UBinv, bool hkl_integ) {
+                      DblMatrix const &UBinv, bool hkl_integ) {
 
   // loop through the eventlists
 
   int numSpectra = static_cast<int>(wksp->getNumberHistograms());
   const bool histogramForm = wksp->isHistogramData();
-  //PARALLEL_FOR1(wksp)
+  PARALLEL_FOR1(wksp)
   for (int i = 0; i < numSpectra; ++i) {
-    //PARALLEL_START_INTERUPT_REGION
+    PARALLEL_START_INTERUPT_REGION
+
+    // units conversion helper
+    UnitsConversionHelper unitConverter;
+    unitConverter.initialize(m_targWSDescr, "Momentum");
+
+    // initialize the MD coordinates conversion class
+    MDTransfQ3D qConverter;
+    qConverter.initialize(m_targWSDescr);
 
     std::vector<double> buffer(DIMS);
     // get tof and counts
@@ -136,7 +142,7 @@ void IntegrateEllipsoids::qListFromHistoWS(Integrate3DEvents &integrator, Progre
     // update which pixel is being converted
     std::vector<Mantid::coord_t> locCoord(DIMS, 0.);
     unitConverter.updateConversion(i);
-    qConverter->calcYDepCoordinates(locCoord, i);
+    qConverter.calcYDepCoordinates(locCoord, i);
 
     // loop over the events
     double signal(1.);  // ignorable garbage
@@ -156,7 +162,7 @@ void IntegrateEllipsoids::qListFromHistoWS(Integrate3DEvents &integrator, Progre
         }
 
         double val = unitConverter.convertUnits(tof);
-        qConverter->calcMatrixCoord(val, locCoord, signal, errorSq);
+        qConverter.calcMatrixCoord(val, locCoord, signal, errorSq);
         for (size_t dim = 0; dim < DIMS; ++dim) {
           buffer[dim] = locCoord[dim]; // TODO. Looks un-necessary to me. Can't
                                        // we just add localCoord directly to
@@ -170,13 +176,13 @@ void IntegrateEllipsoids::qListFromHistoWS(Integrate3DEvents &integrator, Progre
         qList.push_back(std::make_pair(yVal, qVec));
       }
     }
-    //PARALLEL_CRITICAL(addHisto) {
+    PARALLEL_CRITICAL(addHisto) {
       integrator.addEvents(qList, hkl_integ);
-    //}
+    }
     prog.report();
-    //PARALLEL_END_INTERUPT_REGION
+    PARALLEL_END_INTERUPT_REGION
   } // end of loop over spectra
-  //PARALLEL_CHECK_INTERUPT_REGION
+  PARALLEL_CHECK_INTERUPT_REGION
 }
 
 /** NOTE: This has been adapted from the SaveIsawQvector algorithm.
@@ -342,13 +348,9 @@ void IntegrateEllipsoids::exec() {
   // lab-Q vectors
   Matrix<double> UB(3, 3, false);
   Geometry::IndexingUtils::Optimize_UB(UB, hkl_vectors, peak_q_list);
-  DblMatrix UBinv(3,3,true); //Identity
-  if(hkl_integ)
-  {
-    UBinv = UB;
-    UBinv.Invert();
-    UBinv *= (1.0 / (2.0 * M_PI));
-  }
+  Matrix<double> UBinv(UB);
+  UBinv.Invert();
+  UBinv *= (1.0 / (2.0 * M_PI));
 
   std::vector<double> PeakRadiusVector(n_peaks, peak_radius);
   std::vector<double> BackgroundInnerRadiusVector(n_peaks, back_inner_radius);
@@ -375,25 +377,16 @@ void IntegrateEllipsoids::exec() {
   // set up a descripter of where we are going
   this->initTargetWSDescr(wksp);
 
-  // units conversion helper
-  UnitsConversionHelper unitConv;
-  unitConv.initialize(m_targWSDescr, "Momentum");
-
-  // initialize the MD coordinates conversion class
-  MDTransf_sptr qConverter =
-  MDTransfFactory::Instance().create(m_targWSDescr.AlgID);
-  qConverter->initialize(m_targWSDescr);
-
   // set up the progress bar
   const size_t numSpectra = wksp->getNumberHistograms();
   Progress prog(this, 0.5, 1.0, numSpectra);
 
   if (eventWS) {
     // process as EventWorkspace
-    qListFromEventWS(integrator, prog, eventWS, unitConv, qConverter, UBinv, hkl_integ);
+    qListFromEventWS(integrator, prog, eventWS, UBinv, hkl_integ);
   } else {
     // process as Workspace2D
-    qListFromHistoWS(integrator, prog, histoWS, unitConv, qConverter, UBinv, hkl_integ);
+    qListFromHistoWS(integrator, prog, histoWS, UBinv, hkl_integ);
   }
 
   double inti;
