@@ -85,7 +85,8 @@ public:
   getDefaultDimID(Kernel::DeltaEMode::Type dEmode,
                   API::MatrixWorkspace_const_sptr Sptr =
                       API::MatrixWorkspace_const_sptr()) const;
-
+  // copy constructor
+  MDTransfQ3D(const MDTransfQ3D &another);
 protected:
   // the variable which verifies if Lorentz corrections have to be calculated in
   // Elastic mode;

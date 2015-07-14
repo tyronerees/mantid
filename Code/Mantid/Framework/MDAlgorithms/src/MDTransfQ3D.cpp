@@ -308,7 +308,27 @@ MDTransfQ3D::outputUnitID(Kernel::DeltaEMode::Type dEmode,
   UnitID[2] = kUnits;
   return UnitID;
 }
-
+// copy constructor;
+MDTransfQ3D::MDTransfQ3D(
+    const MDTransfQ3D &another) {
+  m_isLorentzCorrected = another.m_isLorentzCorrected;
+  m_SinThetaSqArray = another.m_SinThetaSqArray;
+  m_SinThetaSq = another.m_SinThetaSq;
+  m_RotMat = another.m_RotMat;
+  m_ex = another.m_ex;
+  m_ey = another.m_ey;
+  m_ez = another.m_ez;
+  m_DetDirecton = another.m_DetDirecton;
+  m_NMatrixDim = another.m_NMatrixDim;
+  m_Emode = another.m_Emode;
+  m_Ki = another.m_Ki;
+  m_Ei = another.m_Ei;
+  m_pEfixedArray = another.m_pEfixedArray;
+  m_pDetMasks = another.m_pDetMasks;
+  m_DimMin = another.m_DimMin;
+  m_DimMax = another.m_DimMax;
+   m_AddDimCoordinates = another.m_AddDimCoordinates;
+}
 /// constructor;
 MDTransfQ3D::MDTransfQ3D()
     : m_isLorentzCorrected(false), m_SinThetaSqArray(NULL), SinThetaSq(),

@@ -9,7 +9,7 @@
 #include "MantidMDAlgorithms/MDTransfInterface.h"
 #include "MantidDataObjects/Workspace2D.h"
 #include "MantidDataObjects/EventWorkspace.h"
-
+#include "MantidMDAlgorithms/MDTransfQ3D.h"
 namespace Mantid {
 namespace MDAlgorithms {
 
@@ -32,9 +32,13 @@ private:
   void exec();
   void qListFromEventWS(Integrate3DEvents &integrator, API::Progress &prog,
                         DataObjects::EventWorkspace_sptr &wksp,
+                        UnitsConversionHelper &unitConverter,
+                        MDTransf_sptr &qConverter,
                         Kernel::DblMatrix const &UBinv, bool hkl_integ);
   void qListFromHistoWS(Integrate3DEvents &integrator, API::Progress &prog,
                         DataObjects::Workspace2D_sptr &wksp,
+                        UnitsConversionHelper &unitConverter,
+                        MDTransf_sptr &qConverter,
                         Kernel::DblMatrix const &UBinv, bool hkl_integ);
 
   MDWSDescription m_targWSDescr;
