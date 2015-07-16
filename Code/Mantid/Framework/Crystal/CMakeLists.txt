@@ -5,6 +5,7 @@ set ( SRC_FILES
 	src/CalculatePeaksHKL.cpp
 	src/CalculateUMatrix.cpp
 	src/CentroidPeaks.cpp
+	src/CheckSpaceGroup.cpp
 	src/ClearUB.cpp
 	src/Cluster.cpp
 	src/ClusterRegister.cpp
@@ -77,6 +78,7 @@ set ( INC_FILES
 	inc/MantidCrystal/CalculatePeaksHKL.h
 	inc/MantidCrystal/CalculateUMatrix.h
 	inc/MantidCrystal/CentroidPeaks.h
+	inc/MantidCrystal/CheckSpaceGroup.h
 	inc/MantidCrystal/ClearUB.h
 	inc/MantidCrystal/Cluster.h
 	inc/MantidCrystal/ClusterRegister.h
@@ -149,6 +151,7 @@ set ( TEST_FILES
 	CalculatePeaksHKLTest.h
 	CalculateUMatrixTest.h
 	CentroidPeaksTest.h
+	CheckSpaceGroupTest.h
 	ClearUBTest.h
 	ClusterRegisterTest.h
 	ClusterTest.h

@@ -365,6 +365,21 @@ public:
       TS_ASSERT_EQUALS(hkls.size(), 44);
   }
 
+  void testTriclinic()
+  {
+      UnitCell cell(2.3, 4.5, 6.1, 91.0, 100.0, 105.0);
+      CompositeBraggScatterer_sptr scatterers = CompositeBraggScatterer::create();
+      scatterers->addScatterer(BraggScattererFactory::Instance().createScatterer("IsotropicAtomBraggScatterer", "Element=Ca;Position=[0,0,0.0];U=0.005"));
+      SpaceGroup_const_sptr sgTric = SpaceGroupFactory::Instance().createSpaceGroup("P 1");
+
+      CrystalStructure tric(cell, sgTric, scatterers);
+
+      std::vector<V3D> hkls = tric.getUniqueHKLs(0.7, 10.0, CrystalStructure::UseStructureFactor);
+
+      std::cout << "Tric: " << hkls.size() << std::endl;
+
+  }
+
 private:
     UnitCell m_CsCl;
     PointGroup_sptr m_pg;
