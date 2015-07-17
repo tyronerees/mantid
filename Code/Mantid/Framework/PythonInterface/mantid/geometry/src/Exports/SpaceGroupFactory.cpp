@@ -38,6 +38,14 @@ SpaceGroup_sptr createSpaceGroup(SpaceGroupFactoryImpl &self,
   SpaceGroup_const_sptr spaceGroup = self.createSpaceGroup(symbol);
   return boost::const_pointer_cast<SpaceGroup>(spaceGroup);
 }
+
+SpaceGroup_sptr createIsomorphicSpaceGroup(SpaceGroupFactoryImpl &self,
+                                           const Group_sptr &group) {
+  SpaceGroup_const_sptr spaceGroup = self.createIsomorphicSpaceGroup(
+      boost::const_pointer_cast<const Group>(group));
+
+  return boost::const_pointer_cast<SpaceGroup>(spaceGroup);
+}
 }
 
 void export_SpaceGroupFactory() {
@@ -49,6 +57,8 @@ void export_SpaceGroupFactory() {
       .def("isSubscribedNumber", &isSubscribedNumber,
            "Returns true if a space group with the given number is subscribed.")
       .def("createSpaceGroup", &createSpaceGroup, "Creates a space group.")
+      .def("createIsomorphicSpaceGroup", &createIsomorphicSpaceGroup,
+           "Creates a space group that is isomorphic to the specified group.")
       .def("getAllSpaceGroupSymbols", &allSpaceGroupSymbols,
            "Returns all subscribed space group symbols.")
       .def("getAllSpaceGroupNumbers",

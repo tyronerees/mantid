@@ -18,6 +18,11 @@ PointGroup_sptr getPointGroupFromSpaceGroupSymbol(PointGroupFactoryImpl &self,
   return self.createPointGroupFromSpaceGroup(
       SpaceGroupFactory::Instance().createSpaceGroup(group));
 }
+
+PointGroup_sptr createIsomorphicPointGroup(PointGroupFactoryImpl &self,
+                                           const Group_sptr &group) {
+  return self.createIsomorphicPointGroup(group);
+}
 }
 
 void export_PointGroupFactory() {
@@ -34,6 +39,8 @@ void export_PointGroupFactory() {
       .def("createPointGroupFromSpaceGroupSymbol",
            &getPointGroupFromSpaceGroupSymbol,
            "Creates a point group directly from the space group symbol.")
+      .def("createIsomorphicPointGroup", &createIsomorphicPointGroup,
+           "Creates a point group that is ismorphic to the provided group.")
       .def("getAllPointGroupSymbols",
            &PointGroupFactoryImpl::getAllPointGroupSymbols,
            "Returns all registered point group symbols.")

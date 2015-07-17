@@ -324,6 +324,23 @@ The example produces the following output:
 
     Space groups with point group m-3: ['F d -3','F m -3','I a -3','I m -3','P a -3','P m -3','P n -3']
 
+Some space groups and their point group have a special relationshop, they are isomorphic. The space group that is isomorphic to a point group (or any other group, for example a site symmetry group from the above example) can be obtained through the space group factory:
+
+.. testcode:: ExIsomorphicSpaceGroup
+
+    from mantid.geometry import PointGroupFactory, SpaceGroupFactory
+
+    pg = PointGroupFactory.createPointGroup("m-3")
+    sg = SpaceGroupFactory.createIsomorphicSpaceGroup(pg)
+
+    print "Space group", sg.getHMSymbol(), "is isomorphic to point group m-3."
+
+The short script produces the following output:
+
+.. testoutput:: ExIsomorphicSpaceGroup
+
+    Space group P m -3 is isomorphic to point group m-3.
+
 While PointGroup offers useful methods to handle reflections, some information can only be obtained from the space group. The presence of translational symmetry causes the contributions from symmetrically equivalent atoms to the structure factor of certain reflections to cancel out completely so that it can not be observed. These systematically absent reflections are characteristic for each space group, a fact that can be used to determine the space group from measured reflection intensities. The following script shows how to check a few reflections:
 
 .. testcode:: ExSpaceGroupReflectionIsAllowed
