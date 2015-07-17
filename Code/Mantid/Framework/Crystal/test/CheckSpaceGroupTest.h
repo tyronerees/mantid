@@ -78,6 +78,8 @@ private:
 
     IPeaksWorkspace_sptr peaks = getPeaksWorkspace(cs, sgNoTranlsations, 0.7);
 
+    AnalysisDataService::Instance();
+
     CheckSpaceGroup alg;
     TS_ASSERT_THROWS_NOTHING(alg.initialize());
     TS_ASSERT(alg.isInitialized());
@@ -87,18 +89,29 @@ private:
      */
     TS_ASSERT_THROWS_NOTHING(alg.setProperty("InputWorkspace", peaks));
     TS_ASSERT_THROWS_NOTHING(alg.setProperty("SpaceGroup", spaceGroup));
+    TS_ASSERT_THROWS_NOTHING(alg.setProperty("AbsenceViolationsWorkspace",
+                                             "test_absence_violations_same"))
+    TS_ASSERT_THROWS_NOTHING(alg.setProperty("AdditionalAbsencesWorkspace",
+                                             "test_additional_absences_same"))
 
     TS_ASSERT_THROWS_NOTHING(alg.execute());
 
-    int absenceViolations = alg.getProperty("SystematicAbsenceViolations");
-    int additionalAbsences = alg.getProperty("AdditionalAbsences");
+    IPeaksWorkspace_sptr absenceViolations =
+        AnalysisDataService::Instance().retrieveWS<IPeaksWorkspace>(
+            "test_absence_violations_same");
+    IPeaksWorkspace_sptr additionalAbsences =
+        AnalysisDataService::Instance().retrieveWS<IPeaksWorkspace>(
+            "test_additional_absences_same");
+
+    TS_ASSERT(absenceViolations);
+    TS_ASSERT(additionalAbsences);
 
     TSM_ASSERT_EQUALS("Space group '" + spaceGroup +
                           "': Number of absence violations is not 0.",
-                      absenceViolations, 0);
+                      absenceViolations->getNumberPeaks(), 0);
     TSM_ASSERT_EQUALS("Space group '" + spaceGroup +
                           "': Number of additional absences is not 0.",
-                      additionalAbsences, 0);
+                      additionalAbsences->getNumberPeaks(), 0);
 
     /* When the space group without translations is used, there are additional
      * absences, but since no translations means no systematic absences, there
@@ -106,41 +119,57 @@ private:
      */
     alg.setProperty("InputWorkspace", peaks);
     alg.setProperty("SpaceGroup", spaceGroupNoTranslations);
+    alg.setProperty("AbsenceViolationsWorkspace",
+                    "test_absence_violations_no_translations");
+    alg.setProperty("AdditionalAbsencesWorkspace",
+                    "test_additional_absences_no_translations");
     alg.execute();
 
-    absenceViolations = alg.getProperty("SystematicAbsenceViolations");
-    additionalAbsences = alg.getProperty("AdditionalAbsences");
+    absenceViolations =
+        AnalysisDataService::Instance().retrieveWS<IPeaksWorkspace>(
+            "test_absence_violations_no_translations");
+    additionalAbsences =
+        AnalysisDataService::Instance().retrieveWS<IPeaksWorkspace>(
+            "test_additional_absences_no_translations");
 
     TSM_ASSERT_EQUALS("Space group '" + spaceGroup + "', no translations '" +
                           spaceGroupNoTranslations +
                           "': Number of absence violations is not 0.",
-                      absenceViolations, 0);
+                      absenceViolations->getNumberPeaks(), 0);
     TSM_ASSERT_LESS_THAN(
         "Space group '" + spaceGroup + "', no translations '" +
             spaceGroupNoTranslations +
             "': Number of additional absences is 0, but should be larger.",
-        0, additionalAbsences);
+        0, additionalAbsences->getNumberPeaks());
 
     /* Using a space group with extra translations means that it has more
      * systematic absences and the structure factors violate some of them.
      */
     alg.setProperty("InputWorkspace", peaks);
     alg.setProperty("SpaceGroup", spaceGroupExtraTranslations);
+    alg.setProperty("AbsenceViolationsWorkspace",
+                    "test_absence_violations_extra_translations");
+    alg.setProperty("AdditionalAbsencesWorkspace",
+                    "test_additional_absences_extra_translations");
     alg.execute();
 
-    absenceViolations = alg.getProperty("SystematicAbsenceViolations");
-    additionalAbsences = alg.getProperty("AdditionalAbsences");
+    absenceViolations =
+        AnalysisDataService::Instance().retrieveWS<IPeaksWorkspace>(
+            "test_absence_violations_extra_translations");
+    additionalAbsences =
+        AnalysisDataService::Instance().retrieveWS<IPeaksWorkspace>(
+            "test_additional_absences_extra_translations");
 
     TSM_ASSERT_LESS_THAN(
         "Space group '" + spaceGroup + "', extra translations '" +
             spaceGroupExtraTranslations +
             "': Number of absence violations is 0, but should be larger.",
-        0, absenceViolations);
+        0, absenceViolations->getNumberPeaks());
 
     TSM_ASSERT_EQUALS("Space group '" + spaceGroup + "', extra translations '" +
                           spaceGroupExtraTranslations +
                           "': Number of additional absences is not 0.",
-                      additionalAbsences, 0);
+                      additionalAbsences->getNumberPeaks(), 0);
   }
 
   IPeaksWorkspace_sptr

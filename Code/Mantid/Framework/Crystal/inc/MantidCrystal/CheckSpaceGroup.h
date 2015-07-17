@@ -29,10 +29,8 @@ namespace Crystal {
   not observed, it's an "additional absence", which may indicate the presence
   of an atom on a position in the unit cell with high symmetry.
 
-  By default, the algorithm counts the number of absence violations and
-  additional absences and returns them in their respective output properties.
-  Optionally, the peaks in question can be made available in their own
-  PeaksWorkspaces so that they may be inspected more closely.
+  The peaks in question are made available in their own PeaksWorkspaces so that
+  they may be inspected more closely.
 
     @author Michael Wedel
     @date 14/07/2015

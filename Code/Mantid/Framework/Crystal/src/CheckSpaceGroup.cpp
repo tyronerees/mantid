@@ -14,11 +14,13 @@ using namespace Kernel;
 
 CheckSpaceGroup::CheckSpaceGroup() {}
 
+/// Returns true if the signal/noise ratio of the peak is above the threshold.
 bool CheckSpaceGroup::isPeakObserved(const IPeak &peak,
                                      double obsThreshold) const {
   return peak.getIntensity() / peak.getSigmaIntensity() >= obsThreshold;
 }
 
+/// Returns true if the rounded HKL is allowed in the supplied space group.
 bool
 CheckSpaceGroup::isPeakAllowed(const IPeak &peak,
                                const SpaceGroup_const_sptr &spaceGroup) const {
@@ -31,7 +33,7 @@ CheckSpaceGroup::isPeakAllowed(const IPeak &peak,
 void CheckSpaceGroup::init() {
   declareProperty(
       new WorkspaceProperty<IPeaksWorkspace>("InputWorkspace", "",
-                                            Direction::Input),
+                                             Direction::Input),
       "A workspace with indexed and integrated single crystal peaks.");
 
   std::vector<std::string> spaceGroups =
@@ -44,30 +46,33 @@ void CheckSpaceGroup::init() {
                                          "intensity is larger than "
                                          "SigmaMultiples times its error.");
 
-  declareProperty("SystematicAbsenceViolations", 0,
+  declareProperty(new WorkspaceProperty<IPeaksWorkspace>(
+                      "AbsenceViolationsWorkspace", "", Direction::Output),
                   "Number of peaks that should be absent according to space "
-                  "group symmetry but are observed.",
-                  Direction::Output);
+                  "group symmetry but are observed.");
 
-  declareProperty("AdditionalAbsences", 0, "Number of peaks that should be "
-                                           "present according to space group "
-                                           "symmetry but are not observed.",
-                  Direction::Output);
+  declareProperty(
+      new WorkspaceProperty<IPeaksWorkspace>("AdditionalAbsencesWorkspace", "",
+                                             Direction::Output),
+      "Number of peaks that should be present according to space group "
+      "symmetry but are not observed.");
 }
 
 void CheckSpaceGroup::exec() {
   IPeaksWorkspace_sptr peaks = getProperty("InputWorkspace");
-  double obsThreshold = getProperty("SigmaMultiples");
-  SpaceGroup_const_sptr sg =
-      SpaceGroupFactory::Instance().createSpaceGroup(getProperty("SpaceGroup"));
-
   int peakCount = peaks->getNumberPeaks();
 
-  std::vector<IPeak *> absenceViolations;
-  absenceViolations.reserve(static_cast<size_t>(peakCount));
+  SpaceGroup_const_sptr sg =
+      SpaceGroupFactory::Instance().createSpaceGroup(getProperty("SpaceGroup"));
+  double obsThreshold = getProperty("SigmaMultiples");
 
-  std::vector<IPeak *> additionalAbsences;
-  additionalAbsences.reserve(static_cast<size_t>(peakCount));
+  IPeaksWorkspace_sptr absenceViolations =
+      WorkspaceFactory::Instance().createPeaks();
+  absenceViolations->copyExperimentInfoFrom(peaks.get());
+
+  IPeaksWorkspace_sptr additionalAbsences =
+      WorkspaceFactory::Instance().createPeaks();
+  additionalAbsences->copyExperimentInfoFrom(peaks.get());
 
   for (int i = 0; i < peakCount; ++i) {
     IPeak *peak = peaks->getPeakPtr(i);
@@ -76,16 +81,14 @@ void CheckSpaceGroup::exec() {
     bool isAllowed = isPeakAllowed(*peak, sg);
 
     if (isObserved && !isAllowed) {
-      absenceViolations.push_back(peak);
+      absenceViolations->addPeak(*peak);
     } else if (!isObserved && isAllowed) {
-      additionalAbsences.push_back(peak);
+      additionalAbsences->addPeak(*peak);
     }
   }
 
-  setProperty("SystematicAbsenceViolations",
-              static_cast<int>(absenceViolations.size()));
-  setProperty("AdditionalAbsences",
-              static_cast<int>(additionalAbsences.size()));
+  setProperty("AbsenceViolationsWorkspace", absenceViolations);
+  setProperty("AdditionalAbsencesWorkspace", additionalAbsences);
 }
 
 } // namespace Crystal
