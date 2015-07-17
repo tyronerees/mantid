@@ -17,7 +17,7 @@ CheckSpaceGroup::CheckSpaceGroup() {}
 /// Returns true if the signal/noise ratio of the peak is above the threshold.
 bool CheckSpaceGroup::isPeakObserved(const IPeak &peak,
                                      double obsThreshold) const {
-  return peak.getIntensity() / peak.getSigmaIntensity() >= obsThreshold;
+  return peak.getIntensity() >= peak.getSigmaIntensity() * obsThreshold;
 }
 
 /// Returns true if the rounded HKL is allowed in the supplied space group.
@@ -30,6 +30,7 @@ CheckSpaceGroup::isPeakAllowed(const IPeak &peak,
   return spaceGroup->isAllowedReflection(hkl);
 }
 
+/// Initialization
 void CheckSpaceGroup::init() {
   declareProperty(
       new WorkspaceProperty<IPeaksWorkspace>("InputWorkspace", "",
@@ -42,9 +43,9 @@ void CheckSpaceGroup::init() {
                   boost::make_shared<StringListValidator>(spaceGroups),
                   "Space group to check peaks against.");
 
-  declareProperty("SigmaMultiples", 3.0, "A peak is considered observed if its "
-                                         "intensity is larger than "
-                                         "SigmaMultiples times its error.");
+  declareProperty("ObservedThreshold", 3.0, "A peak is considered observed if "
+                                            "its I >= ObservedThreshold * "
+                                            "sigma(I).");
 
   declareProperty(new WorkspaceProperty<IPeaksWorkspace>(
                       "AbsenceViolationsWorkspace", "", Direction::Output),
@@ -64,7 +65,7 @@ void CheckSpaceGroup::exec() {
 
   SpaceGroup_const_sptr sg =
       SpaceGroupFactory::Instance().createSpaceGroup(getProperty("SpaceGroup"));
-  double obsThreshold = getProperty("SigmaMultiples");
+  double obsThreshold = getProperty("ObservedThreshold");
 
   IPeaksWorkspace_sptr absenceViolations =
       WorkspaceFactory::Instance().createPeaks();
