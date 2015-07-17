@@ -58,6 +58,9 @@ PointGroup_sptr PointGroupFactoryImpl::createPointGroupFromSpaceGroup(
  *
  * If unsuccessfull, the method throws an invalid_argument exception.
  *
+ * There is an analoguous method in SpaceGroupFactory that creates a space
+ * group that is isomorphic to a specified group.
+ *
  * @param group :: A group with a certain set of symmetry operations.
  * @return Point group that is isomorphic to the supplied group.
  */

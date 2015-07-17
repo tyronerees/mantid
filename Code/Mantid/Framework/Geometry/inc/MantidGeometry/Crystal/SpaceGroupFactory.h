@@ -134,6 +134,8 @@ public:
   virtual ~SpaceGroupFactoryImpl() {}
 
   SpaceGroup_const_sptr createSpaceGroup(const std::string &hmSymbol);
+  SpaceGroup_const_sptr
+  createIsomorphicSpaceGroup(const Group_const_sptr &group);
 
   bool isSubscribed(const std::string &hmSymbol) const;
   bool isSubscribed(size_t number) const;

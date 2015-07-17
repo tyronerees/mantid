@@ -131,6 +131,35 @@ SpaceGroupFactoryImpl::createSpaceGroup(const std::string &hmSymbol) {
   return constructFromPrototype(getPrototype(hmSymbol));
 }
 
+/**
+ * Tries to return a space group that is isomorphic to the supplied group
+ *
+ * This method tries to find a space group that is isomorphic to the supplied
+ * group, i.e. that has the same set of symmetry operations and returns it.
+ *
+ * If unsuccessfull, the method throws an invalid_argument exception.
+ *
+ * There is an analoguous method in PointGroupFactoryImpl that creates a point
+ * group that is isomorphic to a specified group.
+ *
+ * @param group :: A group with a certain set of symmetry operations.
+ * @return Space group that is isomorphic to the supplied group.
+ */
+SpaceGroup_const_sptr SpaceGroupFactoryImpl::createIsomorphicSpaceGroup(
+    const Group_const_sptr &group) {
+  for (auto it = m_generatorMap.begin(); it != m_generatorMap.end(); ++it) {
+    SpaceGroup_const_sptr spaceGroup = getPrototype(it->first);
+
+    // Make sure to use comparison operator== of Group that compares sym ops.
+    if (*group == *spaceGroup) {
+      return spaceGroup;
+    }
+  }
+
+  throw std::invalid_argument(
+      "No space group registered that is isomorphic to the supplied group.");
+}
+
 /// Returns true if space group with given symbol is subscribed.
 bool SpaceGroupFactoryImpl::isSubscribed(const std::string &hmSymbol) const {
   return m_generatorMap.find(hmSymbol) != m_generatorMap.end();
