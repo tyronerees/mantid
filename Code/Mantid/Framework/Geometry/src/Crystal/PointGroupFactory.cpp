@@ -50,6 +50,32 @@ PointGroup_sptr PointGroupFactoryImpl::createPointGroupFromSpaceGroup(
   }
 }
 
+/**
+ * Tries to return a point group that is isomorphic to the supplied group
+ *
+ * This method tries to find a point group that is isomorphic to the supplied
+ * group, i.e. that has the same set of symmetry operations and returns it.
+ *
+ * If unsuccessfull, the method throws an invalid_argument exception.
+ *
+ * @param group :: A group with a certain set of symmetry operations.
+ * @return Point group that is isomorphic to the supplied group.
+ */
+PointGroup_sptr PointGroupFactoryImpl::createIsomorphicPointGroup(
+    const Group_const_sptr &group) {
+  for (auto it = m_generatorMap.begin(); it != m_generatorMap.end(); ++it) {
+    PointGroup_sptr pointGroup = getPrototype(it->first);
+
+    // Make sure to use comparison operator== of Group that compares sym ops.
+    if (*group == *pointGroup) {
+      return pointGroup;
+    }
+  }
+
+  throw std::invalid_argument(
+      "No point group registered that is isomorphic to the supplied group.");
+}
+
 bool PointGroupFactoryImpl::isSubscribed(const std::string &hmSymbol) const {
   return m_generatorMap.find(hmSymbol) != m_generatorMap.end();
 }
@@ -105,7 +131,8 @@ PointGroupFactoryImpl::subscribePointGroup(const std::string &hmSymbol,
  * space groups. Point groups don't have translational symmetry, which
  * is reflected in the symbol as well. To get the symbol of the point group
  * a certain space group belongs to, some simple string replacements are enough:
- *  1. Replace screw axes ( (2|3|4|6)[1|2|3|4|5] ) with rotations (first number).
+ *  1. Replace screw axes ( (2|3|4|6)[1|2|3|4|5] ) with rotations (first
+ *number).
  *  2. Replace glide planes (a|b|c|d|e|g|n) with mirror planes (m)
  *  3. Remove centering symbol.
  *  4. Remove origin choice ( :(1|2) )

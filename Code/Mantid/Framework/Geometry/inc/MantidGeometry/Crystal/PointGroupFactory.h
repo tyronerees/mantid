@@ -86,6 +86,8 @@ public:
   PointGroup_sptr
   createPointGroupFromSpaceGroup(const SpaceGroup &spaceGroup);
 
+  PointGroup_sptr createIsomorphicPointGroup(const Group_const_sptr &group);
+
   bool isSubscribed(const std::string &hmSymbol) const;
 
   std::vector<std::string> getAllPointGroupSymbols() const;

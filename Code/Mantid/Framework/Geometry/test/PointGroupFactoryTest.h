@@ -98,6 +98,23 @@ public:
         PointGroupFactory::Instance().createPointGroup("monoclinicA"));
   }
 
+  void testCreateIsomorphicPointGroup() {
+    Group_const_sptr group = GroupFactory::create<Group>("x,y,-z; x,y,z");
+
+    // This should create the fake point group "monoclinicA"
+    PointGroup_sptr pointGroup =
+        PointGroupFactory::Instance().createIsomorphicPointGroup(group);
+
+    TS_ASSERT(pointGroup);
+    TS_ASSERT_EQUALS(pointGroup->getSymbol(), "monoclinicA");
+
+    // The next group does not exist - an exception is thrown
+    Group_const_sptr invalid = GroupFactory::create<Group>("x,y,-z");
+    TS_ASSERT_THROWS(
+        PointGroupFactory::Instance().createIsomorphicPointGroup(invalid),
+        std::invalid_argument);
+  }
+
   void testPointGroupSymbolCreation() {
     TS_ASSERT_THROWS_NOTHING(checkSpaceGroupSymbol("P -1"));
     TS_ASSERT_THROWS_NOTHING(checkSpaceGroupSymbol("P 1 2/m 1"));
