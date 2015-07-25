@@ -1,6 +1,7 @@
 #include "MantidCrystal/CheckSpaceGroup.h"
 #include "MantidAPI/IPeaksWorkspace.h"
 #include "MantidGeometry/Crystal/SpaceGroupFactory.h"
+#include "MantidKernel/FloatingPointComparison.h"
 #include "MantidKernel/ListValidator.h"
 
 namespace Mantid {
@@ -17,16 +18,16 @@ CheckSpaceGroup::CheckSpaceGroup() {}
 /// Returns true if the signal/noise ratio of the peak is above the threshold.
 bool CheckSpaceGroup::isPeakObserved(const IPeak &peak,
                                      double obsThreshold) const {
-  return peak.getIntensity() >= peak.getSigmaIntensity() * obsThreshold;
+  double peakIntensity = peak.getIntensity();
+
+  return peakIntensity > 0 &&
+         peakIntensity >= peak.getSigmaIntensity() * obsThreshold;
 }
 
 /// Returns true if the rounded HKL is allowed in the supplied space group.
 bool
-CheckSpaceGroup::isPeakAllowed(const IPeak &peak,
+CheckSpaceGroup::isPeakAllowed(const V3D &hkl,
                                const SpaceGroup_const_sptr &spaceGroup) const {
-  V3D hkl = peak.getHKL();
-  hkl.round();
-
   return spaceGroup->isAllowedReflection(hkl);
 }
 
@@ -75,16 +76,23 @@ void CheckSpaceGroup::exec() {
       WorkspaceFactory::Instance().createPeaks();
   additionalAbsences->copyExperimentInfoFrom(peaks.get());
 
+  V3D null(0, 0, 0);
+
   for (int i = 0; i < peakCount; ++i) {
     IPeak *peak = peaks->getPeakPtr(i);
 
-    bool isObserved = isPeakObserved(*peak, obsThreshold);
-    bool isAllowed = isPeakAllowed(*peak, sg);
+    V3D hkl = peak->getHKL();
+    hkl.round();
 
-    if (isObserved && !isAllowed) {
-      absenceViolations->addPeak(*peak);
-    } else if (!isObserved && isAllowed) {
-      additionalAbsences->addPeak(*peak);
+    if (hkl != null) {
+      bool isObserved = isPeakObserved(*peak, obsThreshold);
+      bool isAllowed = isPeakAllowed(hkl, sg);
+
+      if (isObserved && !isAllowed) {
+        absenceViolations->addPeak(*peak);
+      } else if (!isObserved && isAllowed) {
+        additionalAbsences->addPeak(*peak);
+      }
     }
   }
 

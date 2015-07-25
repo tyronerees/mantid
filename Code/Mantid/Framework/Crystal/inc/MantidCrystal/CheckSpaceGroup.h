@@ -73,7 +73,7 @@ public:
 
 private:
   bool isPeakObserved(const Geometry::IPeak &peak, double obsThreshold) const;
-  bool isPeakAllowed(const Geometry::IPeak &peak,
+  bool isPeakAllowed(const Kernel::V3D &hkl,
                      const Geometry::SpaceGroup_const_sptr &spaceGroup) const;
 
   void init();
