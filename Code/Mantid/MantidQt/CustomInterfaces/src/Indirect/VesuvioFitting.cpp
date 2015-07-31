@@ -1,31 +1,16 @@
 #include "MantidQtCustomInterfaces/Indirect/VesuvioFitting.h"
 
+namespace MantidQt {
+namespace CustomInterfaces {
+VesuvioFitting::VesuvioFitting(QWidget *parent) : VesuvioTab(parent) {
+  m_uiForm.setupUi(parent);
+}
 
-namespace MantidQt
-{
-  namespace CustomInterfaces
-  {
-    VesuvioFitting::VesuvioFitting(QWidget * parent) :
-      VesuvioTab(parent)
-    {
-      m_uiForm.setupUi(parent);
-    }
+void VesuvioFitting::setup() {}
 
+bool VesuvioFitting::validate() { return false; }
 
-    void VesuvioFitting::setup()
-    {
-    }
+void VesuvioFitting::run() {}
 
-
-    bool VesuvioFitting::validate()
-    {
-      return false;
-    }
-
-
-    void VesuvioFitting::run()
-    {
-    }
-
-  } // namespace CustomInterfaces
+} // namespace CustomInterfaces
 } // namespace MantidQt

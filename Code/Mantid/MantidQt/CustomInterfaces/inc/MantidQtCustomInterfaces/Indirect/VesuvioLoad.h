@@ -9,28 +9,24 @@
 #include <QMap>
 #include <QStringList>
 
-namespace MantidQt
-{
-	namespace CustomInterfaces
-	{
-		class DLLExport VesuvioLoad : public VesuvioTab
-		{
-			Q_OBJECT
+namespace MantidQt {
+namespace CustomInterfaces {
+class DLLExport VesuvioLoad : public VesuvioTab {
+  Q_OBJECT
 
-		public:
-			VesuvioLoad(QWidget * parent = 0);
+public:
+  VesuvioLoad(QWidget *parent = 0);
 
-    protected:
-      void setup();
-			bool validate();
-			void run();
+protected:
+  void setup();
+  bool validate();
+  void run();
 
-		private:
-			/// The UI form
-			Ui::VesuvioLoad m_uiForm;
-
-		};
-	} // namespace CustomInterfaces
+private:
+  /// The UI form
+  Ui::VesuvioLoad m_uiForm;
+};
+} // namespace CustomInterfaces
 } // namespace MantidQt
 
 #endif
