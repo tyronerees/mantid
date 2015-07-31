@@ -121,7 +121,7 @@ boost::shared_ptr<Mantid::Geometry::DetectorGroup> createGroupOfTwoMonitors();
 /** create instrument with cylindrical detectors located in specific angular
  * positions */
 Mantid::Geometry::Instrument_sptr
-createCylInstrumentWithDetInGivenPosisions(const std::vector<double> &L2,
+createCylInstrumentWithDetInGivenPositions(const std::vector<double> &L2,
                                            const std::vector<double> &polar,
                                            const std::vector<double> &azim);
 /**
@@ -145,11 +145,14 @@ createTestInstrumentCylindrical(int num_banks, bool verbose = false,
 /// pixels*pixels in size, a source and spherical sample shape.
 Mantid::Geometry::Instrument_sptr
 createTestInstrumentRectangular(int num_banks, int pixels,
-                                double pixelSpacing = 0.008);
+                                double pixelSpacing = 0.008, double bankDistanceFromSample= 5.0);
 
 Mantid::Geometry::Instrument_sptr
 createTestInstrumentRectangular2(int num_banks, int pixels,
                                  double pixelSpacing = 0.008);
+
+/// Creates a mimimal valid virtual instrument.
+Mantid::Geometry::Instrument_sptr createMinimalInstrument(const Mantid::Kernel::V3D& sourcePos, const Mantid::Kernel::V3D& samplePos, const Mantid::Kernel::V3D& detectorPos );
 }
 
 #endif // COMPONENTCREATIONHELPERS_H_

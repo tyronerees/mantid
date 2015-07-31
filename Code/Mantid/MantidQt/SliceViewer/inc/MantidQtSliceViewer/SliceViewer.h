@@ -6,11 +6,11 @@
 #include "DllOption.h"
 #include "MantidAPI/IMDIterator.h"
 #include "MantidAPI/IMDWorkspace.h"
-#include "MantidAPI/PeakTransformSelector.h"
+#include "MantidGeometry/Crystal/PeakTransformSelector.h"
 #include "MantidGeometry/MDGeometry/MDHistoDimension.h"
 #include "MantidKernel/Logger.h"
 #include "MantidKernel/VMD.h"
-#include "MantidQtAPI/MantidColorMap.h"
+#include "MantidQtAPI/MdSettings.h"
 #include "MantidQtMantidWidgets/SafeQwtPlot.h"
 #include "MantidQtAPI/SyncedCheckboxes.h"
 #include "MantidQtSliceViewer/LineOverlay.h"
@@ -18,16 +18,10 @@
 #include "MantidQtSliceViewer/ZoomablePeaksView.h"
 #include "MantidQtAPI/QwtRasterDataMD.h"
 #include "ui_SliceViewer.h"
-#include <QtCore/QtCore>
-#include <QtGui/qdialog.h>
-#include <QtGui/QWidget>
 #include <qwt_color_map.h>
 #include <qwt_plot_spectrogram.h>
 #include <qwt_plot.h>
-#include <qwt_raster_data.h>
-#include <qwt_scale_widget.h>
 #include <vector>
-#include "MantidAPI/Algorithm.h"
 #include "MantidQtAPI/AlgorithmRunner.h"
 #include <boost/shared_ptr.hpp>
 
@@ -49,6 +43,21 @@ namespace SliceViewer
 // Forward dec
 class CompositePeaksPresenter;
 class ProxyCompositePeaksPresenter;
+
+// Static Const values
+static const std::string g_iconPathPrefix = ":/SliceViewer/icons/";
+static const std::string g_iconZoomPlus = g_iconPathPrefix + "colour zoom plus scale 32x32.png";
+static const std::string g_iconZoomMinus = g_iconPathPrefix + "colour zoom minus scale 32x32.png";
+static const std::string g_iconViewFull = g_iconPathPrefix + "view-fullscreen.png";
+static const std::string g_iconCutOn = g_iconPathPrefix + "cut on 32x32.png";
+static const std::string g_iconCut = g_iconPathPrefix + "cut 32x32.png";
+static const std::string g_iconGridOn = g_iconPathPrefix + "grid on 32x32.png";
+static const std::string g_iconGrid = g_iconPathPrefix + "grid 32x32.png";
+static const std::string g_iconRebinOn = g_iconPathPrefix + "rebin on 32x32.png";
+static const std::string g_iconRebin = g_iconPathPrefix + "rebin 32x32.png";
+static const std::string g_iconPeakListOn = g_iconPathPrefix + "Peak List on 32x32.png";
+static const std::string g_iconPeakList = g_iconPathPrefix + "Peak List 32x32.png";
+
 
 /** GUI for viewing a 2D slice out of a multi-dimensional workspace.
  * You can select which dimension to plot as X,Y, and the cut point
@@ -162,6 +171,7 @@ public slots:
   void changeNormalizationNone();
   void changeNormalizationVolume();
   void changeNormalizationNumEvents();
+  void onNormalizationChanged(const QString& normalizationKey);
 
   // Buttons or actions
   void clearLine();
@@ -169,6 +179,7 @@ public slots:
   void saveImage(const QString & filename = QString());
   void copyImageToClipboard();
   void onPeaksViewerOverlayOptions();
+
 
   // Synced checkboxes
   void LineMode_toggled(bool);
@@ -191,6 +202,10 @@ protected:
 private:
   void loadSettings();
   void saveSettings();
+  void setIconFromString(QAction* action, const std::string& iconName,
+    QIcon::Mode mode, QIcon::State state);
+  void setIconFromString(QAbstractButton* btn, const std::string& iconName,
+    QIcon::Mode mode, QIcon::State state);
   void initMenus();
   void initZoomer();
 
@@ -215,6 +230,7 @@ private:
   QString ensurePngExtension(const QString& fname) const;
 
 private:
+  
 
   // -------------------------- Widgets ----------------------------
 
@@ -319,6 +335,9 @@ private:
   /// If true, the rebinned overlayWS is locked until refreshed.
   bool m_rebinLocked;
 
+  /// Md Settings for color maps 
+  boost::shared_ptr<MantidQt::API::MdSettings>  m_mdSettings;
+
   /// Logger
   Mantid::Kernel::Logger m_logger;
 
@@ -331,11 +350,15 @@ private:
   DimensionSliceWidget* m_peaksSliderWidget;
 
   /// Object for choosing a PeakTransformFactory based on the workspace type.
-  Mantid::API::PeakTransformSelector m_peakTransformSelector;
+  Mantid::Geometry::PeakTransformSelector m_peakTransformSelector;
+
+  static const QString NoNormalizationKey;
+  static const QString VolumeNormalizationKey;
+  static const QString NumEventsNormalizationKey;
 
 };
 
 } // namespace SliceViewer
-} // namespace Mantid
+} // namespace MantidQt
 
 #endif // SLICEVIEWER_H

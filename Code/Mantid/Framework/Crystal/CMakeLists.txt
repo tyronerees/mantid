@@ -1,5 +1,6 @@
 
 set ( SRC_FILES
+	src/AddPeakHKL.cpp
 	src/AnvredCorrection.cpp
 	src/CalculatePeaksHKL.cpp
 	src/CalculateUMatrix.cpp
@@ -63,12 +64,14 @@ set ( SRC_FILES
 	src/ShowPossibleCells.cpp
 	src/SortHKL.cpp
 	src/SortPeaksWorkspace.cpp
+	src/StatisticsOfPeaksWorkspace.cpp
 	src/TOFExtinction.cpp
 	src/TransformHKL.cpp
 )
 
 set ( SRC_UNITY_IGNORE_FILES )
 set ( INC_FILES
+	inc/MantidCrystal/AddPeakHKL.h
 	inc/MantidCrystal/AnvredCorrection.h
 	inc/MantidCrystal/BackgroundStrategy.h
 	inc/MantidCrystal/CalculatePeaksHKL.h
@@ -135,11 +138,13 @@ set ( INC_FILES
 	inc/MantidCrystal/ShowPossibleCells.h
 	inc/MantidCrystal/SortHKL.h
 	inc/MantidCrystal/SortPeaksWorkspace.h
+	inc/MantidCrystal/StatisticsOfPeaksWorkspace.h
 	inc/MantidCrystal/TOFExtinction.h
 	inc/MantidCrystal/TransformHKL.h
 )
 
 set ( TEST_FILES
+	AddPeakHKLTest.h
 	AnvredCorrectionTest.h
 	CalculatePeaksHKLTest.h
 	CalculateUMatrixTest.h
@@ -200,6 +205,7 @@ set ( TEST_FILES
 	ShowPossibleCellsTest.h
 	SortHKLTest.h
 	SortPeaksWorkspaceTest.h
+	StatisticsOfPeaksWorkspaceTest.h
 	TransformHKLTest.h
 )
 
@@ -207,6 +213,12 @@ if(UNITY_BUILD)
   include(UnityBuild)
   enable_unity_build(Crystal SRC_FILES SRC_UNITY_IGNORE_FILES 10)
 endif(UNITY_BUILD)
+
+if (COVERALLS)
+    foreach( loop_var ${SRC_FILES} ${INC_FILES})
+      set_property(GLOBAL APPEND PROPERTY COVERAGE_SRCS "${CMAKE_CURRENT_SOURCE_DIR}/${loop_var}")
+    endforeach(loop_var)
+endif()
 
 # Add the target for this directory
 add_library ( Crystal ${SRC_FILES} ${INC_FILES})
@@ -218,7 +230,7 @@ set_property ( TARGET Crystal PROPERTY FOLDER "MantidFramework" )
 
 include_directories ( inc )
 
-target_link_libraries ( Crystal ${MANTIDLIBS} ${GSL_LIBRARIES} )
+target_link_libraries ( Crystal LINK_PRIVATE ${MANTIDLIBS} ${GSL_LIBRARIES} )
 
 # Add the unit tests directory
 add_subdirectory ( test )

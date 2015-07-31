@@ -36,26 +36,17 @@ using namespace Mantid::Geometry;
 namespace Mantid {
 namespace DataObjects {
 /// Register the workspace as a type
-DECLARE_WORKSPACE(PeaksWorkspace);
-
-//  Kernel::Logger& PeaksWorkspace::g_log =
-//  Kernel::Logger::get("PeaksWorkspace");
+DECLARE_WORKSPACE(PeaksWorkspace)
 
 //---------------------------------------------------------------------------------------------
 /** Constructor. Create a table with all the required columns.
  *
  * @return PeaksWorkspace object
  */
-PeaksWorkspace::PeaksWorkspace() : IPeaksWorkspace() { initColumns(); }
-
-//---------------------------------------------------------------------------------------------
-/** Virtual constructor. Clone method to duplicate the peaks workspace.
- *
- * @return PeaksWorkspace object
- */
-PeaksWorkspace *PeaksWorkspace::clone() const {
-  // Deep copy via copy construtor.
-  return new PeaksWorkspace(*this);
+PeaksWorkspace::PeaksWorkspace()
+    : IPeaksWorkspace(), peaks(), columns(), columnNames(),
+      m_coordSystem(None) {
+  initColumns();
 }
 
 //---------------------------------------------------------------------------------------------
@@ -65,18 +56,9 @@ PeaksWorkspace *PeaksWorkspace::clone() const {
  * @return
  */
 PeaksWorkspace::PeaksWorkspace(const PeaksWorkspace &other)
-    : IPeaksWorkspace(other), peaks(other.peaks) {
+    : IPeaksWorkspace(other), peaks(other.peaks), columns(), columnNames(),
+      m_coordSystem(other.m_coordSystem) {
   initColumns();
-}
-
-//---------------------------------------------------------------------------------------------
-/** Clone a shared pointer
- *
- * @return copy of the peaksworkspace
- */
-boost::shared_ptr<PeaksWorkspace> PeaksWorkspace::clone() {
-  // Copy construct and return
-  return boost::shared_ptr<PeaksWorkspace>(new PeaksWorkspace(*this));
 }
 
 //=====================================================================================
@@ -162,7 +144,7 @@ void PeaksWorkspace::removePeak(const int peakNum) {
 /** Add a peak to the list
  * @param ipeak :: Peak object to add (copy) into this.
  */
-void PeaksWorkspace::addPeak(const API::IPeak &ipeak) {
+void PeaksWorkspace::addPeak(const Geometry::IPeak &ipeak) {
   if (dynamic_cast<const Peak *>(&ipeak)) {
     peaks.push_back((const Peak &)ipeak);
   } else {
@@ -199,11 +181,13 @@ const Peak &PeaksWorkspace::getPeak(const int peakNum) const {
 //---------------------------------------------------------------------------------------------
 /** Creates an instance of a Peak BUT DOES NOT ADD IT TO THE WORKSPACE
  * @param QLabFrame :: Q of the center of the peak, in reciprocal space
- * @param detectorDistance :: distance between the sample and the detector.
+ * @param detectorDistance :: optional distance between the sample and the
+ * detector. You do NOT need to explicitly provide this distance.
  * @return a pointer to a new Peak object.
  */
-API::IPeak *PeaksWorkspace::createPeak(Kernel::V3D QLabFrame,
-                                       double detectorDistance) const {
+Geometry::IPeak *
+PeaksWorkspace::createPeak(Kernel::V3D QLabFrame,
+                           boost::optional<double> detectorDistance) const {
   return new Peak(this->getInstrument(), QLabFrame, detectorDistance);
 }
 
@@ -299,7 +283,8 @@ PeaksWorkspace::peakInfo(Kernel::V3D qFrame, bool labCoords) const {
   }
 
   try {
-    API::IPeak *peak = createPeak(Qlab);
+
+    Geometry::IPeak *peak = createPeak(Qlab);
 
     if (sample().hasOrientedLattice()) {
 
@@ -385,6 +370,42 @@ PeaksWorkspace::peakInfo(Kernel::V3D qFrame, bool labCoords) const {
   {
   }
   return Result;
+}
+
+/**
+ * Create a Peak from a HKL value provided by the client.
+ *
+ *
+ * @param HKL : reciprocal lattice vector coefficients
+ * @return Fully formed peak.
+ */
+Peak *PeaksWorkspace::createPeakHKL(V3D HKL) const {
+  /*
+   The following allows us to add peaks where we have a single UB to work from.
+   */
+
+  Geometry::OrientedLattice lattice = this->sample().getOrientedLattice();
+  Geometry::Goniometer goniometer = this->run().getGoniometer();
+
+  // Calculate qLab from q HKL. As per Busing and Levy 1967, q_lab_frame = 2pi *
+  // Goniometer * UB * HKL
+  V3D qLabFrame = goniometer.getR() * lattice.getUB() * HKL * 2 * M_PI;
+
+  // create a peak using the qLab frame
+  auto peak =
+      new Peak(this->getInstrument(),
+               qLabFrame); // This should calculate the detector positions too.
+
+  // We need to set HKL separately to keep things consistent.
+  peak->setHKL(HKL[0], HKL[1], HKL[2]);
+
+  // Set the goniometer
+  peak->setGoniometerMatrix(goniometer.getR());
+
+  // Take the run number from this
+  peak->setRunNumber(this->getRunNumber());
+
+  return peak;
 }
 
 /**
@@ -617,9 +638,8 @@ void PeaksWorkspace::saveNexus(::NeXus::File *file) const {
     }
     const std::string shapeJSON = p.getPeakShape().toJSON();
     shapes[i] = shapeJSON;
-    if(shapeJSON.size() > maxShapeJSONLength)
-    {
-        maxShapeJSONLength = shapeJSON.size();
+    if (shapeJSON.size() > maxShapeJSONLength) {
+      maxShapeJSONLength = shapeJSON.size();
     }
   }
 
@@ -630,6 +650,9 @@ void PeaksWorkspace::saveNexus(::NeXus::File *file) const {
   file->makeGroup("peaks_workspace", "NXentry",
                   true); // For when peaksWorkspace can be loaded
 
+  // Coordinate system
+  file->writeData("coordinate_system", static_cast<uint32_t>(m_coordSystem));
+  
   // Detectors column
   file->writeData("column_1", detectorID);
   file->openData("column_1");
@@ -766,7 +789,8 @@ void PeaksWorkspace::saveNexus(::NeXus::File *file) const {
     std::string rowStr = shapes[ii];
     for (size_t ic = 0; ic < rowStr.size(); ic++)
       toNexus[ii * maxShapeJSONLength + ic] = rowStr[ic];
-    for (size_t ic = rowStr.size(); ic < static_cast<size_t>(maxShapeJSONLength); ic++)
+    for (size_t ic = rowStr.size();
+         ic < static_cast<size_t>(maxShapeJSONLength); ic++)
       toNexus[ii * maxShapeJSONLength + ic] = ' ';
   }
 
@@ -778,7 +802,6 @@ void PeaksWorkspace::saveNexus(::NeXus::File *file) const {
   file->putAttr("interpret_as", specifyString);
   file->closeData();
 
-
   // QLab & QSample are calculated and do not need to be saved
 
   file->closeGroup(); // end of peaks workpace
@@ -789,25 +812,16 @@ void PeaksWorkspace::saveNexus(::NeXus::File *file) const {
  * @param coordinateSystem : Option to set.
  */
 void PeaksWorkspace::setCoordinateSystem(
-    const Mantid::Kernel::SpecialCoordinateSystem coordinateSystem) {
-  this->mutableRun().addProperty("CoordinateSystem", (int)coordinateSystem,
-                                 true);
+    const Kernel::SpecialCoordinateSystem coordinateSystem) {
+  m_coordSystem = coordinateSystem;
 }
 
 /**
  * @return the special Q3D coordinate system.
  */
-Mantid::Kernel::SpecialCoordinateSystem
+Kernel::SpecialCoordinateSystem
 PeaksWorkspace::getSpecialCoordinateSystem() const {
-  Mantid::Kernel::SpecialCoordinateSystem result = None;
-  try {
-    Property *prop = this->run().getProperty("CoordinateSystem");
-    PropertyWithValue<int> *p = dynamic_cast<PropertyWithValue<int> *>(prop);
-    int temp = *p;
-    result = (SpecialCoordinateSystem)temp;
-  } catch (Mantid::Kernel::Exception::NotFoundError &) {
-  }
-  return result;
+  return m_coordSystem;
 }
 
 // prevent shared pointer from deleting this

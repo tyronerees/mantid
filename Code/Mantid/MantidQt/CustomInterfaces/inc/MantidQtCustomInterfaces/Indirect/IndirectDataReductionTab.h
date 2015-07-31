@@ -10,7 +10,6 @@
 #include "MantidQtAPI/QwtWorkspaceSpectrumData.h"
 #include "MantidQtMantidWidgets/IndirectInstrumentConfig.h"
 #include "IndirectTab.h"
-#include "IndirectDataReduction.h"
 #include "MantidQtMantidWidgets/RangeSelector.h"
 
 #include <QDoubleValidator>
@@ -43,6 +42,8 @@ namespace MantidQt
 {
 namespace CustomInterfaces
 {
+  class IndirectDataReduction;
+
   /** IndirectDataReductionTab
 
     This class defines common functionality of tabs used in the Indirect Data Reduction interface.
@@ -90,7 +91,7 @@ namespace CustomInterfaces
   protected:
     Mantid::API::MatrixWorkspace_sptr loadInstrumentIfNotExist(std::string instrumentName, std::string analyser="", std::string reflection="");
     /// Function to get details about the instrumet from a given workspace
-    std::map<QString, QString> getInstrumentDetails();
+    QMap<QString, QString> getInstrumentDetails();
     std::map<std::string, double> getRangesFromInstrument(QString instName = "", QString analyser = "", QString reflection = "");
     /// Get the instrument config widget
     MantidWidgets::IndirectInstrumentConfig *getInstrumentConfiguration();

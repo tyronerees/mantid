@@ -2,26 +2,35 @@
 #define LOADNEXUSPROCESSEDTEST_H_
 
 #include "MantidAPI/AlgorithmManager.h"
+#include "MantidAPI/FileFinder.h"
 #include "MantidAPI/AnalysisDataService.h"
 #include "MantidAPI/MatrixWorkspace.h"
 #include "MantidAPI/WorkspaceGroup.h"
-#include "MantidDataHandling/LoadInstrument.h"
 #include "MantidDataObjects/EventWorkspace.h"
-#include "MantidGeometry/Instrument.h"
-#include "MantidDataHandling/LoadNexusProcessed.h"
-#include "MantidDataHandling/SaveNexusProcessed.h"
-#include "MantidDataHandling/Load.h"
-#include "SaveNexusProcessedTest.h"
-#include <cxxtest/TestSuite.h>
-#include <iostream>
-#include <Poco/File.h>
-#include <boost/lexical_cast.hpp>
-#include "MantidGeometry/IDTypes.h"
-#include "MantidTestHelpers/WorkspaceCreationHelper.h"
 #include "MantidDataObjects/PeakShapeSpherical.h"
 #include "MantidDataObjects/Peak.h"
 #include "MantidDataObjects/PeaksWorkspace.h"
+#include "MantidGeometry/IDTypes.h"
+#include "MantidGeometry/Instrument.h"
+#include "MantidGeometry/Instrument/InstrumentDefinitionParser.h"
+#include "MantidDataHandling/LoadNexusProcessed.h"
+#include "MantidDataHandling/SaveNexusProcessed.h"
+#include "MantidDataHandling/Load.h"
+#include "MantidDataHandling/LoadInstrument.h"
+#include "MantidTestHelpers/WorkspaceCreationHelper.h"
 
+#include "SaveNexusProcessedTest.h"
+
+#include <boost/assign/list_of.hpp>
+#include <boost/lexical_cast.hpp>
+
+#include <cxxtest/TestSuite.h>
+
+#include <hdf5.h>
+
+#include <Poco/File.h>
+
+using namespace Mantid::Geometry;
 using namespace Mantid::Kernel;
 using namespace Mantid::DataObjects;
 using namespace Mantid::API;
@@ -813,9 +822,109 @@ public:
       Workspace_sptr ws = loadAlg.getProperty("OutputWorkspace");
       auto peakWS = boost::dynamic_pointer_cast<Mantid::DataObjects::PeaksWorkspace>(ws);
       TS_ASSERT(peakWS);
-
   }
 
+  void test_coordinates_saved_and_loaded_on_peaks_workspace()
+  {
+    auto peaksTestWS = WorkspaceCreationHelper::createPeaksWorkspace();
+    // Loading a peaks workspace without a instrument from an IDF doesn't work ...
+    const std::string filename = FileFinder::Instance().getFullPath(
+          "IDFs_for_UNIT_TESTING/MINITOPAZ_Definition.xml");
+    InstrumentDefinitionParser parser(filename, "MINITOPAZ", Strings::loadFile(filename));
+    auto instrument = parser.parseXML(NULL);
+    peaksTestWS->populateInstrumentParameters();
+    peaksTestWS->setInstrument(instrument);
+
+    const SpecialCoordinateSystem appliedCoordinateSystem = QSample;
+    peaksTestWS->setCoordinateSystem(appliedCoordinateSystem);
+
+    SaveNexusProcessed saveAlg;
+    saveAlg.setChild(true);
+    saveAlg.initialize();
+    saveAlg.setProperty("InputWorkspace", peaksTestWS);
+    saveAlg.setPropertyValue("Filename", "LoadAndSaveNexusProcessedCoordinateSystem.nxs");
+    saveAlg.execute();
+    std::string filePath = saveAlg.getPropertyValue("Filename");
+
+    LoadNexusProcessed loadAlg;
+    loadAlg.setChild(true);
+    loadAlg.initialize();
+    loadAlg.setPropertyValue("Filename", filePath);
+    loadAlg.setPropertyValue("OutputWorkspace", "__unused");
+    loadAlg.execute();
+    
+    Mantid::API::Workspace_sptr loadedWS = loadAlg.getProperty("OutputWorkspace");
+    auto loadedPeaksWS =
+        boost::dynamic_pointer_cast<Mantid::API::IPeaksWorkspace>(loadedWS);
+    Poco::File testFile(filePath);
+    if(testFile.exists())
+    {
+      testFile.remove();
+    }
+    
+    TS_ASSERT_EQUALS(appliedCoordinateSystem, loadedPeaksWS->getSpecialCoordinateSystem());
+  }
+
+  // backwards compatability check
+  void test_coordinates_saved_and_loaded_on_peaks_workspace_from_expt_info()
+  {
+    auto peaksTestWS = WorkspaceCreationHelper::createPeaksWorkspace();
+    // Loading a peaks workspace without a instrument from an IDF doesn't work ...
+    const std::string filename = FileFinder::Instance().getFullPath(
+          "IDFs_for_UNIT_TESTING/MINITOPAZ_Definition.xml");
+    InstrumentDefinitionParser parser(filename, "MINITOPAZ", Strings::loadFile(filename));
+    auto instrument = parser.parseXML(NULL);
+    peaksTestWS->populateInstrumentParameters();
+    peaksTestWS->setInstrument(instrument);
+
+    // simulate old-style file with "CoordinateSystem" log
+    const SpecialCoordinateSystem appliedCoordinateSystem = QSample;
+    peaksTestWS->logs()->addProperty("CoordinateSystem",
+                                     static_cast<int>(appliedCoordinateSystem));
+
+    SaveNexusProcessed saveAlg;
+    saveAlg.setChild(true);
+    saveAlg.initialize();
+    saveAlg.setProperty("InputWorkspace", peaksTestWS);
+    saveAlg.setPropertyValue("Filename", "LoadAndSaveNexusProcessedCoordinateSystemOldFormat.nxs");
+    saveAlg.execute();
+    std::string filePath = saveAlg.getPropertyValue("Filename");
+
+    // Remove the coordinate_system entry so it falls back on the log. NeXus
+    // can't do this so use the HDF5 API directly
+    auto fid = H5Fopen(filePath.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
+    auto mantid_id = H5Gopen(fid, "mantid_workspace_1", H5P_DEFAULT);
+    auto peaks_id = H5Gopen(mantid_id, "peaks_workspace", H5P_DEFAULT);
+    if (peaks_id > 0) {
+      H5Ldelete(peaks_id, "coordinate_system", H5P_DEFAULT);
+      H5Gclose(peaks_id);
+      H5Gclose(mantid_id);
+    } else {
+      TS_FAIL("Cannot unlink coordinate_system group. Test file has unexpected "
+              "structure.");
+    }
+    H5Fclose(fid);
+    
+    LoadNexusProcessed loadAlg;
+    loadAlg.setChild(true);
+    loadAlg.initialize();
+    loadAlg.setPropertyValue("Filename", filePath);
+    loadAlg.setPropertyValue("OutputWorkspace", "__unused");
+    loadAlg.execute();
+    
+    Mantid::API::Workspace_sptr loadedWS = loadAlg.getProperty("OutputWorkspace");
+    auto loadedPeaksWS =
+        boost::dynamic_pointer_cast<Mantid::API::IPeaksWorkspace>(loadedWS);
+    Poco::File testFile(filePath);
+    if(testFile.exists())
+    {
+      testFile.remove();
+    }
+    
+    TS_ASSERT_EQUALS(appliedCoordinateSystem, loadedPeaksWS->getSpecialCoordinateSystem());
+  }
+
+  
   void testTableWorkspace_vectorColumn()
   {
     // Create a table we will save
@@ -904,6 +1013,108 @@ public:
       TS_ASSERT_EQUALS( column->cell< std::vector<double> >(1), d2);
       TS_ASSERT_EQUALS( column->cell< std::vector<double> >(2), d3);
     }
+  }
+
+  void test_SaveAndLoadOnHistogramWS() {
+    // Test SaveNexusProcessed/LoadNexusProcessed on a histogram workspace
+
+    // Create histogram workspace with two spectra and 4 points
+    std::vector<double> x1 = boost::assign::list_of(1)(2)(3);
+    std::vector<double> y1 = boost::assign::list_of(1)(2);
+    std::vector<double> x2 = boost::assign::list_of(1)(2)(3);
+    std::vector<double> y2 = boost::assign::list_of(1)(2);
+    MatrixWorkspace_sptr inputWs = WorkspaceFactory::Instance().create(
+        "Workspace2D", 2, x1.size(), y1.size());
+    inputWs->dataX(0) = x1;
+    inputWs->dataX(1) = x2;
+    inputWs->dataY(0) = y1;
+    inputWs->dataY(1) = y2;
+
+    // Save workspace
+    IAlgorithm_sptr save =
+        AlgorithmManager::Instance().create("SaveNexusProcessed");
+    save->initialize();
+    TS_ASSERT(save->isInitialized());
+    TS_ASSERT_THROWS_NOTHING(save->setProperty("InputWorkspace", inputWs));
+    TS_ASSERT_THROWS_NOTHING(save->setPropertyValue(
+        "Filename", "TestSaveAndLoadNexusProcessed.nxs"));
+    TS_ASSERT_THROWS_NOTHING(save->execute());
+
+    // Load workspace
+    IAlgorithm_sptr load =
+        AlgorithmManager::Instance().create("LoadNexusProcessed");
+    load->initialize();
+    TS_ASSERT(load->isInitialized());
+    TS_ASSERT_THROWS_NOTHING(load->setPropertyValue(
+        "Filename", "TestSaveAndLoadNexusProcessed.nxs"));
+    TS_ASSERT_THROWS_NOTHING(
+        load->setPropertyValue("OutputWorkspace", "output"));
+    TS_ASSERT_THROWS_NOTHING(load->execute());
+
+    // Check spectra in loaded workspace
+    MatrixWorkspace_sptr outputWs =
+        AnalysisDataService::Instance().retrieveWS<MatrixWorkspace>("output");
+    TS_ASSERT_EQUALS(inputWs->readX(0), outputWs->readX(0));
+    TS_ASSERT_EQUALS(inputWs->readX(1), outputWs->readX(1));
+    TS_ASSERT_EQUALS(inputWs->readY(0), outputWs->readY(0));
+    TS_ASSERT_EQUALS(inputWs->readY(1), outputWs->readY(1));
+    TS_ASSERT_EQUALS(inputWs->readE(0), outputWs->readE(0));
+    TS_ASSERT_EQUALS(inputWs->readE(1), outputWs->readE(1));
+
+    // Remove workspace and saved nexus file
+    AnalysisDataService::Instance().remove("output");
+    Poco::File("TestSaveAndLoadNexusProcessed.nxs").remove();
+  }
+
+  void test_SaveAndLoadOnPointLikeWS() {
+    // Test SaveNexusProcessed/LoadNexusProcessed on a point-like workspace
+
+    // Create histogram workspace with two spectra and 4 points
+    std::vector<double> x1 = boost::assign::list_of(1)(2)(3);
+    std::vector<double> y1 = boost::assign::list_of(1)(2)(3);
+    std::vector<double> x2 = boost::assign::list_of(10)(20)(30);
+    std::vector<double> y2 = boost::assign::list_of(10)(20)(30);
+    MatrixWorkspace_sptr inputWs = WorkspaceFactory::Instance().create(
+        "Workspace2D", 2, x1.size(), y1.size());
+    inputWs->dataX(0) = x1;
+    inputWs->dataX(1) = x2;
+    inputWs->dataY(0) = y1;
+    inputWs->dataY(1) = y2;
+
+    // Save workspace
+    IAlgorithm_sptr save =
+        AlgorithmManager::Instance().create("SaveNexusProcessed");
+    save->initialize();
+    TS_ASSERT(save->isInitialized());
+    TS_ASSERT_THROWS_NOTHING(save->setProperty("InputWorkspace", inputWs));
+    TS_ASSERT_THROWS_NOTHING(save->setPropertyValue(
+        "Filename", "TestSaveAndLoadNexusProcessed.nxs"));
+    TS_ASSERT_THROWS_NOTHING(save->execute());
+
+    // Load workspace
+    IAlgorithm_sptr load =
+        AlgorithmManager::Instance().create("LoadNexusProcessed");
+    load->initialize();
+    TS_ASSERT(load->isInitialized());
+    TS_ASSERT_THROWS_NOTHING(load->setPropertyValue(
+        "Filename", "TestSaveAndLoadNexusProcessed.nxs"));
+    TS_ASSERT_THROWS_NOTHING(
+        load->setPropertyValue("OutputWorkspace", "output"));
+    TS_ASSERT_THROWS_NOTHING(load->execute());
+
+    // Check spectra in loaded workspace
+    MatrixWorkspace_sptr outputWs =
+        AnalysisDataService::Instance().retrieveWS<MatrixWorkspace>("output");
+    TS_ASSERT_EQUALS(inputWs->readX(0), outputWs->readX(0));
+    TS_ASSERT_EQUALS(inputWs->readX(1), outputWs->readX(1));
+    TS_ASSERT_EQUALS(inputWs->readY(0), outputWs->readY(0));
+    TS_ASSERT_EQUALS(inputWs->readY(1), outputWs->readY(1));
+    TS_ASSERT_EQUALS(inputWs->readE(0), outputWs->readE(0));
+    TS_ASSERT_EQUALS(inputWs->readE(1), outputWs->readE(1));
+
+    // Remove workspace and saved nexus file
+    AnalysisDataService::Instance().remove("output");
+    Poco::File("TestSaveAndLoadNexusProcessed.nxs").remove();
   }
 
   void do_load_multiperiod_workspace(bool fast)
@@ -1051,6 +1262,7 @@ private:
   /// Saved using SaveNexusProcessed and re-used in several load event tests
   std::string m_savedTmpEventFile;
   static const EventType m_savedTmpType = TOF;
+
 };
 
 //------------------------------------------------------------------------------

@@ -2,7 +2,7 @@
 #define MANTIDQTCUSTOMINTERFACESIDA_MSDFIT_H_
 
 #include "ui_MSDFit.h"
-#include "IDATab.h"
+#include "IndirectDataAnalysisTab.h"
 
 namespace MantidQt
 {
@@ -10,7 +10,7 @@ namespace CustomInterfaces
 {
 namespace IDA
 {
-  class DLLExport MSDFit : public IDATab
+  class DLLExport MSDFit : public IndirectDataAnalysisTab
   {
     Q_OBJECT
 
@@ -25,7 +25,7 @@ namespace IDA
 
   private slots:
     void singleFit();
-    void plotFit(QString wsName);
+    void plotFit(QString wsName = QString(), int specNo = -1);
     void newDataLoaded(const QString wsName);
     void plotInput();
     void specMinChanged(int value);

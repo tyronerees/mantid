@@ -1,14 +1,15 @@
 #include "MantidVatesAPI/MDHWLoadingPresenter.h"
 #include "MantidVatesAPI/MDLoadingView.h"
 #include "MantidAPI/FrameworkManager.h"
+#include "MantidAPI/IMDHistoWorkspace.h"
 
 #include "MantidGeometry/MDGeometry/MDHistoDimension.h"
 #include "MantidGeometry/MDGeometry/NullImplicitFunction.h"
-#include "MantidVatesAPI/RebinningKnowledgeSerializer.h"
+#include "MantidVatesAPI/VatesKnowledgeSerializer.h"
 #include "MantidVatesAPI/MetaDataExtractorUtils.h"
 #include "MantidVatesAPI/MetadataJsonManager.h"
 #include "MantidVatesAPI/MetadataToFieldData.h"
-#include "MantidVatesAPI/RebinningCutterXMLDefinitions.h"
+#include "MantidVatesAPI/VatesXMLDefinitions.h"
 #include "MantidVatesAPI/VatesConfigurations.h"
 #include "MantidVatesAPI/vtkDataSetToNonOrthogonalDataSet.h"
 #include "MantidVatesAPI/vtkDataSetToWsName.h"
@@ -16,8 +17,14 @@
 
 #include <boost/scoped_ptr.hpp>
 
+#include <vtkPVChangeOfBasisHelper.h>
 #include <vtkFieldData.h>
 #include <vtkDataSet.h>
+
+namespace {
+
+Mantid::Kernel::Logger g_log("MDHWLoadingPresenter");
+}
 
 namespace Mantid
 {
@@ -150,7 +157,7 @@ namespace Mantid
       vtkFieldData* outputFD = vtkFieldData::New();
       
       //Serialize metadata
-      RebinningKnowledgeSerializer serializer(LocationNotRequired);
+      VatesKnowledgeSerializer serializer;
       serializer.setWorkspaceName(wsName);
       serializer.setGeometryXML(xmlBuilder.create());
       serializer.setImplicitFunction( Mantid::Geometry::MDImplicitFunction_sptr(new Mantid::Geometry::NullImplicitFunction()));
@@ -184,10 +191,12 @@ namespace Mantid
      */
     void MDHWLoadingPresenter::setAxisLabels(vtkDataSet *visualDataSet)
     {
-      vtkFieldData* fieldData = visualDataSet->GetFieldData();
-      setAxisLabel("AxisTitleForX", axisLabels[0], fieldData);
-      setAxisLabel("AxisTitleForY", axisLabels[1], fieldData);
-      setAxisLabel("AxisTitleForZ", axisLabels[2], fieldData);
+      if (!vtkPVChangeOfBasisHelper::AddBasisNames(
+              visualDataSet, axisLabels[0].c_str(), axisLabels[1].c_str(),
+              axisLabels[2].c_str())) {
+        g_log.warning("The basis names could not be added to the field data of "
+                      "the data set.\n");
+      }
     }
 
     /**

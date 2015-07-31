@@ -9,7 +9,7 @@
 #include "MantidGeometry/MDGeometry/MDTypes.h"
 
 #include <string>
-#include <vector>
+#include <array>
 
 class vtkDataSet;
 class vtkUnstructuredGrid;
@@ -64,8 +64,6 @@ namespace VATES
   private:
     vtkDataSetToNonOrthogonalDataSet& operator=(const vtkDataSetToNonOrthogonalDataSet& other);
     vtkDataSetToNonOrthogonalDataSet(const vtkDataSetToNonOrthogonalDataSet& other);
-    /// Copy a vector to an array
-    void copyToRaw(double *arr, MantidVec vec);
     /// Calculate the skew matrix and basis.
     void createSkewInformation(Geometry::OrientedLattice &ol,
                                Kernel::DblMatrix &w,
@@ -78,8 +76,6 @@ namespace VATES
     void updateMetaData(vtkUnstructuredGrid *ugrid);
     vtkDataSet *m_dataSet; ///< Pointer to VTK dataset to modify
     std::string m_wsName; ///< The name of the workspace to fetch
-    //FIXME: Temp var for getting hardcoded stuff back
-    unsigned int m_hc;
     std::size_t m_numDims; ///< Number of dimensions in workspace
     Kernel::DblMatrix m_skewMat; ///< The skew matrix for non-orthogonal representation
     MantidVec m_basisNorm; ///< Holder for the basis normalisation values
@@ -87,6 +83,7 @@ namespace VATES
     Kernel::V3D m_basisY; ///< The Y direction basis vector
     Kernel::V3D m_basisZ; ///< The Z direction basis vector
     Kernel::SpecialCoordinateSystem m_coordType; ///< The coordinate system for the workspace
+    std::array<double, 6> m_boundingBox;
   };
 
 

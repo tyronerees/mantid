@@ -18,6 +18,7 @@
 #include "../ScriptingWindow.h"
 #include "../Folder.h"
 #include "../TiledWindow.h"
+#include "../PythonThreading.h"
 
 #include "MantidKernel/Property.h"
 #include "MantidKernel/ConfigService.h"
@@ -40,6 +41,8 @@
 #include "MantidAPI/CompositeFunction.h"
 #include "MantidAPI/ITableWorkspace.h"
 #include "MantidAPI/IMDHistoWorkspace.h"
+#include "MantidAPI/IMDEventWorkspace.h"
+#include "MantidAPI/IPeaksWorkspace.h"
 
 
 #include <QMessageBox>
@@ -110,8 +113,8 @@ MantidUI::MantidUI(ApplicationWindow *aw):
   m_configServiceObserver(*this,&MantidUI::handleConfigServiceUpdate),
   m_appWindow(aw),
   m_lastShownInstrumentWin(NULL), m_lastShownSliceViewWin(NULL), m_lastShownSpectrumViewerWin(NULL), 
-  m_lastShownColorFillWin(NULL), m_lastShown1DPlotWin(NULL), 
-  m_vatesSubWindow(NULL)//, m_spectrumViewWindow(NULL)
+  m_lastShownColorFillWin(NULL), m_lastShown1DPlotWin(NULL), m_vatesSubWindow(NULL)
+  //, m_spectrumViewWindow(NULL)
 {
 
   // To be able to use them in queued signals they need to be registered
@@ -305,8 +308,8 @@ void MantidUI::shutdown()
       Poco::Thread::sleep(100);
     }
   }
-
-  Mantid::API::FrameworkManager::Instance().clear();
+  bool prompt = false;
+  this->clearAllMemory(prompt);
 }
 
 MantidUI::~MantidUI()
@@ -616,11 +619,7 @@ MultiLayer* MantidUI::plotMDList(const QStringList& wsNames, const int plotAxis,
 
       // Using information from the first graph
       if( i == 0 && isGraphNew )
-      {
-        g->setXAxisTitle(data->getXAxisLabel());
-        g->setYAxisTitle(data->getYAxisLabel());
         g->setAutoScale();
-      }
     }
 
   }
@@ -733,7 +732,8 @@ void MantidUI::showVatesSimpleInterface()
     {
       m_vatesSubWindow = new QMdiSubWindow;
       m_vatesSubWindow->setAttribute(Qt::WA_DeleteOnClose, false);
-      QIcon icon; icon.addFile(QString::fromUtf8(":/VatesSimpleGuiViewWidgets/icons/pvIcon.png"), QSize(), QIcon::Normal, QIcon::Off);
+      QIcon icon; 
+      icon.addFile(QString::fromUtf8(":/VatesSimpleGuiViewWidgets/icons/pvIcon.png"), QSize(), QIcon::Normal, QIcon::Off);
       m_vatesSubWindow->setWindowIcon(icon);
       connect(m_appWindow, SIGNAL(shutting_down()), m_vatesSubWindow, SLOT(close()));
 
@@ -746,12 +746,11 @@ void MantidUI::showVatesSimpleInterface()
         connect(vsui, SIGNAL(requestClose()), m_vatesSubWindow, SLOT(close()));
         vsui->setParent(m_vatesSubWindow);
         m_vatesSubWindow->setWindowTitle("Vates Simple Interface");
-
         vsui->setupPluginMode();
         //m_appWindow->setGeometry(m_vatesSubWindow, vsui);
         m_vatesSubWindow->setWidget(vsui);
         m_vatesSubWindow->widget()->show();
-        vsui->renderWorkspace(wsName, wsType, instrumentName);
+        vsui->renderWorkspace(wsName, wsType,instrumentName);
       }
       else
       {
@@ -945,9 +944,8 @@ Table* MantidUI::importTableWorkspace(const QString& wsName, bool, bool makeVisi
 
 void MantidUI::showContextMenu(QMenu& cm, MdiSubWindow* w)
 {
-  if (w->isA("MantidMatrix"))
+  if (MantidMatrix * mm = dynamic_cast<MantidMatrix*>(w))
   {
-    MantidMatrix * mm = dynamic_cast<MantidMatrix*>(w);
 
     bool areSpectraSelected = mm->setSelectedRows();
     bool areColumnsSelected = mm->setSelectedColumns();
@@ -2121,13 +2119,17 @@ void MantidUI::insertMenu()
   appWindow()->myMenuBar()->insertItem(tr("Man&tid"), mantidMenu);
 }
 
-void MantidUI::clearAllMemory()
+void MantidUI::clearAllMemory(const bool prompt)
 {
+  if(prompt) {
   QMessageBox::StandardButton pressed =
     QMessageBox::question(appWindow(), "MantidPlot", "All workspaces and windows will be removed. Are you sure?", QMessageBox::Ok|QMessageBox::Cancel, QMessageBox::Ok);
 
   if( pressed != QMessageBox::Ok ) return;
-
+  }
+  // If any python objects need to be cleared away then the GIL needs to be held. This doesn't feel like
+  // it is in the right place but it will do no harm
+  GlobalInterpreterLock gil;
   // Relevant notifications are connected to signals that will close all dependent windows
   Mantid::API::FrameworkManager::Instance().clear();
 }
@@ -2176,6 +2178,8 @@ void MantidUI::disableSaveNexus()
 */
 QString MantidUI::saveToString(const std::string& workingDir)
 {
+  using namespace Mantid::API;
+
   QString wsNames;
   wsNames="<mantidworkspaces>\n";
   wsNames+="WorkspaceNames";
@@ -2185,19 +2189,22 @@ QString MantidUI::saveToString(const std::string& workingDir)
   { 
     QTreeWidgetItem* item=tree->topLevelItem(i);
     QString wsName=item->text(0);
-    if (Mantid::API::FrameworkManager::Instance().getWorkspace(wsName.toStdString())->id() == "WorkspaceGroup")
+
+    Workspace_sptr ws = AnalysisDataService::Instance().retrieveWS<Workspace>(wsName.toStdString());
+    WorkspaceGroup_sptr group = boost::dynamic_pointer_cast<Mantid::API::WorkspaceGroup>(ws);
+    // We don't split up multiperiod workspaces for performance reasons.
+    // There's significant optimisations we can perform on load if they're a
+    // single file.
+    if (ws->id() == "WorkspaceGroup" && group && !group->isMultiperiod())
     {
-      Mantid::API::WorkspaceGroup_sptr group = boost::dynamic_pointer_cast<Mantid::API::WorkspaceGroup>(Mantid::API::AnalysisDataService::Instance().retrieve(wsName.toStdString()));
       wsNames+="\t";
-      //wsName is a group, add it to list and indicate what the group contains by a "[" and end the group with a "]"
       wsNames+=wsName;
       std::vector<std::string> secondLevelItems = group->getNames();
-      for(size_t j=0; j<secondLevelItems.size(); j++) //ignore string "WorkspaceGroup at position 0" (start at child '1')
+      for(size_t j=0; j<secondLevelItems.size(); j++)
       {
         wsNames+=",";
         wsNames+=QString::fromStdString(secondLevelItems[j]);
         std::string fileName(workingDir + "//" + secondLevelItems[j] + ".nxs");
-        //saving to  nexus file
         savedatainNexusFormat(fileName,secondLevelItems[j]);
       }
     }
@@ -2207,7 +2214,6 @@ QString MantidUI::saveToString(const std::string& workingDir)
       wsNames+=wsName;
 
       std::string fileName(workingDir + "//" + wsName.toStdString() + ".nxs");
-      //saving to  nexus file
       savedatainNexusFormat(fileName,wsName.toStdString());
     }
   }
@@ -2310,7 +2316,7 @@ MultiLayer* MantidUI::mergePlots(MultiLayer* mlayer_1, MultiLayer* mlayer_2)
   mlayer_2->close();
 
   return mlayer_1;
-};
+}
 
 MantidMatrix* MantidUI::getMantidMatrix(const QString& wsName)
 {
@@ -2355,6 +2361,7 @@ bool MantidUI::createScriptInputDialog(const QString & alg_name, const QString &
   MantidQt::API::AlgorithmDialog *dlg =
     interfaceManager.createDialog(alg, m_appWindow->getScriptWindowHandle(),
                                   true, presets, optional_msg, enabled, disabled);
+  dlg->setShowKeepOpen(false);
   return (dlg->exec() == QDialog::Accepted);
 }
 
@@ -2519,9 +2526,12 @@ void MantidUI::importNumSeriesLog(const QString &wsName, const QString &logName,
   {
     //Seconds offset
     t->setColName(0, "Time (sec)");
-    t->setColumnType(0, Table::Numeric); //six digits after 0
-    t->setNumericPrecision(6); //six digits after 0
+    t->setColumnType(0, Table::Numeric);
+    t->setNumericPrecision(16);   //it's the number of all digits
   }
+
+  // The time when the first data was recorded.
+  auto firstTime = time_value_map.begin()->first;
 
   //Make the column header with the units, if any
   QString column1 = label.section("-",1);
@@ -2530,7 +2540,6 @@ void MantidUI::importNumSeriesLog(const QString &wsName, const QString &logName,
   t->setColName(1, column1);
 
   int iValueCurve = 0;
-  int iFilterCurve = 1;
 
   // Applying filters
   if (filter > 0)
@@ -2538,6 +2547,7 @@ void MantidUI::importNumSeriesLog(const QString &wsName, const QString &logName,
     Mantid::Kernel::TimeSeriesProperty<bool>* f = 0;
     if (filter == 1 || filter ==3)
     {
+      // one of the filters is the running status
       try
       {
         f = dynamic_cast<Mantid::Kernel::TimeSeriesProperty<bool> *>(ws->run().getLogData("running"));
@@ -2549,6 +2559,15 @@ void MantidUI::importNumSeriesLog(const QString &wsName, const QString &logName,
           t->close();
           importNumSeriesLog(wsName,logName,0);
           return;
+        }
+        // If filter records start later than the data we add a value at the filter's front
+        if ( f->firstTime() > firstTime )
+        {
+          // add a "not running" value to the status filter
+          Mantid::Kernel::TimeSeriesProperty<bool> atStart("tmp");
+          atStart.addValue(firstTime,false);
+          atStart.addValue(f->firstTime(),f->firstValue());
+          flt.addFilter(atStart);
         }
       }
       catch(...)
@@ -2633,9 +2652,6 @@ void MantidUI::importNumSeriesLog(const QString &wsName, const QString &logName,
           }
         }
       }
-
-      iValueCurve = 1;
-      iFilterCurve = 0;
 
     } //end (valid filter exists)
 
@@ -2734,22 +2750,24 @@ void MantidUI::importNumSeriesLog(const QString &wsName, const QString &logName,
 
   if (filter && flt.filter())
   {
+    int iFilterCurve = 1;
     QwtPlotCurve *c = g->curve(iFilterCurve);
-    // Set the right axis as Y axis for the filter curve.
-    c->setAxis(2,1);
-    // Set style #3 (HorizontalSteps) for curve 1
-    // Set scale of right Y-axis (#3) from 0 to 1
-    g->setCurveStyle(iFilterCurve,3);
-    g->setScale(3,0,1);
-    // Fill area under the curve with a pattern
-    QBrush br = QBrush(Qt::gray, Qt::Dense5Pattern);
-    g->setCurveBrush(iFilterCurve, br);
-    // Set line colour
-    QPen pn = QPen(Qt::gray);
-    g->setCurvePen(iFilterCurve, pn);
+    if ( c )
+    {
+      // Set the right axis as Y axis for the filter curve.
+      c->setAxis(2,1);
+      // Set style #3 (HorizontalSteps) for curve 1
+      // Set scale of right Y-axis (#3) from 0 to 1
+      g->setCurveStyle(iFilterCurve,3);
+      g->setScale(3,0,1);
+      // Fill area under the curve with a pattern
+      QBrush br = QBrush(Qt::gray, Qt::Dense5Pattern);
+      g->setCurveBrush(iFilterCurve, br);
+      // Set line colour
+      QPen pn = QPen(Qt::gray);
+      g->setCurvePen(iFilterCurve, pn);
+    }
   }
-  g->setXAxisTitle(t->colLabel(0));
-  g->setYAxisTitle(t->colLabel(1).section(".",0,0));
   g->setTitle(label);
   g->setAutoScale();
 
@@ -2972,8 +2990,6 @@ void MantidUI::setUpBinGraph(MultiLayer* ml, const QString& Name, Mantid::API::M
   {
     xtitle = MantidQt::API::PlotAxis(*workspace, 1).title();
   }
-  g->setXAxisTitle(xtitle);
-  g->setYAxisTitle(MantidQt::API::PlotAxis(false, *workspace).title());
 }
 
 /**
@@ -2985,9 +3001,10 @@ Plots the spectra from the given workspaces
 @param style :: Curve style for plot
 @param plotWindow :: Window to plot to. If NULL a new one will be created
 @param clearWindow :: Whether to clear specified plotWindow before plotting. Ignored if plotWindow == NULL
+@param waterfallPlot :: If true create a waterfall type plot
 */
 MultiLayer* MantidUI::plot1D(const QStringList& ws_names, const QList<int>& indexList, bool spectrumPlot, bool errs,
-                             Graph::CurveType style, MultiLayer* plotWindow, bool clearWindow)
+                             Graph::CurveType style, MultiLayer* plotWindow, bool clearWindow, bool waterfallPlot)
 {
   // Convert the list into a map (with the same workspace as key in each case)
   QMultiMap<QString,int> pairs;
@@ -3009,7 +3026,8 @@ MultiLayer* MantidUI::plot1D(const QStringList& ws_names, const QList<int>& inde
   }
 
   // Pass over to the overloaded method
-  return plot1D(pairs,spectrumPlot,MantidQt::DistributionDefault, errs,style,plotWindow, clearWindow);
+  return plot1D(pairs,spectrumPlot,MantidQt::DistributionDefault, errs,style,plotWindow, clearWindow,
+                waterfallPlot);
 }
 /** Create a 1D graph from the specified list of workspaces/spectra.
 @param toPlot :: Map of form ws -> [spectra_list]
@@ -3018,11 +3036,12 @@ MultiLayer* MantidUI::plot1D(const QStringList& ws_names, const QList<int>& inde
 @param errs :: If true include the errors on the graph
 @param plotWindow :: Window to plot to. If NULL a new one will be created
 @param clearWindow :: Whether to clear specified plotWindow before plotting. Ignored if plotWindow == NULL
+@param waterfallPlot :: If true create a waterfall type plot
 @return NULL if failure. Otherwise, if plotWindow == NULL - created window, if not NULL - plotWindow
 */
 MultiLayer* MantidUI::plot1D(const QMultiMap<QString, set<int> >& toPlot, bool spectrumPlot,
                              MantidQt::DistributionFlag distr, bool errs,
-                             MultiLayer* plotWindow, bool clearWindow)
+                             MultiLayer* plotWindow, bool clearWindow, bool waterfallPlot)
 {
   // Convert the list into a map (with the same workspace as key in each case)
   QMultiMap<QString,int> pairs;
@@ -3038,7 +3057,7 @@ MultiLayer* MantidUI::plot1D(const QMultiMap<QString, set<int> >& toPlot, bool s
   }
 
   // Pass over to the overloaded method
-  return plot1D(pairs,spectrumPlot,distr,errs,Graph::Unspecified,plotWindow, clearWindow);
+  return plot1D(pairs,spectrumPlot,distr,errs,Graph::Unspecified,plotWindow, clearWindow, waterfallPlot);
 }
 
 /** Create a 1d graph from the specified spectra in a MatrixWorkspace
@@ -3049,10 +3068,11 @@ MultiLayer* MantidUI::plot1D(const QMultiMap<QString, set<int> >& toPlot, bool s
 @param errs :: If true include the errors on the graph
 @param plotWindow :: Window to plot to. If NULL a new one will be created
 @param clearWindow :: Whether to clear specified plotWindow before plotting. Ignored if plotWindow == NULL
+@param waterfallPlot :: If true create a waterfall type plot
 @return NULL if failure. Otherwise, if plotWindow == NULL - created window, if not NULL - plotWindow
 */
 MultiLayer* MantidUI::plot1D(const QString& wsName, const std::set<int>& indexList, bool spectrumPlot,
-  MantidQt::DistributionFlag distr, bool errs, MultiLayer* plotWindow, bool clearWindow)
+  MantidQt::DistributionFlag distr, bool errs, MultiLayer* plotWindow, bool clearWindow, bool waterfallPlot)
 {
   // Convert the list into a map (with the same workspace as key in each case)
   QMultiMap<QString,int> pairs;
@@ -3064,7 +3084,7 @@ MultiLayer* MantidUI::plot1D(const QString& wsName, const std::set<int>& indexLi
   }
 
   // Pass over to the overloaded method
-  return plot1D(pairs,spectrumPlot,distr,errs,Graph::Unspecified,plotWindow, clearWindow);
+  return plot1D(pairs,spectrumPlot,distr,errs,Graph::Unspecified,plotWindow, clearWindow, waterfallPlot);
 }
 
 /** Create a 1d graph form a set of workspace-spectrum pairs
@@ -3075,11 +3095,13 @@ MultiLayer* MantidUI::plot1D(const QString& wsName, const std::set<int>& indexLi
 @param style :: curve style for plot
 @param plotWindow :: Window to plot to. If NULL a new one will be created
 @param clearWindow :: Whether to clear specified plotWindow before plotting. Ignored if plotWindow == NULL
+@param waterfallPlot :: If true create a waterfall type plot
 @return NULL if failure. Otherwise, if plotWindow == NULL - created window, if not NULL - plotWindow
 */
 MultiLayer* MantidUI::plot1D(const QMultiMap<QString,int>& toPlot, bool spectrumPlot,
                              MantidQt::DistributionFlag distr, bool errs,
-                             Graph::CurveType style, MultiLayer* plotWindow, bool clearWindow)
+                             Graph::CurveType style, MultiLayer* plotWindow,
+                             bool clearWindow, bool waterfallPlot)
 {
   if(toPlot.size() == 0) return NULL;
 
@@ -3094,6 +3116,8 @@ MultiLayer* MantidUI::plot1D(const QMultiMap<QString,int>& toPlot, bool spectrum
     ask.exec();
     if (ask.clickedButton() != confirmButton) return NULL;
   }
+  // Force waterfall option to false if only 1 curve
+  if(toPlot.size() == 1) waterfallPlot = false;
 
   QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
@@ -3191,8 +3215,6 @@ MultiLayer* MantidUI::plot1D(const QMultiMap<QString,int>& toPlot, bool spectrum
       return NULL;
     }
 
-    g->setXAxisTitle(firstCurve->mantidData()->getXAxisLabel());
-    g->setYAxisTitle(firstCurve->mantidData()->getYAxisLabel());
     g->setAutoScale();
     /* The 'setAutoScale' above is needed to make sure that the plot initially encompasses all the
      * data points. However, this has the side-effect suggested by its name: all the axes become
@@ -3206,7 +3228,7 @@ MultiLayer* MantidUI::plot1D(const QMultiMap<QString,int>& toPlot, bool spectrum
     // happen, but it does apparently with some muon analyses.
     g->checkValuesInAxisRange(firstCurve);
   }
-
+  ml->toggleWaterfall(waterfallPlot);
   // Check if window does not contain any curves and should be closed
   ml->maybeNeedToClose();
 
@@ -3269,9 +3291,57 @@ void MantidUI::showSequentialPlot(Ui::SequentialFitDialog* ui, MantidQt::MantidW
 */
 void MantidUI::drawColorFillPlots(const QStringList & wsNames, Graph::CurveType curveType)
 {
-  for( QStringList::const_iterator cit = wsNames.begin(); cit != wsNames.end(); ++cit )
+  int nPlots = wsNames.size();
+  if ( nPlots > 1 )
   {
-    this->drawSingleColorFillPlot(*cit, curveType);
+    QList<MultiLayer*> plots;
+    for( QStringList::const_iterator cit = wsNames.begin(); cit != wsNames.end(); ++cit )
+    {
+      const bool hidden = true;
+      MultiLayer* plot = this->drawSingleColorFillPlot(*cit, curveType, NULL, hidden);
+      if(plot)
+        plots.append(plot);
+    }
+
+    if(!plots.isEmpty())
+    {
+      nPlots = plots.size();
+
+      int nCols = 1;
+      if ( nPlots >= 16 )
+        nCols = 4;
+      else if ( nPlots >= 9 )
+        nCols = 3;
+      else if ( nPlots >= 4 )
+        nCols = 2;
+      else
+        nCols = nPlots;
+
+      int nRows = nPlots / nCols;
+      if ( nPlots % nCols != 0 )
+        ++nRows;
+
+      auto tiledWindow = new TiledWindow(appWindow(),"",appWindow()->generateUniqueName("TiledWindow"),nRows,nCols);
+
+      int row = 0;
+      int col = 0;
+      for(auto it = plots.begin(); it != plots.end(); ++it)
+      {
+        tiledWindow->addWidget(*it, row, col);
+        ++col;
+        if (col == nCols)
+        {
+          col = 0;
+          ++row;
+        }
+      }
+
+      appWindow()->addMdiSubWindow(tiledWindow);
+    }
+  }
+  else if ( nPlots == 1 )
+  {
+    this->drawSingleColorFillPlot(wsNames.front(), curveType);
   }
 }
 
@@ -3281,10 +3351,11 @@ void MantidUI::drawColorFillPlots(const QStringList & wsNames, Graph::CurveType 
 * @param curveType :: The type of curve
 * @param window :: An optional pointer to a plot window. If not NULL the window is cleared
 *                      and reused
+* @param hidden
 * @returns A pointer to the created plot
 */
 MultiLayer* MantidUI::drawSingleColorFillPlot(const QString & wsName, Graph::CurveType curveType,
-                                              MultiLayer* window)
+                                              MultiLayer* window, bool hidden)
 {
   auto workspace = boost::dynamic_pointer_cast<const Mantid::API::MatrixWorkspace>(getWorkspace(wsName));
   if(!workspace) return NULL;
@@ -3298,6 +3369,10 @@ MultiLayer* MantidUI::drawSingleColorFillPlot(const QString & wsName, Graph::Cur
     try
     {
       window = appWindow()->multilayerPlot(appWindow()->generateUniqueName( wsName + "-"));
+      if (hidden)
+      {
+        window->hide();
+      }
     }
     catch(std::runtime_error& e)
     {
@@ -3324,9 +3399,6 @@ MultiLayer* MantidUI::drawSingleColorFillPlot(const QString & wsName, Graph::Cur
   appWindow()->setPreferences(plot);
 
   plot->setTitle(wsName);
-  using MantidQt::API::PlotAxis;
-  plot->setXAxisTitle(PlotAxis(*workspace, 0).title());
-  plot->setYAxisTitle(PlotAxis(*workspace, 1).title());
 
   Spectrogram *spgrm = new Spectrogram(wsName, workspace);
   plot->plotSpectrogram(spgrm, curveType);
@@ -3470,7 +3542,7 @@ void MantidUI::savedatainNexusFormat(const std::string& fileName,const std::stri
     Mantid::API::IAlgorithm_sptr alg = createAlgorithm(algorithm);
     alg->setPropertyValue("Filename",fileName);
     alg->setPropertyValue("InputWorkspace",wsName);
-    alg->execute();
+    executeAlgorithmAsync(alg, true /* wait for completion */);
   }
   catch(...)
   {
@@ -3489,7 +3561,7 @@ void MantidUI::loadWSFromFile(const std::string& wsName, const std::string& file
     Mantid::API::IAlgorithm_sptr alg = createAlgorithm("Load");
     alg->setPropertyValue("Filename",fileName);
     alg->setPropertyValue("OutputWorkspace",wsName);
-    alg->execute();
+    executeAlgorithmAsync(alg, true /* wait for completion */);
   }
   catch(...)
   {

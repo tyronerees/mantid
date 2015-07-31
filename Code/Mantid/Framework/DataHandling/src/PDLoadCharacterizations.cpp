@@ -1,5 +1,6 @@
 #include "MantidDataHandling/PDLoadCharacterizations.h"
 #include "MantidAPI/FileProperty.h"
+#include "MantidAPI/ITableWorkspace.h"
 #include "MantidAPI/TableRow.h"
 #include "MantidAPI/WorkspaceFactory.h"
 #include "MantidKernel/ArrayProperty.h"
@@ -36,10 +37,10 @@ PDLoadCharacterizations::~PDLoadCharacterizations() {}
 /// Algorithm's name for identification. @see Algorithm::name
 const std::string PDLoadCharacterizations::name() const {
   return "PDLoadCharacterizations";
-};
+}
 
 /// Algorithm's version for identification. @see Algorithm::version
-int PDLoadCharacterizations::version() const { return 1; };
+int PDLoadCharacterizations::version() const { return 1; }
 
 /// Algorithm's category for identification. @see Algorithm::category
 const std::string PDLoadCharacterizations::category() const {

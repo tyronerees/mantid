@@ -65,7 +65,7 @@ class SCRIPT_DLL_EXPORT ScriptRepositoryImpl : public ScriptRepository {
           downloaded_date(Kernel::DateAndTime::defaultTime()),
           pub_date(Kernel::DateAndTime::defaultTime()), description(""),
           downloaded_pubdate(Kernel::DateAndTime::defaultTime()),
-          auto_update(false), author(""){};
+          auto_update(false), author(""), status(BOTH_UNCHANGED) {};
   };
 
   typedef std::map<std::string, RepositoryEntry> Repository;
@@ -167,12 +167,11 @@ private:
 
   std::string ignoreregex;
 
-  bool getProxyConfig(std::string &, unsigned short &);
 
   std::string getParentFolder(const std::string &entry);
 };
 
-}; // namespace API
-}; // namespace Mantid
+} // namespace API
+} // namespace Mantid
 
 #endif // _MANTIDSCRIPTREPOSITORY_SCRIPTREPOSITORYIMPL_H_

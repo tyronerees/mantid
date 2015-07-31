@@ -15,8 +15,10 @@ set ( SRC_FILES
   src/MantidDialog.cpp
   src/MantidHelpInterface.cpp
   src/MantidQwtIMDWorkspaceData.cpp
+  src/MantidQwtWorkspaceData.cpp
   src/MantidWidget.cpp
   src/MdConstants.cpp
+  src/MdPlottingCmapsProvider.cpp
   src/MdSettings.cpp
   src/Message.cpp
   src/OptionsPropertyWidget.cpp
@@ -83,6 +85,7 @@ set ( INC_FILES
   inc/MantidQtAPI/MantidQwtIMDWorkspaceData.h
   inc/MantidQtAPI/MantidQwtWorkspaceData.h
   inc/MantidQtAPI/MdConstants.h
+  inc/MantidQtAPI/MdPlottingCmapsProvider.h
   inc/MantidQtAPI/MdSettings.h
   inc/MantidQtAPI/PropertyWidgetFactory.h
   inc/MantidQtAPI/QwtRasterDataMD.h
@@ -130,7 +133,7 @@ if (OSX_VERSION VERSION_GREATER 10.8)
   set_target_properties ( MantidQtAPI PROPERTIES INSTALL_RPATH "@loader_path/../MacOS")
 endif () 
 
-target_link_libraries ( MantidQtAPI ${CORE_MANTIDLIBS} ${QT_LIBRARIES} ${QWT_LIBRARIES} )
+target_link_libraries ( MantidQtAPI LINK_PRIVATE ${CORE_MANTIDLIBS} ${QT_LIBRARIES} ${QWT_LIBRARIES} ${POCO_LIBRARIES} ${Boost_LIBRARIES} )
 
 ###########################################################################
 # Windows: Generate a qt.conf file so that the dev build finds the qt

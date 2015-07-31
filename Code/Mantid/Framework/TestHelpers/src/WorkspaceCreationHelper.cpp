@@ -81,10 +81,8 @@ Workspace2D_sptr Create1DWorkspaceConstant(int size, double value,
                                            double error) {
   MantidVecPtr x1, y1, e1;
   x1.access().resize(size, 1);
-  y1.access().resize(size);
-  std::fill(y1.access().begin(), y1.access().end(), value);
-  e1.access().resize(size);
-  std::fill(y1.access().begin(), y1.access().end(), error);
+  y1.access().resize(size, value);
+  e1.access().resize(size, error);
   Workspace2D_sptr retVal(new Workspace2D);
   retVal->initialize(1, size, size);
   retVal->setX(0, x1);
@@ -318,7 +316,7 @@ create2DWorkspaceWithFullInstrument(int nhist, int nbins, bool includeMonitors,
 
   boost::shared_ptr<Instrument> testInst(new Instrument(instrumentName));
   testInst->setReferenceFrame(
-      boost::shared_ptr<ReferenceFrame>(new ReferenceFrame(Y, X, Left, "")));
+      boost::shared_ptr<ReferenceFrame>(new ReferenceFrame(Y, Z, Left, "")));
   space->setInstrument(testInst);
 
   const double pixelRadius(0.05);
@@ -366,14 +364,14 @@ create2DWorkspaceWithFullInstrument(int nhist, int nbins, bool includeMonitors,
   // Define a source and sample position
   // Define a source component
   ObjComponent *source =
-      new ObjComponent("moderator", Object_sptr(), testInst.get());
+      new ObjComponent("moderator", ComponentCreationHelper::createSphere(0.1, V3D(0,0,0), "1"), testInst.get());
   source->setPos(V3D(-20, 0.0, 0.0));
   testInst->add(source);
   testInst->markAsSource(source);
 
   // Define a sample as a simple sphere
   ObjComponent *sample =
-      new ObjComponent("samplePos", Object_sptr(), testInst.get());
+      new ObjComponent("samplePos", ComponentCreationHelper::createSphere(0.1, V3D(0,0,0), "1"), testInst.get());
   testInst->setPos(0.0, 0.0, 0.0);
   testInst->add(sample);
   testInst->markAsSamplePos(sample);
@@ -500,7 +498,7 @@ create2DWorkspaceWithReflectometryInstrument(double startX) {
   instrument->markAsMonitor(monitor);
 
   ObjComponent *sample = new ObjComponent("some-surface-holder");
-  source->setPos(V3D(15, 0, 0));
+  sample->setPos(V3D(15, 0, 0));
   instrument->add(sample);
   instrument->markAsSamplePos(sample);
 
@@ -520,9 +518,8 @@ create2DWorkspaceWithReflectometryInstrument(double startX) {
   workspace->setYUnit("Counts");
 
   workspace->setInstrument(instrument);
-
-  workspace->getSpectrum(0)->addDetectorID(det->getID());
-  workspace->getSpectrum(1)->addDetectorID(monitor->getID());
+  workspace->getSpectrum(0)->setDetectorID(det->getID());
+  workspace->getSpectrum(1)->setDetectorID(monitor->getID());
   return workspace;
 }
 
@@ -601,7 +598,19 @@ EventWorkspace_sptr CreateEventWorkspace(int numPixels, int numBins,
                                          int numEvents, double x0,
                                          double binDelta, int eventPattern,
                                          int start_at_pixelID) {
-  DateAndTime run_start("2010-01-01T00:00:00");
+  return CreateEventWorkspaceWithStartTime(numPixels, numBins, numEvents, x0,
+                          binDelta, eventPattern, start_at_pixelID,
+                          DateAndTime("2010-01-01T00:00:00"));
+}
+
+/**
+ * Create event workspace with defined start date time
+ */
+EventWorkspace_sptr CreateEventWorkspaceWithStartTime(int numPixels, int numBins,
+                                                      int numEvents, double x0,
+                                                      double binDelta, int eventPattern,
+                                                      int start_at_pixelID,
+                                                      DateAndTime run_start) {
 
   // add one to the number of bins as this is histogram
   numBins++;
@@ -920,7 +929,7 @@ createProcessedInelasticWS(const std::vector<double> &L2,
 
   // detectors at L2, sample at 0 and source at -L2_min
   ws->setInstrument(
-      ComponentCreationHelper::createCylInstrumentWithDetInGivenPosisions(
+      ComponentCreationHelper::createCylInstrumentWithDetInGivenPositions(
           L2, polar, azimutal));
 
   for (int g = 0; g < static_cast<int>(numPixels); g++) {
@@ -1182,7 +1191,7 @@ RebinnedOutput_sptr CreateRebinnedOutputWorkspace() {
 }
 
 Mantid::DataObjects::PeaksWorkspace_sptr
-createPeaksWorkspace(const int numPeaks) {
+createPeaksWorkspace(const int numPeaks, const bool createOrientedLattice) {
   PeaksWorkspace_sptr peaksWS(new PeaksWorkspace());
   Instrument_sptr inst =
       ComponentCreationHelper::createTestInstrumentRectangular2(1, 10);
@@ -1193,6 +1202,10 @@ createPeaksWorkspace(const int numPeaks) {
     peaksWS->addPeak(peak);
   }
 
+  if(createOrientedLattice) {
+    Mantid::Geometry::OrientedLattice lattice;
+    peaksWS->mutableSample().setOrientedLattice(&lattice);
+  }
   return peaksWS;
 }
 

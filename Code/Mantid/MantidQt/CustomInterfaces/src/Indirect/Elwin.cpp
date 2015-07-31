@@ -22,7 +22,7 @@ namespace CustomInterfaces
 namespace IDA
 {
   Elwin::Elwin(QWidget * parent) :
-    IDATab(parent),
+    IndirectDataAnalysisTab(parent),
     m_elwTree(NULL)
   {
     m_uiForm.setupUi(parent);
@@ -65,16 +65,17 @@ namespace IDA
 
     // We always want one range selector... the second one can be controlled from
     // within the elwinTwoRanges(bool state) function
-    m_rangeSelectors["ElwinIntegrationRange"] = new MantidWidgets::RangeSelector(m_uiForm.ppPlot);
-    connect(m_rangeSelectors["ElwinIntegrationRange"], SIGNAL(minValueChanged(double)), this, SLOT(minChanged(double)));
-    connect(m_rangeSelectors["ElwinIntegrationRange"], SIGNAL(maxValueChanged(double)), this, SLOT(maxChanged(double)));
+    auto integrationRangeSelector = m_uiForm.ppPlot->addRangeSelector("ElwinIntegrationRange");
+    connect(integrationRangeSelector, SIGNAL(minValueChanged(double)), this, SLOT(minChanged(double)));
+    connect(integrationRangeSelector, SIGNAL(maxValueChanged(double)), this, SLOT(maxChanged(double)));
     // create the second range
-    m_rangeSelectors["ElwinBackgroundRange"] = new MantidWidgets::RangeSelector(m_uiForm.ppPlot);
-    m_rangeSelectors["ElwinBackgroundRange"]->setColour(Qt::darkGreen); // dark green for background
-    connect(m_rangeSelectors["ElwinIntegrationRange"], SIGNAL(rangeChanged(double, double)), m_rangeSelectors["ElwinBackgroundRange"], SLOT(setRange(double, double)));
-    connect(m_rangeSelectors["ElwinBackgroundRange"], SIGNAL(minValueChanged(double)), this, SLOT(minChanged(double)));
-    connect(m_rangeSelectors["ElwinBackgroundRange"], SIGNAL(maxValueChanged(double)), this, SLOT(maxChanged(double)));
-    m_rangeSelectors["ElwinBackgroundRange"]->setRange(m_rangeSelectors["ElwinIntegrationRange"]->getRange());
+    auto backgroundRangeSelector = m_uiForm.ppPlot->addRangeSelector("ElwinBackgroundRange");
+    backgroundRangeSelector->setColour(Qt::darkGreen); // dark green for background
+    connect(integrationRangeSelector, SIGNAL(rangeChanged(double, double)),
+            backgroundRangeSelector, SLOT(setRange(double, double)));
+    connect(backgroundRangeSelector, SIGNAL(minValueChanged(double)), this, SLOT(minChanged(double)));
+    connect(backgroundRangeSelector, SIGNAL(maxValueChanged(double)), this, SLOT(maxChanged(double)));
+    backgroundRangeSelector->setRange(integrationRangeSelector->getRange());
 
     connect(m_dblManager, SIGNAL(valueChanged(QtProperty*, double)), this, SLOT(updateRS(QtProperty*, double)));
     connect(m_blnManager, SIGNAL(valueChanged(QtProperty*, bool)), this, SLOT(twoRanges(QtProperty*, bool)));
@@ -145,14 +146,15 @@ namespace IDA
     elwinMultAlg->setProperty("OutputELF", elfWorkspace.toStdString());
 
     elwinMultAlg->setProperty("SampleEnvironmentLogName", m_uiForm.leLogName->text().toStdString());
+    elwinMultAlg->setProperty("SampleEnvironmentLogValue", m_uiForm.leLogValue->currentText().toStdString());
 
-    elwinMultAlg->setProperty("Range1Start", m_dblManager->value(m_properties["IntegrationStart"]));
-    elwinMultAlg->setProperty("Range1End", m_dblManager->value(m_properties["IntegrationEnd"]));
+    elwinMultAlg->setProperty("IntegrationRangeStart", m_dblManager->value(m_properties["IntegrationStart"]));
+    elwinMultAlg->setProperty("IntegrationRangeEnd", m_dblManager->value(m_properties["IntegrationEnd"]));
 
     if(m_blnManager->value(m_properties["BackgroundSubtraction"]))
     {
-      elwinMultAlg->setProperty("Range2Start", boost::lexical_cast<std::string>(m_dblManager->value(m_properties["IntegrationStart"])));
-      elwinMultAlg->setProperty("Range2End", boost::lexical_cast<std::string>(m_dblManager->value(m_properties["IntegrationEnd"])));
+      elwinMultAlg->setProperty("BackgroundRangeStart", m_dblManager->value(m_properties["BackgroundStart"]));
+      elwinMultAlg->setProperty("BackgroundRangeEnd", m_dblManager->value(m_properties["BackgroundEnd"]));
     }
 
     if(m_blnManager->value(m_properties["Normalise"]))
@@ -260,15 +262,25 @@ namespace IDA
   void Elwin::setDefaultSampleLog(Mantid::API::MatrixWorkspace_const_sptr ws)
   {
     auto inst = ws->getInstrument();
+    // Set sample environment log name
     auto log = inst->getStringParameter("Workflow.SE-log");
     QString logName("sample");
-
     if(log.size() > 0)
     {
       logName = QString::fromStdString(log[0]);
     }
-
     m_uiForm.leLogName->setText(logName);
+    // Set sample environment log value
+    auto logval = inst->getStringParameter("Workflow.SE-log-value");
+    if(logval.size() > 0)
+    {
+      auto logValue = QString::fromStdString(logval[0]);
+      int  index = m_uiForm.leLogValue->findText(logValue);
+      if (index >= 0)
+      {
+        m_uiForm.leLogValue->setCurrentIndex(index);
+      }
+    }
   }
 
   /**
@@ -360,7 +372,7 @@ namespace IDA
     try
     {
       QPair<double, double> range = m_uiForm.ppPlot->getCurveRange("Sample");
-      m_rangeSelectors["ElwinIntegrationRange"]->setRange(range.first, range.second);
+      m_uiForm.ppPlot->getRangeSelector("ElwinIntegrationRange")->setRange(range.first, range.second);
     }
     catch(std::invalid_argument & exc)
     {
@@ -371,17 +383,21 @@ namespace IDA
   void Elwin::twoRanges(QtProperty* prop, bool val)
   {
     if(prop == m_properties["BackgroundSubtraction"])
-      m_rangeSelectors["ElwinBackgroundRange"]->setVisible(val);
+      m_uiForm.ppPlot->getRangeSelector("ElwinBackgroundRange")->setVisible(val);
   }
 
   void Elwin::minChanged(double val)
   {
+    auto integrationRangeSelector = m_uiForm.ppPlot->getRangeSelector("ElwinIntegrationRange");
+    auto backgroundRangeSelector = m_uiForm.ppPlot->getRangeSelector("ElwinBackgroundRange");
+
     MantidWidgets::RangeSelector* from = qobject_cast<MantidWidgets::RangeSelector*>(sender());
-    if ( from == m_rangeSelectors["ElwinIntegrationRange"] )
+
+    if(from == integrationRangeSelector)
     {
       m_dblManager->setValue(m_properties["IntegrationStart"], val);
     }
-    else if ( from == m_rangeSelectors["ElwinBackgroundRange"] )
+    else if(from == backgroundRangeSelector)
     {
       m_dblManager->setValue(m_properties["BackgroundStart"], val);
     }
@@ -389,12 +405,16 @@ namespace IDA
 
   void Elwin::maxChanged(double val)
   {
+    auto integrationRangeSelector = m_uiForm.ppPlot->getRangeSelector("ElwinIntegrationRange");
+    auto backgroundRangeSelector = m_uiForm.ppPlot->getRangeSelector("ElwinBackgroundRange");
+
     MantidWidgets::RangeSelector* from = qobject_cast<MantidWidgets::RangeSelector*>(sender());
-    if ( from == m_rangeSelectors["ElwinIntegrationRange"] )
+
+    if(from == integrationRangeSelector)
     {
       m_dblManager->setValue(m_properties["IntegrationEnd"], val);
     }
-    else if ( from == m_rangeSelectors["ElwinBackgroundRange"] )
+    else if(from == backgroundRangeSelector)
     {
       m_dblManager->setValue(m_properties["BackgroundEnd"], val);
     }
@@ -402,11 +422,15 @@ namespace IDA
 
   void Elwin::updateRS(QtProperty* prop, double val)
   {
-    if ( prop == m_properties["IntegrationStart"] ) m_rangeSelectors["ElwinIntegrationRange"]->setMinimum(val);
-    else if ( prop == m_properties["IntegrationEnd"] ) m_rangeSelectors["ElwinIntegrationRange"]->setMaximum(val);
-    else if ( prop == m_properties["BackgroundStart"] ) m_rangeSelectors["ElwinBackgroundRange"]->setMinimum(val);
-    else if ( prop == m_properties["BackgroundEnd"] ) m_rangeSelectors["ElwinBackgroundRange"]->setMaximum(val);
+    auto integrationRangeSelector = m_uiForm.ppPlot->getRangeSelector("ElwinIntegrationRange");
+    auto backgroundRangeSelector = m_uiForm.ppPlot->getRangeSelector("ElwinBackgroundRange");
+
+    if ( prop == m_properties["IntegrationStart"] )     integrationRangeSelector->setMinimum(val);
+    else if ( prop == m_properties["IntegrationEnd"] )  integrationRangeSelector->setMaximum(val);
+    else if ( prop == m_properties["BackgroundStart"] ) backgroundRangeSelector->setMinimum(val);
+    else if ( prop == m_properties["BackgroundEnd"] )   backgroundRangeSelector->setMaximum(val);
   }
+
 } // namespace IDA
 } // namespace CustomInterfaces
 } // namespace MantidQt

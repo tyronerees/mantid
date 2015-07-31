@@ -60,7 +60,7 @@ Code Documentation is available at: <http://doxygen.mantidproject.org>
 class DLLExport PlotAsymmetryByLogValue : public API::Algorithm {
 public:
   /// Default constructor
-  PlotAsymmetryByLogValue() : Algorithm(){};
+  PlotAsymmetryByLogValue();
   /// Destructor
   virtual ~PlotAsymmetryByLogValue(){};
   /// Algorithm's name for identification overriding a virtual method
@@ -78,44 +78,89 @@ private:
   // Overridden Algorithm methods
   void init();
   void exec();
+  // Load run, apply dead time corrections and detector grouping
+  API::Workspace_sptr doLoad(int64_t runNumber);
+  // Analyse loaded run
+  void doAnalysis(API::Workspace_sptr loadedWs, int64_t index);
   // Parse run names
-  void parseRunNames (std::string& firstFN, std::string& lastFN, std::string& fnBase, std::string& fnExt);
+  void parseRunNames(std::string &firstFN, std::string &lastFN,
+                     std::string &fnBase, std::string &fnExt, int &fnZeros);
   // Load dead-time corrections from specified file
-  void loadCorrectionsFromFile (API::Workspace_sptr &customDeadTimes, std::string deadTimeFile );
+  API::Workspace_sptr loadCorrectionsFromFile(const std::string &deadTimeFile);
   // Apply dead-time corrections
-  void applyDeadtimeCorr (API::Workspace_sptr &loadedWs, API::Workspace_sptr deadTimes);
-  /// Group detectors from run file
-  void groupDetectors (API::Workspace_sptr &loadedWs, API::Workspace_sptr loadedDetGrouping);
+  void applyDeadtimeCorr(API::Workspace_sptr &loadedWs,
+                         API::Workspace_sptr deadTimes);
+  /// Create custom detector grouping
+  API::Workspace_sptr createCustomGrouping(const std::vector<int> &fwd,
+                                           const std::vector<int> &bwd);
+  /// Group detectors
+  void groupDetectors(API::Workspace_sptr &loadedWs,
+                      API::Workspace_sptr grouping);
   /// Calculate the integral asymmetry for a workspace (single period)
   void calcIntAsymmetry(API::MatrixWorkspace_sptr ws, double &Y, double &E);
   /// Calculate the integral asymmetry for a workspace (red & green)
-  void calcIntAsymmetry(API::MatrixWorkspace_sptr ws_red, API::MatrixWorkspace_sptr ws_geen, double &Y, double &E);
+  void calcIntAsymmetry(API::MatrixWorkspace_sptr ws_red,
+                        API::MatrixWorkspace_sptr ws_green, double &Y,
+                        double &E);
   /// Group detectors
-  void groupDetectors (API::MatrixWorkspace_sptr &ws, const std::vector<int> &spectraList);
+  void groupDetectors(API::MatrixWorkspace_sptr &ws,
+                      const std::vector<int> &spectraList);
   /// Get log value
   double getLogValue(API::MatrixWorkspace &ws);
   /// Populate output workspace with results
-  void populateOutputWorkspace (API::MatrixWorkspace_sptr &outWS, int nplots);
+  void populateOutputWorkspace(API::MatrixWorkspace_sptr &outWS, int nplots);
+  /// Check input properties
+  void checkProperties(size_t &is, size_t &ie);
+  /// Clear previous results
+  void clearResultsFromTo(size_t is, size_t ie);
 
+  /// Stores base name shared by all runs
+  static std::string g_filenameBase;
+  /// Stores extension shared by all runs
+  static std::string g_filenameExt;
+  /// Sotres number of zeros in run name
+  static int g_filenameZeros;
   /// Stores property "Int"
   bool m_int;
   /// Store forward spectra
-  std::vector<int> m_forward_list;
+  static std::vector<int> g_forward_list;
   /// Store backward spectra
-  std::vector<int> m_backward_list;
-  /// If true call LoadMuonNexus with Autogroup on
-  bool m_autogroup;
+  static std::vector<int> g_backward_list;
+  /// Store type of dead time corrections
+  static std::string g_dtcType;
+  /// File to read corrections from
+  static std::string g_dtcFile;
+  /// Store red period
+  static int g_red;
+  /// Store green period
+  static int g_green;
   // Mantid vectors to store results
   // Red mantid vectors
-  MantidVec m_redX, m_redY, m_redE;
+  static std::map<int64_t, double> g_redX;
+  static std::map<int64_t, double> g_redY;
+  static std::map<int64_t, double> g_redE;
   // Green mantid vectors
-  MantidVec m_greenX, m_greenY, m_greenE;
+  static std::map<int64_t, double> g_greenX;
+  static std::map<int64_t, double> g_greenY;
+  static std::map<int64_t, double> g_greenE;
   // Mantid vectors to store Red + Green
-  MantidVec m_sumX, m_sumY, m_sumE;
+  static std::map<int64_t, double> g_sumX;
+  static std::map<int64_t, double> g_sumY;
+  static std::map<int64_t, double> g_sumE;
   // Mantid vectors to store Red - Green
-  MantidVec m_diffX, m_diffY, m_diffE;
+  static std::map<int64_t, double> g_diffX;
+  static std::map<int64_t, double> g_diffY;
+  static std::map<int64_t, double> g_diffE;
   // LogValue name
-  std::string m_logName;
+  static std::string g_logName;
+  // LogValue function
+  static std::string g_logFunc;
+  // Type of computation: integral or differential
+  static std::string g_stype;
+  // Minimum time for the analysis
+  static double g_minTime;
+  // Maximum time for the analysis
+  static double g_maxTime;
 };
 
 } // namespace Algorithm

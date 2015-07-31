@@ -16,22 +16,10 @@ class IndirectCommonTests(unittest.TestCase):
 
     def setUp(self):
         self._config_defaults = config
+        config['default.facility'] = 'ISIS'
 
     def tearDown(self):
         config = self._config_defaults
-
-    def test_loadInst(self):
-        indirect_common.loadInst('IRIS')
-
-        ws_name = '__empty_IRIS'
-        ws = mtd[ws_name]
-        instrument = ws.getInstrument()
-        self.assertEqual(instrument.getName(), 'IRIS')
-
-    def test_loadNexus(self):
-        ws_name = indirect_common.loadNexus('IRS26173_ipg.nxs')
-        self.assertEqual(ws_name, 'IRS26173_ipg')
-        self.assertTrue(mtd.doesExist(ws_name))
 
     def test_getInstrRun_from_name(self):
         ws = self.make_dummy_QENS_workspace()
@@ -81,7 +69,7 @@ class IndirectCommonTests(unittest.TestCase):
 
     def test_getEFixed_failure(self):
         ws = CreateSampleWorkspace()
-        self.assertRaises(IndexError, indirect_common.getEfixed, ws.name())
+        self.assertRaises(ValueError, indirect_common.getEfixed, ws.name())
 
     def test_getDefaultWorkingDirectory(self):
         config['defaultsave.directory'] = os.path.expanduser('~')
@@ -296,23 +284,6 @@ class IndirectCommonTests(unittest.TestCase):
 
         self.assert_matrix_workspace_dimensions(params_workspace.name(),
                                                 expected_num_histograms=3, expected_blocksize=5)
-
-    def test_addSampleLogs(self):
-        ws = CreateSampleWorkspace()
-        logs = {}
-        logs['FloatLog'] = 3.149
-        logs['IntLog'] = 42
-        logs['StringLog'] = "A String Log"
-        logs['BooleanLog'] = True
-
-        indirect_common.addSampleLogs(ws, logs)
-
-        self.assert_logs_match_expected(ws.name(), logs)
-
-    def test_addSampleLogs_empty_dict(self):
-        ws = CreateSampleWorkspace()
-        logs = {}
-        self.assert_does_not_raise(Exception, indirect_common.addSampleLogs, ws, logs)
 
     #-----------------------------------------------------------
     # Custom assertion functions

@@ -8,11 +8,12 @@ set ( SRC_FILES
 	src/CPUTimer.cpp
 	src/CatalogInfo.cpp
 	src/CompositeValidator.cpp
+	src/ComputeResourceInfo.cpp
 	src/ConfigService.cpp
 	src/ChecksumHelper.cpp
 	src/DataItem.cpp
 	src/DateAndTime.cpp
-	src/DateTimeValidator.cpp 
+	src/DateTimeValidator.cpp
 	src/DateValidator.cpp
 	src/DeltaEMode.cpp
 	src/DirectoryValidator.cpp
@@ -128,6 +129,7 @@ set ( INC_FILES
 	inc/MantidKernel/Cache.h
 	inc/MantidKernel/CatalogInfo.h
 	inc/MantidKernel/CompositeValidator.h
+	inc/MantidKernel/ComputeResourceInfo.h
 	inc/MantidKernel/ConfigService.h
 	inc/MantidKernel/ChecksumHelper.h
 	inc/MantidKernel/DataItem.h
@@ -196,6 +198,7 @@ set ( INC_FILES
 	inc/MantidKernel/NullValidator.h
 	inc/MantidKernel/ParaViewVersion.h
 	inc/MantidKernel/PhysicalConstants.h
+        inc/MantidKernel/PocoVersion.h
 	inc/MantidKernel/ProgressBase.h
 	inc/MantidKernel/ProgressText.h
 	inc/MantidKernel/Property.h
@@ -263,6 +266,7 @@ set ( TEST_FILES
 	CacheTest.h
 	CatalogInfoTest.h
 	CompositeValidatorTest.h
+	ComputeResourceInfoTest.h
 	ConfigServiceTest.h
 	ChecksumHelperTest.h
 	DataServiceTest.h
@@ -356,6 +360,12 @@ set ( TEST_FILES
 	WriteLockTest.h
 )
 
+if (COVERALLS)
+    foreach( loop_var ${SRC_FILES} ${INC_FILES})
+      set_property(GLOBAL APPEND PROPERTY COVERAGE_SRCS "${CMAKE_CURRENT_SOURCE_DIR}/${loop_var}")
+    endforeach(loop_var)
+endif()
+
 if ( ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     LIST( APPEND SRC_FILES src/NetworkProxyOSX.cpp )
     SET( NETWORK_LIBRARIES "-framework SystemConfiguration" "-framework CoreFoundation"  "-framework CoreServices")
@@ -391,12 +401,16 @@ set_property ( TARGET Kernel PROPERTY FOLDER "MantidFramework" )
 # For older gcc versions (<4.5) if we do not put stdc++ first then things crash when an exceptions are
 # thrown in Python.
 if ( GCC_COMPILER_VERSION AND GCC_COMPILER_VERSION VERSION_LESS "4.5" )
- target_link_libraries ( Kernel stdc++ )
+ target_link_libraries ( Kernel LINK_PRIVATE stdc++ )
 endif()
-target_link_libraries ( Kernel ${NEXUS_LIBRARIES} ${MANTIDLIBS} ${GSL_LIBRARIES} 
-                        ${NETWORK_LIBRARIES} ${JSONCPP_LIBRARIES} )
+target_link_libraries ( Kernel LINK_PRIVATE ${NEXUS_LIBRARIES} ${GSL_LIBRARIES} ${MANTIDLIBS} ${NETWORK_LIBRARIES} )
+
+if (WITH_ASAN)
+  target_link_libraries ( Kernel LINK_PRIVATE -lasan )
+endif ()
+
 if ( WIN32 )
-  target_link_libraries ( Kernel Psapi.lib ) # For memory usage queries
+  target_link_libraries ( Kernel LINK_PRIVATE Psapi.lib ) # For memory usage queries
 endif()
 
 # Add the unit tests directory
@@ -415,6 +429,13 @@ if ( NOT NOT_GIT_REPO OR NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/MantidVersio
                    ${CMAKE_CURRENT_SOURCE_DIR}/src/MantidVersion.cpp
   )
 endif ()
+
+###########################################################################
+# This section deals with creating the PocoVersion implementation
+###########################################################################
+configure_file ( ${CMAKE_CURRENT_SOURCE_DIR}/inc/MantidKernel/PocoVersion.h.in
+                 ${CMAKE_CURRENT_SOURCE_DIR}/inc/MantidKernel/PocoVersion.h
+)
 
 ###########################################################################
 # This section deals with creating the ParaViewVersion implementation
@@ -436,10 +457,15 @@ if ( ${CMAKE_PROJECT_NAME} STREQUAL "MantidFramework" )
 endif ()
 
 set ( PLUGINS "." )
-set ( PV_PLUGINS "./pvplugins" )
+if ( MAKE_VATES )
+  set ( PV_PLUGINS "./${PVPLUGINS_DIR}" )
+else ()
+  set ( PV_PLUGINS "" )
+endif ()
 set ( IGNORE_PARAVIEW "0" )
 set ( QTPLUGINS "." )
 set ( UPDATE_INSTRUMENT_DEFINTITIONS "0" )
+set ( CHECK_FOR_NEW_MANTID_VERSION "0" )
 set ( ENABLE_USAGE_REPORTS "0" )
 set ( PYTHONPLUGIN_DIRS "${MANTID_ROOT}/Framework/PythonInterface/plugins" )
 set ( DATADIRS ${ExternalData_BINARY_ROOT}/Testing/Data/UnitTest;${ExternalData_BINARY_ROOT}/Testing/Data/DocTest;${MANTID_ROOT}/instrument )
@@ -518,6 +544,7 @@ endif ()
 set ( PLUGINS ${MANTID_ROOT}/plugins )
 set ( PYTHONPLUGIN_DIRS "${PLUGINS}/python" )
 set ( UPDATE_INSTRUMENT_DEFINTITIONS "1" )
+set ( CHECK_FOR_NEW_MANTID_VERSION "1" )
 set ( ENABLE_USAGE_REPORTS "1" )
 set ( DATADIRS "" )
 set ( MANTIDPUBLISHER "http://upload.mantidproject.org/scriptrepository/payload/publish" )

@@ -13,7 +13,7 @@
 
 #include <Poco/NObserver.h>
 
-#include "MantidAPI/MatrixWorkspace.h"
+#include "MantidAPI/MatrixWorkspace_fwd.h"
 #include "MantidAPI/AnalysisDataService.h"
 #include "../UserFunction.h"
 #include "../MdiSubWindow.h"
@@ -268,8 +268,6 @@ protected:
 
   //MantidMatrixFunction m_funct;
   int m_column_width;
-
-  QAction *m_actionShowX;
 
 private:
   //name of the underlying workspace

@@ -1,13 +1,26 @@
-import mantid.simpleapi as api
+#pylint: disable=no-init,invalid-name,too-many-instance-attributes
 from mantid.api import *
 from mantid.kernel import *
 import os
-import datetime
 
 class ExportSampleLogsToCSVFile(PythonAlgorithm):
     """ Python algorithm to export sample logs to spread sheet file
     for VULCAN
     """
+
+    _wksp = None
+    _outputfilename = None
+    _sampleloglist = None
+    _headerconten = None
+    _writeheader = None
+    _headercontent = None
+    _timezone = None
+    _timeTolerance = None
+    _maxtimestamp = None
+    _maxtime = None
+    _starttime = None
+    _localtimediff = None
+
     def category(self):
         """ Category
         """
@@ -42,14 +55,17 @@ class ExportSampleLogsToCSVFile(PythonAlgorithm):
         self.declareProperty("Header", "", "String in the header file.")
 
         # Time zone
-        timezones = ["UTC", "America/New_York", "Asia/Shanghai", "Australia/Sydney", "Europe/London", "GMT+0",
+        timezones = ["UTC", "America/New_York", "Asia/Shanghai", "Australia/Sydney", "Europe/London", "GMT+0",\
                 "Europe/Paris", "Europe/Copenhagen"]
 
-        self.declareProperty("TimeZone", "America/New_York", StringListValidator(timezones))
+        description = "Sample logs recorded in NeXus files (in SNS) are in UTC time.  TimeZone " + \
+            "can allow the algorithm to output the log with local time."
+        self.declareProperty("TimeZone", "America/New_York", StringListValidator(timezones), description)
 
         # Log time tolerance
         self.declareProperty("TimeTolerance", 0.01,
-                             "If any 2 log entries with log times within the time tolerance, they will be recorded in one line. Unit is second. ")
+                             "If any 2 log entries with log times within the time tolerance, " + \
+                             "they will be recorded in one line. Unit is second. ")
 
         return
 
@@ -166,7 +182,7 @@ class ExportSampleLogsToCSVFile(PythonAlgorithm):
             ofile = open(self._outputfilename, "w")
             ofile.write(wbuf)
             ofile.close()
-        except IOError as err:
+        except IOError:
             raise NotImplementedError("Unable to write file %s. Check permission." % (self._outputfilename))
 
         return
@@ -216,7 +232,7 @@ class ExportSampleLogsToCSVFile(PythonAlgorithm):
 
         wbuf = ""
         currtimeindexes = []
-        for i in xrange(len(logtimeslist)):
+        for dummy_i in xrange(len(logtimeslist)):
             currtimeindexes.append(0)
         nextlogindexes = []
 
@@ -255,7 +271,7 @@ class ExportSampleLogsToCSVFile(PythonAlgorithm):
             ofile = open(self._outputfilename, "w")
             ofile.write(wbuf)
             ofile.close()
-        except IOError as err:
+        except IOError:
             raise NotImplementedError("Unable to write file %s. Check permission." % (self._outputfilename))
 
         return
@@ -318,7 +334,6 @@ class ExportSampleLogsToCSVFile(PythonAlgorithm):
         wbuf = "%.6f\t%.6f\t" % (abstime, reltime)
 
         # Log valuess
-        tmplogvalues = []
         for i in xrange(len(logvaluelist)):
             timeindex = currtimeindexes[i]
             if not i in nexttimelogindexes:
@@ -430,16 +445,16 @@ class ExportSampleLogsToCSVFile(PythonAlgorithm):
 
         return
 
-def getLocalTimeShiftInSecond(utctime, localtimezone, logger = None):
+def getLocalTimeShiftInSecond(utctime, localtimezone, currentlogger = None):
     """ Calculate the difference between UTC time and local time of given
     DataAndTime
     """
     from datetime import datetime
     from dateutil import tz
 
-    if logger:
-        logger.information("Input UTC time = %s" % (str(utctime)))
-    
+    if currentlogger:
+        currentlogger.information("Input UTC time = %s" % (str(utctime)))
+
     # Return early if local time zone is UTC
     if localtimezone == "UTC":
         return 0
@@ -449,10 +464,10 @@ def getLocalTimeShiftInSecond(utctime, localtimezone, logger = None):
     to_zone = tz.gettz(localtimezone)
 
     t1str = (str(utctime)).split('.')[0].strip()
-    if logger:
-        logger.information("About to convert time string: %s" % t1str)
+    if currentlogger:
+        currentlogger.information("About to convert time string: %s" % t1str)
     try:
-        if t1str.count("T") == 1: 
+        if t1str.count("T") == 1:
             utc = datetime.strptime(t1str, '%Y-%m-%dT%H:%M:%S')
         else:
             utc = datetime.strptime(t1str, '%Y-%m-%d %H:%M:%S')

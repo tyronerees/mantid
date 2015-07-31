@@ -14,7 +14,7 @@ namespace MantidQt
 {
   namespace CustomInterfaces
   {
-    DECLARE_SUBWINDOW(Vesuvio);
+    DECLARE_SUBWINDOW(Vesuvio)
   }
 }
 

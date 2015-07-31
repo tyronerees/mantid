@@ -54,9 +54,9 @@ namespace MantidQt
       UserInputValidator();
 
       /// Check that the given QLineEdit field is not empty.
-      bool checkFieldIsNotEmpty(const QString & name, QLineEdit * field, QLabel * errorLabel);
+      bool checkFieldIsNotEmpty(const QString & name, QLineEdit * field, QLabel * errorLabel = NULL);
       /// Check that the given QLineEdit field is valid as per any validators it might have.
-      bool checkFieldIsValid(const QString & errorMessage, QLineEdit * field, QLabel * errorLabel);
+      bool checkFieldIsValid(const QString & errorMessage, QLineEdit * field, QLabel * errorLabel = NULL);
       /// Check that the given WorkspaceSelector is not empty.
       bool checkWorkspaceSelectorIsNotEmpty(const QString & name, WorkspaceSelector * workspaceSelector);
       /// Check that the given MWRunFiles widget has valid files.
@@ -71,8 +71,13 @@ namespace MantidQt
       bool checkRangeIsEnclosed(const QString & outerName, std::pair<double, double> outer, const QString & innerName, std::pair<double, double> inner);
       /// Check that the given range can be split evenly into bins of the given width.
       bool checkBins(double lower, double binWidth, double upper, double tolerance = 0.00000001);
+      /// Checks two values are not equal
+      bool checkNotEqual(const QString & name, double x, double y = 0.0, double tolerance = 0.00000001);
       /// Add a custom error message to the list.
       void addErrorMessage(const QString & message);
+
+      /// Sets a validation label
+      void setErrorLabel(QLabel * errorLabel, bool valid);
 
       /// Returns an error message which contains all the error messages raised by the check functions.
       QString generateErrorMessage();
@@ -82,6 +87,7 @@ namespace MantidQt
     private:
       /// Any raised error messages.
       QStringList m_errorMessages;
+
     };
   }
 }
