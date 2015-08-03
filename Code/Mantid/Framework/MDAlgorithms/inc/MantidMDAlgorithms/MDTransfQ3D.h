@@ -53,6 +53,7 @@ public:
   bool calcYDepCoordinates(std::vector<coord_t> &Coord, size_t i);
   bool calcMatrixCoord(const double &X, std::vector<coord_t> &Coord, double &s,
                        double &err) const;
+
   // constructor;
   MDTransfQ3D();
   /* clone method allowing to provide the copy of the particular class */

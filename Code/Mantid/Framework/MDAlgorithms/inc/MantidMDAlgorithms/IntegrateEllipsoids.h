@@ -30,15 +30,16 @@ public:
 private:
   void init();
   void exec();
+
   void qListFromEventWS(Integrate3DEvents &integrator, API::Progress &prog,
                         DataObjects::EventWorkspace_sptr &wksp,
                         UnitsConversionHelper &unitConverter,
-                        MDTransf_sptr &qConverter,
+                        MDTransfQ3D &qConverter,
                         Kernel::DblMatrix const &UBinv, bool hkl_integ);
   void qListFromHistoWS(Integrate3DEvents &integrator, API::Progress &prog,
                         DataObjects::Workspace2D_sptr &wksp,
                         UnitsConversionHelper &unitConverter,
-                        MDTransf_sptr &qConverter,
+                        MDTransfQ3D &qConverter,
                         Kernel::DblMatrix const &UBinv, bool hkl_integ);
 
   MDWSDescription m_targWSDescr;
