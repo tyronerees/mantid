@@ -4,6 +4,7 @@ set ( SRC_FILES
 	# src/UpdatePeakParameterTable.cpp
 	src/AbsorptionCorrection.cpp
 	src/AddLogDerivative.cpp
+	src/AddNote.cpp
 	src/AddPeak.cpp
 	src/AddSampleLog.cpp
 	src/AddTimeSeriesLog.cpp
@@ -164,6 +165,7 @@ set ( SRC_FILES
 	src/NormaliseToMonitor.cpp
 	src/NormaliseToUnity.cpp
 	src/OneMinusExponentialCor.cpp
+	src/PDDetermineCharacterizations.cpp
 	src/PDFFourierTransform.cpp
 	src/Pause.cpp
 	src/PerformIndexOperations.cpp
@@ -211,6 +213,7 @@ set ( SRC_FILES
 	src/ResetNegatives.cpp
 	src/ResizeRectangularDetector.cpp
 	src/RingProfile.cpp
+	src/SANSCollimationLengthEstimator.cpp
 	src/SANSDirectBeamScaling.cpp
 	src/SassenaFFT.cpp
 	src/SaveGSASInstrumentFile.cpp
@@ -246,6 +249,10 @@ set ( SRC_FILES
 	src/SumSpectra.cpp
 	src/TOFSANSResolution.cpp
 	src/TOFSANSResolutionByPixel.cpp
+	src/TOFSANSResolutionByPixelCalculator.cpp
+	src/TimeAtSampleStrategyDirect.cpp
+	src/TimeAtSampleStrategyElastic.cpp
+	src/TimeAtSampleStrategyIndirect.cpp
 	src/Transpose.cpp
 	src/UnGroupWorkspace.cpp
 	src/UnaryOperation.cpp
@@ -267,6 +274,7 @@ set ( INC_FILES
 	# inc/MantidAlgorithms/UpdatePeakParameterTable.h
 	inc/MantidAlgorithms/AbsorptionCorrection.h
 	inc/MantidAlgorithms/AddLogDerivative.h
+	inc/MantidAlgorithms/AddNote.h
 	inc/MantidAlgorithms/AddPeak.h
 	inc/MantidAlgorithms/AddSampleLog.h
 	inc/MantidAlgorithms/AddTimeSeriesLog.h
@@ -428,6 +436,7 @@ set ( INC_FILES
 	inc/MantidAlgorithms/NormaliseToMonitor.h
 	inc/MantidAlgorithms/NormaliseToUnity.h
 	inc/MantidAlgorithms/OneMinusExponentialCor.h
+	inc/MantidAlgorithms/PDDetermineCharacterizations.h
 	inc/MantidAlgorithms/PDFFourierTransform.h
 	inc/MantidAlgorithms/Pause.h
 	inc/MantidAlgorithms/PerformIndexOperations.h
@@ -475,6 +484,7 @@ set ( INC_FILES
 	inc/MantidAlgorithms/ResetNegatives.h
 	inc/MantidAlgorithms/ResizeRectangularDetector.h
 	inc/MantidAlgorithms/RingProfile.h
+	inc/MantidAlgorithms/SANSCollimationLengthEstimator.h
 	inc/MantidAlgorithms/SANSDirectBeamScaling.h
 	inc/MantidAlgorithms/SassenaFFT.h
 	inc/MantidAlgorithms/SaveGSASInstrumentFile.h
@@ -510,6 +520,11 @@ set ( INC_FILES
 	inc/MantidAlgorithms/SumSpectra.h
 	inc/MantidAlgorithms/TOFSANSResolution.h
 	inc/MantidAlgorithms/TOFSANSResolutionByPixel.h
+	inc/MantidAlgorithms/TOFSANSResolutionByPixelCalculator.h
+	inc/MantidAlgorithms/TimeAtSampleStrategy.h
+	inc/MantidAlgorithms/TimeAtSampleStrategyDirect.h
+	inc/MantidAlgorithms/TimeAtSampleStrategyElastic.h
+	inc/MantidAlgorithms/TimeAtSampleStrategyIndirect.h
 	inc/MantidAlgorithms/Transpose.h
 	inc/MantidAlgorithms/UnGroupWorkspace.h
 	inc/MantidAlgorithms/UnaryOperation.h
@@ -541,6 +556,7 @@ set ( TEST_FILES
 	# CountEventsInPulsesTest.h
 	# UpdatePeakParameterTableTest.h
 	AddLogDerivativeTest.h
+	AddNoteTest.h
 	AddPeakTest.h
 	AddSampleLogTest.h
 	AddTimeSeriesLogTest.h
@@ -690,6 +706,7 @@ set ( TEST_FILES
 	NormaliseByDetectorTest.h
 	NormaliseToMonitorTest.h
 	OneMinusExponentialCorTest.h
+	PDDetermineCharacterizationsTest.h
 	PDFFourierTransformTest.h
 	PauseTest.h
 	PerformIndexOperationsTest.h
@@ -733,6 +750,7 @@ set ( TEST_FILES
 	ResetNegativesTest.h
 	ResizeRectangularDetectorTest.h
 	RingProfileTest.h
+	SANSCollimationLengthEstimatorTest.h
 	SassenaFFTTest.h
 	SaveGSASInstrumentFileTest.h
 	ScaleTest.h
@@ -761,6 +779,10 @@ set ( TEST_FILES
 	SumRowColumnTest.h
 	SumSpectraTest.h
 	TOFSANSResolutionByPixelTest.h
+	TOFSANSResolutionByPixelCalculatorTest.h
+	TimeAtSampleStrategyDirectTest.h
+	TimeAtSampleStrategyElasticTest.h
+	TimeAtSampleStrategyIndirectTest.h
 	TransposeTest.h
 	UnGroupWorkspaceTest.h
 	UnaryOperationTest.h
@@ -798,7 +820,7 @@ set_property ( TARGET Algorithms PROPERTY FOLDER "MantidFramework" )
 
 include_directories ( inc )
 
-target_link_libraries ( Algorithms LINK_PRIVATE ${MANTIDLIBS} ${GSL_LIBRARIES} )
+target_link_libraries ( Algorithms LINK_PRIVATE ${TCMALLOC_LIBRARIES_LINKTIME} ${MANTIDLIBS} ${GSL_LIBRARIES} )
 
 # Add the unit tests directory
 add_subdirectory ( test )
