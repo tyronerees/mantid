@@ -675,21 +675,27 @@ class SimulatedDensityOfStates(PythonAlgorithm):
         @param frequencies Array of frequencies read from file
         @param ions List of ions read from file
         """
+        idx_first_positive = np.where(frequencies > 0)[0][0]
+        frequencies = frequencies[idx_first_positive:self._num_branches]
+        dimension = frequencies.shape[0]
+
         num_overtones = self.getProperty('SqwOvertones').value
-        prog_reporter = Progress(self, 0.0, 1.0, (self._num_branches**2 * self._num_ions * num_overtones))
+        total_steps = num_overtones * dimension**2 * self._num_ions
+        prog_reporter = Progress(self, 0.0, 1.0, total_steps)
 
-        total_s_of_qw = np.zeros((self._num_branches, self._num_branches))
-        q_points = 0.5 * (frequencies[:self._num_branches] / 8.066)
+        q_points = 0.5 * (frequencies / 8.066)
+        q_points = q_points[q_points > 0]
 
+        total_s_of_qw = np.zeros((dimension, dimension))
         for n in range(1, num_overtones+1):
             two_n = 2 * n
             fact_n = scipy.misc.factorial(n)
 
-            s_of_qw = np.ndarray((self._num_branches, self._num_branches))
+            s_of_qw = np.zeros_like(total_s_of_qw)
             for q_idx in range(q_points.shape[0]):
                 q_point = q_points[q_idx]
 
-                for m_idx in range(self._num_branches):
+                for m_idx in range(dimension):
                     freq_n = frequencies[m_idx] * n
 
                     s = 0.0
@@ -716,7 +722,7 @@ class SimulatedDensityOfStates(PythonAlgorithm):
             total_s_of_qw += s_of_qw
 
         CreateWorkspace(OutputWorkspace=self._out_ws_name,
-                        DataX=frequencies[:self._num_branches],
+                        DataX=frequencies,
                         DataY=np.ravel(total_s_of_qw),
                         NSpec=total_s_of_qw.shape[0],
                         UnitX='DeltaE_inWavenumber',
