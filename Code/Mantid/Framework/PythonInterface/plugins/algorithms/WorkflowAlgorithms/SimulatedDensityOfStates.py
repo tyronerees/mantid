@@ -339,7 +339,7 @@ class SimulatedDensityOfStates(PythonAlgorithm):
 
         # We want to calculate an S(Q, w) for TOSCA comparison
         elif self._spec_type == 'TOSCA S(Q, w)':
-            self._compute_sqw(frequencies, ions)
+            self._compute_tosca_sqw(frequencies, ions)
 
         self.setProperty('OutputWorkspace', self._out_ws_name)
 
@@ -667,9 +667,10 @@ class SimulatedDensityOfStates(PythonAlgorithm):
 
 #----------------------------------------------------------------------------------------
 
-    def _compute_sqw(self, frequencies, ions):
+    def _compute_tosca_sqw(self, frequencies, ions):
         """
-        Calculate S(Q, w) from frequencies.
+        Calculate S(Q, w) from frequencies for comparison with TOSCA
+        experimental data.
 
         @param frequencies Array of frequencies read from file
         @param ions List of ions read from file
@@ -681,15 +682,13 @@ class SimulatedDensityOfStates(PythonAlgorithm):
         q_points = 0.5 * (frequencies[:self._num_branches] / 8.066)
 
         for n in range(1, num_overtones+1):
-            s_of_qw = []
-
             two_n = 2 * n
             fact_n = scipy.misc.factorial(n)
 
+            s_of_qw = np.ndarray((self._num_branches, self._num_branches))
             for q_idx in range(q_points.shape[0]):
                 q_point = q_points[q_idx]
 
-                s_of_w = []
                 for m_idx in range(self._num_branches):
                     freq_n = frequencies[m_idx] * n
 
@@ -711,11 +710,9 @@ class SimulatedDensityOfStates(PythonAlgorithm):
 
                         s += so
                     #for i_idx
-                    s_of_w.append(s)
+                    s_of_qw[q_idx][m_idx] = s
                 #for m_idx
-                s_of_qw.append(np.array(s_of_w))
             #for q_idx
-            s_of_qw = np.array(s_of_qw)
             total_s_of_qw += s_of_qw
 
         CreateWorkspace(OutputWorkspace=self._out_ws_name,
