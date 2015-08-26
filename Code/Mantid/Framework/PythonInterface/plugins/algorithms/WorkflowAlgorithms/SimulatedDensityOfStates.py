@@ -61,11 +61,14 @@ class SimulatedDensityOfStates(PythonAlgorithm):
                              doc='Set Gaussian/Lorentzian FWHM for broadening. Default is 10')
 
         self.declareProperty(name='SpectrumType', defaultValue='DOS',
-                             validator=StringListValidator(['IonTable', 'DOS', 'IR_Active', 'Raman_Active', 'BondTable']),
+                             validator=StringListValidator(['IonTable', 'DOS', 'DOS_TOSCA', 'IR_Active', 'Raman_Active', 'BondTable']),
                              doc="Type of intensities to extract and model (fundamentals-only) from .phonon.")
 
         self.declareProperty(name='StickHeight', defaultValue=0.01,
                              doc='Intensity of peaks in stick diagram.')
+
+        self.declareProperty(name='TOSCADebyeWallerScale', defaultValue=False,
+                             doc='')
 
         self.declareProperty(name='Scale', defaultValue=1.0,
                              doc='Scale the intesity by the given factor. Default is no scaling.')
@@ -130,11 +133,14 @@ class SimulatedDensityOfStates(PythonAlgorithm):
         if spec_type == 'BondTable' and castep_filename == '':
             issues['SpectrumType'] = 'Require a .castep file for bond table output'
 
-        if spec_type != 'DOS' and calc_partial:
+        if 'DOS' not in spec_type and calc_partial:
             issues['Ions'] = 'Cannot calculate partial density of states when using %s' % spec_type
 
-        if spec_type != 'DOS' and scale_by_cross_section:
+        if 'DOS' not in spec_type and scale_by_cross_section:
             issues['ScaleByCrossSection'] = 'Cannot scale contributions by cross sections when using %s' % spec_type
+
+        if spec_type == 'DOS_TOSCA' and phonon_filename == '':
+            issues['SpectrumType'] = 'Require a .phonon file for TOSCA DOS output'
 
         if phonon_filename == '' and scale_by_cross_section:
             issues['ScaleByCrossSection'] = 'Must supply a PHONON file when scaling by cross sections'
@@ -222,7 +228,7 @@ class SimulatedDensityOfStates(PythonAlgorithm):
                                    bond['population']])
 
         # We want to calculate a partial DoS
-        elif self._calc_partial and self._spec_type == 'DOS':
+        elif 'DOS' in self._spec_type and self._calc_partial:
             logger.notice('Calculating partial density of states')
             prog_reporter.report('Calculating partial density of states')
 
@@ -231,7 +237,7 @@ class SimulatedDensityOfStates(PythonAlgorithm):
             for ion in self._ions:
                 partial_ions[ion] = [i['index'] for i in ions if i['species'] == ion]
 
-            partial_workspaces, sum_workspace = self._compute_partial_ion_workflow(partial_ions, frequencies, eigenvectors, weights)
+            partial_workspaces, sum_workspace = self._compute_partial_ion_workflow(partial_ions, frequencies, eigenvectors, weights, ions)
 
             if self._sum_contributions:
                 # Discard the partial workspaces
@@ -248,7 +254,7 @@ class SimulatedDensityOfStates(PythonAlgorithm):
                 GroupWorkspaces(group, OutputWorkspace=self._out_ws_name)
 
         # We want to calculate a total DoS with scaled intensities
-        elif self._spec_type == 'DOS' and self._scale_by_cross_section != 'None':
+        elif 'DOS' in self._spec_type and self._scale_by_cross_section != 'None':
             logger.notice('Calculating summed density of states with scaled intensities')
             prog_reporter.report('Calculating density of states')
 
@@ -257,7 +263,7 @@ class SimulatedDensityOfStates(PythonAlgorithm):
             for ion in set([i['species'] for i in ions]):
                 all_ions[ion] = [i['index'] for i in ions if i['species'] == ion]
 
-            partial_workspaces, sum_workspace = self._compute_partial_ion_workflow(all_ions, frequencies, eigenvectors, weights)
+            partial_workspaces, sum_workspace = self._compute_partial_ion_workflow(all_ions, frequencies, eigenvectors, weights, ions)
 
             # Discard the partial workspaces
             for partial_ws in partial_workspaces:
@@ -267,11 +273,12 @@ class SimulatedDensityOfStates(PythonAlgorithm):
             RenameWorkspace(InputWorkspace=sum_workspace, OutputWorkspace=self._out_ws_name)
 
         # We want to calculate a total DoS without scaled intensities
-        elif self._spec_type == 'DOS':
+        elif 'DOS' in self._spec_type:
             logger.notice('Calculating summed density of states without scaled intensities')
             prog_reporter.report('Calculating density of states')
 
-            self._compute_DOS(frequencies, np.ones_like(frequencies), weights)
+            masses = np.array([i['atomic_mass'] for i in ions]) if self._scale_debye_waller else None
+            self._compute_DOS(frequencies, np.ones_like(frequencies), weights, masses)
             mtd[self._out_ws_name].setYUnit('(D/A)^2/amu')
             mtd[self._out_ws_name].setYUnitLabel('Intensity')
 
@@ -318,6 +325,8 @@ class SimulatedDensityOfStates(PythonAlgorithm):
         self._ions = self.getProperty('Ions').value
         self._sum_contributions = self.getProperty('SumContributions').value
         self._scale_by_cross_section = self.getPropertyValue('ScaleByCrossSection')
+        self._scale_debye_waller = self.getProperty('TOSCADebyeWallerScale').value
+
         self._calc_partial = (len(self._ions) > 0)
 
 #----------------------------------------------------------------------------------------
@@ -403,7 +412,7 @@ class SimulatedDensityOfStates(PythonAlgorithm):
 
 #----------------------------------------------------------------------------------------
 
-    def _compute_partial_ion_workflow(self, partial_ions, frequencies, eigenvectors, weights):
+    def _compute_partial_ion_workflow(self, partial_ions, frequencies, eigenvectors, weights, all_ions):
         """
         Computes the partial DoS workspaces for a given set of ions (optionally scaling them by
         the cross scattering sections) and sums them into a single spectra.
@@ -414,6 +423,7 @@ class SimulatedDensityOfStates(PythonAlgorithm):
         @param frequencies Frequencies read from file
         @param eigenvectors Eigenvectors read from file
         @param weights Weights for each frequency block
+        @param all_ions List of ions read from file
         @returns Tuple of list of partial workspace names and summed contribution workspace name
         """
         logger.debug('Computing partial DoS for: ' + str(partial_ions))
@@ -425,7 +435,7 @@ class SimulatedDensityOfStates(PythonAlgorithm):
         for ion_name, ions in partial_ions.items():
             partial_ws_name = self._out_ws_name + '_' + ion_name
 
-            self._compute_partial(ions, frequencies, eigenvectors, weights)
+            self._compute_partial(ions, frequencies, eigenvectors, weights, all_ions)
 
             # Set correct units on partial workspace
             mtd[self._out_ws_name].setYUnit('(D/A)^2/amu')
@@ -485,7 +495,7 @@ class SimulatedDensityOfStates(PythonAlgorithm):
 
 #----------------------------------------------------------------------------------------
 
-    def _compute_partial(self, ion_numbers, frequencies, eigenvectors, weights):
+    def _compute_partial(self, ion_numbers, frequencies, eigenvectors, weights, ions):
         """
         Compute partial Density Of States.
 
@@ -496,6 +506,7 @@ class SimulatedDensityOfStates(PythonAlgorithm):
         @param frequencies - frequencies read from file
         @param eigenvectors - eigenvectors read from file
         @param weights - weights for each frequency block
+        @param ions - list of ions read from file
         """
 
         intensities = []
@@ -517,19 +528,29 @@ class SimulatedDensityOfStates(PythonAlgorithm):
 
             intensities += block_intensities
 
+        # Get list of ions for Debye-Waller scale
+        masses = None
+        if self._scale_debye_waller:
+            masses = []
+            for ion_number in ion_numbers:
+                ion = [i for i in ions if i['index'] == ion_number][0]
+                masses.append(ion['atomic_mass'])
+            masses = np.array(masses)
+
         intensities = np.asarray(intensities)
-        self._compute_DOS(frequencies, intensities, weights)
+        self._compute_DOS(frequencies, intensities, weights, masses)
 
 
 #----------------------------------------------------------------------------------------
 
-    def _compute_DOS(self, frequencies, intensities, weights):
+    def _compute_DOS(self, frequencies, intensities, weights, masses=None):
         """
         Compute Density Of States
 
         @param frequencies - frequencies read from file
         @param intensities - intensities read from file
         @param weights - weights for each frequency block
+        @param - atomic masses for each frequency
         """
         if frequencies.size > intensities.size:
             # If we have less intensities than frequencies fill the difference with ones.
@@ -556,6 +577,21 @@ class SimulatedDensityOfStates(PythonAlgorithm):
         xmin, xmax = frequencies[0], frequencies[-1] + self._bin_width
         bins = np.arange(xmin, xmax, self._bin_width)
 
+        # Debye-Waller factor scale
+        if masses is not None:
+            modes, rem = divmod(intensities.size, masses.size)
+            if rem != 0:
+                raise ValueError()
+
+            masses = np.tile(masses, modes)
+
+            q_sq = 0.5 * (frequencies / 8.066)
+            print masses, frequencies
+            u_sq = 16.759 / (masses * frequencies)
+            dw_fact = np.exp(-(q_sq * u_sq))
+
+            intensities *= dw_fact
+
         # Sum values in each bin
         hist = np.zeros(bins.size)
         for index, (lower, upper) in enumerate(zip(bins, bins[1:])):
@@ -571,11 +607,21 @@ class SimulatedDensityOfStates(PythonAlgorithm):
         self._create_dos_workspace(data_x, dos, dos_sticks, self._out_ws_name)
 
         if self._scale != 1:
-            Scale(InputWorkspace=self._out_ws_name, OutputWorkspace=self._out_ws_name, Factor=self._scale)
+            Scale(InputWorkspace=self._out_ws_name,
+                  OutputWorkspace=self._out_ws_name,
+                  Factor=self._scale)
 
 #----------------------------------------------------------------------------------------
 
     def _create_dos_workspace(self, data_x, dos, dos_sticks, out_name):
+        """
+        Creates a workspace for a density of states and stick diagram.
+
+        @param data_x X axis data
+        @param dos Broadened density of states spectrum
+        @param dos_sticks Stick diagram
+        @param out_name Name of the output workspace
+        """
         CreateWorkspace(DataX=data_x,
                         DataY=np.ravel(np.array([dos, dos_sticks])),
                         NSpec=2,
@@ -699,6 +745,7 @@ class SimulatedDensityOfStates(PythonAlgorithm):
 
                     species = line_data[4]
                     ion = {'species': species}
+                    ion['atomic_mass'] = float(line_data[5])
                     ion['fract_coord'] = np.array([float(line_data[1]), float(line_data[2]), float(line_data[3])])
                     # -1 to convert to zero based indexing
                     ion['index'] = int(line_data[0]) - 1
