@@ -776,10 +776,32 @@ class SimulatedDensityOfStates(PythonAlgorithm):
             total_s_of_qw += s_of_qw
         # for n
 
+        # Create histogram x data
+        xmin, xmax = frequencies[0], frequencies[-1] + self._bin_width
+        bins = np.arange(xmin, xmax, self._bin_width)
+
+        broad_total_s_of_qw = []
+        for i in range(total_s_of_qw.shape[0]):
+            # Sum values in each bin
+            hist = np.zeros(bins.size)
+            for index, (lower, upper) in enumerate(zip(bins, bins[1:])):
+                bin_mask = np.where((frequencies >= lower) & (frequencies < upper))
+                hist[index] = total_s_of_qw[i][bin_mask].sum()
+
+            # Find and fit peaks
+            peaks = hist.nonzero()[0]
+            sqw = self._draw_peaks(xmin, hist, peaks)
+            broad_total_s_of_qw.append(sqw)
+
+        broad_total_s_of_qw = np.array(broad_total_s_of_qw)
+
+        data_x = np.arange(xmin, xmin + broad_total_s_of_qw.shape[1])
+        num_spec = broad_total_s_of_qw.shape[0]
+
         CreateWorkspace(OutputWorkspace=out_ws_name,
-                        DataX=frequencies,
-                        DataY=np.ravel(total_s_of_qw),
-                        NSpec=total_s_of_qw.shape[0],
+                        DataX=np.tile(data_x, num_spec),
+                        DataY=np.ravel(broad_total_s_of_qw),
+                        NSpec=num_spec,
                         UnitX='DeltaE_inWavenumber',
                         VerticalAxisUnit='MomentumTransfer',
                         VerticalAxisValues=q_points,
