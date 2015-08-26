@@ -1,4 +1,4 @@
-#pylint: disable=no-init,invalid-name,too-many-locals,too-many-lines
+#pylint: disable=no-init,invalid-name,too-many-locals,too-many-lines,too-many-arguments
 from mantid.kernel import *
 from mantid.api import *
 from mantid.simpleapi import *
@@ -57,6 +57,7 @@ class SimulatedDensityOfStates(PythonAlgorithm):
     _sum_contributions = None
     _scale_by_cross_section = None
     _calc_partial = None
+    _parse_eigenvectors = None
     _num_ions = None
     _num_branches = None
 
@@ -165,7 +166,7 @@ class SimulatedDensityOfStates(PythonAlgorithm):
         if spec_type == 'BondTable' and castep_filename == '':
             issues['SpectrumType'] = 'Require a .castep file for bond table output'
 
-        if spec_type != 'DOS' and calc_partial:
+        if spec_type not in ['DOS', 'TOSCA S(Q, w)'] and calc_partial:
             issues['Ions'] = 'Cannot calculate partial density of states when using %s' % spec_type
 
         if spec_type != 'DOS' and scale_by_cross_section:
@@ -176,6 +177,9 @@ class SimulatedDensityOfStates(PythonAlgorithm):
 
         if not calc_partial and sum_contributions:
             issues['SumContributions'] = 'Cannot sum contributions when not calculating partial density of states'
+
+        if calc_partial and phonon_filename == '':
+            issues['Ions'] = 'Cannot perform partial calculation when using .castep file'
 
         return issues
 
@@ -205,6 +209,8 @@ class SimulatedDensityOfStates(PythonAlgorithm):
         unit_cell = file_data.get('unit_cell', None)
 
         logger.debug('Unit cell: {0}'.format(unit_cell))
+
+        # Note that the order of the if statements here is important.
 
         # We want to output a table workspace with ion information
         if self._spec_type == 'IonTable':
@@ -255,7 +261,7 @@ class SimulatedDensityOfStates(PythonAlgorithm):
                                    bond['population']])
 
         # We want to calculate a partial DoS
-        elif self._calc_partial and self._spec_type == 'DOS':
+        elif self._spec_type == 'DOS' and self._calc_partial:
             logger.notice('Calculating partial density of states')
             prog_reporter = Progress(self, 0.0, 1.0, 1)
             prog_reporter.report('Calculating partial density of states')
@@ -337,9 +343,13 @@ class SimulatedDensityOfStates(PythonAlgorithm):
             mtd[self._out_ws_name].setYUnit('A^4')
             mtd[self._out_ws_name].setYUnitLabel('Intensity')
 
+        # We want to calculate an S(Q, w) for TOSCA comparison with a subset of atom species
+        elif self._spec_type == 'TOSCA S(Q, w)' and self._calc_partial:
+            self._compute_partial_atom_tosca_sqw(frequencies, eigenvectors, ions)
+
         # We want to calculate an S(Q, w) for TOSCA comparison
         elif self._spec_type == 'TOSCA S(Q, w)':
-            self._compute_tosca_sqw(frequencies, ions)
+            self._compute_tosca_sqw(frequencies, eigenvectors, ions, self._out_ws_name)
 
         self.setProperty('OutputWorkspace', self._out_ws_name)
 
@@ -360,7 +370,13 @@ class SimulatedDensityOfStates(PythonAlgorithm):
         self._ions = self.getProperty('Ions').value
         self._sum_contributions = self.getProperty('SumContributions').value
         self._scale_by_cross_section = self.getPropertyValue('ScaleByCrossSection')
+
         self._calc_partial = (len(self._ions) > 0)
+
+        # Only parse eigenvectors from a .phonon file if we need them (parsing them is costly)
+        self._parse_eigenvectors = self._calc_partial \
+                                or (self._spec_type == 'DOS' and self._scale_by_cross_section != 'None') \
+                                or self._spec_type == 'TOSCA S(Q, w)'
 
 #----------------------------------------------------------------------------------------
 
@@ -667,17 +683,52 @@ class SimulatedDensityOfStates(PythonAlgorithm):
 
 #----------------------------------------------------------------------------------------
 
-    def _compute_tosca_sqw(self, frequencies, ions):
+    def _compute_partial_atom_tosca_sqw(self, frequencies, eigenvectors, ions):
+        """
+        Calculate S(Q, w) for a subset of atomic species.
+
+        @param frequencies Array of frequencies read from file
+        @param eigenvectors List of eigenvectors read from file
+        @param ions List of ions read from file
+        """
+        # Build a dictionary of ions that the user cares about
+        partial_ions = dict()
+        for ion in self._ions:
+            partial_ions[ion] = [i['index'] for i in ions if i['species'] == ion]
+
+        # Calculate S(Q, w) for each atomic species
+        ws_names = []
+        for species, indicies in partial_ions.items():
+            ws_name = '%s_%s' % (self._out_ws_name, species)
+            self. _compute_tosca_sqw(frequencies, eigenvectors, ions, ws_name, indicies)
+            ws_names.append(ws_name)
+
+        # Sum or group results
+        if self._sum_contributions:
+            #TODO
+            pass
+        else:
+            GroupWorkspaces(InputWorkspaces=ws_names,
+                            OutputWorkspace=self._out_ws_name)
+
+#----------------------------------------------------------------------------------------
+
+    def _compute_tosca_sqw(self, frequencies, eigenvectors, ions, out_ws_name, partial_ion_list=None):
         """
         Calculate S(Q, w) from frequencies for comparison with TOSCA
         experimental data.
 
         @param frequencies Array of frequencies read from file
+        @param eigenvectors List of eigenvectors read from file
         @param ions List of ions read from file
+        @param out_ws_name Name of the output workspace
+        @param partial_ion_list List of ions to include in calculation
         """
         idx_first_positive = np.where(frequencies > 0)[0][0]
         frequencies = frequencies[idx_first_positive:self._num_branches]
         dimension = frequencies.shape[0]
+
+        eigenvectors = eigenvectors[0]
 
         num_overtones = self.getProperty('SqwOvertones').value
         total_steps = num_overtones * dimension**2 * self._num_ions
@@ -685,6 +736,8 @@ class SimulatedDensityOfStates(PythonAlgorithm):
 
         q_points = 0.5 * (frequencies / 8.066)
         q_points = q_points[q_points > 0]
+
+        ion_index_list = range(self._num_ions) if partial_ion_list is None else partial_ion_list
 
         total_s_of_qw = np.zeros((dimension, dimension))
         for n in range(1, num_overtones+1):
@@ -698,8 +751,7 @@ class SimulatedDensityOfStates(PythonAlgorithm):
                 for m_idx in range(dimension):
                     freq_n = frequencies[m_idx] * n
 
-                    s = 0.0
-                    for i_idx in range(self._num_ions):
+                    for i_idx in ion_index_list:
                         prog_reporter.report('Calculating S(Q, w) (O:{0}, Q:{1}, M:{2}, I:{3})'.format(n, q_idx, m_idx, i_idx))
 
                         ion = ions[i_idx]
@@ -707,21 +759,24 @@ class SimulatedDensityOfStates(PythonAlgorithm):
                         incoh_x_section = _get_incoh_x_section(ion['species'])
                         displacement = 16.759 / (mass * freq_n)
 
-                        # S(Q, w)
-                        so = (((np.sqrt(q_point) * np.sqrt(displacement))**(two_n)) / fact_n)
-                        # Debye-Waller factor
-                        so *= np.exp(-(q_point * displacement))
-                        # Scattering cross section
-                        so *= incoh_x_section
+                        displacement_vector = eigenvectors[m_idx * self._num_ions + i_idx]
+                        displacement *= np.sum(displacement_vector ** 2)
 
-                        s += so
+                        # S(Q, w)
+                        s = (((np.sqrt(q_point) * np.sqrt(displacement))**(two_n)) / fact_n)
+                        # Debye-Waller factor
+                        s *= np.exp(-(q_point * displacement))
+                        # Scattering cross section
+                        s *= incoh_x_section
+
+                        s_of_qw[q_idx][m_idx] += s
                     #for i_idx
-                    s_of_qw[q_idx][m_idx] = s
                 #for m_idx
             #for q_idx
             total_s_of_qw += s_of_qw
+        # for n
 
-        CreateWorkspace(OutputWorkspace=self._out_ws_name,
+        CreateWorkspace(OutputWorkspace=out_ws_name,
                         DataX=frequencies,
                         DataY=np.ravel(total_s_of_qw),
                         NSpec=total_s_of_qw.shape[0],
@@ -745,9 +800,6 @@ class SimulatedDensityOfStates(PythonAlgorithm):
         if ext == '.phonon':
             file_data = self._parse_phonon_file(file_name)
         elif ext == '.castep':
-            if len(self._ions) > 0:
-                raise ValueError("Cannot compute partial density of states from .castep files.")
-
             file_data = self._parse_castep_file(file_name)
 
         if file_data['frequencies'].size == 0:
@@ -892,10 +944,6 @@ class SimulatedDensityOfStates(PythonAlgorithm):
         eigenvectors_regex = re.compile(r"\s*Mode\s+Ion\s+X\s+Y\s+Z\s*")
         block_count = 0
 
-        record_eigenvectors = self._calc_partial \
-                           or (self._spec_type == 'DOS' and self._scale_by_cross_section != 'None') \
-                           or self._spec_type == 'S(Q, w)'
-
         frequencies, ir_intensities, raman_intensities, weights, q_vectors, eigenvectors = [], [], [], [], [], []
         data_lists = (frequencies, ir_intensities, raman_intensities)
         with open(file_name, 'rU') as f_handle:
@@ -923,7 +971,7 @@ class SimulatedDensityOfStates(PythonAlgorithm):
 
                 vector_match = eigenvectors_regex.match(line)
                 if vector_match:
-                    if record_eigenvectors:
+                    if self._parse_eigenvectors:
                         # Parse eigenvectors for partial dos
                         vectors = self._parse_phonon_eigenvectors(f_handle)
                         eigenvectors.append(vectors)
