@@ -731,8 +731,7 @@ class SimulatedDensityOfStates(PythonAlgorithm):
         eigenvectors = eigenvectors[0]
 
         num_overtones = self.getProperty('SqwOvertones').value
-        total_steps = num_overtones * dimension**2 * self._num_ions
-        prog_reporter = Progress(self, 0.0, 1.0, total_steps)
+        prog_reporter = Progress(self, 0.0, 1.0, (num_overtones * dimension**2))
 
         q_points = 0.5 * (frequencies / 8.066)
         q_points = q_points[q_points > 0]
@@ -749,11 +748,10 @@ class SimulatedDensityOfStates(PythonAlgorithm):
                 q_point = q_points[q_idx]
 
                 for m_idx in range(dimension):
+                    prog_reporter.report('Calculating S(Q, w) (O:{0}, Q:{1}, M:{2})'.format(n, q_idx, m_idx))
                     freq_n = frequencies[m_idx] * n
 
                     for i_idx in ion_index_list:
-                        prog_reporter.report('Calculating S(Q, w) (O:{0}, Q:{1}, M:{2}, I:{3})'.format(n, q_idx, m_idx, i_idx))
-
                         ion = ions[i_idx]
                         mass = ion['atomic_mass']
                         incoh_x_section = _get_incoh_x_section(ion['species'])
@@ -776,23 +774,28 @@ class SimulatedDensityOfStates(PythonAlgorithm):
             total_s_of_qw += s_of_qw
         # for n
 
+
+        prog_reporter = Progress(self, 0.0, 1.0, (dimension + 1))
         # Create histogram x data
         xmin, xmax = frequencies[0], frequencies[-1] + self._bin_width
         bins = np.arange(xmin, xmax, self._bin_width)
 
         broad_total_s_of_qw = []
-        for i in range(total_s_of_qw.shape[0]):
+        for spec_idx in range(total_s_of_qw.shape[0]):
+            prog_reporter.report('Broadening peaks (spectrum {0})'.format(spec_idx))
+
             # Sum values in each bin
             hist = np.zeros(bins.size)
             for index, (lower, upper) in enumerate(zip(bins, bins[1:])):
                 bin_mask = np.where((frequencies >= lower) & (frequencies < upper))
-                hist[index] = total_s_of_qw[i][bin_mask].sum()
+                hist[index] = total_s_of_qw[spec_idx][bin_mask].sum()
 
             # Find and fit peaks
             peaks = hist.nonzero()[0]
             sqw = self._draw_peaks(xmin, hist, peaks)
             broad_total_s_of_qw.append(sqw)
 
+        prog_reporter.report('Creating output')
         broad_total_s_of_qw = np.array(broad_total_s_of_qw)
 
         data_x = np.arange(xmin, xmin + broad_total_s_of_qw.shape[1])
