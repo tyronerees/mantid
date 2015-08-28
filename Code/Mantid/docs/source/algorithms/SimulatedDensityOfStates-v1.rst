@@ -25,6 +25,41 @@ If the BondTable spectrum type is used then the output workspace will be
 a table workspace containing details of the bonds defined in the *.castep*
 file.
 
+S(Q, w) Mode
+~~~~~~~~~~~~
+
+In TOSCA S(Q, w) mode the :math:`S(Q, \omega)` is calculated as follows [1]_:
+
+.. math::
+
+  S(Q, n\omega) = \sum_{j}
+                  \sigma_{j}
+                  \left<
+                  \frac{(Q \cdot U_{j})^{2n}}{n!}
+                  exp\left(-(Q \cdot U_{j})^{2}\right)
+                  \right>
+
+where :math:`j` denotes an atom in the sample, :math:`\sigma` is the incoherent
+scattering cross section of atom :math:`j` and :math:`n` is the number of
+overtones (with 1 being the fundamental frequencies only).
+
+The displacement of an atom :math:`j`, :math:`U_{j}`, is given by the following
+equation:
+
+.. math::
+
+  U^{2} = \frac{16.759}{\mu n \nu}
+
+where :math:`\mu` is the mass of atom :math:`j` and :math:`\nu` is the frequency
+of the vibration of atom :math:`j` in :math:`cm^{-1}`.
+
+The instrument dependant momentum distribution, :math:`Q`, is given by the
+following equation for the TOSCA instrument:
+
+.. math::
+
+  Q^{2} \approx \frac{1}{2} \left(\frac{\nu}{8.066}\right)
+
 Usage
 -----
 
@@ -94,6 +129,11 @@ Output:
 .. testoutput:: ExSimulatedDensityOfStatesIonTable
 
     H, H, H, H, C, C, C, C, C, C, C, C, O, O, O, O, O, O, O, O
+
+References
+----------
+
+.. [1] D. Champion, J. Tomkinson, and G. Kearley. “a-CLIMAX: a new INS analysis tool”. `Applied Physics A: Materials Science & Processing 74 (Dec. 2002), s1302–s1304 <http://dx.doi.org/10.1007/s003390101223>`__
 
 .. categories::
 
