@@ -2,7 +2,7 @@
 
 import unittest
 from mantid import logger
-from mantid.api import ITableWorkspace
+from mantid.api import (ITableWorkspace, MatrixWorkspace)
 from mantid.simpleapi import (SimulatedDensityOfStates, CheckWorkspacesMatch,
                               Scale, CreateEmptyTableWorkspace)
 
@@ -222,8 +222,26 @@ class SimulatedDensityOfStatesTest(unittest.TestCase):
         """
         self.assertRaises(RuntimeError, SimulatedDensityOfStates,
                           PHONONFile=self._phonon_file,
-                          SpectrumType='IonTable')
+                          SpectrumType='BondTable',
+                          OutputWorkspace='__test')
 
+    def test_tosca_sqw(self):
+        wks = SimulatedDensityOfStates(PHONONFile=self._phonon_file,
+                                       SpectrumType='TOSCA S(Q, w)')
+
+        self.assertTrue(isinstance(wks, MatrixWorkspace))
+        self.assertEqual(wks.getNumberHistograms(), 57)
+        self.assertEqual(wks.blocksize(), 2072)
+
+    def test_tosca_sqw_castep_error(self):
+        """
+        Creating a TOSCA S(Q, w) from a castep file is not possible and should
+        fail validation.
+        """
+        self.assertRaises(RuntimeError, SimulatedDensityOfStates,
+                          CASTEPFile=self._castep_file,
+                          SpectrumType='TOSCA S(Q, w)',
+                          OutputWorkspace='__test')
 
 if __name__=="__main__":
     unittest.main()

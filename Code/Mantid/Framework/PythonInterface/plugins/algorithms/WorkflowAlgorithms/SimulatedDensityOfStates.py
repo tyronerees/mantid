@@ -160,8 +160,8 @@ class SimulatedDensityOfStates(PythonAlgorithm):
         if spec_type == 'IonTable' and phonon_filename == '':
             issues['SpectrumType'] = 'Require a .phonon file for ion table output'
 
-        if spec_type == 'S(Q, w)' and phonon_filename == '':
-            issues['SpectrumType'] = 'Require a .phonon file for S(Q, w) output'
+        if spec_type == 'TOSCA S(Q, w)' and phonon_filename == '':
+            issues['SpectrumType'] = 'Require a .phonon file for TOSCA S(Q, w) output'
 
         if spec_type == 'BondTable' and castep_filename == '':
             issues['SpectrumType'] = 'Require a .castep file for bond table output'
