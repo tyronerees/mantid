@@ -394,6 +394,15 @@ void LoadMD::doLoad(typename MDEventWorkspace<MDE, nd>::sptr ws) {
   }
   ws->setTitle(title);
 
+  std::string comment;
+  try{
+	m_file->getAttr("comment", comment);
+  } catch (std::exception&)
+  {
+	//Leave the comment blank if error on loading
+  }
+  ws->setComment(comment);
+
   // Load the WorkspaceHistory "process"
   ws->history().loadNexus(m_file.get());
 
