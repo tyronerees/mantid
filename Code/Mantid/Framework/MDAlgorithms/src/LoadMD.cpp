@@ -261,6 +261,24 @@ void LoadMD::loadHisto() {
   // Coordinate system
   ws->setCoordinateSystem(m_coordSystem);
 
+  std::string title;
+  try{
+    m_file->getAttr("title", title);
+  } catch (std::exception&)
+  {
+    //Leave the title blank if error on loading
+  }
+  ws->setTitle(title);
+
+  std::string comment;
+  try{
+	m_file->getAttr("comment", comment);
+  } catch (std::exception&)
+  {
+	//Leave the comment blank if error on loading
+  }
+  ws->setComment(comment);
+
   // Load the WorkspaceHistory "process"
   ws->history().loadNexus(m_file.get());
 
