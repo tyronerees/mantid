@@ -87,7 +87,9 @@ target_link_libraries ( PythonGeometryModule LINK_PRIVATE ${TCMALLOC_LIBRARIES_L
             )
 
 if (OSX_VERSION VERSION_GREATER 10.8)
-  set_target_properties ( PythonGeometryModule PROPERTIES INSTALL_RPATH "@loader_path/../../../MacOS;@loader_path/../kernel/")
+  set_target_properties ( PythonGeometryModule PROPERTIES 
+                          INSTALL_RPATH "@loader_path/../../../MacOS;@loader_path/../kernel/"
+                          LINK_FLAGS "-undefined dynamic_lookup" )
 endif ()
 
 ###########################################################################

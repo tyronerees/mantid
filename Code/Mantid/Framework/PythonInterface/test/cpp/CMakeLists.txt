@@ -26,5 +26,8 @@ if ( CXXTEST_FOUND )
             ${PYTHON_LIBRARIES} )
   add_dependencies ( FrameworkTests PythonInterfaceCppTest )
   # Add to the 'UnitTests' group in VS
-  set_property ( TARGET PythonInterfaceCppTest PROPERTY FOLDER "UnitTests" )
+  set_target_properties ( PythonInterfaceCppTest PROPERTIES 
+                          FOLDER "UnitTests" 
+                          LINK_FLAGS "-undefined dynamic_lookup" )
+
 endif ()

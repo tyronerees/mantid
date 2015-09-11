@@ -147,7 +147,9 @@ target_link_libraries ( PythonAPIModule LINK_PRIVATE ${TCMALLOC_LIBRARIES_LINKTI
             ${Boost_LIBRARIES} )
 
 if (OSX_VERSION VERSION_GREATER 10.8)
-  set_target_properties( PythonAPIModule PROPERTIES INSTALL_RPATH "@loader_path/../../../MacOS;@loader_path/../kernel/;@loader_path/../geometry/")
+  set_target_properties( PythonAPIModule PROPERTIES 
+                         INSTALL_RPATH "@loader_path/../../../MacOS;@loader_path/../kernel/;@loader_path/../geometry/"
+                         LINK_FLAGS "-undefined dynamic_lookup" )
 endif ()
 ###########################################################################
 # Installation settings

@@ -62,10 +62,7 @@ set(CMAKE_INCLUDE_SYSTEM_FLAG_CXX "-isystem ")
 # Use the system-installed version of Python.
 ###########################################################################
 find_package ( PythonLibs REQUIRED )
-# If found, need to add debug library into libraries variable
-if ( PYTHON_DEBUG_LIBRARIES )
-  set ( PYTHON_LIBRARIES optimized ${PYTHON_LIBRARIES} debug ${PYTHON_DEBUG_LIBRARIES} )
-endif ()
+unset ( PYTHON_LIBRARIES )
 # Find the python interpreter to get the version we're using (needed for install commands below)
 find_package ( PythonInterp )
 if ( PYTHON_VERSION_MAJOR )

@@ -157,7 +157,9 @@ ${Boost_LIBRARIES}
 )
 
 if (OSX_VERSION VERSION_GREATER 10.8)
-  set_target_properties ( VatesSimpleGuiViewWidgets PROPERTIES INSTALL_RPATH "@loader_path/../Contents/MacOS;@loader_path/../Contents/Libraries")
+  set_target_properties ( VatesSimpleGuiViewWidgets PROPERTIES 
+                          INSTALL_RPATH "@loader_path/../Contents/MacOS;@loader_path/../Contents/Libraries"
+                          LINK_FLAGS "-undefined dynamic_lookup" )
 endif ()
 
 # Create test file projects

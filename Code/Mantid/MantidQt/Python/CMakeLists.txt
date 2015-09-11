@@ -78,7 +78,10 @@ elseif ( APPLE )
   	set_target_properties ( mantidqtpython PROPERTIES PREFIX "" SUFFIX .so )
 
 if (OSX_VERSION VERSION_GREATER 10.8)
-  set_target_properties ( mantidqtpython PROPERTIES INSTALL_RPATH "@loader_path/../MacOS")
+  set_target_properties ( mantidqtpython PROPERTIES 
+                          INSTALL_RPATH "@loader_path/../MacOS"
+                          LINK_FLAGS "-undefined dynamic_lookup" )
+
 endif () 
 
 else ()

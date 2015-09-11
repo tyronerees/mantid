@@ -45,6 +45,7 @@ target_link_libraries ( PythonWorkspaceCreationHelper LINK_PRIVATE ${TCMALLOC_LI
             ${POCO_LIBRARIES}
             )
 
+set_target_properties( PythonWorkspaceCreationHelper PROPERTIES LINK_FLAGS "-undefined dynamic_lookup" )
 # Overall testhelpers target
 add_custom_target ( testhelpers DEPENDS PythonWorkspaceCreationHelper )
 add_dependencies ( FrameworkTests testhelpers )
