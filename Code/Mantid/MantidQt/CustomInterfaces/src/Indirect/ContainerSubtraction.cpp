@@ -69,21 +69,14 @@ void ContainerSubtraction::run() {
 
   // Check for same binning across sample and container
   if (!checkWorkspaceBinningMatches(sampleWs, canWs)) {
-    QString text = "Binning on sample and container does not match."
-                   "Would you like to rebin the sample to match the container?";
+    QString text = "Binning on sample and container does not match.";
 
-    int result = QMessageBox::question(NULL, tr("Rebin sample?"), tr(text),
-                                       QMessageBox::Yes, QMessageBox::No,
-                                       QMessageBox::NoButton);
-
-    if (result == QMessageBox::Yes) {
-      addRebinStep(sampleWsName, canWsName);
-    } else {
-      m_batchAlgoRunner->clearQueue();
-      g_log.error("Cannot apply absorption corrections using a sample and "
-                  "container with different binning.");
-      return;
-    }
+    QMessageBox::warning(NULL, tr("Bin Mismatch"), tr(text), QMessageBox::Ok,
+                         QMessageBox::NoButton);
+    m_batchAlgoRunner->clearQueue();
+    g_log.error("Cannot apply absorption corrections using a sample and "
+                "container with different binning.");
+    return;
   }
 
   // Generate output workspace name
