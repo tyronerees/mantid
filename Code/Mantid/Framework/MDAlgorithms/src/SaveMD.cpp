@@ -244,9 +244,6 @@ void SaveMD::doSaveHisto(Mantid::DataObjects::MDHistoWorkspace_sptr ws) {
   // Save the algorithm history under "process"
   ws->getHistory().saveNexus(file);
 
-  file->putAttr("title", ws->getTitle());
-  file->putAttr("comment", ws->getComment());
-
   // Save all the ExperimentInfos
   for (uint16_t i = 0; i < ws->getNumExperimentInfo(); i++) {
     ExperimentInfo_sptr ei = ws->getExperimentInfo(i);
@@ -273,6 +270,9 @@ void SaveMD::doSaveHisto(Mantid::DataObjects::MDHistoWorkspace_sptr ws) {
   // Write out the affine matrices
   MDBoxFlatTree::saveAffineTransformMatricies(
       file, boost::dynamic_pointer_cast<const IMDWorkspace>(ws));
+  
+  file->putAttr("title", ws->getTitle());
+  file->putAttr("comment", ws->getComment());
 
   // Check that the typedef has not been changed. The NeXus types would need
   // changing if it does!
