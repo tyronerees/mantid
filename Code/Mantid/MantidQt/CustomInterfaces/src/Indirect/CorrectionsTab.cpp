@@ -64,7 +64,12 @@ namespace CustomInterfaces
     {
       auto leftX = left->readX(0);
       auto rightX = right->readX(0);
-      return std::equal(leftX.begin(), leftX.end(), rightX.begin());
+      const bool binning = std::equal(leftX.begin(), leftX.end(), rightX.begin());
+
+	  const bool compareMin = (left->getXMin() == right->getXMin());
+	  const bool compareMax = (left->getXMax() == right->getXMax());
+
+	  return (binning && compareMin && compareMax);
     }
     else
     {
