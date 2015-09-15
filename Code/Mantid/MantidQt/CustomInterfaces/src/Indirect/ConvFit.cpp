@@ -629,7 +629,7 @@ CompositeFunction_sptr ConvFit::createFunction(bool tieCentres) {
   comp->addFunction(conv);
 
   // Tie PeakCentres together
-  if (tieCentres) {
+  if (tieCentres && fitTypeIndex < 3) {
     std::string tieL = prefix1 + "PeakCentre";
     std::string tieR = prefix2 + "PeakCentre";
     model->tie(tieL, tieR);
@@ -883,7 +883,7 @@ void ConvFit::typeSelection(int index) {
 
   // Disable Plot Guess and Use Delta Function for DiffSphere and
   // DiffRotDiscreteCircle
-  m_uiForm.ckPlotGuess->setEnabled(index < 3);
+  //m_uiForm.ckPlotGuess->setEnabled(index < 3);
   m_properties["UseDeltaFunc"]->setEnabled(index < 3);
 
   updatePlotOptions();
@@ -963,9 +963,9 @@ void ConvFit::plotGuess() {
         m_uiForm.ckPlotGuess->isChecked()))
     return;
 
-  if (m_uiForm.cbFitType->currentIndex() > 2) {
+  /*if (m_uiForm.cbFitType->currentIndex() > 2) {
     return;
-  }
+  }*/
 
   bool tieCentres = (m_uiForm.cbFitType->currentIndex() > 1);
   CompositeFunction_sptr function = createFunction(tieCentres);
