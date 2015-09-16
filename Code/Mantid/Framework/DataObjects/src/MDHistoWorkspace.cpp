@@ -602,7 +602,7 @@ void MDHistoWorkspace::getLinePlot(const Mantid::Kernel::VMD &start,
         }
         // And add the normalized signal/error to the list too
         auto signal = this->getSignalAt(linearIndex) * normalizer;
-        if (boost::math::isinf(signal)){
+        if (boost::math::isinf(signal)) {
           // The plotting library (qwt) doesn't like infs.
           signal = std::numeric_limits<signal_t>::quiet_NaN();
         }
@@ -1170,8 +1170,8 @@ void MDHistoWorkspace::setMDMasking(
  * @param index : linear index to mask
  * @param mask : True to mask. False to clear.
  */
-void MDHistoWorkspace::setMDMaskAt(const size_t& index, bool mask){
-    m_masks[index] = mask;
+void MDHistoWorkspace::setMDMaskAt(const size_t &index, bool mask) {
+  m_masks[index] = mask;
 }
 
 /// Clear any existing masking.

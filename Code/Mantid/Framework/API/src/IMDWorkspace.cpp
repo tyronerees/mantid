@@ -124,7 +124,8 @@ void IMDWorkspace::getLinePlot(const Mantid::Kernel::VMD &start,
 }
 
 /**
-@return normalization preferred for visualization. Set to none for the generic case, but overriden elsewhere.
+@return normalization preferred for visualization. Set to none for the generic
+case, but overriden elsewhere.
 */
 MDNormalization IMDWorkspace::displayNormalization() const {
   return NoNormalization;

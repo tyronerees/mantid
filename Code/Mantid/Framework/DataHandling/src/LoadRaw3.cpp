@@ -31,11 +31,9 @@ using namespace API;
 
 /// Constructor
 LoadRaw3::LoadRaw3()
-  : m_filename(), m_numberOfSpectra(), m_cache_options(),
-    m_specTimeRegimes(), m_noTimeRegimes(0), m_prog(0.0),
-    m_prog_start(0.0), m_prog_end(1.0), m_lengthIn(0),
-    m_timeChannelsVec(), m_total_specs(0), m_periodList() {
-}
+    : m_filename(), m_numberOfSpectra(), m_cache_options(), m_specTimeRegimes(),
+      m_noTimeRegimes(0), m_prog(0.0), m_prog_start(0.0), m_prog_end(1.0),
+      m_lengthIn(0), m_timeChannelsVec(), m_total_specs(0), m_periodList() {}
 
 LoadRaw3::~LoadRaw3() {}
 
@@ -204,7 +202,7 @@ void LoadRaw3::exec() {
 
   // Loop over the number of periods in the raw file, putting each period in a
   // separate workspace
-  
+
   for (int period = 0; period < m_numberOfPeriods; ++period) {
     // skipping the first spectra in each period
     skipData(file, static_cast<int>(period * (m_numberOfSpectra + 1)));

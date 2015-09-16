@@ -137,13 +137,12 @@ public:
     std::transform(signal.begin(), signal.end(), error.begin(),
                    (double (*)(double))sqrt);
     std::generate(tof.begin(), tof.end(), Decrementer(199.5));
-    TS_ASSERT_THROWS(MayersSampleCorrectionStrategy(createTestParameters(),
-                                                    tof, signal, error),
+    TS_ASSERT_THROWS(MayersSampleCorrectionStrategy(createTestParameters(), tof,
+                                                    signal, error),
                      std::invalid_argument);
   }
 
 private:
-
   struct Incrementer {
     Incrementer(double start) : current(start) {}
     double operator()() { return current++; }

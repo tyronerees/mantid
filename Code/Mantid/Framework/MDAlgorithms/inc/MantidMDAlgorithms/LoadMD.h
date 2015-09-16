@@ -70,7 +70,8 @@ private:
       boost::shared_ptr<Mantid::API::MultipleExperimentInfos> ws);
 
   void loadSlab(std::string name, void *data,
-                DataObjects::MDHistoWorkspace_sptr ws, NeXus::NXnumtype dataType);
+                DataObjects::MDHistoWorkspace_sptr ws,
+                NeXus::NXnumtype dataType);
   void loadHisto();
 
   void loadDimensions();
@@ -103,7 +104,7 @@ private:
   bool m_BoxStructureAndMethadata;
 
   /// Version of SaveMD used to save the file
-  int m_saveMDVersion ;
+  int m_saveMDVersion;
 };
 
 } // namespace DataObjects

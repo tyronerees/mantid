@@ -47,8 +47,7 @@ LoadMD::LoadMD()
     : m_numDims(0), // uninitialized incorrect value
       m_coordSystem(None),
       m_BoxStructureAndMethadata(true), // this is faster but rarely needed.
-      m_saveMDVersion(false)
-{}
+      m_saveMDVersion(false) {}
 
 //----------------------------------------------------------------------------------------------
 /** Destructor
@@ -198,7 +197,8 @@ void LoadMD::exec() {
 
     // Now the ExperimentInfo
     bool lazyLoadExpt = fileBacked;
-    MDBoxFlatTree::loadExperimentInfos(m_file.get(), m_filename, ws, lazyLoadExpt);
+    MDBoxFlatTree::loadExperimentInfos(m_file.get(), m_filename, ws,
+                                       lazyLoadExpt);
 
     // Wrapper to cast to MDEventWorkspace then call the function
     CALL_MDEVENT_FUNCTION(this->doLoad, ws);
@@ -266,8 +266,8 @@ void LoadMD::loadHisto() {
 
   this->loadAffineMatricies(boost::dynamic_pointer_cast<IMDWorkspace>(ws));
 
-  if (m_saveMDVersion == 2 )
-    m_file->openGroup("data","NXdata");
+  if (m_saveMDVersion == 2)
+    m_file->openGroup("data", "NXdata");
   // Load each data slab
   this->loadSlab("signal", ws->getSignalArray(), ws, ::NeXus::FLOAT64);
   this->loadSlab("errors_squared", ws->getErrorSquaredArray(), ws,
@@ -306,7 +306,7 @@ void LoadMD::loadDimensions2() {
 
   std::string axes;
 
-  m_file->openGroup("data","NXdata");
+  m_file->openGroup("data", "NXdata");
   m_file->openData("signal");
   m_file->getAttr("axes", axes);
   m_file->closeData();
@@ -324,17 +324,19 @@ void LoadMD::loadDimensions2() {
     m_file->getAttr("long_name", long_name);
     m_file->getAttr("units", units);
     try {
-        m_file->getAttr("frame", frame);
-    } catch (std::exception&)
-    {
-        frame = "Unknown frame";
+      m_file->getAttr("frame", frame);
+    } catch (std::exception &) {
+      frame = "Unknown frame";
     }
-    Geometry::MDFrame_const_uptr mdFrame = Geometry::makeMDFrameFactoryChain()->create(MDFrameArgument(frame, units));
+    Geometry::MDFrame_const_uptr mdFrame =
+        Geometry::makeMDFrameFactoryChain()->create(
+            MDFrameArgument(frame, units));
     m_file->getData(axis);
     m_file->closeData();
     m_dims.push_back(boost::make_shared<MDHistoDimension>(
-        long_name, splitAxes[d - 1], *mdFrame, static_cast<coord_t>(axis.front()),
-        static_cast<coord_t>(axis.back()), axis.size() - 1));
+        long_name, splitAxes[d - 1], *mdFrame,
+        static_cast<coord_t>(axis.front()), static_cast<coord_t>(axis.back()),
+        axis.size() - 1));
   }
   m_file->closeGroup();
 }
@@ -386,11 +388,10 @@ void LoadMD::doLoad(typename MDEventWorkspace<MDE, nd>::sptr ws) {
 
   prog->report("Opening file.");
   std::string title;
-  try{
+  try {
     m_file->getAttr("title", title);
-  } catch (std::exception&)
-  {
-    //Leave the title blank if error on loading
+  } catch (std::exception &) {
+    // Leave the title blank if error on loading
   }
   ws->setTitle(title);
 
@@ -548,7 +549,7 @@ CoordTransform *LoadMD::loadAffineMatrix(std::string entry_name) {
   outD--;
   Matrix<coord_t> mat(vec);
   CoordTransform *transform = NULL;
-  if (("CoordTransformAffine" == type)||("CoordTransformAligned" == type)) {
+  if (("CoordTransformAffine" == type) || ("CoordTransformAligned" == type)) {
     CoordTransformAffine *affine = new CoordTransformAffine(inD, outD);
     affine->setMatrix(mat);
     transform = affine;

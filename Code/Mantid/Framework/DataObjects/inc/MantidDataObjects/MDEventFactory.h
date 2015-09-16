@@ -51,13 +51,13 @@ public:
   CreateMDWorkspace(size_t nd, const std::string &eventType = "MDLeanEvent");
 
   // create MDBox factory call
-  static API::IMDNode *
-  createBox(size_t nDimensions, BoxType Type, API::BoxController_sptr &splitter,
-            const std::vector<
-                Mantid::Geometry::MDDimensionExtents<coord_t>> &extentsVector =
-                std::vector<Mantid::Geometry::MDDimensionExtents<coord_t>>(),
-            const uint32_t depth = 0, const size_t nBoxEvents = UNDEF_SIZET,
-            const size_t boxID = UNDEF_SIZET);
+  static API::IMDNode *createBox(
+      size_t nDimensions, BoxType Type, API::BoxController_sptr &splitter,
+      const std::vector<Mantid::Geometry::MDDimensionExtents<coord_t>> &
+          extentsVector =
+              std::vector<Mantid::Geometry::MDDimensionExtents<coord_t>>(),
+      const uint32_t depth = 0, const size_t nBoxEvents = UNDEF_SIZET,
+      const size_t boxID = UNDEF_SIZET);
 
   /** Returns max number of MD dimensions allowed by current Mantid version*/
   static size_t getMaxNumDim() { return size_t(MAX_MD_DIMENSIONS_NUM); }

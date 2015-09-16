@@ -304,7 +304,7 @@ void ConvertCWSDExpToMomentum::convertSpiceMatrixToMomentumMDEvents(
 
   // Creates a new instance of the MDEventInserte to output workspace
   MDEventWorkspace<MDEvent<3>, 3>::sptr mdws_mdevt_3 =
-      boost::dynamic_pointer_cast<MDEventWorkspace<MDEvent<3>, 3> >(m_outputWS);
+      boost::dynamic_pointer_cast<MDEventWorkspace<MDEvent<3>, 3>>(m_outputWS);
   MDEventInserter<MDEventWorkspace<MDEvent<3>, 3>::sptr> inserter(mdws_mdevt_3);
 
   // Calcualte k_i: it is assumed that all k_i are same for one Pt.
@@ -502,8 +502,7 @@ ConvertCWSDExpToMomentum::loadSpiceData(const std::string &filename,
       loaded = true;
     else
       loaded = false;
-  }
-  catch (std::runtime_error &runerror) {
+  } catch (std::runtime_error &runerror) {
     loaded = false;
     errmsg = runerror.what();
   }

@@ -68,19 +68,19 @@ std::string checkBinning(const std::vector<double> &binning) {
         error = "Only step size zero is allowed. Denotes copy of original step "
                 "size for that dimension.";
       } else {
-         auto min = binning[0];
-         auto max = binning[2];
-         if (min >= max) {
-            error = "Min must be < max limit for binning";
-         }
+        auto min = binning[0];
+        auto max = binning[2];
+        if (min >= max) {
+          error = "Min must be < max limit for binning";
+        }
       }
 
     } else if (binning.size() == 2) {
-         auto min = binning[0];
-         auto max = binning[1];
-         if (min >= max) {
-            error = "Min must be < max limit for binning";
-         }
+      auto min = binning[0];
+      auto max = binning[1];
+      if (min >= max) {
+        error = "Min must be < max limit for binning";
+      }
     } else {
       error = "Unknown binning prameters for dimension.";
     }
@@ -95,9 +95,9 @@ std::string checkBinning(const std::vector<double> &binning) {
  * @param logger : Logging object
  * @return
  */
-MDHistoWorkspace_sptr
-createShapedOutput(IMDHistoWorkspace const *const inWS,
-                   std::vector<std::vector<double>> pbins, Logger& logger) {
+MDHistoWorkspace_sptr createShapedOutput(IMDHistoWorkspace const *const inWS,
+                                         std::vector<std::vector<double>> pbins,
+                                         Logger &logger) {
   const size_t nDims = inWS->getNumDims();
   std::vector<Mantid::Geometry::IMDDimension_sptr> dimensions(nDims);
   for (size_t i = 0; i < nDims; ++i) {
@@ -112,31 +112,34 @@ createShapedOutput(IMDHistoWorkspace const *const inWS,
           static_cast<Mantid::coord_t>(binning.front()) /*min*/,
           static_cast<Mantid::coord_t>(
               binning.back()) /*max*/); // Set custom min, max and nbins.
-    } else if( i < pbins.size() && similarBinning(pbins[i]) ) {
+    } else if (i < pbins.size() && similarBinning(pbins[i])) {
       auto binning = pbins[i];
-      const double width = inDim->getBinWidth(); // Take the width from the input dimension
+      const double width =
+          inDim->getBinWidth(); // Take the width from the input dimension
       double min = binning.front();
       double max = binning.back();
 
       // Correct users, input, output and rounded to the nearest whole width.
-      min = width * std::floor(min/width); // Rounded down
-      max = width * std::ceil(max/width); // Rounded up
+      min = width * std::floor(min / width); // Rounded down
+      max = width * std::ceil(max / width);  // Rounded up
 
-      if(min != binning.front()) {
-          std::stringstream buffer;
-          buffer << "Rounding min from: " << binning.front() << " to the nearest whole width at: " << min;
-          logger.warning(buffer.str());
+      if (min != binning.front()) {
+        std::stringstream buffer;
+        buffer << "Rounding min from: " << binning.front()
+               << " to the nearest whole width at: " << min;
+        logger.warning(buffer.str());
       }
-      if(max != binning.back()) {
-          std::stringstream buffer;
-          buffer << "Rounding max from: " << binning.back() << " to the nearest whole width at: " << max;
-          logger.warning(buffer.str());
+      if (max != binning.back()) {
+        std::stringstream buffer;
+        buffer << "Rounding max from: " << binning.back()
+               << " to the nearest whole width at: " << max;
+        logger.warning(buffer.str());
       }
-      const size_t roundedNBins = static_cast<size_t>((max-min)/width+0.5); // round up to a whole number of bins.
-      outDim->setRange(
-          roundedNBins,
-          static_cast<Mantid::coord_t>(min) /*min*/,
-          static_cast<Mantid::coord_t>(max) /*max*/); // Set custom min, max and nbins.
+      const size_t roundedNBins = static_cast<size_t>(
+          (max - min) / width + 0.5); // round up to a whole number of bins.
+      outDim->setRange(roundedNBins, static_cast<Mantid::coord_t>(min) /*min*/,
+                       static_cast<Mantid::coord_t>(
+                           max) /*max*/); // Set custom min, max and nbins.
     }
     dimensions[i] = outDim;
   }
@@ -330,9 +333,9 @@ void IntegrateMDHistoWorkspace::exec() {
         */
         inIterator->jumpToNearest(outIteratorCenter);
 
-        performWeightedSum(inIterator.get(), box, sumSignal,
-                           sumSQErrors, sumNEvents); // Use the present position. neighbours
-                                         // below exclude the current position.
+        performWeightedSum(inIterator.get(), box, sumSignal, sumSQErrors,
+                           sumNEvents); // Use the present position. neighbours
+                                        // below exclude the current position.
 
         // Look at all of the neighbours of our position. We previously
         // calculated what the width vector would need to be.
@@ -340,7 +343,8 @@ void IntegrateMDHistoWorkspace::exec() {
             inIterator->findNeighbourIndexesByWidth(widthVector);
         for (size_t i = 0; i < neighbourIndexes.size(); ++i) {
           inIterator->jumpTo(neighbourIndexes[i]); // Go to that neighbour
-          performWeightedSum(inIterator.get(), box, sumSignal, sumSQErrors, sumNEvents);
+          performWeightedSum(inIterator.get(), box, sumSignal, sumSQErrors,
+                             sumNEvents);
         }
 
         const size_t iteratorIndex = outIterator->getLinearIndex();

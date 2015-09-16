@@ -44,9 +44,11 @@ const std::size_t DIMS(3);
  * @param UBinv : inverse of UB matrix
  * @param hkl_integ ; boolean for integrating in HKL space
  */
-void IntegrateEllipsoids::qListFromEventWS(Integrate3DEvents &integrator, Progress &prog,
-                      EventWorkspace_sptr &wksp,
-                      DblMatrix const &UBinv, bool hkl_integ) {
+void IntegrateEllipsoids::qListFromEventWS(Integrate3DEvents &integrator,
+                                           Progress &prog,
+                                           EventWorkspace_sptr &wksp,
+                                           DblMatrix const &UBinv,
+                                           bool hkl_integ) {
   // loop through the eventlists
 
   int numSpectra = static_cast<int>(wksp->getNumberHistograms());
@@ -92,12 +94,11 @@ void IntegrateEllipsoids::qListFromEventWS(Integrate3DEvents &integrator, Progre
         buffer[dim] = locCoord[dim];
       }
       V3D qVec(buffer[0], buffer[1], buffer[2]);
-      if (hkl_integ) qVec = UBinv * qVec;
+      if (hkl_integ)
+        qVec = UBinv * qVec;
       qList.push_back(std::make_pair(event->m_weight, qVec));
     } // end of loop over events in list
-    PARALLEL_CRITICAL(addEvents){
-      integrator.addEvents(qList, hkl_integ);
-    }
+    PARALLEL_CRITICAL(addEvents) { integrator.addEvents(qList, hkl_integ); }
 
     prog.report();
     PARALLEL_END_INTERUPT_REGION
@@ -114,9 +115,11 @@ void IntegrateEllipsoids::qListFromEventWS(Integrate3DEvents &integrator, Progre
  * @param UBinv : inverse of UB matrix
  * @param hkl_integ ; boolean for integrating in HKL space
  */
-void IntegrateEllipsoids::qListFromHistoWS(Integrate3DEvents &integrator, Progress &prog,
-                      Workspace2D_sptr &wksp,
-                      DblMatrix const &UBinv, bool hkl_integ) {
+void IntegrateEllipsoids::qListFromHistoWS(Integrate3DEvents &integrator,
+                                           Progress &prog,
+                                           Workspace2D_sptr &wksp,
+                                           DblMatrix const &UBinv,
+                                           bool hkl_integ) {
 
   // loop through the eventlists
 
@@ -169,16 +172,15 @@ void IntegrateEllipsoids::qListFromHistoWS(Integrate3DEvents &integrator, Progre
                                        // qVec
         }
         V3D qVec(buffer[0], buffer[1], buffer[2]);
-        if (hkl_integ) qVec = UBinv * qVec;
+        if (hkl_integ)
+          qVec = UBinv * qVec;
 
         // Account for counts in histograms by increasing the qList with the
         // same q-point
         qList.push_back(std::make_pair(yVal, qVec));
       }
     }
-    PARALLEL_CRITICAL(addHisto) {
-      integrator.addEvents(qList, hkl_integ);
-    }
+    PARALLEL_CRITICAL(addHisto) { integrator.addEvents(qList, hkl_integ); }
     prog.report();
     PARALLEL_END_INTERUPT_REGION
   } // end of loop over spectra
@@ -272,9 +274,8 @@ void IntegrateEllipsoids::init() {
                   "Number of sigmas to add to mean of half-length of "
                   "major radius for second pass when SpecifySize is false.");
 
-  declareProperty(
-      "IntegrateInHKL", false,
-      "If true, integrate in HKL space not Q space.");
+  declareProperty("IntegrateInHKL", false,
+                  "If true, integrate in HKL space not Q space.");
 }
 
 //---------------------------------------------------------------------

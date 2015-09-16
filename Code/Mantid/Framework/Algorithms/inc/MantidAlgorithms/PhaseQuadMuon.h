@@ -48,7 +48,8 @@ public:
   virtual const std::string name() const { return "PhaseQuad"; }
   /// Summary of algorithm's purpose
   virtual const std::string summary() const {
-    return "Calculate Muon squashograms from InputWorkspace and PhaseTable/PhaseList.";
+    return "Calculate Muon squashograms from InputWorkspace and "
+           "PhaseTable/PhaseList.";
   }
 
   /// Algorithm's version for identification overriding a virtual method

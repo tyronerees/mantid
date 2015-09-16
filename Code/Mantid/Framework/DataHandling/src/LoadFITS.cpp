@@ -828,8 +828,8 @@ void LoadFITS::doRebin(size_t rebin, MantidImage &imageY, MantidImage &imageE,
     for (size_t i = 0; i < (rebinnedY[0].size() - rebin + 1); ++i) {
       double accumY = 0.0;
       double accumE = 0.0;
-      size_t origJ = j*rebin;
-      size_t origI = i*rebin;
+      size_t origJ = j * rebin;
+      size_t origI = i * rebin;
       for (size_t k = 0; k < rebin; ++k) {
         for (size_t l = 0; l < rebin; ++l) {
           accumY += imageY[origJ + k][origI + l];

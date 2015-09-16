@@ -96,7 +96,6 @@ public:
   virtual void setCoordinateSystem(
       const Kernel::SpecialCoordinateSystem coordinateSystem) = 0;
 
-
 protected:
   /// Protected copy constructor. May be used by childs for cloning.
   IMDHistoWorkspace(const IMDHistoWorkspace &other);

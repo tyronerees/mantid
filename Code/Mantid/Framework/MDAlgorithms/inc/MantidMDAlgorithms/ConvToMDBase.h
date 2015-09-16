@@ -60,7 +60,7 @@ public:
   /// method which starts the conversion procedure
   virtual void runConversion(API::Progress *) = 0;
   /// virtual destructor
-  virtual ~ConvToMDBase(){}
+  virtual ~ConvToMDBase() {}
 
   /** method returns unit conversion helper, used to convert input workspace
      units to the units, used by appropriate MD transformation
