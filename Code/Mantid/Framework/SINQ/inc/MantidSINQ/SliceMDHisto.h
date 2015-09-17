@@ -3,8 +3,9 @@
  * it which is storeed into the result workspace.
  *
  * Original contributor: Mark Koennecke: mark.koennecke@psi.ch
- * 
- * Copyright &copy; 2013 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+ *
+ * Copyright &copy; 2013 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge
+ National Laboratory & European Spallation Source
 
  * This file is part of Mantid.
 
@@ -29,19 +30,20 @@
 
 #include "MantidSINQ/DllConfig.h"
 #include "MantidAPI/Algorithm.h"
-#include "MantidMDEvents/MDHistoWorkspace.h"
+#include "MantidAPI/IMDHistoWorkspace_fwd.h"
 
-class MANTID_SINQ_DLL SliceMDHisto : public Mantid::API::Algorithm
-{
+class MANTID_SINQ_DLL SliceMDHisto : public Mantid::API::Algorithm {
 public:
-  /// (Empty) Constructor
-  SliceMDHisto() : Mantid::API::Algorithm(), dim() {}
+  /// Default constructor
+  SliceMDHisto();
   /// Virtual destructor
   virtual ~SliceMDHisto() {}
   /// Algorithm's name
   virtual const std::string name() const { return "SliceMDHisto"; }
-  ///Summary of algorithms purpose
-  virtual const std::string summary() const {return "Extracts a hyperslab of data from a MDHistoWorkspace";}
+  /// Summary of algorithms purpose
+  virtual const std::string summary() const {
+    return "Extracts a hyperslab of data from a MDHistoWorkspace";
+  }
 
   /// Algorithm's version
   virtual int version() const { return (1); }
@@ -51,18 +53,18 @@ public:
 private:
   /// Initialisation code
   void init();
-  ///Execution code
+  /// Execution code
   void exec();
 
-  unsigned int rank;
-  std::vector<int>dim;
+  unsigned int m_rank;
+  std::vector<int> m_dim;
   void cutData(Mantid::API::IMDHistoWorkspace_sptr inWS,
-		  Mantid::API::IMDHistoWorkspace_sptr outWS,
-		  Mantid::coord_t *sourceDim, Mantid::coord_t *targetDim,
-		  std::vector<int> start, std::vector<int> end, unsigned int dim);
+               Mantid::API::IMDHistoWorkspace_sptr outWS,
+               Mantid::coord_t *sourceDim, Mantid::coord_t *targetDim,
+               std::vector<int> start, std::vector<int> end, unsigned int dim);
 
-  void copyMetaData( Mantid::API::IMDHistoWorkspace_sptr inws,  Mantid::API::IMDHistoWorkspace_sptr outws);
-
+  void copyMetaData(Mantid::API::IMDHistoWorkspace_sptr inws,
+                    Mantid::API::IMDHistoWorkspace_sptr outws);
 };
 
 #endif /*SLICEMDHISTO_H_*/

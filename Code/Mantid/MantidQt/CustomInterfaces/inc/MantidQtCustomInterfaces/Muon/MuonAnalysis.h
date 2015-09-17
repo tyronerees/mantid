@@ -7,8 +7,8 @@
 #include "ui_MuonAnalysis.h"
 
 #include "MantidAPI/AnalysisDataService.h"
-#include "MantidAPI/MatrixWorkspace.h"
-#include "MantidAPI/ITableWorkspace.h"
+#include "MantidAPI/MatrixWorkspace_fwd.h"
+#include "MantidAPI/ITableWorkspace_fwd.h"
 
 #include "MantidGeometry/Instrument.h"
 
@@ -61,7 +61,7 @@ see <http://www.mantidproject.org/MuonAnalysis>.
 
 @author Anders Markvardsen, ISIS, RAL
 
-Copyright &copy; 2010 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+Copyright &copy; 2010 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
 
 This file is part of Mantid.
 

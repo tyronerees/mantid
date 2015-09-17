@@ -5,7 +5,7 @@
 #include <qwt_plot.h>
 #include <qpainter.h>
 #include "qwt_text.h"
-#include "MantidAPI/Workspace.h"
+#include "MantidAPI/Workspace_fwd.h"
 #include "WidgetDllOption.h"
 
 namespace MantidQt
@@ -24,7 +24,7 @@ namespace MantidWidgets
     
     @date 2012-01-24
 
-    Copyright &copy; 2012 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+    Copyright &copy; 2012 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
 
     This file is part of Mantid.
 

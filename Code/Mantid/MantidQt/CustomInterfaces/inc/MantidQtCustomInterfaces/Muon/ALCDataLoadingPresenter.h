@@ -15,7 +15,7 @@ namespace CustomInterfaces
 
   /** ALCDataLoadingPresenter : Presenter for ALC Data Loading step
     
-    Copyright &copy; 2014 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+    Copyright &copy; 2014 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
 
     This file is part of Mantid.
 
@@ -47,12 +47,18 @@ namespace CustomInterfaces
     /// @return Last loaded data workspace
     MatrixWorkspace_const_sptr loadedData() const { return m_loadedData; }
 
+    /// @return Loaded data as MatrixWorkspace_sptr
+    MatrixWorkspace_sptr exportWorkspace();
+
+    /// Sets some data
+    void setData (MatrixWorkspace_const_sptr data);
+
   private slots:
     /// Load new data and update the view accordingly
     void load();
 
-    /// Updates the list of logs user can choose from
-    void updateAvailableLogs();
+    /// Updates the list of logs and number of periods
+    void updateAvailableInfo();
 
   private:
     /// View which the object works with

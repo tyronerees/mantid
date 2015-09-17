@@ -4,58 +4,58 @@
 #include "MantidKernel/System.h"
 #include "MantidAlgorithms/RebinByTimeBase.h"
 
-namespace Mantid
-{
-  namespace Algorithms
-  {
+namespace Mantid {
 
-    /** RebinByTimeAtSample : Rebins an event workspace to a histogram workspace with time at sample along the x-axis.
+namespace Algorithms {
 
-     Copyright &copy; 2014 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+/** RebinByTimeAtSample : Rebins an event workspace to a histogram workspace
+ with time at sample along the x-axis.
 
-     This file is part of Mantid.
+ Copyright &copy; 2014 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge
+ National Laboratory & European Spallation Source
 
-     Mantid is free software; you can redistribute it and/or modify
-     it under the terms of the GNU General Public License as published by
-     the Free Software Foundation; either version 3 of the License, or
-     (at your option) any later version.
+ This file is part of Mantid.
 
-     Mantid is distributed in the hope that it will be useful,
-     but WITHOUT ANY WARRANTY; without even the implied warranty of
-     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-     GNU General Public License for more details.
+ Mantid is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 3 of the License, or
+ (at your option) any later version.
 
-     You should have received a copy of the GNU General Public License
-     along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ Mantid is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
 
-     File change history is stored at: <https://github.com/mantidproject/mantid>
-     Code Documentation is available at: <http://doxygen.mantidproject.org>
-     */
-    class DLLExport RebinByTimeAtSample: public RebinByTimeBase
-    {
-    public:
-      RebinByTimeAtSample();
-      virtual ~RebinByTimeAtSample();
+ You should have received a copy of the GNU General Public License
+ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-      virtual const std::string name() const;
-      virtual int version() const;
-      virtual const std::string category() const;
-      virtual const std::string summary() const;
+ File change history is stored at: <https://github.com/mantidproject/mantid>
+ Code Documentation is available at: <http://doxygen.mantidproject.org>
+ */
+class DLLExport RebinByTimeAtSample : public RebinByTimeBase {
+public:
+  RebinByTimeAtSample();
+  virtual ~RebinByTimeAtSample();
 
-    private:
+  virtual const std::string name() const;
+  virtual int version() const;
+  virtual const std::string category() const;
+  virtual const std::string summary() const;
 
-      void doHistogramming(Mantid::API::IEventWorkspace_sptr inWS,
-          Mantid::API::MatrixWorkspace_sptr outputWS, Mantid::MantidVecPtr& XValues_new,
-          Mantid::MantidVec& OutXValues_scaled, Mantid::API::Progress& prog);
+private:
+  void doHistogramming(Mantid::API::IEventWorkspace_sptr inWS,
+                       Mantid::API::MatrixWorkspace_sptr outputWS,
+                       Mantid::MantidVecPtr &XValues_new,
+                       Mantid::MantidVec &OutXValues_scaled,
+                       Mantid::API::Progress &prog);
 
-      /// Get the minimum x across all spectra in workspace
-      virtual uint64_t getMaxX(Mantid::API::IEventWorkspace_sptr ws) const;
-      /// Get the maximum x across all spectra in workspace
-      virtual uint64_t getMinX(Mantid::API::IEventWorkspace_sptr ws) const;
+  /// Get the minimum x across all spectra in workspace
+  virtual uint64_t getMaxX(Mantid::API::IEventWorkspace_sptr ws) const;
+  /// Get the maximum x across all spectra in workspace
+  virtual uint64_t getMinX(Mantid::API::IEventWorkspace_sptr ws) const;
+};
 
-    };
-
-  } // namespace Algorithms
+} // namespace Algorithms
 } // namespace Mantid
 
-#endif  /* MANTID_ALGORITHMS_REBINBYTIMEATSAMPLE_H_ */
+#endif /* MANTID_ALGORITHMS_REBINBYTIMEATSAMPLE_H_ */

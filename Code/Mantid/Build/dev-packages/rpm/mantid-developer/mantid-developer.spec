@@ -1,5 +1,5 @@
 Name:           mantid-developer
-Version:        1.4
+Version:        1.13
 Release:        1%{?dist}
 Summary:        Meta Package to install dependencies for Mantid Development
 
@@ -9,9 +9,11 @@ License:        GPL
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 %{?fc20:Requires: rpmfusion-nonfree-release}
-Requires: cmake-gui >= 2.8.5
+Requires: clang
+Requires: cmake-gui >= 2.8.12
 Requires: boost-devel
 %{?el6:Requires: epel-release}
+Requires: doxygen
 Requires: gperftools-devel
 Requires: gperftools-libs
 Requires: gcc-c++
@@ -19,6 +21,7 @@ Requires: git-all
 Requires: gsl-devel
 Requires: hdf-devel
 Requires: hdf5-devel
+Requires: jsoncpp-devel
 Requires: muParser-devel
 Requires: mxml-devel
 Requires: nexus >= 4.2
@@ -29,7 +32,9 @@ Requires: poco-devel
 Requires: PyQt4-devel
 Requires: python-devel
 Requires: python-ipython >= 1.1
-Conflicts: python-ipython >= 2.0
+%{?el6:Conflicts: python-ipython >= 2.0}
+Requires: python-matplotlib
+Requires: python-pip
 Requires: python-sphinx
 Requires: qscintilla-devel
 Requires: qt-devel >= 4.6
@@ -46,23 +51,28 @@ Requires: sip-devel
 Requires: git
 Requires: openssl-devel
 Requires: texlive-latex
+%if 0%{?el6}
+# do nothing
+%else
 Requires: texlive-latex-bin
 Requires: texlive-was
+%endif
 Requires: tex-preview
 Requires: dvipng
 %if 0%{?el6}
-Requires: mantidlibs-qt-devel
-Requires: mantidlibs-qtwebkit-devel
+Requires: mantidlibs34-qt-devel
+Requires: mantidlibs34-qtwebkit-devel
 Requires: scl-utils
 %else
 Requires: qt-devel
 Requires: qtwebkit-devel
 %endif
+Requires: graphviz
 
 BuildArch: noarch
 
 %description
-A virtual package which requires all the dependencies and tools that are 
+A virtual package which requires all the dependencies and tools that are
 required for Mantid development.
 
 %prep
@@ -80,6 +90,12 @@ required for Mantid development.
 %files
 
 %changelog
+* Wed Jul 01 2015 Steven Hahn <hahnse@ornl.gov>
+- Added python-matplotlib dependency
+
+* Thu Feb 12 2015 Harry Jeffery <henry.jeffery@stfc.ac.uk>
+- Added graphviz dependency
+
 * Wed Aug 13 2014 Peter Peterson <petersonpf@ornl.gov>
 - Merged all three distribution spec files into one
 
@@ -123,7 +139,7 @@ required for Mantid development.
 - Added dependency on NeXus development after nexus rpm split.
 - Updated CMake dependency to 2.8.5 following 'the virus'!
 - Added Google Mock and GTest.
- 
+
 * Fri Jun  3 2011 Stuart Campbell <campbellsi@ornl.gov>
 - Added rpmdevtools and lsb dependencies
 

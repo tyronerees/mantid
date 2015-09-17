@@ -14,7 +14,7 @@
 #include "MantidAPI/AnalysisDataService.h"
 #include "MantidQtAPI/MantidQwtWorkspaceData.h"
 #include "MantidKernel/TimeSeriesProperty.h"
-#include "MantidAPI/Workspace.h"
+#include "MantidAPI/Workspace_fwd.h"
 
 #include <QList>
 #include <QMenu>
@@ -92,7 +92,8 @@ private slots:
   void xAxisClicked(const QwtPolygon &);
   void yAxisClicked(const QwtPolygon &);
 
-  void insertTextBox();
+	void insertLegend();
+	void insertTextBox();
   void insertXCoord();
   void insertYCoord();
   void insertDataCoord();

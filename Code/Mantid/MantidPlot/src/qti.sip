@@ -31,6 +31,12 @@
 
 %Module _qti
 
+%UnitCode
+  #if defined(__GNUC__) && !(defined(__INTEL_COMPILER))
+    #pragma GCC system_header
+  #endif
+%End
+
 %Import QtCore/QtCoremod.sip
 %Import QtGui/QtGuimod.sip
 %Import mantidqt.sip
@@ -52,10 +58,6 @@ public:
   CaptionPolicy captionPolicy();
   void setCaptionPolicy(CaptionPolicy);
 
-  virtual SIP_PYOBJECT saveAsTemplate(const QString& );
-%MethodCode
-  sipRes = PyString_FromString(sipCpp->saveAsTemplate(*a0));
-%End
   virtual void restore(const QStringList& );
   //Folder* folder();
   QString name();
@@ -384,6 +386,32 @@ private:
   Matrix(const Matrix&);
 };
 
+class QwtData /PyName = CurveData/
+{
+%TypeHeaderCode
+#include <qwt_data.h>
+%End
+
+public:
+   // Note that the 'unsigned int' in this class should be size_t. But if you typedef size_t you'll get a crash
+   //  at least on linux/gcc (and you'll still get warnings)
+
+   virtual unsigned int size() const = 0;
+   // this MethodCode is only needed for windoze, but apparently it's not possible to nest it inside an %If
+   // Beware: the treatment of typedefs in sip changes with versions, so errors/warnings can vanish/show up anytime
+   // in the future
+%MethodCode
+   size_t v = sipCpp->size();
+   // sipRes will be declared as unsigned int (uint)
+   sipRes = static_cast<unsigned int>(v);
+%End
+   virtual double x(unsigned int i) const = 0;
+   virtual double y(unsigned int i) const = 0;
+
+private:
+   QwtData(const QwtData&);
+};
+
 class QwtSymbol /PyName = PlotSymbol/
 {
 %TypeHeaderCode
@@ -597,6 +625,23 @@ private:
   Spectrogram(const Spectrogram&);
 };
 
+class QwtPlotCurve  // /PyName = PlotCurve/
+{
+%TypeHeaderCode
+#include <qwt_plot_curve.h>
+%End
+public:
+   QwtPlotCurve();
+
+   double minXValue() const;
+   double maxXValue() const;
+   double minYValue() const;
+   double maxYValue() const;
+   const QwtData &data() const;
+
+private:
+   QwtPlotCurve(const QwtPlotCurve&);
+};
 
 class Grid : QObject // : QwtPlotGrid
 {
@@ -696,6 +741,7 @@ public:
   void removeCurve(int);
   void removeCurve(const QString&);
   int curves() /PyName=numCurves/;
+  QwtPlotCurve* curve(int index);
   QString curveTitle(int);
 
   void setCurveLineColor(int, int);
@@ -1066,7 +1112,7 @@ public:
   enum MatrixToTableConversion{Direct, XYZ, YXZ};
   Table* table(const QString&);
 %MethodCode
-  sipRes = sipCpp->current_folder->table(*a0, false);
+  sipRes = sipCpp->currentFolder()->table(*a0, false);
   if(!sipRes)
     sipRes = sipCpp->projectFolder()->table(*a0, true);
 %End
@@ -1077,7 +1123,7 @@ public:
 %End
   Matrix* matrix(const QString&);
 %MethodCode
-  sipRes = sipCpp->current_folder->matrix(*a0, false);
+  sipRes = sipCpp->currentFolder()->matrix(*a0, false);
   if(!sipRes)
     sipRes = sipCpp->projectFolder()->matrix(*a0, true);
 %End
@@ -1088,7 +1134,7 @@ public:
   
   MultiLayer *plot(const QString&) /PyName=graph/;
 %MethodCode
-  sipRes = sipCpp->current_folder->graph(*a0, false);
+  sipRes = sipCpp->currentFolder()->graph(*a0, false);
   if(!sipRes)
     sipRes = sipCpp->projectFolder()->graph(*a0, true);
 %End
@@ -1097,7 +1143,7 @@ public:
 
   Note *note(const QString&);
 %MethodCode
-  sipRes = sipCpp->current_folder->note(*a0, false);
+  sipRes = sipCpp->currentFolder()->note(*a0, false);
   if(!sipRes)
     sipRes = sipCpp->projectFolder()->note(*a0, true);
 %End
@@ -1170,20 +1216,16 @@ public:
   // folders
   Folder *activeFolder();
 %MethodCode
-  sipRes = sipCpp->current_folder;
+  sipRes = sipCpp->currentFolder();
 %End
 
   Folder* appendProject(const QString& file_name, Folder* parentFolder = 0);
-  void saveFolder(Folder *folder, const QString& fn, bool=false);
   Folder* projectFolder() /PyName=rootFolder/;
 
   Folder* addFolder(QString name, Folder* parent = 0);
   bool deleteFolder(Folder *);
   bool changeFolder(Folder *, bool force = false);
   bool copyFolder(Folder *src, Folder *dest);
-
-  MdiSubWindow* openTemplate(const QString&);
-  void saveAsTemplate(MdiSubWindow*, const QString&);
 
   void setWindowName(MdiSubWindow *, const QString &);
   void setPreferences(Graph*);
@@ -1325,6 +1367,12 @@ class InstrumentWindowTab: QFrame
 %TypeHeaderCode
 #include "src/Mantid/InstrumentWidget/InstrumentWindowTab.h"
 %End
+public:
+	// This is a duplicate from the same enum in InstrumentWindow, just so you
+	// can do like InstrumentWindowRenderTab.FULL3D
+	enum SurfaceType { FULL3D, CYLINDRICAL_X, CYLINDRICAL_Y, CYLINDRICAL_Z,
+                     SPHERICAL_X, SPHERICAL_Y, SPHERICAL_Z,
+                     RENDERMODE_SIZE };
 private:
   InstrumentWindowTab(const InstrumentWindowTab &);
 };
@@ -1348,6 +1396,7 @@ class InstrumentWindow: MdiSubWindow
 %End
 
 public:
+  // Note this enum is also defined in InstrumentWindowTab
   enum SurfaceType { FULL3D, CYLINDRICAL_X, CYLINDRICAL_Y, CYLINDRICAL_Z,
                      SPHERICAL_X, SPHERICAL_Y, SPHERICAL_Z,
                      RENDERMODE_SIZE };
@@ -1636,7 +1685,8 @@ sipClass=sipFindClass(sipCpp->className());
 public:
   // Plotting methods
   MultiLayer* plot1D(const QList<QString>& wsnames, const QList<int>&, bool spectrumPlot, bool errs=false,
-    Graph::CurveType style = Graph::Unspecified, MultiLayer* window = NULL, bool clearWindow = false);
+    Graph::CurveType style = Graph::Unspecified, MultiLayer* window = NULL,
+                     bool clearWindow = false, bool waterfallPlot = false);
 
   MultiLayer* drawSingleColorFillPlot(const QString & name, Graph::CurveType style = Graph::ColorMap,
                                       MultiLayer* window = NULL);
@@ -1660,6 +1710,7 @@ public:
   Table* createTableFromSpectraList(const QString& tableName, const QString& workspaceName,
       QList<int> indexList, bool errs=true, bool binCentres=false) /PyName = workspaceToTable/;
   Table* importTableWorkspace(const QString&, bool = false, bool = false);
+  Table* createDetectorTable(const QString & wsName);
 
   void setIsRunning(bool running);
   bool createScriptInputDialog(const QString &, const QString &, const QString&, const QStringList&, const QStringList&);

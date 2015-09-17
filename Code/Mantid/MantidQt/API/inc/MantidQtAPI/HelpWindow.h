@@ -15,7 +15,7 @@ namespace API
 {
 
 /**
-  Copyright &copy; 2013-14 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+  Copyright &copy; 2013-14 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
 
   This file is part of Mantid.
 
@@ -46,6 +46,8 @@ public:
   static void showConcept(QWidget *parent, const std::string &name=std::string());
   static void showConcept(QWidget *parent, const QString &name);
   static void showFitFunction(QWidget *parent, const std::string &name=std::string());
+  static void showCustomInterface(QWidget *parent, const QString &name);
+  static void showCustomInterface(QWidget *parent, const std::string &name=std::string());
 };
 } // namespace API
 } // namespace MantidQt

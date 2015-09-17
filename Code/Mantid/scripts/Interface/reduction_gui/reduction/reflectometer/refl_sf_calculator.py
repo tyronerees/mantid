@@ -1,9 +1,12 @@
+#pylint: disable=invalid-name
 """
     This class holds all the necessary information to create a reduction script.
     This is a fake version of the Reducer for testing purposes.
 """
 import time
 from reduction_gui.reduction.scripter import BaseReductionScripter
+import sys
+
 # Check whether Mantid is available
 try:
     import mantidplot

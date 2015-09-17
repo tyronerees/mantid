@@ -12,15 +12,15 @@
 #include "MantidKernel/DateAndTime.h"
 #include "MantidKernel/MultiThreaded.h"
 
-namespace Mantid
-{
+namespace Mantid {
 
-namespace DataHandling
-{
+namespace DataHandling {
 /**
- Loads a NeXus file that conforms to the TOFRaw instrument definition format and stores it in a 2D workspace.
+ Loads a NeXus file that conforms to the TOFRaw instrument definition format and
+ stores it in a 2D workspace.
 
- Copyright &copy; 2007-8 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+ Copyright &copy; 2007-8 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge
+ National Laboratory & European Spallation Source
 
  This file is part of Mantid.
 
@@ -39,45 +39,45 @@ namespace DataHandling
 
  File change history is stored at: <https://github.com/mantidproject/mantid>
  */
-class DLLExport LoadTOFRawNexus : public API::IFileLoader<Kernel::NexusDescriptor>
-{
+class DLLExport LoadTOFRawNexus
+    : public API::IFileLoader<Kernel::NexusDescriptor> {
 public:
   /// Default Constructor
   LoadTOFRawNexus();
 
   // Destructor
-  virtual ~LoadTOFRawNexus()
-  {}
+  virtual ~LoadTOFRawNexus() {}
 
   /// Algorithm's name for identification overriding a virtual method
-  virtual const std::string name() const 
-  { return "LoadTOFRawNexus";}
+  virtual const std::string name() const { return "LoadTOFRawNexus"; }
 
-  ///Summary of algorithms purpose
-  virtual const std::string summary() const 
-  {return "Loads a NeXus file confirming to the TOFRaw format";}
+  /// Summary of algorithms purpose
+  virtual const std::string summary() const {
+    return "Loads a NeXus file confirming to the TOFRaw format";
+  }
 
   /// Algorithm's version for identification overriding a virtual method
-  virtual int version() const
-  { return 1;}
+  virtual int version() const { return 1; }
 
   /// Algorithm's category for identification overriding a virtual method
-  virtual const std::string category() const
-  { return "DataHandling;DataHandling\\Nexus";}
+  virtual const std::string category() const {
+    return "DataHandling;DataHandling\\Nexus";
+  }
 
-  static std::string getEntryName(const std::string & filename);
+  static std::string getEntryName(const std::string &filename);
 
   /// Returns a confidence value that this algorithm can load a file
-  virtual int confidence(Kernel::NexusDescriptor & descriptor) const;
+  virtual int confidence(Kernel::NexusDescriptor &descriptor) const;
 
-  void countPixels(const std::string &nexusfilename, const std::string & entry_name,
-       std::vector<std::string> & bankNames);
+  void countPixels(const std::string &nexusfilename,
+                   const std::string &entry_name,
+                   std::vector<std::string> &bankNames);
 
   /// Number of pixels
-  size_t numPixels;
+  size_t m_numPixels;
 
   /// Signal # to load. Default 1
-  int signalNo;
+  int m_signalNo;
 
 protected:
   void init();
@@ -90,16 +90,18 @@ protected:
   void runLoadInstrument(DataObjects::Workspace2D_sptr);
 
   /// Load in details about the sample
-  void loadSampleData(DataObjects::Workspace2D_sptr, Mantid::NeXus::NXEntry & entry);
+  void loadSampleData(DataObjects::Workspace2D_sptr,
+                      Mantid::NeXus::NXEntry &entry);
 
-  void loadBank(const std::string &nexusfilename, const std::string & entry_name,
-      const std::string &bankName, API::MatrixWorkspace_sptr WS, const detid2index_map& id_to_wi);
+  void loadBank(const std::string &nexusfilename, const std::string &entry_name,
+                const std::string &bankName, API::MatrixWorkspace_sptr WS,
+                const detid2index_map &id_to_wi);
 
   /// List of the absolute time of each pulse
   std::vector<Kernel::DateAndTime> pulseTimes;
 
   /// Number of bins
-  size_t numBins;
+  size_t m_numBins;
 
   /// Interval of chunk
   specid_t m_spec_min, m_spec_max;

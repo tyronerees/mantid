@@ -40,7 +40,7 @@ qt4_generate_moc (
   ${CMAKE_CURRENT_BINARY_DIR}/moc_qtpropertymanager.cpp
 )
 qt4_generate_moc (
-  src/qteditorfactory.h
+  src/qteditorfactory.h 
   ${CMAKE_CURRENT_BINARY_DIR}/moc_qteditorfactory.cpp
 )
 qt4_generate_moc (
@@ -103,6 +103,7 @@ set (
 )
 
 qt4_wrap_cpp ( EXTRA_MOCS src/DoubleEditorFactory.h 
+                          src/ButtonEditorFactory.h
                           src/ParameterPropertyManager.h
 )
 
@@ -126,7 +127,11 @@ set ( SRCS
 
 add_library ( ${PROJECT_NAME} SHARED ${SRCS} )
 
-target_link_libraries ( ${PROJECT_NAME} ${QT_LIBRARIES} )
+if (OSX_VERSION VERSION_GREATER 10.8)
+  set_target_properties ( ${PROJECT_NAME} PROPERTIES INSTALL_RPATH "@loader_path/../MacOS")
+endif ()
+
+target_link_libraries ( ${PROJECT_NAME} LINK_PRIVATE ${TCMALLOC_LIBRARIES_LINKTIME} ${QT_LIBRARIES} )
 
 if ( WIN32 )
   add_definitions ( -DQT_QTPROPERTYBROWSER_EXPORT )

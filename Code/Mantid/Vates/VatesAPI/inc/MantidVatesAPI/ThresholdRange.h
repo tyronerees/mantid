@@ -4,14 +4,14 @@
 #include <boost/shared_ptr.hpp>
 #include "MantidKernel/System.h"
 #include "MantidGeometry/MDGeometry/MDTypes.h"
-#include "MantidAPI/Workspace.h"
+#include "MantidAPI/Workspace_fwd.h"
 
 /** Abstract type promises to supply a minimum and maximum set of threshold range values.
 
  @author Owen Arnold, Tessella plc
  @date 30/06/2011
 
- Copyright &copy; 2010 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+ Copyright &copy; 2010 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
 
  This file is part of Mantid.
 

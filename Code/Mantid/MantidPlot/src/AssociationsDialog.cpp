@@ -48,19 +48,20 @@
 AssociationsDialog::AssociationsDialog( Graph* g, Qt::WFlags fl )
     : QDialog( g, fl )
 {
-    setName( "AssociationsDialog" );
-    setWindowTitle( tr( "MantidPlot - Plot Associations" ) );
+  setName( "AssociationsDialog" );
+  setWindowTitle( tr( "MantidPlot - Plot Associations" ) );
+  setModal(true);
   setSizeGripEnabled(true);
   setFocus();
 
   QVBoxLayout *vl = new QVBoxLayout();
 
   QHBoxLayout *hbox1 = new QHBoxLayout ();
-    hbox1->addWidget(new QLabel(tr( "Spreadsheet: " )));
+  hbox1->addWidget(new QLabel(tr( "Spreadsheet: " )));
 
   tableCaptionLabel = new QLabel();
-    hbox1->addWidget(tableCaptionLabel);
-    vl->addLayout(hbox1);
+  hbox1->addWidget(tableCaptionLabel);
+  vl->addLayout(hbox1);
 
   table = new QTableWidget(3, 5);
   table->horizontalHeader()->setClickable( false );
@@ -69,26 +70,26 @@ AssociationsDialog::AssociationsDialog( Graph* g, Qt::WFlags fl )
   table->verticalHeader()->setResizeMode(QHeaderView::ResizeToContents);
   table->setMaximumHeight(8*table->rowHeight(0));
   table->setHorizontalHeaderLabels(QStringList() << tr("Column") << tr("X") << tr("Y") << tr("xErr") << tr("yErr"));
-    vl->addWidget(table);
+  vl->addWidget(table);
 
   connect(table, SIGNAL(itemClicked(QTableWidgetItem*)), this, SLOT(processStateChange(QTableWidgetItem*)));
   
   associations = new QListWidget();
   associations->setSelectionMode ( QListWidget::SingleSelection );
-    vl->addWidget(associations);
+  vl->addWidget(associations);
 
   btnApply = new QPushButton(tr( "&Update curves" ));
-    btnOK = new QPushButton( tr( "&OK" ) );
+  btnOK = new QPushButton( tr( "&OK" ) );
   btnOK->setDefault( true );
-    btnCancel = new QPushButton( tr( "&Cancel" ) );
+  btnCancel = new QPushButton( tr( "&Cancel" ) );
 
-    QHBoxLayout *hbox2 = new QHBoxLayout ();
+  QHBoxLayout *hbox2 = new QHBoxLayout ();
   hbox2->addStretch();
-    hbox2->addWidget(btnApply);
-    hbox2->addWidget(btnOK);
-    hbox2->addWidget(btnCancel);
-    vl->addStretch();
-    vl->addLayout(hbox2);
+  hbox2->addWidget(btnApply);
+  hbox2->addWidget(btnOK);
+  hbox2->addWidget(btnCancel);
+  vl->addStretch();
+  vl->addLayout(hbox2);
   setLayout(vl);
 
   active_table = 0;
@@ -134,43 +135,45 @@ void AssociationsDialog::changePlotAssociation(int curve, const QString& text)
   QStringList lst = text.split(",", QString::SkipEmptyParts);
   if (lst.count() == 1){
     c->setTitle(lst[0]);
-    if (graph->curveType(curve) == Graph::Box)
-      dynamic_cast<BoxCurve*>(c)->loadData();
-    else if (graph->curveType(curve) == Graph::Pie)
-      dynamic_cast<QwtPieCurve*>(c)->loadData();
+    if (auto b = dynamic_cast<BoxCurve*>(c))
+      b->loadData();
+    else if (auto p = dynamic_cast<QwtPieCurve*>(c))
+      p->loadData();
   } else if (lst.count() == 2){
     c->setXColumnName(lst[0].remove("(X)"));
     c->setTitle(lst[1].remove("(Y)"));
     c->loadData();
   } else if (lst.count() == 3){//curve with error bars
-    QwtErrorPlotCurve *er = dynamic_cast<QwtErrorPlotCurve *>(c);
-    QString xColName = lst[0].remove("(X)");
-    QString yColName = lst[1].remove("(Y)");
-    QString erColName = lst[2].remove("(xErr)").remove("(yErr)");
-    DataCurve *master_curve = graph->masterCurve(xColName, yColName);
-    if (!master_curve)
-      return;
+    if (QwtErrorPlotCurve *er = dynamic_cast<QwtErrorPlotCurve *>(c)) {
+      QString xColName = lst[0].remove("(X)");
+      QString yColName = lst[1].remove("(Y)");
+      QString erColName = lst[2].remove("(xErr)").remove("(yErr)");
+      DataCurve *master_curve = graph->masterCurve(xColName, yColName);
+      if (!master_curve)
+        return;
 
-    int type = QwtErrorPlotCurve::Vertical;
-    if (text.contains("(xErr)"))
-      type = QwtErrorPlotCurve::Horizontal;
-    er->setDirection(type);
-    er->setTitle(erColName);
-    if (master_curve != er->masterCurve())
-      er->setMasterCurve(master_curve);
-    else
-      er->loadData();
+      int type = QwtErrorPlotCurve::Vertical;
+      if (text.contains("(xErr)"))
+        type = QwtErrorPlotCurve::Horizontal;
+      er->setDirection(type);
+      er->setTitle(erColName);
+      if (master_curve != er->masterCurve())
+        er->setMasterCurve(master_curve);
+      else
+        er->loadData();
+    }
   } else if (lst.count() == 4) {
-    VectorCurve *v = dynamic_cast<VectorCurve *>(c);
-    v->setXColumnName(lst[0].remove("(X)"));
-    v->setTitle(lst[1].remove("(Y)"));
+    if (VectorCurve *v = dynamic_cast<VectorCurve *>(c)) {
+      v->setXColumnName(lst[0].remove("(X)"));
+      v->setTitle(lst[1].remove("(Y)"));
 
-    QString xEndCol = lst[2].remove("(X)").remove("(A)");
-    QString yEndCol = lst[3].remove("(Y)").remove("(M)");
-    if (v->vectorEndXAColName() != xEndCol || v->vectorEndYMColName() != yEndCol)
-      v->setVectorEnd(xEndCol, yEndCol);
-    else
-      v->loadData();
+      QString xEndCol = lst[2].remove("(X)").remove("(A)");
+      QString yEndCol = lst[3].remove("(Y)").remove("(M)");
+      if (v->vectorEndXAColName() != xEndCol || v->vectorEndYMColName() != yEndCol)
+        v->setVectorEnd(xEndCol, yEndCol);
+      else
+        v->loadData();
+    }
   }
   graph->notifyChanges();
 }
@@ -212,35 +215,58 @@ Table * AssociationsDialog::findTable(int index)
 
 void AssociationsDialog::updateTable(int index)
 {
-Table *t = findTable(index);
-if (!t)
-  return;
+  Table *t = findTable(index);
+  if (!t)
+    return;
 
-if (active_table != t){
-  active_table = t;
-  tableCaptionLabel->setText(t->objectName());
-  table->clearContents();
-  table->setRowCount(t->numCols());
+  if (active_table != t)
+  {
+    active_table = t;
+    tableCaptionLabel->setText(t->objectName());
+    table->clearContents();
+    table->setRowCount(t->numCols());
 
-  QStringList colNames = t->colNames();
-  for (int i=0; i<table->rowCount(); i++ ){
-        QTableWidgetItem *cell = new QTableWidgetItem(colNames[i]);
-        cell->setBackground (QBrush(Qt::lightGray));
-        cell->setFlags (Qt::ItemIsEnabled);
-        table->setItem(i, 0, cell);
-      }
+    QStringList colNames = t->colNames();
+    // this vector will tell which rows should be disabled (cause there's no data in them)
+    std::vector<bool> disableRow;
+    disableRow.resize(table->rowCount(), false);
+    for (int i=0; i<table->rowCount(); i++ )
+    {
+      QTableWidgetItem *cell = new QTableWidgetItem(colNames[i]);
+      cell->setBackground (QBrush(Qt::lightGray));
+      cell->setFlags (Qt::ItemIsEnabled);
+      table->setItem(i, 0, cell);
 
-  for (int j=1; j < table->columnCount(); j++){
-    for (int i=0; i < table->rowCount(); i++ )
+      // do we need to disable this row cause the corresponding curve it's empty?
+      // (empty curves could cause crashes in many other places)
+      bool allEmpty = true;
+      // Note possible confusion, here 'table' is the table that you see in the AssociationsDialog,
+      // whereas t is the underlying data table (spreadsheet).
+      for (int dataRow = 0; dataRow < t->numRows() && allEmpty; dataRow++)
       {
-        QTableWidgetItem *cell = new QTableWidgetItem();
-        cell->setBackground(QBrush(Qt::lightGray));
-        cell->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
-        table->setItem(i, j, cell);
+        // use i (row in the associations table) as column index
+        allEmpty = allEmpty & t->text(dataRow, i).isEmpty();
+      }
+      if (allEmpty)
+        disableRow[i] = true;
+    }
+
+    for (int j=1; j < table->columnCount(); j++)
+    {
+      for (int i=0; i < table->rowCount(); i++ )
+      {
+          QTableWidgetItem *cell = new QTableWidgetItem();
+          cell->setBackground(QBrush(Qt::lightGray));
+          cell->setFlags(Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
+          table->setItem(i, j, cell);
+
+          // disable (but keep the checkbox, as set above)
+          if (disableRow[i])
+            cell->setFlags(Qt::NoItemFlags);
       }
     }
   }
-updateColumnTypes();
+  updateColumnTypes();
 }
 
 void AssociationsDialog::updateColumnTypes()
@@ -360,11 +386,12 @@ void AssociationsDialog::setGraph(Graph *g)
         if (it->rtti() != QwtPlotItem::Rtti_PlotCurve)
             continue;
 
-        if (dynamic_cast<const DataCurve *>(it)->type() != Graph::Function){
-            QString s = dynamic_cast<const DataCurve *>(it)->plotAssociation();
-            if (dynamic_cast<const DataCurve *>(it)->table()){
-                QString table = dynamic_cast<const DataCurve *>(it)->table()->objectName();
-                plotAssociationsList << table + ": " + s.remove(table + "_");
+        auto dataCurve = dynamic_cast<const DataCurve *>(it);
+        if (dataCurve && dataCurve->type() != Graph::Function){
+            QString s = dataCurve->plotAssociation();
+            if (auto table = dataCurve->table()){
+                QString tableName = table->objectName();
+                plotAssociationsList << tableName + ": " + s.remove(tableName + "_");
             }
         }
   }

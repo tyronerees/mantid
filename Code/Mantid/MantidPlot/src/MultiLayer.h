@@ -34,6 +34,7 @@
 
 #include "MdiSubWindow.h"
 #include "Graph.h"
+#include "Mantid/IProjectSerialisable.h"
 #include <QPushButton>
 #include <QLayout>
 #include <QPointer>
@@ -65,7 +66,7 @@ class WaterfallFillDialog;
  * If MultiLayer exposes its parent Project to the widgets it manages, they could handle things like creating
  * tables by calling methods of Project instead of sending signals.
  */
-class MultiLayer: public MdiSubWindow
+class MultiLayer: public MdiSubWindow, public Mantid::IProjectSerialisable
 {
 	Q_OBJECT
 
@@ -96,6 +97,9 @@ public:
   void setCloseOnEmpty(bool yes=true){d_close_on_empty = yes;}
 
   void setWaterfallLayout(bool on = true);
+
+  void loadFromProject(const std::string& lines, ApplicationWindow* app, const int fileVersion);
+  std::string saveToProject(ApplicationWindow* app);
 
 public slots:
 	Graph* addLayer(int x = 0, int y = 0, int width = 0, int height = 0);
@@ -164,13 +168,13 @@ public slots:
 
 	void connectLayer(Graph *g);
 
-	QString saveToString(const QString& geometry, bool = false);
-	QString saveAsTemplate(const QString& geometryInfo);
-
   void maybeNeedToClose();
 
   //! \name Waterfall Plots
   //@{
+  void toggleWaterfall(bool on);
+  void convertToWaterfall();
+  void convertFromWaterfall();
   void showWaterfallOffsetDialog();
   void reverseWaterfallOrder();
   void showWaterfallFillDialog();
@@ -226,6 +230,7 @@ private:
   void removeLayerSelectionFrame();
 
   void createWaterfallBox();
+  void removeWaterfallBox();
 
 	Graph* active_graph;
 	//! Used for resizing of layers.
@@ -265,7 +270,7 @@ signals:
 	void clicked(LayerButton*);
 };
 
-Q_DECLARE_METATYPE(MultiLayer*);
+Q_DECLARE_METATYPE(MultiLayer*)
 
 
 class WaterfallFillDialog : QDialog
@@ -275,7 +280,7 @@ class WaterfallFillDialog : QDialog
 public:
     WaterfallFillDialog(MultiLayer *parent, Graph *active_graph);
 
-public slots:    
+public slots:
   void setFillMode();
   void enableFill(bool b);
 

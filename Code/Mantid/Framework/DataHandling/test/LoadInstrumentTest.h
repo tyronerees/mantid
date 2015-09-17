@@ -9,9 +9,6 @@
 #include "MantidAPI/WorkspaceFactory.h"
 #include "MantidDataHandling/LoadInstrument.h"
 #include "MantidDataObjects/Workspace2D.h"
-#include "MantidGeometry/IDetector.h"
-#include "MantidGeometry/Instrument/Component.h"
-#include "MantidGeometry/Instrument/FitParameter.h"
 #include "MantidGeometry/Instrument/FitParameter.h"
 #include "MantidGeometry/Instrument.h"
 #include "MantidGeometry/Instrument/RectangularDetector.h"
@@ -618,7 +615,7 @@ public:
 
   void test_BASIS()
   {
-    doTest("BASIS_Definition.xml", 5);
+    doTest("BASIS_Definition_0-20130119.xml", 5);
   }
 
   void test_CNCS()

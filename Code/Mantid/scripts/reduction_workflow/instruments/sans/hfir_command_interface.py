@@ -1,12 +1,11 @@
+#pylint: disable=invalid-name
 """
     List of common user commands for HFIR SANS
 """
 from reduction_workflow.command_interface import *
 from reduction_workflow.find_data import *
 from reduction_workflow.instruments.sans import hfir_instrument
-from mantid.api import AlgorithmManager
 from mantid.kernel import Logger
-import mantid.simpleapi as simpleapi
 import os
 
 ## List of user commands ######################################################
@@ -112,7 +111,7 @@ def NoSolidAngle():
     ReductionSingleton().reduction_properties["SolidAngleCorrection"]=False
 
 def AzimuthalAverage(binning=None, suffix="_Iq", error_weighting=False,
-                     n_bins=100, n_subpix=1, log_binning=False):
+                     n_bins=100, n_subpix=1, log_binning=False, align_log_with_decades=False):
     # Suffix is no longer used but kept for backward compatibility
     ReductionSingleton().reduction_properties["DoAzimuthalAverage"]=True
     if binning is not None:
@@ -123,6 +122,7 @@ def AzimuthalAverage(binning=None, suffix="_Iq", error_weighting=False,
     ReductionSingleton().reduction_properties["IQLogBinning"]=log_binning
     ReductionSingleton().reduction_properties["NumberOfSubpixels"]=n_subpix
     ReductionSingleton().reduction_properties["ErrorWeighting"]=error_weighting
+    ReductionSingleton().reduction_properties["IQAlignLogWithDecades"]=align_log_with_decades
 
 def NoTransmission():
     if ReductionSingleton().reduction_properties.has_key("TransmissionValue"):
@@ -235,9 +235,9 @@ def BckDirectBeamTransmission(sample_file, empty_file, beam_radius=3.0, theta_de
     ReductionSingleton().reduction_properties["BckTransmissionEmptyDataFile"] = empty_file
     ReductionSingleton().reduction_properties["BckThetaDependentTransmission"] = theta_dependent
 
-def BckBeamSpreaderTransmission(sample_spreader, direct_spreader,
-                             sample_scattering, direct_scattering,
-                             spreader_transmission=1.0, spreader_transmission_err=0.0,
+def BckBeamSpreaderTransmission(sample_spreader, direct_spreader,\
+                             sample_scattering, direct_scattering,\
+                             spreader_transmission=1.0, spreader_transmission_err=0.0,\
                              theta_dependent=True ):
     sample_spreader = find_data(sample_spreader, instrument=ReductionSingleton().get_instrument())
     direct_spreader = find_data(direct_spreader, instrument=ReductionSingleton().get_instrument())
@@ -354,6 +354,17 @@ def DivideByThickness(thickness=1.0):
             del ReductionSingleton().reduction_properties["SampleThickness"]
     else:
         ReductionSingleton().reduction_properties["SampleThickness"] = thickness
+
+def SetWedges(number_of_wedges=2, wedge_angle=30.0, wedge_offset=0.0):
+    """
+        Set the wedge properties
+        @param number_of_wedges: number of wedges to calculate
+        @param wedge_angle: augular opening of each wedge, in degrees
+        @param wedge_offset: angular offset for the wedges, in degrees
+    """
+    ReductionSingleton().reduction_properties["NumberOfWedges"] = number_of_wedges
+    ReductionSingleton().reduction_properties["WedgeAngle"] = wedge_angle
+    ReductionSingleton().reduction_properties["WedgeOffset"] = wedge_offset
 
 def Stitch(data_list=[], q_min=None, q_max=None, output_workspace=None,
            scale=None, save_output=False):

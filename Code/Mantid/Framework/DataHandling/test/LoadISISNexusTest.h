@@ -18,6 +18,8 @@
 #include "MantidDataHandling/LoadISISNexus.h"
 #include "MantidDataHandling/LoadISISNexus2.h"
 
+#include <cmath>
+
 using namespace Mantid::API;
 using namespace Mantid::Kernel;
 using namespace Mantid::DataHandling;
@@ -46,7 +48,7 @@ private:
   // Helper method to check that the log data contains a specific period number entry.
   void checkPeriodLogData(MatrixWorkspace_sptr workspace, int expectedPeriodNumber)
   {
-    Property* p = NULL; 
+    Property* p = NULL;
     TS_ASSERT_THROWS_NOTHING(p = fetchPeriodLog(workspace, expectedPeriodNumber));
     TS_ASSERT(p != NULL)
       TSM_ASSERT_THROWS("Shouldn't have a period less than the expected entry", fetchPeriodLog(workspace, expectedPeriodNumber-1), Mantid::Kernel::Exception::NotFoundError);
@@ -67,6 +69,77 @@ private:
   }
 
 public:
+
+  void testExecMonSeparated()
+  {
+    Mantid::API::FrameworkManager::Instance();
+    LoadISISNexus2 ld;
+    ld.initialize();
+    ld.setPropertyValue("Filename","LOQ49886.nxs");
+    ld.setPropertyValue("OutputWorkspace","outWS");
+    ld.setPropertyValue("LoadMonitors","1"); // should read "Separate"
+    TS_ASSERT_THROWS_NOTHING(ld.execute());
+    TS_ASSERT(ld.isExecuted());
+
+
+    MatrixWorkspace_sptr ws = AnalysisDataService::Instance().retrieveWS<MatrixWorkspace>("outWS");
+    MatrixWorkspace_sptr mon_ws = AnalysisDataService::Instance().retrieveWS<MatrixWorkspace>("outWS_monitors");
+
+    TS_ASSERT_EQUALS(ws->blocksize(),5);
+    TS_ASSERT_EQUALS(ws->getNumberHistograms(),17790);
+
+    TS_ASSERT_EQUALS(mon_ws->blocksize(),5);
+    TS_ASSERT_EQUALS(mon_ws->getNumberHistograms(),2);
+
+    // Two monitors which form two first spectra are excluded by load separately
+
+    // spectrum with ID 5 is now spectrum N 3 as 2 monitors
+    TS_ASSERT_EQUALS(ws->readY(5-2)[1],1.);
+    TS_ASSERT_EQUALS(ws->getSpectrum(5-2)->getSpectrumNo(),6);
+    TS_ASSERT_EQUALS(*(ws->getSpectrum(5-2)->getDetectorIDs().begin()), 6);
+    // spectrum with ID 7 is now spectrum N 4
+    TS_ASSERT_EQUALS(ws->readY(6-2)[0],1.);
+    TS_ASSERT_EQUALS(ws->getSpectrum(6-2)->getSpectrumNo(),7);
+    TS_ASSERT_EQUALS(*(ws->getSpectrum(6-2)->getDetectorIDs().begin()), 7);
+    //
+    TS_ASSERT_EQUALS(ws->readY(8-2)[3],1.);
+
+    TS_ASSERT_EQUALS(mon_ws->readX(0)[0],5.);
+    TS_ASSERT_EQUALS(mon_ws->readX(0)[1],4005.);
+    TS_ASSERT_EQUALS(mon_ws->readX(0)[2],8005.);
+
+    // these spectra are not loaded as above so their values are different  (occasionally 0)
+    TS_ASSERT_EQUALS(mon_ws->readY(0)[1],0);
+    TS_ASSERT_EQUALS(mon_ws->readY(1)[0],0.);
+    TS_ASSERT_EQUALS(mon_ws->readY(0)[3],0.);
+
+
+    const std::vector< Property* >& logs = mon_ws->run().getLogData();
+    for(size_t i = 0; i < logs.size(); ++i) std::cerr << logs[i]->name() << "\n";
+    TS_ASSERT_EQUALS(logs.size(), 62);
+
+    std::string header = mon_ws->run().getPropertyValueAsType<std::string>("run_header");
+    TS_ASSERT_EQUALS(86, header.size());
+    TS_ASSERT_EQUALS("LOQ 49886 Team LOQ             Quiet Count, ISIS Off, N 28-APR-2009  09:20:29     0.00", header);
+
+    TimeSeriesProperty<std::string>* slog = dynamic_cast<TimeSeriesProperty<std::string>*>(mon_ws->run().getLogData("icp_event"));
+    TS_ASSERT(slog);
+    std::string str = slog->value();
+    TS_ASSERT_EQUALS(str.size(),1023);
+    TS_ASSERT_EQUALS(str.substr(0,37),"2009-Apr-28 09:20:29  CHANGE_PERIOD 1");
+
+    slog = dynamic_cast<TimeSeriesProperty<std::string>*>(mon_ws->run().getLogData("icp_debug"));
+    TS_ASSERT(slog);
+    TS_ASSERT_EQUALS(slog->size(),50);
+
+    AnalysisDataService::Instance().remove("outWS");
+    AnalysisDataService::Instance().remove("outWS_monitors");
+  }
+
+
+
+
+
   void testExec()
   {
     Mantid::API::FrameworkManager::Instance();
@@ -451,6 +524,175 @@ public:
     TS_ASSERT_THROWS_NOTHING( v1.initialize() );
     TS_ASSERT_THROWS( v1.execute(), Exception::NotImplementedError)
   }
+  void testExecMonExcluded()
+  {
+    Mantid::API::FrameworkManager::Instance();
+    LoadISISNexus2 ld;
+    ld.initialize();
+    ld.setPropertyValue("Filename","LOQ49886.nxs");
+    ld.setPropertyValue("OutputWorkspace","outWS");
+    ld.setPropertyValue("LoadMonitors","0"); // should read "exclude"
+    TS_ASSERT_THROWS_NOTHING(ld.execute());
+    TS_ASSERT(ld.isExecuted());
+
+
+    MatrixWorkspace_sptr ws = AnalysisDataService::Instance().retrieveWS<MatrixWorkspace>("outWS");
+    TS_ASSERT_EQUALS(ws->blocksize(),5);
+    TS_ASSERT_EQUALS(ws->getNumberHistograms(),17790);
+
+    // Two monitors which form two first spectra are excluded by load separately
+
+    // spectrum with ID 5 is now spectrum N 3 as 2 monitors
+    TS_ASSERT_EQUALS(ws->readY(5-2)[1],1.);
+    TS_ASSERT_EQUALS(ws->getSpectrum(5-2)->getSpectrumNo(),6);
+    TS_ASSERT_EQUALS(*(ws->getSpectrum(5-2)->getDetectorIDs().begin()), 6);
+    // spectrum with ID 7 is now spectrum N 4
+    TS_ASSERT_EQUALS(ws->readY(6-2)[0],1.);
+    TS_ASSERT_EQUALS(ws->getSpectrum(6-2)->getSpectrumNo(),7);
+    TS_ASSERT_EQUALS(*(ws->getSpectrum(6-2)->getDetectorIDs().begin()), 7);
+    //
+    TS_ASSERT_EQUALS(ws->readY(8-2)[3],1.);
+
+    // spectrum with ID 9 is now spectrum N 6
+    TS_ASSERT_EQUALS(ws->getSpectrum(8-2)->getSpectrumNo(),9);
+    TS_ASSERT_EQUALS(*(ws->getSpectrum(8-2)->getDetectorIDs().begin()), 9);
+    // spectrum with ID 14 is now spectrum N 11
+    TS_ASSERT_EQUALS(ws->readY(13-2)[1],1.);
+    TS_ASSERT_EQUALS(ws->getSpectrum(13-2)->getSpectrumNo(),14);
+    TS_ASSERT_EQUALS(*(ws->getSpectrum(13-2)->getDetectorIDs().begin()), 14);
+    // spectrum with ID 18 is now spectrum N 15
+    TS_ASSERT_EQUALS(ws->readY(17-2)[1],2.);
+    TS_ASSERT_EQUALS(ws->getSpectrum(17-2)->getSpectrumNo(),18);
+    TS_ASSERT_EQUALS(*(ws->getSpectrum(17-2)->getDetectorIDs().begin()), 18);
+    // spectrum with ID 19 is now spectrum N 16
+    TS_ASSERT_EQUALS(ws->readY(18-2)[1],1.);
+    TS_ASSERT_EQUALS(ws->getSpectrum(18-2)->getSpectrumNo(),19);
+    TS_ASSERT_EQUALS(*(ws->getSpectrum(18-2)->getDetectorIDs().begin()), 19);
+
+
+    TS_ASSERT_EQUALS(ws->readY(33-2)[2],1.);
+    TS_ASSERT_EQUALS(ws->getSpectrum(33-2)->getSpectrumNo(),34);
+    TS_ASSERT_EQUALS(*(ws->getSpectrum(33-2)->getDetectorIDs().begin()), 34);
+    //
+    TS_ASSERT_EQUALS(ws->readY(34-2)[1],1.);
+    TS_ASSERT_EQUALS(ws->getSpectrum(34-2)->getSpectrumNo(),35);
+    TS_ASSERT_EQUALS(*(ws->getSpectrum(34-2)->getDetectorIDs().begin()), 35);
+
+    TS_ASSERT_EQUALS(ws->readY(37-2)[3],1.);
+    TS_ASSERT_EQUALS(ws->readY(37-2)[4],1.);
+    TS_ASSERT_EQUALS(ws->getSpectrum(37-2)->getSpectrumNo(),38);
+    TS_ASSERT_EQUALS(*(ws->getSpectrum(37-2)->getDetectorIDs().begin()), 38);
+
+
+    TS_ASSERT_EQUALS(ws->getSpectrum(1234-2)->getDetectorIDs().size(), 1);
+    TS_ASSERT_EQUALS(*(ws->getSpectrum(1234-2)->getDetectorIDs().begin()), 1235);
+
+    TS_ASSERT_EQUALS(ws->getSpectrum(1234-2)->getSpectrumNo(), 1235 );
+    TS_ASSERT(ws->getSpectrum(1234-2)->hasDetectorID(1235) );
+
+    const std::vector< Property* >& logs = ws->run().getLogData();
+    TS_ASSERT_EQUALS(logs.size(), 62);
+
+    std::string header = ws->run().getPropertyValueAsType<std::string>("run_header");
+    TS_ASSERT_EQUALS(86, header.size());
+    TS_ASSERT_EQUALS("LOQ 49886 Team LOQ             Quiet Count, ISIS Off, N 28-APR-2009  09:20:29     0.00", header);
+
+    TimeSeriesProperty<std::string>* slog = dynamic_cast<TimeSeriesProperty<std::string>*>(ws->run().getLogData("icp_event"));
+    TS_ASSERT(slog);
+    std::string str = slog->value();
+    TS_ASSERT_EQUALS(str.size(),1023);
+    TS_ASSERT_EQUALS(str.substr(0,37),"2009-Apr-28 09:20:29  CHANGE_PERIOD 1");
+
+    slog = dynamic_cast<TimeSeriesProperty<std::string>*>(ws->run().getLogData("icp_debug"));
+    TS_ASSERT(slog);
+    TS_ASSERT_EQUALS(slog->size(),50);
+
+    TimeSeriesProperty<int>* ilog = dynamic_cast<TimeSeriesProperty<int>*>(ws->run().getLogData("total_counts"));
+    TS_ASSERT(ilog);
+    TS_ASSERT_EQUALS(ilog->size(),172);
+
+    ilog = dynamic_cast<TimeSeriesProperty<int>*>(ws->run().getLogData("period"));
+    TS_ASSERT(ilog);
+    TS_ASSERT_EQUALS(ilog->size(),172);
+
+    TimeSeriesProperty<double> *dlog = dynamic_cast<TimeSeriesProperty<double>*>(ws->run().getLogData("proton_charge"));
+    TS_ASSERT(dlog);
+    TS_ASSERT_EQUALS(dlog->size(),172);
+
+
+    TimeSeriesProperty<bool>* blog = dynamic_cast<TimeSeriesProperty<bool>*>(ws->run().getLogData("period 1"));
+    TS_ASSERT(blog);
+    TS_ASSERT_EQUALS(blog->size(),1);
+
+    blog = dynamic_cast<TimeSeriesProperty<bool>*>(ws->run().getLogData("running"));
+    TS_ASSERT(blog);
+    TS_ASSERT_EQUALS(blog->size(),6);
+
+    TS_ASSERT_EQUALS(ws->sample().getName(),"PMMA_SAN25_1.5%_TRANS_150");
+
+    Property *l_property = ws->run().getLogData( "run_number" );
+    TS_ASSERT_EQUALS( l_property->value(), "49886" );
+    AnalysisDataService::Instance().remove("outWS");
+  }
+
+  void testExecMultiPeriodMonitorSeparate()
+  {
+    LoadISISNexus2 ld;
+    ld.setChild(true);
+    ld.initialize();
+    ld.setPropertyValue("Filename","POLREF00004699.nxs");
+    ld.setPropertyValue("OutputWorkspace","__unused_for_child");
+    ld.setPropertyValue("LoadMonitors","Separate");
+    TS_ASSERT_THROWS_NOTHING(ld.execute());
+    TS_ASSERT(ld.isExecuted());
+
+    Workspace_sptr detWS = ld.getProperty("OutputWorkspace");
+    auto detGroup = boost::dynamic_pointer_cast<WorkspaceGroup>(detWS);
+    TS_ASSERT(detGroup);
+    Workspace_sptr monWS = ld.getProperty("MonitorWorkspace");
+    auto monGroup = boost::dynamic_pointer_cast<WorkspaceGroup>(monWS);
+    TS_ASSERT(monGroup);
+
+    if(!(detGroup && monGroup)) return;
+
+    TS_ASSERT_EQUALS(2, detGroup->size());
+    TS_ASSERT_EQUALS(2, monGroup->size());
+
+    auto detWS0 = boost::dynamic_pointer_cast<MatrixWorkspace>(detGroup->getItem(0));
+    TS_ASSERT_EQUALS(1000, detWS0->blocksize());
+    TS_ASSERT_EQUALS(243, detWS0->getNumberHistograms());
+    TS_ASSERT_DELTA(105, detWS0->readX(1)[1], 1e-08);
+    TS_ASSERT_DELTA(2, detWS0->readY(1)[1], 1e-08);
+    TS_ASSERT_DELTA(std::sqrt(2.0), detWS0->readE(1)[1], 1e-08);
+    TS_ASSERT_EQUALS(detWS0->getSpectrum(0)->getSpectrumNo(),4);
+
+    auto monWS0 = boost::dynamic_pointer_cast<MatrixWorkspace>(monGroup->getItem(0));
+    TS_ASSERT_EQUALS(1000, monWS0->blocksize());
+    TS_ASSERT_EQUALS(3, monWS0->getNumberHistograms());
+    TS_ASSERT_DELTA(105, monWS0->readX(1)[1], 1e-08);
+    TS_ASSERT_DELTA(12563.0, monWS0->readY(0)[1], 1e-08);
+    TS_ASSERT_DELTA(std::sqrt(12563.0), monWS0->readE(0)[1], 1e-08);
+    TS_ASSERT_EQUALS(monWS0->getSpectrum(0)->getSpectrumNo(),1);
+    TS_ASSERT_EQUALS(monWS0->getSpectrum(2)->getSpectrumNo(),3);
+
+    auto monWS1 = boost::dynamic_pointer_cast<MatrixWorkspace>(monGroup->getItem(1));
+    TS_ASSERT_EQUALS(1000, monWS1->blocksize());
+    TS_ASSERT_EQUALS(3, monWS1->getNumberHistograms());
+    TS_ASSERT_DELTA(105, monWS1->readX(1)[1], 1e-08);
+    TS_ASSERT_DELTA(12595.0, monWS1->readY(0)[1], 1e-08);
+    TS_ASSERT_DELTA(std::sqrt(12595.0), monWS1->readE(0)[1], 1e-08);
+    TS_ASSERT_EQUALS(monWS1->getSpectrum(0)->getSpectrumNo(),1);
+    TS_ASSERT_EQUALS(monWS1->getSpectrum(2)->getSpectrumNo(),3);
+  
+    // Same number of logs
+    const auto & monPeriod1Run = monWS0->run();
+    const auto & monPeriod2Run = monWS1->run();
+    TS_ASSERT_EQUALS(monPeriod1Run.getLogData().size(), monPeriod2Run.getLogData().size() );
+    TS_ASSERT(monPeriod1Run.hasProperty("period 1"))
+    TS_ASSERT(monPeriod2Run.hasProperty("period 2"))
+    
+  }
+
 };
 
 //------------------------------------------------------------------------------

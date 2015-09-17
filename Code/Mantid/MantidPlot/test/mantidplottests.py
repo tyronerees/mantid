@@ -16,7 +16,7 @@ import datetime
 from PyQt4 import QtGui, QtCore
 from PyQt4.QtCore import pyqtSlot
 
-from mantidplotpy.proxies import threadsafe_call
+from pymantidplot.proxies import threadsafe_call
 
 # Try to import QTest. Not available on Windows?
 try:
@@ -46,7 +46,7 @@ def runTests(classname):
     if src is None:
         runner = unittest.TextTestRunner()
     else:
-        sys.path.append( os.path.join(src, "TestingTools/unittest-xml-reporting/src") )
+        sys.path.append( os.path.join(src, "Testing", "Tools", "unittest-xml-reporting", "src") )
         import xmlrunner
         runner = xmlrunner.XMLTestRunner(output='Testing')
 

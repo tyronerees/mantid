@@ -17,15 +17,15 @@ set ( PY_FILES
   simpleapi.py
 )
 
-copy_python_files_to_dir ( "${PY_FILES}" ${CMAKE_CURRENT_SOURCE_DIR} ${OUTPUT_DIR} 
-                           PYTHON_PKGROOT_INSTALL_FILES )
+copy_files_to_dir ( "${PY_FILES}" ${CMAKE_CURRENT_SOURCE_DIR} ${OUTPUT_DIR} 
+                     PYTHON_PKGROOT_INSTALL_FILES )
 # Generate the version module
 set ( VERSION_PY pyversion )
 # Build version
 configure_file ( ${CMAKE_CURRENT_SOURCE_DIR}/${VERSION_PY}.py.in ${CMAKE_CURRENT_BINARY_DIR}/${VERSION_PY}.py )
 # Copy py to build directory, taking care of multi-config (MSVC) builds
-copy_python_files_to_dir ( ${VERSION_PY}.py ${CMAKE_CURRENT_BINARY_DIR} ${OUTPUT_DIR}
-                           PYTHON_PKGROOT_INSTALL_FILES )
+copy_files_to_dir ( ${VERSION_PY}.py ${CMAKE_CURRENT_BINARY_DIR} ${OUTPUT_DIR}
+                    PYTHON_PKGROOT_INSTALL_FILES )
 # Package version
 configure_file ( ${CMAKE_CURRENT_SOURCE_DIR}/${VERSION_PY}.py.in ${CMAKE_CURRENT_BINARY_DIR}/${VERSION_PY}.install.py )
 
@@ -47,9 +47,11 @@ add_subdirectory ( kernel )
 add_dependencies ( PythonKernelModule PythonModule ) # Ensure the module files are in place
 add_subdirectory ( geometry )
 add_subdirectory ( api )
+add_subdirectory ( dataobjects )
 
 # Create an overall target
-add_custom_target ( PythonInterface DEPENDS PythonKernelModule PythonGeometryModule PythonAPIModule  )
+add_custom_target ( PythonInterface DEPENDS PythonKernelModule PythonGeometryModule 
+                    PythonAPIModule PythonDataObjectsModule )
 set_property ( TARGET PythonInterface PROPERTY FOLDER "MantidFramework/Python" )
 
 ###########################################################################

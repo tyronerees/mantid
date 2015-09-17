@@ -2,10 +2,6 @@
 #define MANTID_ALGORITHMS_COPYSAMPLETEST_H_
 
 #include <cxxtest/TestSuite.h>
-#include "MantidKernel/Timer.h"
-#include "MantidKernel/System.h"
-#include <iostream>
-#include <iomanip>
 
 #include "MantidAlgorithms/CopySample.h"
 #include "MantidDataObjects/WorkspaceSingleValue.h"
@@ -17,9 +13,10 @@
 #include "MantidGeometry/Instrument/ObjComponent.h"
 #include "MantidGeometry/Objects/Object.h"
 
-#include "MantidMDEvents/MDEvent.h"
-#include "MantidMDEvents/MDEventFactory.h"
-#include "MantidMDEvents/MDEventWorkspace.h"
+#include "MantidDataObjects/MDEvent.h"
+#include "MantidDataObjects/MDEventFactory.h"
+#include "MantidDataObjects/MDEventWorkspace.h"
+#include "MantidTestHelpers/ComponentCreationHelper.h"
 
 using namespace Mantid;
 using namespace Mantid::Algorithms;
@@ -27,35 +24,17 @@ using namespace Mantid::API;
 using namespace Mantid::DataObjects;
 using namespace Mantid::Geometry;
 using namespace Mantid::Kernel;
-using namespace Mantid::MDEvents;
 
 class CopySampleTest : public CxxTest::TestSuite
 {
 public:
 
-    
+
   void test_Init()
   {
     CopySample alg;
     TS_ASSERT_THROWS_NOTHING( alg.initialize() )
     TS_ASSERT( alg.isInitialized() )
-  }
-
-  Object_sptr createCappedCylinder(double radius, double height, const V3D & baseCentre, const V3D & axis, const std::string & id)
-  {
-    std::ostringstream xml;
-    xml << "<cylinder id=\"" << id << "\">"
-      << "<centre-of-bottom-base x=\"" << baseCentre.X() << "\" y=\"" << baseCentre.Y() << "\" z=\"" << baseCentre.Z() << "\"/>"
-      << "<axis x=\"" << axis.X() << "\" y=\"" << axis.Y() << "\" z=\"" << axis.Z() << "\"/>"
-      << "<radius val=\"" << radius << "\" />"
-      << "<height val=\"" << height << "\" />"  << "</cylinder>";
-    ShapeFactory shapeMaker;
-    return shapeMaker.createShape(xml.str());
-  }
-  ObjComponent * createSingleObjectComponent()
-  {
-    Object_sptr pixelShape = createCappedCylinder(0.5, 1.5, V3D(0.0,0.0,0.0), V3D(0.,1.0,0.), "tube");
-    return new ObjComponent("pixel", pixelShape);
   }
 
   Sample createsample()
@@ -64,15 +43,15 @@ public:
     sample.setName("test");
     const std::string envName("TestKit");
     SampleEnvironment *kit = new SampleEnvironment(envName);
-    kit->add(createSingleObjectComponent());
+    auto shape = ComponentCreationHelper::createCappedCylinder(0.5, 1.5, V3D(0.0,0.0,0.0), V3D(0.,1.0,0.), "tube");
+    kit->add(*shape);
     sample.setEnvironment(kit);
     OrientedLattice *latt = new OrientedLattice(1.0,2.0,3.0, 90, 90, 90);
     sample.setOrientedLattice(latt);
     delete latt;
-    Material vanBlock("vanBlock", Mantid::PhysicalConstants::getNeutronAtom(23, 0), 0.072);
-    sample.setMaterial(vanBlock);
-    Object_sptr shape_sptr =
-      createCappedCylinder(0.0127, 1.0, V3D(), V3D(0.0, 1.0, 0.0), "cyl");
+    Object_sptr shape_sptr = \
+      ComponentCreationHelper::createCappedCylinder(0.0127, 1.0, V3D(), V3D(0.0, 1.0, 0.0), "cyl");
+    shape_sptr->setMaterial(Material("vanBlock", Mantid::PhysicalConstants::getNeutronAtom(23, 0), 0.072));
     sample.setShape(*shape_sptr);
     return sample;
   }
@@ -103,7 +82,7 @@ public:
 
     TS_ASSERT_THROWS_NOTHING( alg.execute(); );
     TS_ASSERT( alg.isExecuted() );
-    
+
     // Retrieve the workspace from data service.
     MatrixWorkspace_sptr ws;
     TS_ASSERT_THROWS_NOTHING( ws = AnalysisDataService::Instance().retrieveWS<MatrixWorkspace>(outWSName) );
@@ -114,7 +93,7 @@ public:
     Sample copy=ws->mutableSample();
     TS_ASSERT_EQUALS(copy.getName(),"test" );
     TS_ASSERT_EQUALS(copy.getOrientedLattice().c(), 3.0);
-    TS_ASSERT_EQUALS(copy.getEnvironment().getName(), "TestKit");
+    TS_ASSERT_EQUALS(copy.getEnvironment().name(), "TestKit");
     TS_ASSERT_EQUALS(copy.getEnvironment().nelements(), 1);
     TS_ASSERT_DELTA(copy.getMaterial().cohScatterXSection(2.1), 0.0184,  1e-02);
     TS_ASSERT_EQUALS(copy.getShape().getName(),s.getShape().getName());
@@ -123,7 +102,7 @@ public:
     AnalysisDataService::Instance().remove(inWSName);
     AnalysisDataService::Instance().remove(outWSName);
   }
-  
+
 
   void test_exec_some()
   {
@@ -162,7 +141,7 @@ public:
     Sample copy=ws->mutableSample();
     TS_ASSERT_DIFFERS(copy.getName(),"test" );
     TS_ASSERT(!copy.hasOrientedLattice());
-    TS_ASSERT_EQUALS(copy.getEnvironment().getName(), "TestKit");
+    TS_ASSERT_EQUALS(copy.getEnvironment().name(), "TestKit");
     TS_ASSERT_EQUALS(copy.getEnvironment().nelements(), 1);
     TS_ASSERT_DELTA(copy.getMaterial().cohScatterXSection(2.1), 0.0184,  1e-02);
     TS_ASSERT_DIFFERS(copy.getShape().getName(),s.getShape().getName());

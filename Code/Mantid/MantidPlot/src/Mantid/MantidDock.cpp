@@ -9,6 +9,8 @@
 
 #include <MantidAPI/AlgorithmFactory.h>
 #include <MantidAPI/FileProperty.h>
+#include "MantidAPI/IMDEventWorkspace.h"
+#include "MantidAPI/IPeaksWorkspace.h"
 #include <MantidAPI/WorkspaceGroup.h>
 #include <MantidGeometry/MDGeometry/IMDDimension.h>
 #include <MantidGeometry/Crystal/OrientedLattice.h>
@@ -44,6 +46,8 @@ MantidDockWidget::MantidDockWidget(MantidUI *mui, ApplicationWindow *parent) :
   setMinimumHeight(150);
   setMinimumWidth(200);
   parent->addDockWidget( Qt::RightDockWidgetArea, this );
+
+  m_appParent = parent;
 
   QFrame *f = new QFrame(this);
   setWidget(f);
@@ -83,10 +87,10 @@ MantidDockWidget::MantidDockWidget(MantidUI *mui, ApplicationWindow *parent) :
   layout->addWidget(m_workspaceFilter);
   layout->addWidget(m_tree);
 
-
   m_loadMenu = new QMenu(this);
+  m_saveMenu = new QMenu(this);
 
-  QAction* loadFileAction = new QAction("File",this);
+  QAction *loadFileAction = new QAction("File",this);
   QAction *liveDataAction = new QAction("Live Data",this);
   m_loadMapper = new QSignalMapper(this);
   m_loadMapper->setMapping(liveDataAction,"StartLiveData");
@@ -107,7 +111,6 @@ MantidDockWidget::MantidDockWidget(MantidUI *mui, ApplicationWindow *parent) :
   createSortMenuActions();
   createWorkspaceMenuActions();
 
-  connect(m_saveButton,SIGNAL(clicked()),this,SLOT(saveWorkspaces()));
   connect(m_deleteButton,SIGNAL(clicked()),this,SLOT(deleteWorkspaces()));
   connect(m_tree,SIGNAL(itemClicked(QTreeWidgetItem*, int)),this,SLOT(clickedWorkspace(QTreeWidgetItem*, int)));
   connect(m_tree,SIGNAL(itemSelectionChanged()),this,SLOT(workspaceSelected()));
@@ -179,9 +182,6 @@ void MantidDockWidget::createWorkspaceMenuActions()
   m_plotSpecErr = new QAction(tr("Plot Spectrum with Errors..."),this);
   connect(m_plotSpecErr,SIGNAL(triggered()),this,SLOT(plotSpectraErr()));
 
-  m_plotSpecDistr = new QAction(tr("Plot spectrum as distribution..."),this);
-  connect(m_plotSpecDistr,SIGNAL(triggered()),this,SLOT(plotSpectraDistribution()));
-
   m_colorFill = new QAction(tr("Color Fill Plot"), this);
   connect(m_colorFill, SIGNAL(triggered()), this, SLOT(drawColorFillPlot()));
 
@@ -212,6 +212,9 @@ void MantidDockWidget::createWorkspaceMenuActions()
 
   m_showLogs = new QAction(tr("Sample Logs..."), this);
   connect(m_showLogs,SIGNAL(triggered()),m_mantidUI,SLOT(showLogFileWindow()));
+
+  m_showSampleMaterial = new QAction(tr("Sample Material..."), this);
+  connect(m_showSampleMaterial,SIGNAL(triggered()),m_mantidUI,SLOT(showSampleMaterialWindow()));
 
   m_showHist = new QAction(tr("Show History"), this);
   connect(m_showHist,SIGNAL(triggered()),m_mantidUI,SLOT(showAlgorithmHistory()));
@@ -552,6 +555,7 @@ void MantidDockWidget::addMatrixWorkspaceMenuItems(QMenu *menu, const Mantid::AP
   menu->addSeparator();
   menu->addAction(m_showDetectors);
   menu->addAction(m_showLogs);
+  menu->addAction(m_showSampleMaterial);
   menu->addAction(m_showHist);
   menu->addAction(m_saveNexus);
 }
@@ -811,6 +815,32 @@ void MantidDockWidget::workspaceSelected()
 { 
   QList<QTreeWidgetItem*> selectedItems=m_tree->selectedItems();
   if(selectedItems.isEmpty()) return;
+
+  // If there are multiple workspaces selected group and save as Nexus
+  if(selectedItems.length() > 1)
+  {
+    connect(m_saveButton, SIGNAL(clicked()), this, SLOT(saveWorkspaceGroup()));
+
+    // Don't display as a group
+    m_saveButton->setMenu(NULL);
+  }
+  else
+  {
+    // Don't run the save group function when clicked
+    disconnect(m_saveButton, SIGNAL(clicked()), this, SLOT(saveWorkspaceGroup()));
+
+    // Remove all existing save algorithms from list
+    m_saveMenu->clear();
+
+    // Add some save algorithms
+    addSaveMenuOption("SaveNexus", "Nexus");
+    addSaveMenuOption("SaveAscii", "ASCII");
+    addSaveMenuOption("SaveAscii.1", "ASCII v1");
+
+    // Set the button to show the menu
+    m_saveButton->setMenu(m_saveMenu);
+  }
+
   QString wsName=selectedItems[0]->text(0);
   if(m_ads.doesExist(wsName.toStdString()))
   {
@@ -819,25 +849,40 @@ void MantidDockWidget::workspaceSelected()
 }
 
 /**
+ * Adds an algorithm to the save menu.
+ *
+ * @param algorithmString Algorithm string in format ALGO_NAME.VERSION or ALGO_NAME
+ * @param menuEntryName Text to be shown in menu
+ */
+void MantidDockWidget::addSaveMenuOption(QString algorithmString, QString menuEntryName)
+{
+  // Default to algo string if no entry name given
+  if(menuEntryName.isEmpty())
+    menuEntryName = algorithmString;
+
+  // Create the action and add data
+  QAction *saveAction = new QAction(menuEntryName, this);
+  saveAction->setData(QVariant(algorithmString));
+
+  // Connect the tigger slot to show algorithm dialog
+  connect(saveAction, SIGNAL(triggered()), this, SLOT(handleShowSaveAlgorithm()));
+
+  // Add it to the menu
+  m_saveMenu->addAction(saveAction);
+}
+
+/**
  * Save all selected workspaces
  */
-void MantidDockWidget::saveWorkspaces()
+void MantidDockWidget::saveWorkspaceGroup()
 {
   QList<QTreeWidgetItem*> items = m_tree->selectedItems();
-  if(items.empty())
+  if(items.size() < 2)
     return;
 
-  // Call same save asction as popup menu for a single workspace
-  if(items.size() == 1)
-  {
-    m_mantidUI->saveNexusWorkspace();
-  }
-  else
-  {
-    m_saveFolderDialog->setWindowTitle("Select save folder");
-    m_saveFolderDialog->setLabelText(QFileDialog::Accept, "Select");
-    m_saveFolderDialog->open(this, SLOT(saveWorkspacesToFolder(const QString &)));
-  }
+  m_saveFolderDialog->setWindowTitle("Select save folder");
+  m_saveFolderDialog->setLabelText(QFileDialog::Accept, "Select");
+  m_saveFolderDialog->open(this, SLOT(saveWorkspacesToFolder(const QString &)));
 }
 
 /**
@@ -873,31 +918,105 @@ void MantidDockWidget::saveWorkspacesToFolder(const QString &folder)
 }
 
 /**
+ * Handles a save algorithm being triggered by the Save menu.
+ *
+ * To select a specific algorithm add a QString to the data of the QAction
+ * in the form ALGORITHM_NAME.VERSION or just ALGORITHM_NAME to use the
+ * most recent version.
+ */
+void MantidDockWidget::handleShowSaveAlgorithm()
+{
+  QAction *sendingAction = dynamic_cast<QAction *>(sender());
+
+  if(sendingAction)
+  {
+    QString wsName = getSelectedWorkspaceName();
+    QVariant data = sendingAction->data();
+
+    if(data.canConvert<QString>())
+    {
+      QString algorithmName;
+      int version = -1;
+
+      QStringList splitData = data.toString().split(".");
+      switch(splitData.length())
+      {
+        case 2:
+          version = splitData[1].toInt();
+        case 1:
+          algorithmName = splitData[0];
+          break;
+        default:
+          m_mantidUI->saveNexusWorkspace();
+          return;
+      }
+
+      QHash<QString,QString> presets;
+      if(!wsName.isEmpty())
+        presets["InputWorkspace"] = wsName;
+
+      m_mantidUI->showAlgorithmDialog(algorithmName, presets, NULL, version);
+      return;
+    }
+  }
+
+  // If we can't get the type of algorithm this should be we can always fall back on Nexus
+  m_mantidUI->saveNexusWorkspace();
+}
+
+/**
 deleteWorkspaces
 */
 void MantidDockWidget::deleteWorkspaces()
 {
   QList<QTreeWidgetItem*> items = m_tree->selectedItems();
-  if(items.empty())
-  {
-    MantidMatrix* m = dynamic_cast<MantidMatrix*>(m_mantidUI->appWindow()->activeWindow());
-    if (!m || !m->isA("MantidMatrix")) return;
-    if(m->workspaceName().isEmpty()) return;
+  MantidMatrix* m = dynamic_cast<MantidMatrix*>(m_mantidUI->appWindow()->activeWindow());
+   
+  bool deleteExplorer = false;
+  bool deleteActive = false;
 
-    if(m_ads.doesExist(m->workspaceName().toStdString()))
-    {	
-      m_mantidUI->deleteWorkspace(m->workspaceName());
-    }
-    return;
-  }
-  //loop through multiple items selected from the mantid tree
-  QList<QTreeWidgetItem*>::iterator itr=items.begin();
-  for (itr = items.begin(); itr != items.end(); ++itr)
+  if((m_deleteButton->hasFocus() || m_tree->hasFocus()) && !items.empty())
   {
-    //Sometimes we try to delete a workspace that's already been deleted.
-    if(m_ads.doesExist((*itr)->text(0).toStdString()))
-      m_mantidUI->deleteWorkspace((*itr)->text(0));
-  }//end of for loop for selected items
+    deleteExplorer = true;
+  }
+  if((m && m->isA("MantidMatrix")) && (!m->workspaceName().isEmpty() && m_ads.doesExist(m->workspaceName().toStdString())))
+  {
+    deleteActive = true;
+  }
+
+  if(deleteActive || deleteExplorer)
+  {    
+    QMessageBox::StandardButton reply;
+    
+    if(m_appParent->isDeleteWorkspacePromptEnabled())
+    {
+      reply = QMessageBox::question(this, "Delete Workspaces", "Are you sure you want to delete the selected Workspaces?\n\nThis prompt can be disabled from:\nPreferences->General->Confirmations",
+                                    QMessageBox::Yes|QMessageBox::No);
+    }
+    else
+    {
+      reply = QMessageBox::Yes;
+    }
+
+    if (reply == QMessageBox::Yes)
+    {
+      if(deleteExplorer)
+      { 
+        //loop through multiple items selected from the mantid tree
+        QList<QTreeWidgetItem*>::iterator itr=items.begin();
+        for (itr = items.begin(); itr != items.end(); ++itr)
+        {
+          //Sometimes we try to delete a workspace that's already been deleted.
+          if(m_ads.doesExist((*itr)->text(0).toStdString()))
+            m_mantidUI->deleteWorkspace((*itr)->text(0));
+        }//end of for loop for selected items
+      }
+      else if(deleteActive)
+      {
+        m_mantidUI->deleteWorkspace(m->workspaceName());
+      }
+    }
+  }
 }
 
 void MantidDockWidget::sortAscending()
@@ -1227,41 +1346,27 @@ void MantidDockWidget::groupingButtonClick()
 /// Plots a single spectrum from each selected workspace
 void MantidDockWidget::plotSpectra()
 {
-  const QMultiMap<QString,std::set<int> > toPlot = m_tree->chooseSpectrumFromSelected();
+  const auto userInput = m_tree->chooseSpectrumFromSelected();
   // An empty map will be returned if the user clicks cancel in the spectrum selection
-  if (toPlot.empty()) return;
+  if (userInput.plots.empty()) return;
 
-  m_mantidUI->plot1D(toPlot, true, false);
-}
-
-/// Plots a single spectrum from each selected workspace
-void MantidDockWidget::plotSpectraDistribution()
-{
-  const QMultiMap<QString,std::set<int> > toPlot = m_tree->chooseSpectrumFromSelected();
-  // An empty map will be returned if the user clicks cancel in the spectrum selection
-  if (toPlot.empty()) return;
-
-  m_mantidUI->plot1D(toPlot, true, false, true );
+  bool spectrumPlot(true), errs(false), clearWindow(false);
+  MultiLayer *window(NULL);
+  m_mantidUI->plot1D(userInput.plots, spectrumPlot, MantidQt::DistributionDefault, errs,
+                     window, clearWindow, userInput.waterfall);
 }
 
 /// Plots a single spectrum from each selected workspace with errors
 void MantidDockWidget::plotSpectraErr()
 {
-  const QMultiMap<QString,std::set<int> > toPlot = m_tree->chooseSpectrumFromSelected();
+  const auto userInput = m_tree->chooseSpectrumFromSelected();
   // An empty map will be returned if the user clicks cancel in the spectrum selection
-  if (toPlot.empty()) return;
+  if (userInput.plots.empty()) return;
 
-  m_mantidUI->plot1D(toPlot, true, true);
-}
-
-/// Plots a single spectrum from each selected workspace with erros
-void MantidDockWidget::plotSpectraDistributionErr()
-{
-  const QMultiMap<QString,std::set<int> > toPlot = m_tree->chooseSpectrumFromSelected();
-  // An empty map will be returned if the user clicks cancel in the spectrum selection
-  if (toPlot.empty()) return;
-
-  m_mantidUI->plot1D(toPlot, true, true, true );
+  bool spectrumPlot(true), errs(true), clearWindow(false);
+  MultiLayer *window(NULL);
+  m_mantidUI->plot1D(userInput.plots, spectrumPlot, MantidQt::DistributionDefault, errs,
+                     window, clearWindow, userInput.waterfall);
 }
 
 /**
@@ -1276,7 +1381,8 @@ void MantidDockWidget::drawColorFillPlot()
   if( wsNames.empty() ) return;
 
   // Extract child workspace names from any WorkspaceGroups selected.
-  QSet<QString> allWsNames;
+  // Use a list to preserve workspace order.
+  QStringList allWsNames;
   foreach( const QString wsName, wsNames )
   {
     const auto wsGroup = boost::dynamic_pointer_cast<const WorkspaceGroup>(m_ads.retrieve(wsName.toStdString()));
@@ -1284,13 +1390,17 @@ void MantidDockWidget::drawColorFillPlot()
     {
       const auto children = wsGroup->getNames();
       for( auto childWsName = children.begin(); childWsName != children.end(); ++childWsName )
-        allWsNames.insert(QString::fromStdString(*childWsName));
+      {
+        auto name = QString::fromStdString(*childWsName);
+        if (allWsNames.contains(name)) continue;
+        allWsNames.append(name);
+      }
     }
     else
-      allWsNames.insert(wsName);
+      allWsNames.append(wsName);
   }
 
-  m_mantidUI->drawColorFillPlots(allWsNames.toList());
+  m_mantidUI->drawColorFillPlots(allWsNames);
 }
 
 void MantidDockWidget::treeSelectionChanged()
@@ -1336,6 +1446,16 @@ void MantidDockWidget::treeSelectionChanged()
 
   if(m_saveButton)
     m_saveButton->setEnabled(Items.size() > 0);
+
+  if (Items.size() > 0)
+  {
+    auto item = *(Items.begin());
+    m_mantidUI->enableSaveNexus(item->text(0));
+  }
+  else
+  {
+    m_mantidUI->disableSaveNexus();
+  }
 }
 
 /**
@@ -1387,6 +1507,7 @@ MantidTreeWidget::MantidTreeWidget(MantidDockWidget *w, MantidUI *mui)
 {
   setObjectName("WorkspaceTree");
   setSelectionMode(QAbstractItemView::ExtendedSelection);
+  setSortOrder(Qt::AscendingOrder);
   setAcceptDrops(true);
 }
 
@@ -1559,9 +1680,10 @@ QStringList MantidTreeWidget::getSelectedWorkspaceNames() const
 * TableWorkspaces (which are implicitly excluded).  We only want workspaces we
 * can actually plot!
 *
-* @return :: A map of workspace name to spectrum numbers to plot.
+* @param showWaterfallOpt If true, show the waterfall option on the dialog
+* @return :: A MantidWSIndexDialog::UserInput structure listing the selected options
 */
-QMultiMap<QString,std::set<int> > MantidTreeWidget::chooseSpectrumFromSelected() const
+MantidWSIndexDialog::UserInput MantidTreeWidget::chooseSpectrumFromSelected(bool showWaterfallOpt) const
 {
   // Check for any selected WorkspaceGroup names and replace with the names of
   // their children.
@@ -1619,13 +1741,17 @@ QMultiMap<QString,std::set<int> > MantidTreeWidget::chooseSpectrumFromSelected()
         SINGLE_SPECTRUM
         );
     }
-    return spectrumToPlot;
+    MantidWSIndexDialog::UserInput selections;
+    selections.plots = spectrumToPlot;
+    selections.waterfall = false;
+    return selections;
   }
 
-  // Else, one or more workspaces 
-  MantidWSIndexDialog *dio = new MantidWSIndexDialog(m_mantidUI, 0, selectedMatrixWsNameList);
+  // Else, one or more workspaces
+  MantidWSIndexDialog *dio = new MantidWSIndexDialog(m_mantidUI, 0, selectedMatrixWsNameList,
+                                                     showWaterfallOpt);
   dio->exec();
-  return dio->getPlots();
+  return dio->getSelections();
 }
 
 void MantidTreeWidget::setSortScheme(MantidItemSortScheme sortScheme)

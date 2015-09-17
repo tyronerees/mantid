@@ -1,106 +1,97 @@
 #include "MantidAlgorithms/RebinByTimeAtSample.h"
-
+#include "MantidAlgorithms/TimeAtSampleStrategyElastic.h"
 #include "MantidDataObjects/EventWorkspace.h"
 #include "MantidKernel/VectorHelper.h"
 #include "MantidKernel/Unit.h"
+#include "MantidKernel/V3D.h"
 #include <boost/make_shared.hpp>
 #include <algorithm>
+#include <cmath>
 
-namespace Mantid
-{
-  namespace Algorithms
-  {
-    using namespace Mantid::Kernel;
-    using namespace Mantid::API;
-    using namespace Mantid::DataObjects;
+namespace Mantid {
+namespace Algorithms {
+using namespace Mantid::Kernel;
+using namespace Mantid::API;
+using namespace Mantid::DataObjects;
 
-    // Register the algorithm into the AlgorithmFactory
-    DECLARE_ALGORITHM(RebinByTimeAtSample)
+// Register the algorithm into the AlgorithmFactory
+DECLARE_ALGORITHM(RebinByTimeAtSample)
 
-    //----------------------------------------------------------------------------------------------
-    /** Constructor
-     */
-    RebinByTimeAtSample::RebinByTimeAtSample()
-    {
-    }
+//----------------------------------------------------------------------------------------------
+/** Constructor
+ */
+RebinByTimeAtSample::RebinByTimeAtSample() {}
 
-    //----------------------------------------------------------------------------------------------
-    /** Destructor
-     */
-    RebinByTimeAtSample::~RebinByTimeAtSample()
-    {
-    }
+//----------------------------------------------------------------------------------------------
+/** Destructor
+ */
+RebinByTimeAtSample::~RebinByTimeAtSample() {}
 
-    //----------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------
 
-    /// Algorithm's version for identification. @see Algorithm::version
-    int RebinByTimeAtSample::version() const
-    {
-      return 1;
-    }
-    ;
+/// Algorithm's version for identification. @see Algorithm::version
+int RebinByTimeAtSample::version() const { return 1; }
 
-    /// Algorithm's category for identification. @see Algorithm::category
-    const std::string RebinByTimeAtSample::category() const
-    {
-      return "Transforms\\Rebin;Events\\EventFiltering";
-    }
+/// Algorithm's category for identification. @see Algorithm::category
+const std::string RebinByTimeAtSample::category() const {
+  return "Transforms\\Rebin;Events\\EventFiltering";
+}
 
-    /// Algorithm's summary for use in the GUI and help. @see Algorithm::summary
-    const std::string RebinByTimeAtSample::summary() const
-    {
-      return "Rebins with an x-axis of relative time at sample for comparing event arrival time at the sample environment.";
-    }
+/// Algorithm's summary for use in the GUI and help. @see Algorithm::summary
+const std::string RebinByTimeAtSample::summary() const {
+  return "Rebins with an x-axis of relative time at sample for comparing event "
+         "arrival time at the sample environment.";
+}
 
-    const std::string RebinByTimeAtSample::name() const
-    {
-      return "RebinByTimeAtSample";
-    }
+const std::string RebinByTimeAtSample::name() const {
+  return "RebinByTimeAtSample";
+}
 
-    /**
-     * Do histogramming of the data to create the output workspace.
-     * @param inWS : input workspace
-     * @param outputWS : output workspace
-     * @param XValues_new : Pointer to new x values vector (cowp)
-     * @param OutXValues_scaled : Vector of new x values
-     * @param prog : Progress object
-     */
-    void RebinByTimeAtSample::doHistogramming(IEventWorkspace_sptr inWS, MatrixWorkspace_sptr outputWS,
-        MantidVecPtr& XValues_new, MantidVec& OutXValues_scaled, Progress& prog)
-    {
-      const int histnumber = static_cast<int>(inWS->getNumberHistograms());
+/**
+ * Do histogramming of the data to create the output workspace.
+ * @param inWS : input workspace
+ * @param outputWS : output workspace
+ * @param XValues_new : Pointer to new x values vector (cowp)
+ * @param OutXValues_scaled : Vector of new x values
+ * @param prog : Progress object
+ */
+void RebinByTimeAtSample::doHistogramming(IEventWorkspace_sptr inWS,
+                                          MatrixWorkspace_sptr outputWS,
+                                          MantidVecPtr &XValues_new,
+                                          MantidVec &OutXValues_scaled,
+                                          Progress &prog) {
+  const int histnumber = static_cast<int>(inWS->getNumberHistograms());
 
-      const double tofOffset = 0;
-      auto instrument = inWS->getInstrument();
-      auto source = instrument->getSource();
-      auto sample = instrument->getSample();
-      const double L1 = source->getDistance(*sample);
+  const double tofOffset = 0;
 
-      //Go through all the histograms and set the data
-      PARALLEL_FOR2(inWS, outputWS)
-      for (int i = 0; i < histnumber; ++i)
-      {
-        PARALLEL_START_INTERUPT_REGION
+  TimeAtSampleStrategyElastic strategy(inWS);
 
-        const double L2 = inWS->getDetector(i)->getDistance(*sample);
-        const double tofFactor = L1 / (L1 + L2);
+  // Go through all the histograms and set the data
+  PARALLEL_FOR2(inWS, outputWS)
+  for (int i = 0; i < histnumber; ++i) {
+    PARALLEL_START_INTERUPT_REGION
 
-        const IEventList* el = inWS->getEventListPtr(i);
-        MantidVec y_data, e_data;
-        // The EventList takes care of histogramming.
-        el->generateHistogramTimeAtSample(*XValues_new, y_data, e_data, tofFactor, tofOffset);
+    Correction correction = strategy.calculate(i);
 
-        //Set the X axis for each output histogram
-        outputWS->setX(i, OutXValues_scaled);
+    const double tofFactor = correction.factor;
 
-        //Copy the data over.
-        outputWS->dataY(i).assign(y_data.begin(), y_data.end());
-        outputWS->dataE(i).assign(e_data.begin(), e_data.end());
+    const IEventList *el = inWS->getEventListPtr(i);
+    MantidVec y_data, e_data;
+    // The EventList takes care of histogramming.
+    el->generateHistogramTimeAtSample(*XValues_new, y_data, e_data, tofFactor,
+                                      tofOffset);
 
-        //Report progress
-        prog.report(name());
-      PARALLEL_END_INTERUPT_REGION
-    }
+    // Set the X axis for each output histogram
+    outputWS->setX(i, OutXValues_scaled);
+
+    // Copy the data over.
+    outputWS->dataY(i).assign(y_data.begin(), y_data.end());
+    outputWS->dataE(i).assign(e_data.begin(), e_data.end());
+
+    // Report progress
+    prog.report(name());
+    PARALLEL_END_INTERUPT_REGION
+  }
   PARALLEL_CHECK_INTERUPT_REGION
 }
 
@@ -109,8 +100,8 @@ namespace Mantid
  * @param ws : workspace to inspect
  * @return max time since epoch in nanoseconds.
  */
-uint64_t RebinByTimeAtSample::getMaxX(Mantid::API::IEventWorkspace_sptr ws) const
-{
+uint64_t
+RebinByTimeAtSample::getMaxX(Mantid::API::IEventWorkspace_sptr ws) const {
   return ws->getTimeAtSampleMax().totalNanoseconds();
 }
 
@@ -119,8 +110,8 @@ uint64_t RebinByTimeAtSample::getMaxX(Mantid::API::IEventWorkspace_sptr ws) cons
  * @param ws : workspace to inspect
  * @return min time since epoch in nanoseconds.
  */
-uint64_t RebinByTimeAtSample::getMinX(Mantid::API::IEventWorkspace_sptr ws) const
-{
+uint64_t
+RebinByTimeAtSample::getMinX(Mantid::API::IEventWorkspace_sptr ws) const {
   return ws->getTimeAtSampleMin().totalNanoseconds();
 }
 

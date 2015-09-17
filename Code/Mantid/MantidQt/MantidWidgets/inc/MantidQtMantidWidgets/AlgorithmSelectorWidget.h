@@ -5,13 +5,20 @@
 #include "MantidAPI/AlgorithmFactory.h"
 #include "WidgetDllOption.h"
 
+#include <vector>
 #include <Poco/NObserver.h>
 
 #include <QtGui>
-
 //------------------------------------------------------------------------------
 // Forward declaration
 //------------------------------------------------------------------------------
+namespace Mantid
+{
+namespace API
+{
+  struct Algorithm_descriptor;
+}
+}
 namespace MantidQt
 {
 namespace MantidWidgets
@@ -113,6 +120,10 @@ signals:
 
   protected:
     void keyPressEvent(QKeyEvent *e);
+  private:
+    typedef std::vector<Mantid::API::Algorithm_descriptor> AlgNamesType;
+    void addAliases(AlgNamesType& algNamesList);
+    QString stripAlias(const QString& text) const;
   };
 
 
@@ -125,7 +136,7 @@ signals:
 
 
 /**
-Copyright &copy; 2012 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+Copyright &copy; 2012 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
 
 This file is part of Mantid.
 

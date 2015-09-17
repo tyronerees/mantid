@@ -1,23 +1,39 @@
 #include "MantidQtAPI/QwtWorkspaceSpectrumData.h"
+
+#include "MantidAPI/MatrixWorkspace.h"
 #include "MantidQtAPI/PlotAxis.h"
 
 #include <QStringBuilder>
 
-/// Constructor
-QwtWorkspaceSpectrumData::QwtWorkspaceSpectrumData(const Mantid::API::MatrixWorkspace & workspace,int specIndex, const bool logScale, bool distr)
+/**
+ * Construct a QwtWorkspaceSpectrumData object with a source workspace
+ * @param workspace The workspace containing the data
+ * @param specIndex Index of the spectrum to plot
+ * @param logScale If true, plot a log scale
+ * @param plotAsDistribution If true and the data is histogram and not already a distribution then plot the Y values/X bin-width
+ */
+QwtWorkspaceSpectrumData::QwtWorkspaceSpectrumData(const Mantid::API::MatrixWorkspace & workspace,
+                                                   int specIndex, const bool logScale,
+                                                   const bool plotAsDistribution)
  : m_spec(specIndex),
    m_X(workspace.readX(specIndex)),
    m_Y(workspace.readY(specIndex)),
    m_E(workspace.readE(specIndex)),
    m_xTitle(), m_yTitle(),
    m_isHistogram(workspace.isHistogramData()),
+   m_dataIsNormalized(workspace.isDistribution()),
    m_binCentres(false),
    m_logScale(logScale),
-   m_minPositive(0),
-   m_isDistribution(distr)
+   m_isDistribution(false)
 {
+  // Actual plotting based on what type of data we have
+  setAsDistribution(plotAsDistribution && !m_dataIsNormalized); // takes into account if this is a histogram and sets m_isDistribution
+
   m_xTitle = MantidQt::API::PlotAxis(workspace, 0).title();
-  m_yTitle = MantidQt::API::PlotAxis(workspace).title();
+  m_yTitle = MantidQt::API::PlotAxis((m_dataIsNormalized||m_isDistribution), workspace).title();
+
+  // Calculate the min and max values
+  calculateYMinAndMax(m_Y, m_minY, m_maxY, m_minPositive);
 }
 
 /// Virtual copy constructor
@@ -32,7 +48,7 @@ QwtWorkspaceSpectrumData *QwtWorkspaceSpectrumData::copy() const
 */
  QwtWorkspaceSpectrumData* QwtWorkspaceSpectrumData::copyWithNewSource(const Mantid::API::MatrixWorkspace & workspace) const
 {
-  return new QwtWorkspaceSpectrumData(workspace, m_spec, m_logScale);
+  return new QwtWorkspaceSpectrumData(workspace, m_spec, m_logScale, m_isDistribution);
 }
 
 
@@ -85,15 +101,18 @@ double QwtWorkspaceSpectrumData::ex(size_t i) const
 
 double QwtWorkspaceSpectrumData::e(size_t i) const
 {
+  double ei = (i < m_E.size()) ? m_E[i] : m_E[m_E.size()-1];
+  if(m_isDistribution)
+  {
+    ei /= (m_X[i+1] - m_X[i]);
+  }
   if (m_logScale)
   {
-    if (m_Y[i] <= 0.0)
-      return 0;
-    else
-      return m_E[i];
+    double yi = (i < m_Y.size()) ? m_Y[i] : m_Y[m_Y.size()-1];
+    if (yi <= 0.0) return 0;
+    else return ei;
   }
-  else
-    return m_E[i];
+  else return ei;
 }
 
 size_t QwtWorkspaceSpectrumData::esize() const
@@ -107,17 +126,10 @@ size_t QwtWorkspaceSpectrumData::esize() const
  */
 double QwtWorkspaceSpectrumData::getYMin() const
 {
-  auto it = std::min_element(m_Y.begin(), m_Y.end());
-  double temp = 0;
-  if(it != m_Y.end())
-  {
-    temp = *it;
-  }
-  if (m_logScale && temp <= 0.)
-  {
-    temp = m_minPositive;
-  }
-  return temp;
+  if (m_logScale)
+    return m_minPositive;
+  else
+    return m_minY;
 }
 
 /**
@@ -126,17 +138,10 @@ double QwtWorkspaceSpectrumData::getYMin() const
  */
 double QwtWorkspaceSpectrumData::getYMax() const
 {
-  auto it = std::max_element(m_Y.begin(), m_Y.end());
-  double temp = 0;
-  if(it != m_Y.end())
-  {
-    temp = *it;
-  }
-  if (m_logScale && temp <= 0.)
-  {
-    temp = m_minPositive;
-  }
-  return temp;
+  if (m_logScale && m_maxY <= 0)
+    return m_minPositive;
+  else
+    return m_maxY;
 }
 
 /**

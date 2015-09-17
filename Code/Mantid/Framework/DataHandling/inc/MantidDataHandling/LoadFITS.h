@@ -4,110 +4,189 @@
 //---------------------------------------------------
 // Includes
 //---------------------------------------------------
-#include "MantidAPI/IFileLoader.h"
 #include <map>
 #include <sstream>
 #include <string>
 #include <vector>
 
-using namespace std;
+#include "MantidAPI/IFileLoader.h"
+#include "MantidDataObjects/Workspace2D.h"
 
-struct FITSInfo {  
-  vector<string> headerItems;
-  map<string, string> headerKeys;
+struct FITSInfo {
+  std::vector<std::string> headerItems;
+  std::map<std::string, std::string> headerKeys;
   int bitsPerPixel;
   int numberOfAxis;
-  vector<int> axisPixelLengths;
+  int offset;
+  int headerSizeMultiplier;
+  std::vector<size_t> axisPixelLengths;
   double tof;
   double timeBin;
+  double scale;
+  std::string imageKey;
   long int countsInImage;
   long int numberOfTriggers;
-  string extension;
-  string filePath;
-}; 
+  std::string extension;
+  std::string filePath;
+  bool isFloat;
+};
 
-namespace Mantid
-{
-namespace DataHandling
-{
-  /** 
-    LoadFITS : Load a number of FITS files into a histogram Workspace
+namespace Mantid {
+namespace DataHandling {
+/**
+LoadFITS: Load one or more of FITS files into a Workspace2D. The FITS
+format, normally used for images, is described for example here:
+http://www.fileformat.info/format/fits/egff.htm
 
-    File format is described here: http://www.fileformat.info/format/fits/egff.htm
-    This loader doesn't support the full specification, caveats are:
-      Support for unsigned 8, 16, 32 bit values only
-      Support only for 2 data axis
-      No support for format extensions
+At the moment this algorithm only supports 2 data axis and the
+following data types: unsigned 8, 16, 32 bits per pixel.
 
-    Loader is designed to work with multiple files, loading into a single workspace.
-    At points there are assumptions that all files in a batch use the same number of bits per pixel,
-    and that the number of spectra in each file are the same.
+Copyright &copy; 2014,2015 ISIS Rutherford Appleton Laboratory, NScD
+Oak Ridge National Laboratory & European Spallation Source
 
-    @author John R Hill, RAL 
-    @date 29/08/2014
-    
-    Copyright &copy; 2014 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+This file is part of Mantid.
 
-    This file is part of Mantid.
+Mantid is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 3 of the License, or
+(at your option) any later version.
 
-    Mantid is free software; you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation; either version 3 of the License, or
-    (at your option) any later version.
+Mantid is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
 
-    Mantid is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+File change history is stored at: <https://github.com/mantidproject/mantid>
+Code Documentation is available at: <http://doxygen.mantidproject.org>
+*/
 
-    File change history is stored at: <https://github.com/mantidproject/mantid>
-    Code Documentation is available at: <http://doxygen.mantidproject.org>
-  */
+class DLLExport LoadFITS : public API::IFileLoader<Kernel::FileDescriptor> {
+public:
+  LoadFITS();
+  virtual ~LoadFITS() {}
 
-  class DLLExport LoadFITS : public API::IFileLoader<Kernel::FileDescriptor>
-  {
-  public:
-    LoadFITS() {}
-    virtual ~LoadFITS() {}
+  /// Algorithm's name for identification overriding a virtual method
+  virtual const std::string name() const { return "LoadFITS"; }
 
-    /// Algorithm's name for identification overriding a virtual method
-    virtual const std::string name() const { return "LoadFITS" ;}
+  /// Summary of algorithms purpose
+  virtual const std::string summary() const {
+    return "Load FITS files into workspaces of type Workspace2D.";
+  }
 
-    ///Summary of algorithms purpose
-    virtual const std::string summary() const {return "Load data from FITS files.";}
+  /// Algorithm's version for identification overriding a virtual method
+  virtual int version() const { return 1; }
 
-    /// Algorithm's version for identification overriding a virtual method
-    virtual int version() const { return 1 ;}
+  /// Algorithm's category for identification overriding a virtual method
+  virtual const std::string category() const {
+    return "DataHandling;DataHandling\\Tomography";
+  }
 
-    /// Algorithm's category for identification overriding a virtual method
-    virtual const std::string category() const { return "DataHandling";}
+  /// Returns a confidence value that this algorithm can load a file
+  virtual int confidence(Kernel::FileDescriptor &descriptor) const;
 
-    /// Returns a confidence value that this algorithm can load a file
-    virtual int confidence(Kernel::FileDescriptor & descriptor) const;
+  /// Returns a value indicating whether or not loader wants to load multiple
+  /// files into a single workspace
+  virtual bool loadMutipleAsOne() { return true; }
 
-    /// Returns a value indicating whether or not loader wants to load multiple files into a single workspace
-    virtual bool loadMutipleAsOne() { return true; }
+private:
+  /// Initialisation code
+  void init();
+  /// Execution code
+  void exec();
 
-  private:
-    /// Initialisation code
-    void init();
-    /// Execution code
-    void exec();    
-    /// Parses the header values for the FITS file
-    bool parseHeader(FITSInfo &headerInfo);
-    /// Load data from a number of files into the workspace
-    void loadChunkOfBinsFromFile(Mantid::API::MatrixWorkspace_sptr &workspace, vector<vector<double> > &yVals, vector<vector<double> > &eVals, void *&bufferAny, MantidVecPtr &x, size_t spetraCount, int bitsPerPixel, size_t binChunkStartIndex);
-    /// Initialises a workspace with IDF and fills it with data
-    API::MatrixWorkspace_sptr initAndPopulateHistogramWorkspace();
+  /// Loads files into workspace(s)
+  void doLoadFiles(const std::vector<std::string> &paths,
+                   const std::string &outWSName, bool loadAsRectImg = false);
 
-    vector<FITSInfo> m_allHeaderInfo;
-    size_t m_binChunkSize;
-    static const int FIXED_HEADER_SIZE = 2880;    
-  };
-  
+  /// Loads the FITS header(s) into a struct
+  void doLoadHeaders(const std::vector<std::string> &paths,
+                     std::vector<FITSInfo> &headers);
+
+  /// Parses the header values for the FITS file
+  void parseHeader(FITSInfo &headerInfo);
+
+  /// Initialises a workspace with IDF and fills it with data
+  DataObjects::Workspace2D_sptr
+  makeWorkspace(const FITSInfo &fileInfo, size_t &newFileNumber,
+                std::vector<char> &buffer, API::MantidImage &imageY,
+                API::MantidImage &imageE,
+                const DataObjects::Workspace2D_sptr parent,
+                bool loadAsRectImg = false);
+
+  // Reads the data from a single FITS file into a workspace
+  void readDataToImgs(const FITSInfo &fileInfo, API::MantidImage &imageY,
+                      API::MantidImage &imageE, std::vector<char> &buffer);
+
+  /// Once loaded, check against standard and limitations of this algorithm
+  void headerSanityCheck(const FITSInfo &hdr, const FITSInfo &hdrFirst);
+
+  /// filter noise pixel by pixel
+  void doFilterNoise(double thresh, API::MantidImage &imageY,
+                     API::MantidImage &imageE);
+
+  /// rebin the matrix/image
+  void doRebin(size_t rebin, API::MantidImage &imageY,
+               API::MantidImage &imageE, API::MantidImage &rebinnedY,
+               API::MantidImage &rebinnedE);
+
+  /// identifies fits coming from 'other' cameras by specific headers
+  bool isInstrOtherThanIMAT(FITSInfo &hdr);
+
+  void setupDefaultKeywordNames();
+
+  /// Returns the trailing number from a string minus leading 0's (so 25 from
+  /// workspace_00025)
+  size_t fetchNumber(const std::string &name);
+
+  // Adds a number of leading 0's to another number up to the totalDigitCount.
+  std::string padZeros(const size_t number, const size_t totalDigitCount);
+
+  // Maps the header keys to specified values
+  void mapHeaderKeys();
+
+  // Strings used to map header keys
+  std::string m_headerScaleKey;
+  std::string m_headerOffsetKey;
+  std::string m_headerBitDepthKey;
+  std::string m_headerRotationKey;
+  std::string m_headerImageKeyKey;
+  std::string m_headerNAxisNameKey;
+  std::vector<std::string> m_headerAxisNameKeys;
+  std::string m_mapFile;
+
+  static const std::string g_defaultImgType;
+
+  // names of extension headers
+  std::string m_sampleRotation;
+  std::string m_imageType;
+
+  std::string m_baseName;
+  size_t m_pixelCount;
+  // rebin block size (m_rebin x m_rebin) cells
+  int m_rebin;
+  // noise threshold level
+  double m_noiseThresh;
+  API::Progress *m_progress;
+
+  // Number of digits for the fixed width appendix number added to
+  // workspace names, i.e. 3=> workspace_001; 5 => workspace_00001
+  static const size_t g_DIGIT_SIZE_APPEND = 5;
+  /// size of a FITS header block (room for 36 entries, of 80
+  /// characters each), in bytes. A FITS header always comes in
+  /// multiples of this block.
+  static const int g_BASE_HEADER_SIZE = 2880;
+
+  // names for several options that can be given in a "FITS" header
+  // setup file
+  static const std::string g_BIT_DEPTH_NAME;
+  static const std::string g_AXIS_NAMES_NAME;
+  static const std::string g_ROTATION_NAME;
+  static const std::string g_IMAGE_KEY_NAME;
+  static const std::string g_HEADER_MAP_NAME;
+};
 
 } // namespace DataHandling
 } // namespace Mantid

@@ -4,8 +4,11 @@
 #include <cxxtest/TestSuite.h>
 #include "MantidKernel/Timer.h"
 #include "MantidKernel/System.h"
+#include <cmath>
 #include <iostream>
 #include <iomanip>
+#include <fstream>
+#include <Poco/File.h>
 
 #include "MantidAlgorithms/GenerateEventsFilter.h"
 #include "MantidDataObjects/EventWorkspace.h"
@@ -22,10 +25,6 @@
 #include "MantidDataHandling/LoadInstrument.h"
 #include "MantidKernel/TimeSeriesProperty.h"
 #include "MantidKernel/UnitFactory.h"
-#include <iostream>
-#include <iomanip>
-#include <fstream>
-#include <Poco/File.h>
 
 using namespace Mantid;
 using namespace Mantid::Algorithms;
@@ -109,8 +108,12 @@ public:
    */
   void test_genTimeMultipleInterval()
   {
-    // 1. Create input Workspace
+    // Create input Workspace
     DataObjects::EventWorkspace_sptr eventWS = createEventWorkspace();
+    for (size_t i = 0; i < eventWS->getNumberHistograms(); ++i)
+      std::cout << "Spectrum " << i << ": max pulse time = " << eventWS->getEventList(i).getPulseTimeMax()
+                << " = " << eventWS->getEventList(i).getPulseTimeMin().totalNanoseconds() << "\n";
+
     int64_t timeinterval_ns = 15000;
 
     // 2. Init and set property
@@ -120,7 +123,7 @@ public:
     TS_ASSERT_THROWS_NOTHING(alg.setProperty("InputWorkspace", eventWS));
     TS_ASSERT_THROWS_NOTHING(alg.setProperty("OutputWorkspace", "Splitters01"));
     TS_ASSERT_THROWS_NOTHING(alg.setPropertyValue("InformationWorkspace", "InfoWS");)
-    TS_ASSERT_THROWS_NOTHING(alg.setProperty("TimeInterval", 15000.0));
+    TS_ASSERT_THROWS_NOTHING(alg.setPropertyValue("TimeInterval", "15000.0"));
     TS_ASSERT_THROWS_NOTHING(alg.setProperty("UnitOfTime", "Nanoseconds"));
 
     // 3. Running and get result
@@ -133,7 +136,7 @@ public:
 
     TS_ASSERT(splittersws);
 
-    size_t numintervals = 67;
+    size_t numintervals = 74;
     TS_ASSERT_EQUALS(splittersws->getNumberSplitters(), numintervals);
 
     std::string runstarttimestr = eventWS->run().getProperty("run_start")->value();
@@ -142,7 +145,7 @@ public:
 
     Kernel::TimeSeriesProperty<double> *protonchargelog =
         dynamic_cast<Kernel::TimeSeriesProperty<double>* >(eventWS->run().getProperty("proton_charge"));
-    Kernel::DateAndTime runstoptime = protonchargelog->lastTime();
+    Kernel::DateAndTime runstoptime = Kernel::DateAndTime(protonchargelog->lastTime().totalNanoseconds() + 100000);
 
     // b) First interval
     Kernel::SplittingInterval splitter0 = splittersws->getSplitter(0);
@@ -409,14 +412,12 @@ public:
   DataObjects::EventWorkspace_sptr createEventWorkspace()
   {
     using namespace WorkspaceCreationHelper;
-    double PI = 3.14159265;
 
-    // 1. Empty workspace
+    // Empty workspace
     DataObjects::EventWorkspace_sptr eventws =
         WorkspaceCreationHelper::createEventWorkspaceWithFullInstrument(2, 2, true);
-    //eventws->setName("TestWorkspace");
 
-    // 2. Run star time
+    // Run star time
     int64_t runstarttime_ns = 3000000000;
     int64_t runstoptime_ns  = 3001000000;
     int64_t pulsetime_ns    =     100000;
@@ -424,7 +425,7 @@ public:
     Kernel::DateAndTime runstarttime(runstarttime_ns);
     eventws->mutableRun().addProperty("run_start", runstarttime.toISO8601String());
 
-    // 3. Proton charge log
+    // Proton charge log
     Kernel::TimeSeriesProperty<double> *protonchargelog =
         new Kernel::TimeSeriesProperty<double>("proton_charge");
     int64_t curtime_ns = runstarttime_ns;
@@ -435,6 +436,7 @@ public:
       curtime_ns += pulsetime_ns;
     }
     eventws->mutableRun().addProperty(protonchargelog, true);
+    std::cout << "Proton charge log from " << runstarttime_ns << " to " << runstoptime_ns << "\n";
 
     // 4. Sine value log (value record 1/4 of pulse time.  it is FAST)
     Kernel::TimeSeriesProperty<double> *sinlog = new Kernel::TimeSeriesProperty<double>("FastSineLog");
@@ -443,7 +445,7 @@ public:
     while (curtime_ns < runstoptime_ns)
     {
       Kernel::DateAndTime curtime(curtime_ns);
-      double value = sin(PI*static_cast<double>(curtime_ns)/period*0.25);
+      double value = sin(M_PI*static_cast<double>(curtime_ns)/period*0.25);
       sinlog->addValue(curtime, value);
       curtime_ns += pulsetime_ns/4;
     }
@@ -456,11 +458,13 @@ public:
     while (curtime_ns < runstoptime_ns)
     {
       Kernel::DateAndTime curtime(curtime_ns);
-      double value = sin(2*PI*static_cast<double>(curtime_ns)/period);
+      double value = sin(2*M_PI*static_cast<double>(curtime_ns)/period);
       coslog->addValue(curtime, value);
       curtime_ns += pulsetime_ns*2;
     }
     eventws->mutableRun().addProperty(coslog, true);
+
+    std::cout << "<----------- Number of events = " << eventws->getNumberEvents() << "\n";
 
     return eventws;
   }
@@ -593,7 +597,7 @@ public:
     TS_ASSERT_THROWS_NOTHING(alg.setPropertyValue("OutputWorkspace", "Splitters08"));
     TS_ASSERT_THROWS_NOTHING(alg.setPropertyValue("InformationWorkspace", "InfoWS08"));
     TS_ASSERT_THROWS_NOTHING(alg.setProperty("FastLog", true));
-    TS_ASSERT_THROWS_NOTHING(alg.setProperty("TimeInterval", 15000.0));
+    TS_ASSERT_THROWS_NOTHING(alg.setPropertyValue("TimeInterval", "15000.0"));
     TS_ASSERT_THROWS_NOTHING(alg.setProperty("UnitOfTime", "Nanoseconds"));
 
     // Running and get result
@@ -607,7 +611,7 @@ public:
     TS_ASSERT(splittersws);
 
     // Check values of output workspace
-    size_t numintervals = 67;
+    size_t numintervals = 74;
     TS_ASSERT_EQUALS(splittersws->readY(0).size(), numintervals);
 
     std::string runstarttimestr = eventWS->run().getProperty("run_start")->value();
@@ -616,7 +620,7 @@ public:
 
     Kernel::TimeSeriesProperty<double> *protonchargelog =
         dynamic_cast<Kernel::TimeSeriesProperty<double>* >(eventWS->run().getProperty("proton_charge"));
-    Kernel::DateAndTime runstoptime = protonchargelog->lastTime();
+    Kernel::DateAndTime runstoptime = Kernel::DateAndTime(protonchargelog->lastTime().totalNanoseconds() + 100000);
 
     // First interval
     TS_ASSERT_EQUALS(static_cast<int64_t>(splittersws->readX(0)[0]), runstarttime_ns);
@@ -890,8 +894,6 @@ public:
    */
   void test_genMultipleIntLogValuesFilterMatrixSplitter()
   {
-    std::cout << "\n==== Test Multiple Integer Log Value Filter (Matrix Splitter) ====\n" << std::endl;
-
     // Create input
     DataObjects::EventWorkspace_sptr eventWS = createEventWorkspaceIntLog();
     AnalysisDataService::Instance().addOrReplace("TestEventWS09", eventWS);
@@ -936,6 +938,79 @@ public:
 
     TS_ASSERT_DELTA(splittersws->readY(0)[0], 0.0, 0.00001);
     TS_ASSERT_DELTA(splittersws->readY(0)[1], 1.0, 0.00001);
+  }
+
+
+  //----------------------------------------------------------------------------------------------
+  /** Test generation of splitters by various time intervals
+   * (1) Multiple time interval with various time interval lengths
+   * (2) Default start time and stop time
+   */
+  void test_genTimeVariousIntervalMatrixSplitter()
+  {
+    // Create input Workspace & initial setup
+    DataObjects::EventWorkspace_sptr eventWS = createEventWorkspace();
+    AnalysisDataService::Instance().addOrReplace("TestEventWorkspace08v", eventWS);
+    int64_t timeinterval_ns = 15000;
+
+    // Init and set property
+    GenerateEventsFilter alg;
+    alg.initialize();
+
+    std::vector<double> vectimeintervals;
+    vectimeintervals.push_back(static_cast<double>(timeinterval_ns));
+    vectimeintervals.push_back(static_cast<double>(timeinterval_ns)*2.);
+    vectimeintervals.push_back(static_cast<double>(timeinterval_ns)*3.);
+    TS_ASSERT_THROWS_NOTHING(alg.setPropertyValue("InputWorkspace", "TestEventWorkspace08v"));
+    TS_ASSERT_THROWS_NOTHING(alg.setPropertyValue("OutputWorkspace", "Splitters08v"));
+    TS_ASSERT_THROWS_NOTHING(alg.setPropertyValue("InformationWorkspace", "InfoWS08v"));
+    TS_ASSERT_THROWS_NOTHING(alg.setProperty("FastLog", true));
+    TS_ASSERT_THROWS_NOTHING(alg.setProperty("TimeInterval", vectimeintervals));
+    TS_ASSERT_THROWS_NOTHING(alg.setProperty("UnitOfTime", "Nanoseconds"));
+
+    // Running and get result
+    TS_ASSERT_THROWS_NOTHING(alg.execute());
+    TS_ASSERT(alg.isExecuted());
+
+    // Check output workspace
+    API::MatrixWorkspace_sptr splittersws =
+        boost::dynamic_pointer_cast<API::MatrixWorkspace>(AnalysisDataService::Instance().retrieve("Splitters08v"));
+
+    TS_ASSERT(splittersws);
+
+    // Check values of output workspace
+    size_t numintervals = 38;
+    TS_ASSERT_EQUALS(splittersws->readY(0).size(), numintervals);
+
+    std::string runstarttimestr = eventWS->run().getProperty("run_start")->value();
+    Kernel::DateAndTime runstarttime(runstarttimestr);
+    int64_t runstarttime_ns = runstarttime.totalNanoseconds();
+
+    Kernel::TimeSeriesProperty<double> *protonchargelog =
+        dynamic_cast<Kernel::TimeSeriesProperty<double>* >(eventWS->run().getProperty("proton_charge"));
+    Kernel::DateAndTime runstoptime = Kernel::DateAndTime(protonchargelog->lastTime().totalNanoseconds() + 100000);
+
+    // First 3 intervals
+    TS_ASSERT_EQUALS(static_cast<int64_t>(splittersws->readX(0)[0]), runstarttime_ns);
+    TS_ASSERT_EQUALS(static_cast<int64_t>(splittersws->readX(0)[1]), runstarttime_ns + timeinterval_ns);
+    TS_ASSERT_EQUALS(static_cast<int>(splittersws->readY(0)[0]), 0);
+
+    TS_ASSERT_EQUALS(static_cast<int64_t>(splittersws->readX(0)[2]), runstarttime_ns + timeinterval_ns*3);
+    TS_ASSERT_EQUALS(static_cast<int>(splittersws->readY(0)[1]), 1);
+
+    TS_ASSERT_EQUALS(static_cast<int64_t>(splittersws->readX(0)[3]), runstarttime_ns + timeinterval_ns*6);
+    TS_ASSERT_EQUALS(static_cast<int>(splittersws->readY(0)[2]), 2);
+
+    // Last interval
+    TS_ASSERT_EQUALS(static_cast<int64_t>(splittersws->readX(0).back()), runstoptime.totalNanoseconds());
+    TS_ASSERT_EQUALS(static_cast<int>(splittersws->readY(0).back()), numintervals-1);
+
+    // Clean
+    AnalysisDataService::Instance().remove("Splitters08v");
+    AnalysisDataService::Instance().remove("InfoWS08v");
+    AnalysisDataService::Instance().remove("TestEventWorkspace08v");
+
+    return;
   }
 
 

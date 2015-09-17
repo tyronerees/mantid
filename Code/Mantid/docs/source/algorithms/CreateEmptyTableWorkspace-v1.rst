@@ -6,7 +6,7 @@
 
 .. properties::
 
-.. _TableWorkspace Python API: http://download.mantidproject.org/docs/current-release/python/html/api/generated/ITableWorkspace.html
+.. _TableWorkspace Python API: http://www.mantidproject.org/Python_ITableWorkspace_v2
 
 Description
 -----------
@@ -50,3 +50,5 @@ Output:
    Remember, the table is a workspace.  It's name is "my_table".
 
 .. categories::
+
+.. sourcelink::

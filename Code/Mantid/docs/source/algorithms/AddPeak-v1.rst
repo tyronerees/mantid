@@ -9,7 +9,7 @@
 Description
 -----------
 
-Adds a `IPeak <http://www.mantidproject./IPeak>`__ to a `PeaksWorkspace <http://www.mantidproject.org/PeaksWorkspace>`__.
+Adds a peak to a :ref:`PeaksWorkspace <PeaksWorkspace>`.
 
 Usage
 -----
@@ -36,3 +36,5 @@ Output:
     The number of peaks after adding a peak is: 175
 
 .. categories::
+
+.. sourcelink::

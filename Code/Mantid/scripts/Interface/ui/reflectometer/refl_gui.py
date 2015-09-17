@@ -1,4 +1,5 @@
-import refl_window
+#pylint: disable=invalid-name
+import ui_refl_window
 import refl_save
 import refl_choose_col
 import refl_options
@@ -14,6 +15,7 @@ from isis_reflectometry.quick import *
 from isis_reflectometry.convert_to_wavelength import ConvertToWavelength
 from isis_reflectometry import load_live_runs
 from isis_reflectometry.combineMulti import *
+import mantidqtpython
 from mantid.api import Workspace, WorkspaceGroup, CatalogManager, AlgorithmManager
 
 try:
@@ -30,7 +32,13 @@ except ImportError:
 
 
 
-class ReflGui(QtGui.QMainWindow, refl_window.Ui_windowRefl):
+class ReflGui(QtGui.QMainWindow, ui_refl_window.Ui_windowRefl):
+
+    current_instrument = None
+    current_table = None
+    current_polarisation_method = None
+    labelStatus = None
+    accMethod = None
 
     def __init__(self):
         """
@@ -71,7 +79,7 @@ class ReflGui(QtGui.QMainWindow, refl_window.Ui_windowRefl):
         self.__group_tof_workspaces_key = "group_tof_workspaces"
 
         #Setup instrument options with defaults assigned.
-        self.instrument_list = ['INTER', 'SURF', 'CRISP', 'POLREF']
+        self.instrument_list = ['INTER', 'SURF', 'CRISP', 'POLREF', 'OFFSPEC']
         self.polarisation_instruments = ['CRISP', 'POLREF']
         self.polarisation_options = {'None' : PolarisationCorrection.NONE, '1-PNR' : PolarisationCorrection.PNR, '2-PA' : PolarisationCorrection.PA }
 
@@ -81,28 +89,28 @@ class ReflGui(QtGui.QMainWindow, refl_window.Ui_windowRefl):
         self.live_method = settings.value(self.__live_data_method_key, "", type=str)
         self.live_freq = settings.value(self.__live_data_frequency_key, 0, type=float)
 
-        if not (self.live_freq):
+        if not self.live_freq:
             logger.information("No settings were found for Update frequency of loading live data, Loading default of 60 seconds")
             self.live_freq = float(60)
             settings.setValue(self.__live_data_frequency_key, self.live_freq)
-        if not (self.live_method):
+        if not self.live_method:
             logger.information("No settings were found for Accumulation Method of loading live data, Loading default of \"Add\"")
             self.live_method = "Add"
             settings.setValue(self.__live_data_method_key, self.live_method)
         settings.endGroup()
 
         settings.beginGroup(self.__generic_settings)
-        
+
         self.__alg_migrate = settings.value(self.__alg_migration_key, True, type=bool)
         if self.__alg_migrate:
             self.__alg_use = True # We will use the algorithms by default rather than the quick scripts
             self.__alg_migrate = False # Never do this again. We only want to reset once.
         else:
             self.__alg_use = settings.value(self.__ads_use_key, True, type=bool)
-    
+
         self.__icat_download = settings.value(self.__icat_download_key, False, type=bool)
         self.__group_tof_workspaces = settings.value(self.__group_tof_workspaces_key, True, type=bool)
-        
+
         settings.setValue(self.__ads_use_key, self.__alg_use)
         settings.setValue(self.__icat_download_key, self.__icat_download)
         settings.setValue(self.__group_tof_workspaces_key, self.__group_tof_workspaces)
@@ -126,15 +134,15 @@ class ReflGui(QtGui.QMainWindow, refl_window.Ui_windowRefl):
         """
         msgBox = QtGui.QMessageBox()
         msgBox.setText("The table has been modified. Do you want to save your changes?")
-        
+
         accept_btn = QtGui.QPushButton('Accept')
         cancel_btn = QtGui.QPushButton('Cancel')
         discard_btn = QtGui.QPushButton('Discard')
-        
+
         msgBox.addButton(accept_btn, QtGui.QMessageBox.AcceptRole)
         msgBox.addButton(cancel_btn, QtGui.QMessageBox.RejectRole)
         msgBox.addButton(discard_btn, QtGui.QMessageBox.NoRole)
-        
+
         msgBox.setIcon(QtGui.QMessageBox.Question)
         msgBox.setDefaultButton(accept_btn)
         msgBox.setEscapeButton(cancel_btn)
@@ -148,7 +156,7 @@ class ReflGui(QtGui.QMainWindow, refl_window.Ui_windowRefl):
             ret = QtGui.QMessageBox.RejectRole
         else:
             ret = QtGui.QMessageBox.NoRole
-        
+
         return ret, saved
 
     def closeEvent(self, event):
@@ -165,7 +173,7 @@ class ReflGui(QtGui.QMainWindow, refl_window.Ui_windowRefl):
             elif ret == QtGui.QMessageBox.NoRole:
                 self.mod_flag = False
                 event.accept()
-                
+
     def _instrument_selected(self, instrument):
         """
         Change the default instrument to the selected one
@@ -199,6 +207,10 @@ class ReflGui(QtGui.QMainWindow, refl_window.Ui_windowRefl):
         """
         plotbutton = self.sender()
         self._plot(plotbutton)
+
+    def _show_slit_calculator(self):
+        calc = mantidqtpython.MantidQt.MantidWidgets.SlitCalculator(self)
+        calc.exec_()
 
     def _polar_corr_selected(self):
         """
@@ -274,12 +286,12 @@ class ReflGui(QtGui.QMainWindow, refl_window.Ui_windowRefl):
 
         for column in range(self.tableMain.columnCount()):
             for row in range(self.tableMain.rowCount()):
-                if (column in self.run_cols):
+                if column in self.run_cols:
                     item = QtGui.QTableWidgetItem()
                     item.setText('')
                     item.setToolTip('Runs can be colon delimited to coadd them')
                     self.tableMain.setItem(row, column, item)
-                elif (column in self.angle_cols):
+                elif column in self.angle_cols:
                     item = QtGui.QTableWidgetItem()
                     item.setText('')
                     item.setToolTip('Angles are in degrees')
@@ -360,6 +372,7 @@ class ReflGui(QtGui.QMainWindow, refl_window.Ui_windowRefl):
         self.actionCopy.triggered.connect(self._copy_cells)
         self.actionChoose_Columns.triggered.connect(self._choose_columns)
         self.actionRefl_Gui_Options.triggered.connect(self._options_dialog)
+        self.actionSlit_Calculator.triggered.connect(self._show_slit_calculator)
 
 
     def __valid_rb(self):
@@ -432,15 +445,15 @@ class ReflGui(QtGui.QMainWindow, refl_window.Ui_windowRefl):
         howMany = len(self.tableMain.selectedItems())
         for cell in self.tableMain.selectedItems():
             sum = sum + self.tableMain.row(cell)
-        if (howMany):
+        if howMany:
             selectedrow = self.tableMain.row(self.tableMain.selectedItems()[0])
-            if (sum / howMany == selectedrow):
+            if sum / howMany == selectedrow:
                 startrow = selectedrow + 1
                 filled = 0
                 for cell in self.tableMain.selectedItems():
                     row = startrow
                     txt = cell.text()
-                    while (self.tableMain.item(row, 0).text() != ''):
+                    while self.tableMain.item(row, 0).text() != '':
                         item = QtGui.QTableWidgetItem()
                         item.setText(txt)
                         self.tableMain.setItem(row, self.tableMain.column(cell), item)
@@ -679,22 +692,22 @@ class ReflGui(QtGui.QMainWindow, refl_window.Ui_windowRefl):
                     overlapLow = []
                     overlapHigh = []
                     theta = [0, 0, 0]
-                    if (self.tableMain.item(row, 0).text() != ''):
+                    if self.tableMain.item(row, 0).text() != '':
                         self.statusMain.showMessage("Processing row: " + str(row + 1))
                         logger.debug("Processing row: " + str(row + 1))
 
                         for i in range(3):
                             run_entry = str(self.tableMain.item(row, i * 5).text())
-                            if (run_entry != ''):
+                            if run_entry != '':
                                 runno.append(run_entry)
                             ovLow = str(self.tableMain.item(row, (i * 5) + 3).text())
-                            if (ovLow != ''):
+                            if ovLow != '':
                                 overlapLow.append(float(ovLow))
                             ovHigh = str(self.tableMain.item(row, (i * 5) + 4).text())
-                            if (ovHigh != ''):
+                            if ovHigh != '':
                                 overlapHigh.append(float(ovHigh))
                         # Determine resolution
-                        if (self.tableMain.item(row, 15).text() == ''):
+                        if self.tableMain.item(row, 15).text() == '':
                             loadedRun = None
                             if load_live_runs.is_live_run(runno[0]):
                                 loadedRun = load_live_runs.get_live_data(config['default.instrument'], frequency = self.live_freq, accumulation = self.live_method)
@@ -707,7 +720,12 @@ class ReflGui(QtGui.QMainWindow, refl_window.Ui_windowRefl):
                                 if len(two_theta_str) > 0:
                                     two_theta = float(two_theta_str)
 
-                                dqq, two_theta = CalculateResolution(Workspace = loadedRun, TwoTheta = two_theta)
+                                #Make sure we only ever run calculate resolution on a non-group workspace.
+                                #If we're given a group workspace, we can just run it on the first member of the group instead
+                                thetaRun = loadedRun
+                                if isinstance(thetaRun, WorkspaceGroup):
+                                    thetaRun = thetaRun[0]
+                                dqq, two_theta = CalculateResolution(Workspace = thetaRun, TwoTheta = two_theta)
 
                                 #Put the calculated resolution into the table
                                 resItem = QtGui.QTableWidgetItem()
@@ -749,16 +767,16 @@ class ReflGui(QtGui.QMainWindow, refl_window.Ui_windowRefl):
                             qmin = round(qmin, 3)
                             qmax = round(qmax, 3)
                             wksp.append(wq.name())
-                            if (self.tableMain.item(row, i * 5 + 1).text() == ''):
+                            if self.tableMain.item(row, i * 5 + 1).text() == '':
                                 item = QtGui.QTableWidgetItem()
                                 item.setText(str(theta))
                                 self.tableMain.setItem(row, i * 5 + 1, item)
-                            if (self.tableMain.item(row, i * 5 + 3).text() == ''):
+                            if self.tableMain.item(row, i * 5 + 3).text() == '':
                                 item = QtGui.QTableWidgetItem()
                                 item.setText(str(qmin))
                                 self.tableMain.setItem(row, i * 5 + 3, item)
                                 overlapLow.append(qmin)
-                            if (self.tableMain.item(row, i * 5 + 4).text() == ''):
+                            if self.tableMain.item(row, i * 5 + 4).text() == '':
                                 item = QtGui.QTableWidgetItem()
                                 if i == len(runno) - 1:
                                 # allow full high q-range for last angle
@@ -772,28 +790,34 @@ class ReflGui(QtGui.QMainWindow, refl_window.Ui_windowRefl):
                             #Scale each run
                             if self.tableMain.item(row, self.scale_col).text():
                                 Scale(InputWorkspace=wksp[i], OutputWorkspace=wksp[i], Factor=1 / float(self.tableMain.item(row, self.scale_col).text()))
-                                
+
                         if self.__checked_row_stiched(row):
-                            if (len(runno) == 1):
+                            if len(runno) == 1:
                                 logger.notice("Nothing to combine for processing row : " + str(row))
                             else:
                                 w1 = getWorkspace(wksp[0])
                                 w2 = getWorkspace(wksp[-1])
-                                if (len(runno) == 2):
+                                if len(runno) == 2:
                                     outputwksp = runno[0] + '_' + runno[1][3:5]
                                 else:
                                     outputwksp = runno[0] + '_' + runno[-1][3:5]
                                 begoverlap = w2.readX(0)[0]
                                 # get Qmax
-                                if (self.tableMain.item(row, i * 5 + 4).text() == ''):
+                                if self.tableMain.item(row, i * 5 + 4).text() == '':
                                     overlapHigh = 0.3 * max(w1.readX(0))
 
                                 Qmin = min(w1.readX(0))
                                 Qmax = max(w2.readX(0))
 
+                                if len(self.tableMain.item(row, i * 5 + 3).text()) > 0:
+                                    Qmin = float(self.tableMain.item(row, i * 5 + 3).text())
+
+                                if len(self.tableMain.item(row, i * 5 + 4).text()) > 0:
+                                    Qmax = float(self.tableMain.item(row, i * 5 + 4).text())
+
                                 wcomb = combineDataMulti(wksp, outputwksp, overlapLow, overlapHigh, Qmin, Qmax, -dqq, 1, keep=True)
-                               
-                                    
+
+
                         # Enable the plot button
                         plotbutton = self.tableMain.cellWidget(row, self.plot_col).children()[1]
                         plotbutton.setProperty('runno',runno)
@@ -869,7 +893,7 @@ class ReflGui(QtGui.QMainWindow, refl_window.Ui_windowRefl):
                 self.__graphs[wksp[i]] = base_graph
 
                 titl = groupGet(ws_name_binned, 'samp', 'run_title')
-                if (type(titl) == str):
+                if type(titl) == str:
                     base_graph.activeLayer().setTitle(titl)
                 base_graph.activeLayer().setAxisScale(Layer.Left, Imin * 0.1, Imax * 10, Layer.Log10)
                 base_graph.activeLayer().setAxisScale(Layer.Bottom, Qmin * 0.9, Qmax * 1.1, Layer.Log10)
@@ -878,14 +902,14 @@ class ReflGui(QtGui.QMainWindow, refl_window.Ui_windowRefl):
 
         # Create and plot stitched outputs
         if self.__checked_row_stiched(row):
-            if (len(runno) == 2):
+            if len(runno) == 2:
                 outputwksp = runno[0] + '_' + runno[1][3:5]
             else:
                 outputwksp = runno[0] + '_' + runno[2][3:5]
             if not getWorkspace(outputwksp, report_error=False):
                 # Stitching has not been done as part of processing, so we need to do it here.
                 wcomb = combineDataMulti(wkspBinned, outputwksp, overlapLow, overlapHigh, Qmin, Qmax, -dqq, 1, keep=True)
-                    
+
             Qmin = min(getWorkspace(outputwksp).readX(0))
             Qmax = max(getWorkspace(outputwksp).readX(0))
             if canMantidPlot:
@@ -928,13 +952,19 @@ class ReflGui(QtGui.QMainWindow, refl_window.Ui_windowRefl):
         transrun_named = self.__name_trans(transrun)
         # Look for existing transmission workspaces that match the name
         transmission_ws = None
-        if mtd.doesExist(transrun_named) and mtd[transrun_named].getAxis(0).getUnit().unitID() == "Wavelength":
-            logger.notice('Reusing transmission workspace ' + transrun_named)
-            transmission_ws = mtd[transrun_named]
+        if mtd.doesExist(transrun_named):
+            if isinstance(mtd[transrun_named], WorkspaceGroup):
+                unit = mtd[transrun_named][0].getAxis(0).getUnit().unitID()
+            else:
+                unit = mtd[transrun_named].getAxis(0).getUnit().unitID()
+
+            if unit == "Wavelength":
+                logger.notice('Reusing transmission workspace ' + transrun_named)
+                transmission_ws = mtd[transrun_named]
 
         angle = str(self.tableMain.item(row, which * 5 + 1).text())
 
-        if len(angle) > 1:
+        if len(angle) > 0:
             angle = float(angle)
         else:
             angle = None
@@ -961,18 +991,38 @@ class ReflGui(QtGui.QMainWindow, refl_window.Ui_windowRefl):
             else:
                 raise RuntimeError("Up to 2 transmission runs can be specified. No more than that.")
 
+        #Load the runs required ConvertToWavelength will deal with the transmission runs, while .to_workspace will deal with the run itself
+        ws = ConvertToWavelength.to_workspace(loadedRun, ws_prefix="")
+
         if self.__alg_use:
-            #Load the runs required ConvertToWavelength will deal with the transmission runs, while .to_workspace will deal with the run itself
+            #If we're dealing with a workspace group, we'll manually map execution over each group member
+            #We do this so we can get ThetaOut correctly (see ticket #10597 for why we can't at the moment)
+            if isinstance(ws, WorkspaceGroup):
+                wqGroup = []
+                wlamGroup = []
+                thetaGroup = []
 
-            ws = ConvertToWavelength.to_workspace(loadedRun, ws_prefix="")
+                group_trans_ws = transmission_ws
+                for i in range(0, ws.size()):
+                    #If the transmission workspace is a group, we'll use it pair-wise with the tof workspace group
+                    if isinstance(transmission_ws, WorkspaceGroup):
+                        group_trans_ws = transmission_ws[i]
+                    wq, wlam, th = ReflectometryReductionOneAuto(InputWorkspace=ws[i], FirstTransmissionRun=group_trans_ws, thetaIn=angle, OutputWorkspace=runno+'_IvsQ_'+str(i+1), OutputWorkspaceWavelength=runno+'_IvsLam_'+str(i+1),)
+                    wqGroup.append(wq)
+                    wlamGroup.append(wlam)
+                    thetaGroup.append(th)
 
-            wq, wlam, th = ReflectometryReductionOneAuto(InputWorkspace=ws, FirstTransmissionRun=transmission_ws, thetaIn=angle, OutputWorkspace=runno+'_IvsQ', OutputWorkspaceWavelength=runno+'_IvsLam',)
+                wq = GroupWorkspaces(InputWorkspaces=wqGroup, OutputWorkspace=runno+'_IvsQ')
+                wlam = GroupWorkspaces(InputWorkspaces=wlamGroup, OutputWorkspace=runno+'_IvsLam')
+                th = thetaGroup[0]
+            else:
+                wq, wlam, th = ReflectometryReductionOneAuto(InputWorkspace=ws, FirstTransmissionRun=transmission_ws, thetaIn=angle, OutputWorkspace=runno+'_IvsQ', OutputWorkspaceWavelength=runno+'_IvsLam',)
 
             cleanup()
         else:
             wlam, wq, th = quick(loadedRun, trans=transmission_ws, theta=angle, tof_prefix="")
 
-        if self.__group_tof_workspaces:
+        if self.__group_tof_workspaces and not isinstance(ws, WorkspaceGroup):
             if "TOF" in mtd:
                 tof_group = mtd["TOF"]
                 if not tof_group.contains(loadedRun):
@@ -984,7 +1034,12 @@ class ReflGui(QtGui.QMainWindow, refl_window.Ui_windowRefl):
             runno = runno.split(':')[0]
         if ',' in runno:
             runno = runno.split(',')[0]
-        inst = wq.getInstrument()
+        if isinstance(wq, WorkspaceGroup):
+            inst = wq[0].getInstrument()
+        else:
+            inst = wq.getInstrument()
+        #NOTE: In the new Refl UI, these adjustments to lmin/lmax are NOT made. This has been
+        #noted in the parameter files for INTER/CRIST/POLREF/SURF.
         lmin = inst.getNumberParameter('LambdaMin')[0] + 1
         lmax = inst.getNumberParameter('LambdaMax')[0] - 2
         qmin = 4 * math.pi / lmax * math.sin(th * math.pi / 180)
@@ -1001,7 +1056,7 @@ class ReflGui(QtGui.QMainWindow, refl_window.Ui_windowRefl):
                 rowtext = []
                 for column in range(self.tableMain.columnCount() - 2):
                     rowtext.append(self.tableMain.item(row, column).text())
-                if (len(rowtext) > 0):
+                if len(rowtext) > 0:
                     writer.writerow(rowtext)
             self.current_table = filename
             logger.notice("Saved file to " + filename)
@@ -1090,7 +1145,7 @@ class ReflGui(QtGui.QMainWindow, refl_window.Ui_windowRefl):
                 reader = csv.reader(open(filename, "rb"))
                 row = 0
                 for line in reader:
-                    if (row < 100):
+                    if row < 100:
                         for column in range(self.tableMain.columnCount() - 2):
                             item = QtGui.QTableWidgetItem()
                             item.setText(line[column])
@@ -1125,7 +1180,7 @@ class ReflGui(QtGui.QMainWindow, refl_window.Ui_windowRefl):
                 reader = csv.reader(open(filename, "rb"))
                 row = 0
                 for line in reader:
-                    if (row < 100):
+                    if row < 100:
                         for column in range(self.tableMain.columnCount() - 2):
                             item = QtGui.QTableWidgetItem()
                             item.setText(line[column])
@@ -1156,8 +1211,8 @@ class ReflGui(QtGui.QMainWindow, refl_window.Ui_windowRefl):
         Shows the dialog for setting options regarding live data
         """
         try:
-            
-            dialog_controller = refl_options.ReflOptions(def_method = self.live_method, def_freq = self.live_freq, 
+
+            dialog_controller = refl_options.ReflOptions(def_method = self.live_method, def_freq = self.live_freq,
                                                          def_alg_use = self.__alg_use, def_icat_download=self.__icat_download,
                                                          def_group_tof_workspaces = self.__group_tof_workspaces)
             if dialog_controller.exec_():

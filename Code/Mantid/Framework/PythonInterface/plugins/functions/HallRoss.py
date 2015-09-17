@@ -1,8 +1,9 @@
+#pylint: disable=no-init,invalid-name
 '''
 @author Spencer Howells, ISIS
 @date December 05, 2013
 
-Copyright &copy; 2007-8 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+Copyright &copy; 2007-8 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
 
 This file is part of Mantid.
 
@@ -24,7 +25,6 @@ Code Documentation is available at: <http://doxygen.mantidproject.org>
 '''
 
 from mantid.api import IFunction1D, FunctionFactory
-from mantid import logger
 import math, numpy as np
 
 class HallRoss(IFunction1D):
@@ -56,8 +56,8 @@ class HallRoss(IFunction1D):
         for x in xvals:
             ex = math.exp(-l*x*x)
             h = (1.0-ex)/tau
-            jacobian.set(i,0,-h/tau);
-            jacobian.set(i,1,x*x*ex/tau);
+            jacobian.set(i,0,-h/tau)
+            jacobian.set(i,1,x*x*ex/tau)
             i += 1
 
 # Required to have Mantid recognise the new function

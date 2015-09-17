@@ -16,6 +16,8 @@ namespace Vates
 {
 namespace SimpleGui
 {
+
+  class RebinnedSourcesManager;
 /**
  *
  This class creates four views of the given dataset. There are three 2D views
@@ -25,7 +27,7 @@ namespace SimpleGui
  @author Michael Reuter
  @date 24/05/2011
 
- Copyright &copy; 2011 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+ Copyright &copy; 2011 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
 
  This file is part of Mantid.
 
@@ -53,8 +55,9 @@ public:
   /**
    * Default constructor.
    * @param parent the parent widget for the threeslice view
+   * @param rebinnedSourcesManager Pointer to a RebinnedSourcesManager
    */
-  ThreeSliceView(QWidget *parent = 0);
+  ThreeSliceView(QWidget *parent = 0, RebinnedSourcesManager* rebinnedSourcesManager = 0);
   /// Default destructor.
   virtual ~ThreeSliceView();
 
@@ -94,9 +97,9 @@ private:
   /// Helper function that creates all three Cartesian orthogonal slices.
   void makeThreeSlice();
 
-  QPointer<pqRenderView> mainView; ///< The 3D view
+  QPointer<pqRenderView> m_mainView; ///< The 3D view
 
-  Ui::ThreeSliceView ui; ///< The three slice view's UI form
+  Ui::ThreeSliceView m_ui; ///< The three slice view's UI form
 };
 
 }

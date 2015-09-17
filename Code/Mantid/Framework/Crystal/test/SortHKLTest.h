@@ -8,6 +8,7 @@
 #include "MantidKernel/System.h"
 #include "MantidKernel/Timer.h"
 #include "MantidTestHelpers/ComponentCreationHelper.h"
+#include "MantidGeometry/Crystal/OrientedLattice.h"
 #include <cxxtest/TestSuite.h>
 #include <iomanip>
 #include <iostream>
@@ -38,13 +39,21 @@ public:
     Instrument_sptr inst = ComponentCreationHelper::createTestInstrumentRectangular(4, 10, 1.0);
     PeaksWorkspace_sptr ws(new PeaksWorkspace());
     ws->setInstrument(inst);
-    //ws->setName("TOPAZ_peaks");
+
+    auto lattice = new Mantid::Geometry::OrientedLattice;
+    Mantid::Kernel::DblMatrix UB(3, 3, true);
+    UB.identityMatrix();
+    lattice->setUB(UB);
+    ws->mutableSample().setOrientedLattice(lattice);
+
     double smu = 0.357;
     double amu = 0.011;
     NeutronAtom neutron(static_cast<uint16_t>(EMPTY_DBL()), static_cast<uint16_t>(0),
-  			0.0, 0.0, smu, 0.0, smu, amu);
-    Material mat("SetInSaveHKLTest", neutron, 1.0);
-    ws->mutableSample().setMaterial(mat);
+                        0.0, 0.0, smu, 0.0, smu, amu);
+    Object sampleShape;
+    sampleShape.setMaterial(Material("SetInSaveHKLTest", neutron, 1.0));
+    ws->mutableSample().setShape(sampleShape);
+    
     API::Run & mrun = ws->mutableRun();
     mrun.addProperty<double>("Radius", 0.1, true);
 
@@ -77,9 +86,9 @@ public:
         AnalysisDataService::Instance().retrieve("TOPAZ_peaks") ) );
     TS_ASSERT(wsout);
     if (!wsout) return;
-    TS_ASSERT_EQUALS( wsout->getNumberPeaks(), 32);
+    TS_ASSERT_EQUALS( wsout->getNumberPeaks(), 24);
 
-    Peak p = wsout->getPeaks()[8];
+    Peak p = wsout->getPeaks()[0];
     TS_ASSERT_EQUALS(p.getH(),1 );
     TS_ASSERT_EQUALS(p.getK(),1 );
     TS_ASSERT_EQUALS(p.getL(),1 );

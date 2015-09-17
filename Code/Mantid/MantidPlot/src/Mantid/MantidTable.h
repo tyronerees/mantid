@@ -3,7 +3,7 @@
 
 #include "../Table.h"
 #include "MantidQtAPI/WorkspaceObserver.h"
-#include "MantidAPI/ITableWorkspace.h"
+#include "MantidAPI/ITableWorkspace_fwd.h"
 
 
 /** A MantidTable appears to be a MantidPlot "Table" object
@@ -26,6 +26,8 @@ public:
   virtual bool isSortable();
   //! are the columns fixed - not editable by the GUI
   virtual bool isFixedColumns() {return true;}
+
+  virtual void sortTableDialog();
 
 signals:
   void needToClose();

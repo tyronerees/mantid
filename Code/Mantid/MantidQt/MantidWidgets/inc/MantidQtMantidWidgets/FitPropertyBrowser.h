@@ -1,7 +1,7 @@
 #ifndef FITPROPERTYBROWSER_H_
 #define FITPROPERTYBROWSER_H_
 
-#include "MantidAPI/Workspace.h"
+#include "MantidAPI/Workspace_fwd.h"
 #include "MantidAPI/AlgorithmObserver.h"
 #include "WidgetDllOption.h"
 
@@ -15,7 +15,7 @@
 #include "MantidAPI/IFunction.h"
 #include "MantidAPI/IPeakFunction.h"
 #include "MantidAPI/FunctionFactory.h"
-#include "MantidAPI/MatrixWorkspace.h"
+#include "MantidAPI/MatrixWorkspace_fwd.h"
 
 
     /* Forward declarations */
@@ -143,6 +143,8 @@ public:
   std::string costFunction()const;
   /// Get the "ConvolveMembers" option
   bool convolveMembers()const;
+  /// Set if the data must be normalised before fitting
+  void normaliseData(bool on) {m_shouldBeNormalised = on;}
 
   /// Get the start X
   double startX()const;
@@ -545,6 +547,9 @@ private:
 
   /// store current workspace name
   std::string m_storedWorkspaceName;
+
+  /// Should the data be normalised before fitting?
+  bool m_shouldBeNormalised;
 
   friend class PropertyHandler;
   friend class CreateAttributeProperty;

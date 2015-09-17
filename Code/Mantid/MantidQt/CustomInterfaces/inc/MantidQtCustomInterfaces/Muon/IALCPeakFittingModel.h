@@ -5,7 +5,7 @@
 #include "MantidKernel/System.h"
 
 #include "MantidAPI/IFunction.h"
-#include "MantidAPI/MatrixWorkspace.h"
+#include "MantidAPI/MatrixWorkspace_fwd.h"
 
 #include <QObject>
 
@@ -18,7 +18,7 @@ namespace CustomInterfaces
 
   /** IALCPeakFittingModel : ALC peak fitting step model interface.
     
-    Copyright &copy; 2014 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+    Copyright &copy; 2014 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
 
     This file is part of Mantid.
 

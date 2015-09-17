@@ -146,9 +146,17 @@ class sfCalculator():
             self.back_pixel_max = self.d_back_pixel_max
 
         nexus_file_numerator = file
-        LoadEventNexus(Filename=nexus_file_numerator,
-                       OutputWorkspace='EventDataWks')
+        ws_event_data = LoadEventNexus(Filename=nexus_file_numerator,
+                                       OutputWorkspace='EventDataWks')
         mt1 = mtd['EventDataWks']
+
+        is_nexus_detector_rotated_flag = wks_utility.isNexusTakeAfterRefDate(ws_event_data.getRun().getProperty('run_start').value)
+        if is_nexus_detector_rotated_flag:
+            self.alpha_pixel_nbr = 304
+            self.beta_pixel_nbr = 256
+        else:
+            self.alpha_pixel_nbr = 256
+            self.beta_pixel_nbr = 304
 
         proton_charge = self._getProtonCharge(mt1)
         rebin(InputWorkspace='EventDataWks',
@@ -368,7 +376,7 @@ def plotObject(instance):
              linestyle='',
              label='Exp. data')
 
-    if (instance.a is not None):
+    if instance.a is not None:
         x = linspace(10000, 22000, 100)
         _label = "%.3f + x*%.2e" % (instance.a, instance.b)
         plot(x, instance.a + instance.b * x, label=_label)

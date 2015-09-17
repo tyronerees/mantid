@@ -85,23 +85,59 @@ namespace MantidWidgets
  * @param parent :: The parent widget - must be an ApplicationWindow
  * @param mantidui :: The UI form for MantidPlot
  */
-FitPropertyBrowser::FitPropertyBrowser(QWidget *parent, QObject* mantidui)
-:QDockWidget("Fit Function",parent),
-m_logValue(NULL),
-m_compositeFunction(),
-m_changeSlotsEnabled(false),
-m_guessOutputName(true),
-m_updateObserver(*this,&FitPropertyBrowser::handleFactoryUpdate),
-m_currentHandler(0),
-m_defaultFunction("Gaussian"),
-m_defaultPeak("Gaussian"),
-m_defaultBackground("LinearBackground"),
-m_peakToolOn(false),
-m_auto_back(false),
-m_autoBgName(QString::fromStdString(Mantid::Kernel::ConfigService::Instance().getString("curvefitting.autoBackground"))),
-m_autoBackground(NULL),
-m_decimals(-1),
-m_mantidui(mantidui)
+FitPropertyBrowser::FitPropertyBrowser(QWidget *parent, QObject* mantidui):
+  QDockWidget("Fit Function",parent),
+  m_workspaceIndex(NULL),
+  m_startX(NULL),
+  m_endX(NULL),
+  m_output(NULL),
+  m_minimizer(NULL),
+  m_ignoreInvalidData(NULL),
+  m_costFunction(NULL),
+  m_maxIterations(NULL),
+  m_logValue(NULL),
+  m_plotDiff(NULL),
+  m_plotCompositeMembers(NULL),
+  m_convolveMembers(NULL),
+  m_rawData(NULL),
+  m_xColumn(NULL),
+  m_yColumn(NULL),
+  m_errColumn(NULL),
+  m_showParamErrors(NULL),
+  m_compositeFunction(),
+  m_browser(NULL),
+  m_fitActionUndoFit(NULL),
+  m_fitActionSeqFit(NULL),
+  m_fitActionFit(NULL),
+  m_fitActionEvaluate(NULL),
+  m_functionsGroup(NULL),
+  m_settingsGroup(NULL),
+  m_customSettingsGroup(NULL),
+  m_changeSlotsEnabled(false),
+  m_guessOutputName(true),
+  m_updateObserver(*this,&FitPropertyBrowser::handleFactoryUpdate),
+  m_fitMapper(NULL),
+  m_fitMenu(NULL),
+  m_displayActionPlotGuess(NULL),
+  m_displayActionQuality(NULL),
+  m_displayActionClearAll(NULL),
+  m_setupActionCustomSetup(NULL),
+  m_setupActionRemove(NULL),
+  m_tip(NULL),
+  m_fitSelector(NULL),
+  m_fitTree(NULL),
+  m_currentHandler(0),
+  m_defaultFunction("Gaussian"),
+  m_defaultPeak("Gaussian"),
+  m_defaultBackground("LinearBackground"),
+  m_index_(0),
+  m_peakToolOn(false),
+  m_auto_back(false),
+  m_autoBgName(QString::fromStdString(Mantid::Kernel::ConfigService::Instance().getString("curvefitting.autoBackground"))),
+  m_autoBackground(NULL),
+  m_decimals(-1),
+  m_mantidui(mantidui),
+  m_shouldBeNormalised(false)
 {
   // Make sure plugins are loaded
   std::string libpath = Mantid::Kernel::ConfigService::Instance().getString("plugins.directory");
@@ -185,19 +221,18 @@ void FitPropertyBrowser::init()
   m_minimizers << "Levenberg-Marquardt"
                << "Levenberg-MarquardtMD"
                << "Simplex"
+               << "FABADA"
                << "Conjugate gradient (Fletcher-Reeves imp.)"
                << "Conjugate gradient (Polak-Ribiere imp.)"
                << "BFGS"
-               << "Damping"
-               << "Fake";
+               << "Damping";
 
   m_ignoreInvalidData = m_boolManager->addProperty("Ignore invalid data");
   setIgnoreInvalidData( settings.value("Ignore invalid data",false).toBool() );
 
   m_enumManager->setEnumNames(m_minimizer, m_minimizers);
   m_costFunction = m_enumManager->addProperty("Cost function");
-  m_costFunctions << "Least squares" << "Rwp";
-                  //<< "Ignore positive peaks";
+  m_costFunctions << "Least squares" << "Rwp" << "Unweighted least squares";
   m_enumManager->setEnumNames(m_costFunction,m_costFunctions);
   m_maxIterations = m_intManager->addProperty("Max Iterations");
   m_intManager->setValue( m_maxIterations, settings.value("Max Iterations",500).toInt() );
@@ -342,6 +377,8 @@ void FitPropertyBrowser::initLayout(QWidget *w)
 
   QMenu* setupSubMenuCustom = new QMenu(this);
   m_setupActionCustomSetup->setMenu(setupSubMenuCustom);
+  // empty menu for now, so set it disabled to avoid confusing users
+  m_setupActionCustomSetup->setEnabled(false);
 
   QMenu* setupSubMenuManage = new QMenu(this);
   QAction* setupActionSave = new QAction("Save Setup",this);
@@ -364,6 +401,8 @@ void FitPropertyBrowser::initLayout(QWidget *w)
 
   QMenu* setupSubMenuRemove = new QMenu(this);
   m_setupActionRemove->setMenu(setupSubMenuRemove); 
+  // empty menu for now, so set it disabled to avoid confusing users
+  m_setupActionRemove->setEnabled(false);
 
   QSignalMapper* setupMapper = new QSignalMapper(this);
   setupMapper->setMapping(setupActionClearFit,"ClearFit");
@@ -454,6 +493,9 @@ void FitPropertyBrowser::updateSetupMenus()
 
   QSignalMapper* mapperLoad = new QSignalMapper(this);
   QSignalMapper* mapperRemove = new QSignalMapper(this);
+  // enable actions that open the menus only if there will be >=1 entries in there
+  m_setupActionCustomSetup->setEnabled(names.size() >= 1);
+  m_setupActionRemove->setEnabled(names.size() >= 1);
   for (int i = 0; i < names.size(); i++)
   {
     QAction* itemLoad = new QAction(names.at(i), this);
@@ -1100,26 +1142,33 @@ std::string FitPropertyBrowser::minimizer(bool withProperties)const
   {
     foreach(QtProperty* prop,m_minimizerProperties)
     {
-      minimStr += "," + prop->propertyName() + "=";
-      if ( prop->propertyManager() == m_intManager )
+      if ( prop->propertyManager() == m_stringManager )
       {
-        minimStr += QString::number( m_intManager->value(prop) );
-      }
-      else if ( prop->propertyManager() == m_doubleManager )
-      {
-        minimStr += QString::number( m_doubleManager->value(prop) );
-      }
-      else if ( prop->propertyManager() == m_boolManager )
-      {
-        minimStr += QString::number( m_boolManager->value(prop) );
-      }
-      else if ( prop->propertyManager() == m_stringManager )
-      {
-        minimStr += m_stringManager->value(prop);
+        QString value = m_stringManager->value(prop);
+        if ( !value.isEmpty() )
+        {
+          minimStr += "," + prop->propertyName() + "=" + value;
+        }
       }
       else
       {
-        throw std::runtime_error("The fit browser doesn't support the type of minimizer's property " + prop->propertyName().toStdString() );
+        minimStr += "," + prop->propertyName() + "=";
+        if ( prop->propertyManager() == m_intManager )
+        {
+          minimStr += QString::number( m_intManager->value(prop) );
+        }
+        else if ( prop->propertyManager() == m_doubleManager )
+        {
+          minimStr += QString::number( m_doubleManager->value(prop) );
+        }
+        else if ( prop->propertyManager() == m_boolManager )
+        {
+          minimStr += QString::number( m_boolManager->value(prop) );
+        }
+        else
+        {
+          throw std::runtime_error("The fit browser doesn't support the type of minimizer's property " + prop->propertyName().toStdString() );
+        }
       }
     }
   }
@@ -1573,6 +1622,7 @@ void FitPropertyBrowser::doFit(int maxIterations)
     alg->setProperty("IgnoreInvalidData",ignoreInvalidData());
     alg->setPropertyValue("CostFunction",costFunction());
     alg->setProperty( "MaxIterations", maxIterations );
+    alg->setProperty( "Normalise", m_shouldBeNormalised );
     // Always output each composite function but not necessarily plot it
     alg->setProperty("OutputCompositeMembers", true);
     if ( alg->existsProperty("ConvolveMembers") )
@@ -2074,6 +2124,7 @@ void FitPropertyBrowser::deleteTie()
   QtBrowserItem * ci = m_browser->currentItem();
   QtProperty* paramProp = ci->property();
   PropertyHandler* h = getHandler()->findHandler(paramProp);
+  if (!h) return;
 
   if (ci->property()->propertyName() != "Tie") 
   {
@@ -3019,7 +3070,7 @@ void FitPropertyBrowser::setWorkspaceProperties()
       {
         if ( name != xName )
         {
-          m_columnManager->setValue(m_xColumn, columns.indexOf( name ));
+          m_columnManager->setValue(m_yColumn, columns.indexOf( name ));
           break;
         }
       }
@@ -3198,6 +3249,8 @@ void FitPropertyBrowser::minimizerChanged()
         QMessageBox::warning(this,"MantidPlot - Error","Type of minimizer's property " + propName + " is not yet supported by the browser.");
         continue;
     }
+
+    if ( !prop ) continue;
     // set the tooltip from property doc string
     QString toolTip = QString::fromStdString( (**it).documentation() );
     if ( !toolTip.isEmpty() )
@@ -3250,7 +3303,7 @@ void FitPropertyBrowser::functionHelp()
   if ( handler )
   {
     // Create and open the URL of the help page
-    QString url = QString::fromStdString( "http://www.mantidproject.org/" + handler->ifun()->name() );
+    QString url = QString::fromStdString( "http://docs.mantidproject.org/fitfunctions/" + handler->ifun()->name() );
     QDesktopServices::openUrl(QUrl(url));
   }
 }

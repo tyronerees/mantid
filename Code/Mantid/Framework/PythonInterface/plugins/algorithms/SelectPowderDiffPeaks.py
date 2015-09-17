@@ -1,11 +1,16 @@
-from mantid.api import PythonAlgorithm, AlgorithmFactory, ITableWorkspaceProperty, WorkspaceFactory, FileProperty, FileAction
-from mantid.kernel import Direction, StringListValidator
+#pylint: disable=no-init,invalid-name
+from mantid.api import PythonAlgorithm, AlgorithmFactory, ITableWorkspaceProperty, WorkspaceFactory
+from mantid.kernel import Direction
+import warnings
 
 _OUTPUTLEVEL = "NOOUTPUT"
 
 class SelectPowderDiffPeaks(PythonAlgorithm):
     """ Algorithm to select the powder diffraction peaks for Le Bail Fit
     """
+
+    mPeaks = None
+
     def category(self):
         """
         """
@@ -22,13 +27,13 @@ class SelectPowderDiffPeaks(PythonAlgorithm):
     def PyInit(self):
         """ Declare properties
         """
-        self.declareProperty(ITableWorkspaceProperty("BraggPeakParameterWorkspace", "", Direction.Input),
+        self.declareProperty(ITableWorkspaceProperty("BraggPeakParameterWorkspace", "", Direction.Input),\
                 "Name of Table Workspace containing peak parameters.")
 
-        self.declareProperty(ITableWorkspaceProperty("ZscoreWorkspace", "", Direction.Input),
+        self.declareProperty(ITableWorkspaceProperty("ZscoreWorkspace", "", Direction.Input),\
                 "Name of Table Workspace containing z-score for the peak parametrs.")
 
-        self.declareProperty(ITableWorkspaceProperty("OutputBraggPeakParameterWorkspace", "", Direction.Output),
+        self.declareProperty(ITableWorkspaceProperty("OutputBraggPeakParameterWorkspace", "", Direction.Output),\
                 "Name of Table Workspace containing the filtered peaks' parameters.")
 
         self.declareProperty("MinimumPeakHeight", 0.0, "Minimum peak height allowed for the peaks to fit. ")
@@ -40,6 +45,8 @@ class SelectPowderDiffPeaks(PythonAlgorithm):
     def PyExec(self):
         """ Main Execution Body
         """
+        warnings.warn("A message", ModuleDeprecationWarning)
+
         # 1. Get Input properties
         inppeakws = self.getProperty("BraggPeakParameterWorkspace").value
         inpzscows = self.getProperty("ZscoreWorkspace").value

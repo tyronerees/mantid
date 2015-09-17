@@ -102,6 +102,16 @@ public:
     TS_ASSERT_THROWS_NOTHING(log1.debug("a debug string with offset 999 should be trace"));
   }
 
+  void testLogLevelFiltering()
+  {
+    TS_ASSERT_THROWS_NOTHING(ConfigService::Instance().setConsoleLogLevel(4));
+    TS_ASSERT_THROWS_NOTHING(ConfigService::Instance().setFileLogLevel(4));
+    TSM_ASSERT_THROWS("A false channel name for setFilterChannelLogLevel did not throw",
+      ConfigService::Instance().setFilterChannelLogLevel("AnIncorrectChannelName",4),std::invalid_argument);
+    TSM_ASSERT_THROWS("A correct channel name, but not a filterChannel for setFilterChannelLogLevel did not throw",
+      ConfigService::Instance().setFilterChannelLogLevel("consoleChannel",4),std::invalid_argument);
+  }
+
   void testDefaultFacility()
   {
     TS_ASSERT_THROWS_NOTHING(ConfigService::Instance().getFacility() );
@@ -183,10 +193,51 @@ public:
     TS_ASSERT_LESS_THAN(0, osArch.length()); //check that the string is not empty
     std::string osCompName = ConfigService::Instance().getComputerName();
     TS_ASSERT_LESS_THAN(0, osCompName.length()); //check that the string is not empty
+    std::string username = ConfigService::Instance().getUsername();
+    TS_ASSERT_LESS_THAN(0, username.length());
     TS_ASSERT_LESS_THAN(0, ConfigService::Instance().getOSVersion().length()); //check that the string is not empty
+    TS_ASSERT_LESS_THAN(
+        0, ConfigService::Instance().getOSVersionReadable().length());
     TS_ASSERT_LESS_THAN(0, ConfigService::Instance().getCurrentDir().length()); //check that the string is not empty
 //        TS_ASSERT_LESS_THAN(0, ConfigService::Instance().getHomeDir().length()); //check that the string is not empty
     TS_ASSERT_LESS_THAN(0, ConfigService::Instance().getTempDir().length()); //check that the string is not empty
+
+	  std::string appdataDir = ConfigService::Instance().getAppDataDir();
+	  TS_ASSERT_LESS_THAN(0, appdataDir.length());
+#ifdef _WIN32
+	  std::string::size_type index = appdataDir.find("\\AppData\\Roaming\\mantidproject\\mantid");
+	  TSM_ASSERT_LESS_THAN("Could not find correct path in getAppDataDir()",index,appdataDir.size());
+#else
+	  std::string::size_type index = appdataDir.find("/.mantid");
+	  TSM_ASSERT_LESS_THAN("Could not find correct path in getAppDataDir()",index,appdataDir.size());
+#endif
+
+  }
+
+  void TestInstrumentDirectory()
+  {
+	  
+    auto directories = ConfigService::Instance().getInstrumentDirectories();
+	  TS_ASSERT_LESS_THAN(1,directories.size());
+	  //the first entry should be the AppDataDir + instrument
+	  TSM_ASSERT_LESS_THAN("Could not find the appData directory in getInstrumentDirectories()[0]",directories[0].find(ConfigService::Instance().getAppDataDir()),directories[0].size());
+	  TSM_ASSERT_LESS_THAN("Could not find the 'instrument' directory in getInstrumentDirectories()[0]",directories[0].find("instrument"),directories[0].size());
+
+	  if (directories.size() == 3)
+	  {
+		  // The middle entry should be /etc/mantid/instrument
+		  TSM_ASSERT_LESS_THAN("Could not find /etc/mantid/instrument path in getInstrumentDirectories()[1]",directories[1].find("etc/mantid/instrument"),directories[1].size());
+	  }
+	  //Check that the last directory matches that returned by getInstrumentDirectory
+	  TS_ASSERT_EQUALS(directories[directories.size()-1],ConfigService::Instance().getInstrumentDirectory());
+
+	  //check all of the directory entries actually exist
+	  for (auto it = directories.begin(); it != directories.end(); ++it)
+	  {
+		  Poco::File directory(*it);
+		  TSM_ASSERT(*it + " does not exist", directory.exists());
+	  }
+
   }
 
   void TestCustomProperty()
@@ -514,6 +565,17 @@ public:
     std::vector<std::string> keyVector = ConfigService::Instance().getKeys(""); 
     // The 4 unique in the file and the ConfigService always sets a datasearch.directories key on creation
     TS_ASSERT_EQUALS(keyVector.size(), 5);
+  }
+
+  void testGetAllKeys()
+  {
+    const std::string propfilePath = ConfigService::Instance().getDirectoryOfExecutable();
+    const std::string propfile = propfilePath + "MantidTest.properties";
+    ConfigService::Instance().updateConfig(propfile);
+
+    std::vector<std::string> keys = ConfigService::Instance().keys();
+
+    TS_ASSERT_EQUALS(keys.size(), 17);
   }
 
   void testRemovingProperty()

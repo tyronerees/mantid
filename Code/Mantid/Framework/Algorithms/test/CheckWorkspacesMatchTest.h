@@ -4,25 +4,25 @@
 #include <cxxtest/TestSuite.h>
 
 #include "MantidAlgorithms/CheckWorkspacesMatch.h"
+#include "MantidAPI/FrameworkManager.h"
 #include "MantidAPI/NumericAxis.h"
 #include "MantidKernel/UnitFactory.h"
 #include "MantidDataObjects/EventWorkspace.h"
 #include "MantidDataObjects/PeaksWorkspace.h"
-#include "MantidMDEvents/MDHistoWorkspace.h"
+#include "MantidDataObjects/MDHistoWorkspace.h"
 #include "MantidTestHelpers/WorkspaceCreationHelper.h"
 #include "MantidTestHelpers/MDEventsTestHelper.h"
 #include "MantidDataObjects/Workspace2D.h"
 #include "MantidAlgorithms/CreatePeaksWorkspace.h"
 #include "MantidAPI/MatrixWorkspace.h"
 #include "MantidGeometry/Instrument.h"
-#include "MantidMDEvents/MDBoxBase.h"
+#include "MantidDataObjects/MDBoxBase.h"
 #include "MantidKernel/V3D.h"
 
 using namespace Mantid::Algorithms;
 using namespace Mantid::API;
 using namespace Mantid::DataObjects;
 using namespace Mantid::Geometry;
-using namespace Mantid::MDEvents;
 
 class CheckWorkspacesMatchTest : public CxxTest::TestSuite
 {
@@ -34,6 +34,7 @@ public:
 
   CheckWorkspacesMatchTest() : ws1(WorkspaceCreationHelper::Create2DWorkspace123(2,2))
   {
+    FrameworkManager::Instance();
   }
   
   void testName()
@@ -218,8 +219,8 @@ public:
   void testMDEvents_matches()
   {
     if ( !checker.isInitialized() ) checker.initialize();
-    MDEventWorkspace3Lean::sptr mdews1 = MDEventsTestHelper::makeFileBackedMDEW("mdev1", false);
-    MDEventWorkspace3Lean::sptr mdews2 = MDEventsTestHelper::makeFileBackedMDEW("mdev2", false);
+    MDEventWorkspace3Lean::sptr mdews1 = MDEventsTestHelper::makeFakeMDEventWorkspace("mdev1");
+    MDEventWorkspace3Lean::sptr mdews2 = MDEventsTestHelper::makeFakeMDEventWorkspace("mdev2");
     TS_ASSERT_THROWS_NOTHING( checker.setProperty("Workspace1", boost::dynamic_pointer_cast<IMDWorkspace>(mdews1)) );
     TS_ASSERT_THROWS_NOTHING( checker.setProperty("Workspace2", boost::dynamic_pointer_cast<IMDWorkspace>(mdews2)) );
     TS_ASSERT( checker.execute() );
@@ -900,9 +901,9 @@ private:
     auto table = WorkspaceFactory::Instance().createTable();
     // One column of each type
     table->addColumn("int","int");
-    table->addColumn("int32_t","int32");
+    table->addColumn("uint","uint");
     table->addColumn("long64","int64");
-    table->addColumn("size_t","uint");
+    table->addColumn("size_t","size_t");
     table->addColumn("float","float");
     table->addColumn("double","double");
     table->addColumn("bool","bool");
@@ -911,13 +912,13 @@ private:
 
     // A few rows
     TableRow row1 = table->appendRow();
-    row1 << -1 << static_cast<int32_t>(0) << static_cast<int64_t>(1) << static_cast<size_t>(10)
+    row1 << -1 << static_cast<uint32_t>(0) << static_cast<int64_t>(1) << static_cast<size_t>(10)
          << 5.5f << -9.9 << true << "Hello" << Mantid::Kernel::V3D();
     TableRow row2 = table->appendRow();
-    row2 << 1 << static_cast<int32_t>(-2) << static_cast<int64_t>(-2) << static_cast<size_t>(100)
+    row2 << 1 << static_cast<uint32_t>(2) << static_cast<int64_t>(-2) << static_cast<size_t>(100)
          << 0.0f << 101.0 << false << "World" << Mantid::Kernel::V3D(-1,3,4);
     TableRow row3 = table->appendRow();
-    row3 << 6 << static_cast<int32_t>(3) << static_cast<int64_t>(0) << static_cast<size_t>(0)
+    row3 << 6 << static_cast<uint32_t>(3) << static_cast<int64_t>(0) << static_cast<size_t>(0)
          << -99.0f << 0.0 << false << "!" << Mantid::Kernel::V3D(1,6,10);
 
     return table;

@@ -1,3 +1,4 @@
+#pylint: disable=invalid-name
 from PyQt4 import QtGui, uic, QtCore
 import reduction_gui.widgets.util as util
 import os
@@ -134,10 +135,8 @@ class DetectorWidget(BaseWidget):
 
     def _draw_patch(self):
         if IS_IN_MANTIDPLOT:
-            from reduction_gui.reduction.sans.eqsans_data_proxy import DataProxy
-            self.show_instrument(self._content.sensitivity_file_edit.text,
-              workspace=self.patch_ws, tab=2, reload=True,
-              data_proxy=DataProxy)
+            self.show_instrument(self._content.sensitivity_file_edit.text,\
+              workspace=self.patch_ws, tab=2, reload=True, data_proxy=None)
 
     def _create_sensitivity(self):
         if IS_IN_MANTIDPLOT and self.options_callback is not None:

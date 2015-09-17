@@ -14,6 +14,7 @@ process background to prepare Le Bail Fit.
 
 
 There are a few functional options for user to choose.
+
 * SelectBackgroundPoints: selecting background points from diffraction data. Usually the output will be used to fit background;
 * RemovePeaks: removing peaks from a given MatrixWorks from diffraction data;
 
@@ -360,3 +361,5 @@ Output:
   Fitted background parameters: A0 = 3.90254e+00, A1 = 1.09284e-02, Chi-square = 0.08237
 
 .. categories::
+
+.. sourcelink::

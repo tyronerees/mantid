@@ -4,31 +4,32 @@
 //----------------------------------------------------------------------
 // Includes
 //----------------------------------------------------------------------
-#include "MantidAPI/Workspace.h"
+#include "MantidAPI/Workspace_fwd.h"
+#include "MantidAPI/WorkspaceGroup_fwd.h"
 #include "MantidAPI/AnalysisDataService.h"
 
 #include <Poco/NObserver.h>
 #include <Poco/Mutex.h>
 
-namespace Mantid
-{
+namespace Mantid {
 
-namespace API
-{
+namespace API {
 //----------------------------------------------------------------------
 // Forward Declarations
 //----------------------------------------------------------------------
 class Algorithm;
 
 /** Class to hold a set of workspaces.
-    The workspace group can be an entry in the AnalysisDataService. 
+    The workspace group can be an entry in the AnalysisDataService.
     Its constituent workspaces should also have individual ADS entries.
-    Workspace groups can be used in algorithms in the same way as single workspaces.
+    Workspace groups can be used in algorithms in the same way as single
+   workspaces.
 
     @author Sofia Antony, ISIS, RAL
     @date 12/06/2009
 
-    Copyright &copy; 2009 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+    Copyright &copy; 2009 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge
+   National Laboratory & European Spallation Source
 
     This file is part of Mantid.
 
@@ -48,8 +49,7 @@ class Algorithm;
     File change history is stored at: <https://github.com/mantidproject/mantid>.
     Code Documentation is available at: <http://doxygen.mantidproject.org>
  */
-class MANTID_API_DLL WorkspaceGroup : public Workspace
-{
+class MANTID_API_DLL WorkspaceGroup : public Workspace {
 public:
   /// Default constructor.
   WorkspaceGroup();
@@ -82,7 +82,7 @@ public:
   /// Inidicates that the workspace group can be treated as multiperiod.
   bool isMultiperiod() const;
   /// Check if a workspace is included in this group or any nested groups.
-  bool isInGroup( const Workspace& workspace, size_t level = 0 ) const;
+  bool isInGroup(const Workspace &workspace, size_t level = 0) const;
   /// Prints the group to the screen using the logger at debug
   void print() const;
 
@@ -90,39 +90,56 @@ public:
   //@{
 
   /// Adds a workspace to the group.
-  void add(const std::string& wsName) { AnalysisDataService::Instance().addToGroup( this->name(), wsName); }
+  void add(const std::string &wsName) {
+    AnalysisDataService::Instance().addToGroup(this->name(), wsName);
+  }
   /// Remove a name from the group
-  void remove(const std::string& wsName) { AnalysisDataService::Instance().removeFromGroup( this->name(), wsName); }
+  void remove(const std::string &wsName) {
+    AnalysisDataService::Instance().removeFromGroup(this->name(), wsName);
+  }
   /// Does a workspace exist within the group
-  bool contains(const std::string & wsName) const;
+  bool contains(const std::string &wsName) const;
   /// Does a workspace exist within the group
-  bool contains(const Workspace_sptr & wsName) const;
+  bool contains(const Workspace_sptr &wsName) const;
   /// Add the members of the group to the given list
-  void reportMembers(std::set<Workspace_sptr> & memberList) const;
-  /// Returns the names of workspaces that make up this group. Note that this returns a copy as the internal vector can mutate while the vector is being iterated over.
+  void reportMembers(std::set<Workspace_sptr> &memberList) const;
+  /// Returns the names of workspaces that make up this group. Note that this
+  /// returns a copy as the internal vector can mutate while the vector is being
+  /// iterated over.
   std::vector<std::string> getNames() const;
 
   //@}
 
+protected:
+  /// Protected, unimplemented copy constructor
+  WorkspaceGroup(const WorkspaceGroup &ref);
+  /// Protected, unimplemented copy assignment operator
+  const WorkspaceGroup &operator=(const WorkspaceGroup &);
+
 private:
-  /// Private, unimplemented copy constructor
-  WorkspaceGroup(const WorkspaceGroup& ref);
-  /// Private, unimplemented copy assignment operator
-  const WorkspaceGroup& operator=(const WorkspaceGroup&);
-  /// ADS removes a member of this group using this method. It doesn't send notifications in contrast to remove(name).
-  void removeByADS(const std::string& name);
+  virtual WorkspaceGroup *doClone() const {
+    throw std::runtime_error("Cloning of WorkspaceGroup is not implemented.");
+  }
+  /// ADS removes a member of this group using this method. It doesn't send
+  /// notifications in contrast to remove(name).
+  void removeByADS(const std::string &name);
   /// Turn ADS observations on/off
   void observeADSNotifications(const bool observeADS);
   /// Check if a workspace is included in any child groups and groups in them.
-  bool isInChildGroup( const Workspace& workspace ) const;
+  bool isInChildGroup(const Workspace &workspace) const;
   /// Callback when a delete notification is received
-  void workspaceDeleteHandle(Mantid::API::WorkspacePostDeleteNotification_ptr notice);
+  void workspaceDeleteHandle(
+      Mantid::API::WorkspacePostDeleteNotification_ptr notice);
   /// Observer for workspace delete notfications
-  Poco::NObserver<WorkspaceGroup, Mantid::API::WorkspacePostDeleteNotification> m_deleteObserver;
+  Poco::NObserver<WorkspaceGroup, Mantid::API::WorkspacePostDeleteNotification>
+      m_deleteObserver;
   /// Callback when a before-replace notification is received
-  void workspaceReplaceHandle(Mantid::API::WorkspaceBeforeReplaceNotification_ptr notice);
+  void workspaceReplaceHandle(
+      Mantid::API::WorkspaceBeforeReplaceNotification_ptr notice);
   /// Observer for workspace before-replace notfications
-  Poco::NObserver<WorkspaceGroup, Mantid::API::WorkspaceBeforeReplaceNotification> m_replaceObserver;
+  Poco::NObserver<WorkspaceGroup,
+                  Mantid::API::WorkspaceBeforeReplaceNotification>
+      m_replaceObserver;
   /// The list of workspace pointers in the group
   std::vector<Workspace_sptr> m_workspaces;
   /// Flag as to whether the observers have been added to the ADS
@@ -133,11 +150,6 @@ private:
   friend class AnalysisDataServiceImpl;
   friend class Algorithm;
 };
-
-/// Shared pointer to a workspace group class
-typedef boost::shared_ptr<WorkspaceGroup> WorkspaceGroup_sptr;
-/// Shared pointer to a workspace group class (const version)
-typedef boost::shared_ptr<const WorkspaceGroup> WorkspaceGroup_const_sptr;
 
 } // namespace API
 } // namespace Mantid

@@ -143,7 +143,7 @@ void MantidMatrixCurve::init(Graph* g,bool distr,Graph::CurveType style)
 
   int lineWidth = 1;
   MultiLayer* ml = dynamic_cast<MultiLayer*>(g->parent()->parent()->parent());
-  if (style == Graph::Unspecified || (ml && ml->applicationWindow()->applyCurveStyleToMantid) )
+  if (ml && (style == Graph::Unspecified || ml->applicationWindow()->applyCurveStyleToMantid) )
   {
     applyStyleChoice(style, ml, lineWidth);
   }
@@ -356,6 +356,24 @@ bool MantidMatrixCurve::isDistribution() const
   if( auto *d = dynamic_cast<const QwtWorkspaceSpectrumData*>(&data()))
   {
     return d->m_isDistribution;
+  }
+  else return false;
+}
+
+bool MantidMatrixCurve::isHistogramData() const
+{
+  if( auto *d = dynamic_cast<const QwtWorkspaceSpectrumData*>(&data()))
+  {
+    return d->isHistogram();
+  }
+  else return false;
+}
+
+bool MantidMatrixCurve::isNormalizable() const
+{
+  if( auto *d = dynamic_cast<const QwtWorkspaceSpectrumData*>(&data()))
+  {
+    return d->isHistogram() && !d->dataIsNormalized();
   }
   else return false;
 }

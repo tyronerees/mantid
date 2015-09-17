@@ -28,12 +28,14 @@ rising to exponentially decaying. :math:`I` is the integrated intensity.
 
 For information about how to convert Fullprof back-to-back exponential
 parameters into those used for this function see
-`CreateBackToBackParameters <http://www.mantidproject.org/CreateBackToBackParameters>`_.
+`CreateBackToBackParameters <http://www.mantidproject.org/CreateBackToBackParameters>`_. 
+For information about how to create parameters from a GSAS parameter file see
+`CreateBackToBackParametersGSAS <http://www.mantidproject.org/CreateBackToBackParametersGSAS>`_.
 
 References
 
-1. R.B. Von Dreele, J.D. Jorgensen & C.G. Windsor, J. Appl. Cryst., 15,
-581-589, 1982
+1. R.B. Von Dreele, J.D. Jorgensen & C.G. Windsor, `J. Appl. Cryst., 15,
+581-589, 1982 <http://dx.doi.org/10.1107/S0021889882012722>`_
 
 The figure below illustrate this peakshape function fitted to a TOF
 peak:
@@ -50,3 +52,5 @@ peak:
    HRPD instrument.
 
 .. categories::
+
+.. sourcelink::

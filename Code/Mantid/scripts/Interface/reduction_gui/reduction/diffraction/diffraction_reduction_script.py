@@ -1,3 +1,4 @@
+#pylint: disable=invalid-name
 """
     Classes for each reduction step. Those are kept separately
     from the the interface class so that the DgsReduction class could
@@ -22,36 +23,68 @@ class DiffractionReductionScripter(BaseReductionScripter):
     TOPLEVEL_WORKFLOWALG = "SNSPowderReductionPlus"
     WIDTH_END = "".join([" " for i in range(len(TOPLEVEL_WORKFLOWALG))])
     WIDTH = WIDTH_END + " "
+    AUTOSCRIPTNAME = 'SNSPowderReductionScript_AutoSave.py'
 
     def __init__(self, name="VULCAN", facility="SNS"):
         """ Initialization
         """
+        # Call base class
         super(DiffractionReductionScripter, self).__init__(name=name, facility=facility)
+
+        # Find whether there is stored setup XMLs
+        homedir = os.path.expanduser("~")
+        mantidconfigdir = os.path.join(homedir, ".mantid")
+        self.configDir = mantidconfigdir
+
+        # create configuratin dir if it has not been
+        if os.path.exists(self.configDir) is False:
+            os.makedirs(self.configDir)
+
+        # Information output
+        print "[diffraction_reduction_script]  Facility = %s,  Instrument = %s" % (
+                self.facility_name, self.instrument_name)
+        print "Auto-save Directory %s. " % (mantidconfigdir)
 
         return
 
     def to_script(self, file_name=None):
-        """ Generate reduction script via observers
-            @param file_name: name of the file to write the script to
-        """
-        print "[Main Reduction Script]  Facility = %s,  Instrument = %s" % (self.facility_name, self.instrument_name)
+        """ Generate reduction script via observers and
+        (1) save the script to disk and (2) save the reduction setup to disk.
 
-        # 1. Collect from observers
+        Arguments:
+         - file_name: name of the file to write the script to
+        """
+        # Collect partial scripters from observers
         paramdict = {}
         for observer in self._observers:
             obstate = observer.state()
             self.parseTabSetupScript(observer._subject.__class__.__name__, obstate, paramdict)
         # ENDFOR
 
-        # 2. Construct python commands
+        # Construct python commands
         script = self.constructPythonScript(paramdict)
 
-        if file_name is not None:
+        # Save script to disk
+        if file_name is None:
+            file_name = os.path.join(self.configDir, DiffractionReductionScripter.AUTOSCRIPTNAME)
+
+        try:
             f = open(file_name, 'w')
             f.write(script)
             f.close()
+        except IOError as e:
+            print "Unable to save script to file. Reason: %s." % (str(e))
 
-        print "[DBx337] Am I called?  The script is ... \n", script, "\n==== End of Script ====="
+        # Export XML file
+        autosavexmlfname = os.path.join(self.configDir, "snspowderreduction.xml")
+        self.to_xml(autosavexmlfname)
+
+        # Information output
+        wbuf = "Reduction script: (script is saved to %s; setup is saved to %s. \n" % (
+                file_name, autosavexmlfname)
+        wbuf += script
+        wbuf += "\n========== End of Script ==========="
+        print (wbuf)
 
         return script
 
@@ -69,7 +102,7 @@ class DiffractionReductionScripter(BaseReductionScripter):
 
         @param setupscript : object of SetupScript for this tab/observer
         """
-        print "ClassName: %s.  Type %s" % (tabsetuptype, type(setupscript))
+        # print "ClassName: %s.  Type %s" % (tabsetuptype, type(setupscript))
 
         if setupscript is None:
             return
@@ -119,7 +152,7 @@ class DiffractionReductionScripter(BaseReductionScripter):
                 runnumber = runtuple[0]
                 datafilename = runtuple[1]
 
-                print "Working on run ", str(runnumber), " in file ", datafilename
+                # print "Working on run ", str(runnumber), " in file ", datafilename
 
                 # i.  Load meta data only
                 metadatawsname = str(datafilename.split(".")[0]+"_meta")
@@ -158,7 +191,7 @@ class DiffractionReductionScripter(BaseReductionScripter):
                         script += "%sMinimumLogValue    = '%s',\n" % (DiffractionReductionScripter.WIDTH, filterdict["MinimumLogValue"])
                     if filterdict["MaximumLogValue"] != "":
                         script += "%sMaximumLogValue    = '%s',\n" % (DiffractionReductionScripter.WIDTH, filterdict["MaximumLogValue"])
-                    script += "%sFilterLogValueByChangingDirection = '%s',\n" % (DiffractionReductionScripter.WIDTH,
+                    script += "%sFilterLogValueByChangingDirection = '%s',\n" % (DiffractionReductionScripter.WIDTH,\
                             filterdict["FilterLogValueByChangingDirection"])
                     if filterdict["LogValueInterval"] != "":
                         # Filter by log value interval
@@ -188,6 +221,9 @@ class DiffractionReductionScripter(BaseReductionScripter):
 
         # ENDIF : do filter
 
+
+        print "Script and Save XML to default."
+
         return script
 
 
@@ -197,15 +233,15 @@ class DiffractionReductionScripter(BaseReductionScripter):
         dofilter = False
         if filterdict["FilterByTimeMin"] != "":
             dofilter = True
-            print "Yes! Min Generate Filter will be called!"
+            # print "Yes! Min Generate Filter will be called!"
 
         if filterdict["FilterByTimeMax"] != "":
             dofilter = True
-            print "Yes! Max Generate Filter will be called!"
+            # print "Yes! Max Generate Filter will be called!"
 
         if filterdict["FilterType"] != "NoFilter":
             dofilter = True
-            print "Yes! FilterType Generate Filter will be called!"
+            # print "Yes! FilterType Generate Filter will be called!"
 
         return dofilter
 
@@ -247,13 +283,13 @@ class DiffractionReductionScripter(BaseReductionScripter):
                 twovalues = term.split("-")
                 try:
                     runstart = int(twovalues[0])
-                    print "run start = ", runstart
+                    #print "run start = ", runstart
                 except ValueError:
                     print "Term %s cannot be parsed to a range of integers.  Input error!" % (term)
                     break
                 try:
                     runend = int(twovalues[1])
-                    print "run end = ", runend
+                    #print "run end = ", runend
                 except ValueError:
                     print "Term %s cannot be parsed to a range of integers.  Input error!" % (term)
                     break
@@ -276,7 +312,7 @@ class DiffractionReductionScripter(BaseReductionScripter):
             filename = str(self.instrument_name +"_" + str(run) + extension)
             datafilenames.append((run, filename))
 
-            print "Input data file %s of run number %s" % (filename, str(run))
+            #print "Input data file %s of run number %s" % (filename, str(run))
         # ENDFOR
 
         return datafilenames
@@ -351,7 +387,7 @@ class DiffractionReductionScripter(BaseReductionScripter):
         if splitwsname is not None and splitwsname != "":
             script += "%sSplittersWorkspace = '%s',\n" % (DiffractionReductionScripter.WIDTH, str(splitwsname))
         if splitinfowsname is not None and splitinfowsname != "":
-            script += "%sSplitInformationWorkspace='%s',\n" % (DiffractionReductionScripter.WIDTH,
+            script += "%sSplitInformationWorkspace='%s',\n" % (DiffractionReductionScripter.WIDTH,\
                                                               str(splitinfowsname))
         script += "%s)\n" % (DiffractionReductionScripter.WIDTH)
 

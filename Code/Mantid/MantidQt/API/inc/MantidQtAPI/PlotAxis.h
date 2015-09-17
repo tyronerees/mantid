@@ -2,9 +2,13 @@
 #define MANTIDQT_API_PLOTAXISLABEL_H_
 
 #include "MantidQtAPI/DllOption.h"
-#include "MantidAPI/MatrixWorkspace.h"
+#include "MantidAPI/MatrixWorkspace_fwd.h"
+#include "MantidAPI/IMDWorkspace.h"
+#include "MantidGeometry/MDGeometry/IMDDimension.h"
+#include "MantidKernel/ClassMacros.h"
 
 #include <QString>
+#include <string>
 
 namespace MantidQt
 {
@@ -14,7 +18,7 @@ namespace MantidQt
     /**
       Deals with formatting a label for a plot axis for a given type of workspace
 
-      Copyright &copy; 2014 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+      Copyright &copy; 2014 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
 
       This file is part of Mantid.
 
@@ -42,14 +46,15 @@ namespace MantidQt
                const size_t index);
       /// Constructor with an IMDDimension
       PlotAxis(const Mantid::Geometry::IMDDimension & dim);
-      /// Constructor with just a workspace
-      PlotAxis(const Mantid::API::MatrixWorkspace & workspace);
+      /// Constructor with just a workspace (reverse order to above so compiler doesn't convert a
+      /// a bool to an size_t and call the wrong thing
+      PlotAxis(const bool plottingDistribution, const Mantid::API::MatrixWorkspace & workspace);
 
       /// Create a new axis title
       QString title() const;
 
     private:
-      DISABLE_DEFAULT_CONSTRUCT(PlotAxis);
+      DISABLE_DEFAULT_CONSTRUCT(PlotAxis)
 
       /// Creates a title suitable for an axis attached to the given index
       void titleFromIndex(const Mantid::API::IMDWorkspace & workspace,
@@ -57,7 +62,8 @@ namespace MantidQt
       /// Creates a title suitable for an axis attached to the given dimension
       void titleFromDimension(const Mantid::Geometry::IMDDimension & dim);
       /// Creates a title suitable for the Y data values
-      void titleFromYData(const Mantid::API::MatrixWorkspace & workspace);
+      void titleFromYData(const Mantid::API::MatrixWorkspace & workspace,
+                          const bool plottingDistribution);
 
       /// Title
       QString m_title;

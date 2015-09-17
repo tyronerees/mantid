@@ -27,15 +27,20 @@
   <value val="diffspec,diffonly" />
 </parameter>
 
-<!-- Available options are "Show" or "Hide". -->
+<!-- Default Indirect Data Reduction > Energy Transfer GUI setup -->
+<!-- Available options are "true" or "false" -->
 <parameter name="cm-1-convert-choice" type="string">
-    <value val="Show" />
+    <value val="false" />
 </parameter>
-<parameter name="save-aclimax-choice" type="string">
-    <value val="Show" />
+<parameter name="save-nexus-choice" type="string">
+    <value val="true" />
+</parameter>
+<parameter name="save-ascii-choice" type="string">
+    <value val="false" />
 </parameter>
 
 <!-- Reduction workflow parameters under this line -->
+<!-- This is actually spectrum index, NOT spectrum number -->
 <parameter name="Workflow.Monitor1-SpectrumNumber" >
   <value val="0" />
 </parameter>
@@ -51,6 +56,7 @@
 <parameter name="Workflow.Monitor1-ScalingFactor">
   <value val="1e6" />
 </parameter>
+<!-- This is actually spectrum index, NOT spectrum number -->
 <parameter name="Workflow.Monitor2-SpectrumNumber" >
   <value val="1" />
 </parameter>
@@ -74,6 +80,9 @@
 </parameter>
 <parameter name="Workflow.SE-log" type="string">
     <value val="sample" />
+</parameter>
+<parameter name="Workflow.SE-log-value" type="string">
+    <value val="last_value" />
 </parameter>
 <parameter name="Workflow.beam-width" type="string">
     <value val="2.1" />

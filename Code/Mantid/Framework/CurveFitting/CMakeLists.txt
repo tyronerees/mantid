@@ -2,6 +2,7 @@ set ( SRC_FILES
 	#	src/CostFuncIgnorePosPeaks.cpp
 	#	src/SCDPanelErrors.cpp
 	# src/ChebyshevPolynomialBackground.cpp
+	#src/RefinePowderInstrumentParameters.cpp
 	src/Abragam.cpp
 	src/AugmentedLagrangianOptimizer.cpp
 	src/AutoDiffTestAlg.cpp
@@ -12,7 +13,10 @@ set ( SRC_FILES
 	src/BivariateNormal.cpp
 	src/Bk2BkExpConvPV.cpp
 	src/BoundaryConstraint.cpp
+	src/CalculateChiSquared.cpp
 	src/CalculateGammaBackground.cpp
+	src/CalculateMSVesuvio.cpp
+	src/ChebfunBase.cpp
 	src/Chebyshev.cpp
 	src/ComptonPeakProfile.cpp
 	src/ComptonProfile.cpp
@@ -23,16 +27,21 @@ set ( SRC_FILES
 	src/CostFuncFitting.cpp
 	src/CostFuncLeastSquares.cpp
 	src/CostFuncRwp.cpp
+	src/CostFuncUnweightedLeastSquares.cpp
 	src/CubicSpline.cpp
 	src/DampingMinimizer.cpp
 	src/DeltaFunction.cpp
 	src/DerivMinimizer.cpp
 	src/DiffRotDiscreteCircle.cpp
 	src/DiffSphere.cpp
+	src/DynamicKuboToyabe.cpp
 	src/EndErfc.cpp
+	src/EstimatePeakErrors.cpp
+	src/EvaluateFunction.cpp
 	src/ExpDecay.cpp
 	src/ExpDecayMuon.cpp
 	src/ExpDecayOsc.cpp
+	src/FABADAMinimizer.cpp
 	src/FRConjugateGradientMinimizer.cpp
 	src/Fit.cpp
 	src/Fit1D.cpp
@@ -43,6 +52,7 @@ set ( SRC_FILES
 	src/FunctionDomain1DSpectrumCreator.cpp
 	src/GSLFunctions.cpp
 	src/GSLMatrix.cpp
+	src/GSLVector.cpp
 	src/GausDecay.cpp
 	src/GausOsc.cpp
 	src/Gaussian.cpp
@@ -51,7 +61,10 @@ set ( SRC_FILES
 	src/GaussianHandCoded.cpp
 	src/GaussianNumDiff.cpp
 	src/GramCharlierComptonProfile.cpp
+	src/IFittingAlgorithm.cpp
 	src/IkedaCarpenterPV.cpp
+	src/LatticeDomainCreator.cpp
+	src/LatticeFunction.cpp
 	src/LeBailFit.cpp
 	src/LeBailFunction.cpp
 	src/LevenbergMarquardtMDMinimizer.cpp
@@ -60,6 +73,7 @@ set ( SRC_FILES
 	src/LogNormal.cpp
 	src/Lorentzian.cpp
 	src/Lorentzian1D.cpp
+	src/MSVesuvioHelpers.cpp
 	src/LorentzianFamily.cpp
 	src/MultiDomainCreator.cpp
 	src/MuonFInteraction.cpp
@@ -67,20 +81,25 @@ set ( SRC_FILES
 	src/NormaliseByPeakArea.cpp
 	src/PRConjugateGradientMinimizer.cpp
 	src/ParDomain.cpp
+	src/ParameterEstimator.cpp
 	src/PearsonVIIFamily.cpp
+	src/PawleyFit.cpp
+	src/PawleyFunction.cpp
+	src/PeakParameterFunction.cpp
 	src/PlotPeakByLogValue.cpp
 	src/Polynomial.cpp
 	src/ProcessBackground.cpp
 	src/ProductFunction.cpp
 	src/ProductLinearExp.cpp
 	src/ProductQuadraticExp.cpp
+	src/PseudoVoigt.cpp
 	src/Quadratic.cpp
-	src/RefinePowderInstrumentParameters.cpp
 	src/RefinePowderInstrumentParameters3.cpp
 	src/ReflectivityMulf.cpp
 	src/Resolution.cpp
 	src/SeqDomain.cpp
 	src/SeqDomainSpectrumCreator.cpp
+	src/SimpleChebfun.cpp
 	src/SimplexMinimizer.cpp
 	src/SpecialFunctionHelper.cpp
 	src/SplineBackground.cpp
@@ -100,19 +119,17 @@ set ( SRC_FILES
 	src/ThermalNeutronDtoTOFFunction.cpp
 	src/UserFunction.cpp
 	src/UserFunction1D.cpp
-  src/VesuvioResolution.cpp
+	src/VesuvioResolution.cpp
 	src/Voigt.cpp
-  src/FakeMinimizer.cpp
-
 )
-                
+
 set ( SRC_UNITY_IGNORE_FILES src/Fit1D.cpp src/GSLFunctions.cpp )
 
 set ( INC_FILES
-  inc/MantidCurveFitting/FakeMinimizer.h
 	#	inc/MantidCurveFitting/CostFuncIgnorePosPeaks.h
 	#	inc/MantidCurveFitting/SCDPanelErrors.h
 	# inc/MantidCurveFitting/ChebyshevPolynomialBackground.h
+	#inc/MantidCurveFitting/RefinePowderInstrumentParameters.h
 	inc/MantidCurveFitting/Abragam.h
 	inc/MantidCurveFitting/AugmentedLagrangianOptimizer.h
 	inc/MantidCurveFitting/AutoDiffTestAlg.h
@@ -123,7 +140,10 @@ set ( INC_FILES
 	inc/MantidCurveFitting/BivariateNormal.h
 	inc/MantidCurveFitting/Bk2BkExpConvPV.h
 	inc/MantidCurveFitting/BoundaryConstraint.h
+	inc/MantidCurveFitting/CalculateChiSquared.h
 	inc/MantidCurveFitting/CalculateGammaBackground.h
+	inc/MantidCurveFitting/CalculateMSVesuvio.h
+	inc/MantidCurveFitting/ChebfunBase.h
 	inc/MantidCurveFitting/Chebyshev.h
 	inc/MantidCurveFitting/ComptonPeakProfile.h
 	inc/MantidCurveFitting/ComptonProfile.h
@@ -134,6 +154,7 @@ set ( INC_FILES
 	inc/MantidCurveFitting/CostFuncFitting.h
 	inc/MantidCurveFitting/CostFuncLeastSquares.h
 	inc/MantidCurveFitting/CostFuncRwp.h
+	inc/MantidCurveFitting/CostFuncUnweightedLeastSquares.h
 	inc/MantidCurveFitting/CubicSpline.h
 	inc/MantidCurveFitting/DampingMinimizer.h
 	inc/MantidCurveFitting/DeltaFunction.h
@@ -141,10 +162,14 @@ set ( INC_FILES
 	inc/MantidCurveFitting/DiffRotDiscreteCircle.h
 	inc/MantidCurveFitting/DiffSphere.h
 	inc/MantidCurveFitting/DllConfig.h
+	inc/MantidCurveFitting/DynamicKuboToyabe.h
 	inc/MantidCurveFitting/EndErfc.h
+	inc/MantidCurveFitting/EstimatePeakErrors.h
+	inc/MantidCurveFitting/EvaluateFunction.h
 	inc/MantidCurveFitting/ExpDecay.h
 	inc/MantidCurveFitting/ExpDecayMuon.h
 	inc/MantidCurveFitting/ExpDecayOsc.h
+	inc/MantidCurveFitting/FABADAMinimizer.h
 	inc/MantidCurveFitting/FRConjugateGradientMinimizer.h
 	inc/MantidCurveFitting/Fit.h
 	inc/MantidCurveFitting/Fit1D.h
@@ -165,8 +190,12 @@ set ( INC_FILES
 	inc/MantidCurveFitting/GaussianHandCoded.h
 	inc/MantidCurveFitting/GaussianNumDiff.h
 	inc/MantidCurveFitting/GramCharlierComptonProfile.h
+	inc/MantidCurveFitting/HalfComplex.h
+	inc/MantidCurveFitting/IFittingAlgorithm.h
 	inc/MantidCurveFitting/IkedaCarpenterPV.h
 	inc/MantidCurveFitting/Jacobian.h
+	inc/MantidCurveFitting/LatticeDomainCreator.h
+	inc/MantidCurveFitting/LatticeFunction.h
 	inc/MantidCurveFitting/LeBailFit.h
 	inc/MantidCurveFitting/LeBailFunction.h
 	inc/MantidCurveFitting/LevenbergMarquardtMDMinimizer.h
@@ -175,6 +204,7 @@ set ( INC_FILES
 	inc/MantidCurveFitting/LogNormal.h
 	inc/MantidCurveFitting/Lorentzian.h
 	inc/MantidCurveFitting/Lorentzian1D.h
+	inc/MantidCurveFitting/MSVesuvioHelpers.h
 	inc/MantidCurveFitting/LorentzianFamily.h
 	inc/MantidCurveFitting/MultiDomainCreator.h
 	inc/MantidCurveFitting/MuonFInteraction.h
@@ -182,20 +212,25 @@ set ( INC_FILES
 	inc/MantidCurveFitting/NormaliseByPeakArea.h
 	inc/MantidCurveFitting/PRConjugateGradientMinimizer.h
 	inc/MantidCurveFitting/ParDomain.h
+	inc/MantidCurveFitting/ParameterEstimator.h
 	inc/MantidCurveFitting/PearsonVIIFamily.h
+	inc/MantidCurveFitting/PawleyFit.h
+	inc/MantidCurveFitting/PawleyFunction.h
+	inc/MantidCurveFitting/PeakParameterFunction.h
 	inc/MantidCurveFitting/PlotPeakByLogValue.h
 	inc/MantidCurveFitting/Polynomial.h
 	inc/MantidCurveFitting/ProcessBackground.h
 	inc/MantidCurveFitting/ProductFunction.h
 	inc/MantidCurveFitting/ProductLinearExp.h
 	inc/MantidCurveFitting/ProductQuadraticExp.h
+	inc/MantidCurveFitting/PseudoVoigt.h
 	inc/MantidCurveFitting/Quadratic.h
-	inc/MantidCurveFitting/RefinePowderInstrumentParameters.h
 	inc/MantidCurveFitting/RefinePowderInstrumentParameters3.h
 	inc/MantidCurveFitting/ReflectivityMulf.h
 	inc/MantidCurveFitting/Resolution.h
 	inc/MantidCurveFitting/SeqDomain.h
 	inc/MantidCurveFitting/SeqDomainSpectrumCreator.h
+	inc/MantidCurveFitting/SimpleChebfun.h
 	inc/MantidCurveFitting/SimplexMinimizer.h
 	inc/MantidCurveFitting/SpecialFunctionSupport.h
 	inc/MantidCurveFitting/SplineBackground.h
@@ -215,10 +250,10 @@ set ( INC_FILES
 	inc/MantidCurveFitting/ThermalNeutronDtoTOFFunction.h
 	inc/MantidCurveFitting/UserFunction.h
 	inc/MantidCurveFitting/UserFunction1D.h
-  inc/MantidCurveFitting/VesuvioResolution.h
+	inc/MantidCurveFitting/VesuvioResolution.h
 	inc/MantidCurveFitting/Voigt.h
 )
-              
+
 set ( TEST_FILES
 	# ChebyshevPolynomialBackgroundTest.h
 	# RefinePowderInstrumentParametersTest.h
@@ -232,7 +267,10 @@ set ( TEST_FILES
 	BivariateNormalTest.h
 	Bk2BkExpConvPVTest.h
 	BoundaryConstraintTest.h
+	CalculateChiSquaredTest.h
 	CalculateGammaBackgroundTest.h
+	CalculateMSVesuvioTest.h
+	ChebfunBaseTest.h
 	ChebyshevTest.h
 	CompositeFunctionTest.h
 	ComptonPeakProfileTest.h
@@ -241,24 +279,31 @@ set ( TEST_FILES
 	ConvertToYSpaceTest.h
 	ConvolutionTest.h
 	ConvolveWorkspacesTest.h
+	CostFuncUnweightedLeastSquaresTest.h
 	CubicSplineTest.h
 	DampingMinimizerTest.h
 	DeltaFunctionTest.h
 	DiffRotDiscreteCircleTest.h
 	DiffSphereTest.h
+	DynamicKuboToyabeTest.h
 	EndErfcTest.h
+	EstimatePeakErrorsTest.h
+	EvaluateFunctionTest.h
 	ExpDecayMuonTest.h
 	ExpDecayOscTest.h
 	ExpDecayTest.h
+	FABADAMinimizerTest.h
 	FRConjugateGradientTest.h
-  FitMWTest.h
-  FitTest.h
-  FitPowderDiffPeaksTest.h
+	FitMWTest.h
+	FitPowderDiffPeaksTest.h
+	FitTest.h
 	FlatBackgroundTest.h
 	FullprofPolynomialTest.h
 	FunctionDomain1DSpectrumCreatorTest.h
 	FunctionFactoryConstraintTest.h
+	FunctionParameterDecoratorFitTest.h
 	GSLMatrixTest.h
+	GSLVectorTest.h
 	GausDecayTest.h
 	GausOscTest.h
 	GaussianAutoDiffTest.h
@@ -267,7 +312,11 @@ set ( TEST_FILES
 	GaussianNumDiffTest.h
 	GaussianTest.h
 	GramCharlierComptonProfileTest.h
+	IPeakFunctionCentreParameterNameTest.h
+	IPeakFunctionIntensityTest.h
 	IkedaCarpenterPVTest.h
+	LatticeDomainCreatorTest.h
+	LatticeFunctionTest.h
 	LeBailFitTest.h
 	LeBailFunctionTest.h
 	LeastSquaresTest.h
@@ -285,17 +334,23 @@ set ( TEST_FILES
 	NormaliseByPeakAreaTest.h
 	PRConjugateGradientTest.h
 	PearsonVIIFamilyTest.h
+	ParameterEstimatorTest.h
+	PawleyFitTest.h
+	PawleyFunctionTest.h
+	PeakParameterFunctionTest.h
 	PlotPeakByLogValueTest.h
 	PolynomialTest.h
 	ProcessBackgroundTest.h
 	ProductFunctionTest.h
 	ProductLinearExpTest.h
 	ProductQuadraticExpTest.h
+	PseudoVoigtTest.h
 	QuadraticTest.h
 	RefinePowderInstrumentParameters3Test.h
 	ReflectivityMulfTest.h
 	ResolutionTest.h
 	SeqDomainSpectrumCreatorTest.h
+	SimpleChebfunTest.h
 	SimplexTest.h
 	SpecialFunctionSupportTest.h
 	SplineBackgroundTest.h
@@ -314,10 +369,15 @@ set ( TEST_FILES
 	ThermalNeutronDtoTOFFunctionTest.h
 	UserFunction1DTest.h
 	UserFunctionTest.h
-  VesuvioResolutionTest.h
+	VesuvioResolutionTest.h
 	VoigtTest.h
 )
 
+if (COVERALLS)
+    foreach( loop_var ${SRC_FILES} ${INC_FILES})
+      set_property(GLOBAL APPEND PROPERTY COVERAGE_SRCS "${CMAKE_CURRENT_SOURCE_DIR}/${loop_var}")
+    endforeach(loop_var)
+endif()
 
 if(UNITY_BUILD)
   include(UnityBuild)
@@ -335,13 +395,19 @@ enable_precompiled_headers( inc/MantidCurveFitting/PrecompiledHeader.h SRC_FILES
 # Add the target for this directory
 add_library ( CurveFitting ${SRC_FILES} ${INC_FILES})
 # Set the name of the generated library
-set_target_properties ( CurveFitting PROPERTIES OUTPUT_NAME MantidCurveFitting COMPILE_DEFINITIONS IN_MANTID_CURVEFITTING)
+set_target_properties ( CurveFitting PROPERTIES OUTPUT_NAME MantidCurveFitting 
+                                     COMPILE_DEFINITIONS IN_MANTID_CURVEFITTING )
+
+if (OSX_VERSION VERSION_GREATER 10.8)
+  set_target_properties ( CurveFitting PROPERTIES INSTALL_RPATH "@loader_path/../Contents/MacOS")
+endif () 
+
 # Add to the 'Framework' group in VS
 set_property ( TARGET CurveFitting PROPERTY FOLDER "MantidFramework" )
 
 include_directories ( inc )
 
-target_link_libraries ( CurveFitting ${MANTIDLIBS} ${GSL_LIBRARIES} )
+target_link_libraries ( CurveFitting LINK_PRIVATE ${TCMALLOC_LIBRARIES_LINKTIME} ${MANTIDLIBS} ${GSL_LIBRARIES} )
 
 # Add the unit tests directory
 add_subdirectory ( test )

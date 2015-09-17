@@ -16,7 +16,6 @@ using namespace Mantid::API;
 
 class FuncMinimizerFactoryTest_A: public IFuncMinimizer
 {
-  int m_attr;
 public:
   FuncMinimizerFactoryTest_A() 
   {
@@ -34,7 +33,7 @@ public:
   }
 };
 
-DECLARE_FUNCMINIMIZER(FuncMinimizerFactoryTest_A, nedtur);
+DECLARE_FUNCMINIMIZER(FuncMinimizerFactoryTest_A, nedtur)
 
 
 class FuncMinimizerFactoryTest : public CxxTest::TestSuite

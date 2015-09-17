@@ -5,7 +5,7 @@
 
 #include "MantidQtCustomInterfaces/DllConfig.h"
 
-#include "MantidAPI/MatrixWorkspace.h"
+#include "MantidAPI/MatrixWorkspace_fwd.h"
 #include "MantidAPI/IFunction.h"
 
 #include <QObject>
@@ -19,7 +19,7 @@ namespace CustomInterfaces
 
   /** IALCBaselineModellingModel : Model interface for ALC BaselineModelling step
     
-    Copyright &copy; 2014 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+    Copyright &copy; 2014 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
 
     This file is part of Mantid.
 

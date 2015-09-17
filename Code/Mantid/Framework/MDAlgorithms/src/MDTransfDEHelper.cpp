@@ -1,23 +1,16 @@
-#include "MantidMDEvents/MDTransfDEHelper.h"
+#include "MantidDataObjects/MDTransfDEHelper.h"
 
+namespace Mantid {
+namespace DataObjects {
 
-namespace Mantid
-{
-namespace MDEvents
-{
-
-MDTransfDEHelper::MDTransfDEHelper()
-EmodesList(ConvertToMD::No_DE,"")
-{
-   EmodesList[ConvertToMD::Elastic]="Elastic";
-   EmodesList[ConvertToMD::Direct] ="Direct";
-   EmodesList[ConvertToMD::Indir]  ="Indirect";
-
+MDTransfDEHelper::MDTransfDEHelper() EmodesList(ConvertToMD::No_DE, "") {
+  EmodesList[ConvertToMD::Elastic] = "Elastic";
+  EmodesList[ConvertToMD::Direct] = "Direct";
+  EmodesList[ConvertToMD::Indir] = "Indirect";
 }
-ConvertToMD::Emodes getEmode(const std::string &Mode)const
-{
-    return ConvertToMD::No_DE;
+ConvertToMD::Emodes getEmode(const std::string &Mode) const {
+  return ConvertToMD::No_DE;
 }
 
-} // endnamespace MDEvents
+} // endnamespace DataObjects
 } // endnamespace Mantid

@@ -1,8 +1,9 @@
 #include "MantidVatesAPI/vtkDataSetToWsName.h"
 #include "MantidVatesAPI/FieldDataToMetadata.h"
-#include "MantidVatesAPI/RebinningCutterXMLDefinitions.h"
+#include "MantidVatesAPI/VatesXMLDefinitions.h"
 #include "MantidGeometry/MDGeometry/MDGeometryXMLDefinitions.h"
 #include <vtkDataSet.h>
+#include <Poco/AutoPtr.h>
 #include <Poco/DOM/DOMParser.h>
 #include <Poco/DOM/Element.h>
 #include <Poco/DOM/Document.h>
@@ -45,7 +46,7 @@ namespace Mantid
       std::string xmlString = convert(m_dataset->GetFieldData(), XMLDefinitions::metaDataId());
 
       Poco::XML::DOMParser pParser;
-      Poco::XML::Document* pDoc = pParser.parseString(xmlString);
+      Poco::AutoPtr<Poco::XML::Document> pDoc = pParser.parseString(xmlString);
       Poco::XML::Element* pRootElem = pDoc->documentElement();
       Poco::XML::Element* wsNameElem = pRootElem->getChildElement(MDGeometryXMLDefinitions::workspaceNameElementName());
       if(wsNameElem == NULL)

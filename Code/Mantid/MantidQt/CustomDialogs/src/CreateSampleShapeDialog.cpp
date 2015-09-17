@@ -24,7 +24,7 @@ namespace MantidQt
 {
 namespace CustomDialogs
 {
-  DECLARE_DIALOG(CreateSampleShapeDialog);
+  DECLARE_DIALOG(CreateSampleShapeDialog)
 }
 }
 
@@ -38,7 +38,7 @@ using namespace MantidQt::CustomDialogs;
  * Constructor
  */
 CreateSampleShapeDialog::CreateSampleShapeDialog(QWidget *parent) :
-  AlgorithmDialog(parent), m_setup_map(), m_details_map(), m_ops_map()
+  AlgorithmDialog(parent), m_shapeTree(NULL), m_setup_map(), m_details_map(), m_ops_map()
 {
   m_object_viewer = new MantidGLWidget;
 }
@@ -83,8 +83,8 @@ void CreateSampleShapeDialog::initLayout()
   m_setup_map["cylinder"] = new ShapeDetailsInstantiator<CylinderDetails>;
   m_setup_map["infinite cylinder"] = new ShapeDetailsInstantiator<InfiniteCylinderDetails>();
   m_setup_map["cylinder ring slice"] = new ShapeDetailsInstantiator<SliceOfCylinderRingDetails>();
-  m_setup_map["cone"] = new ShapeDetailsInstantiator<ConeDetails>();
-  m_setup_map["infinite cone"] = new ShapeDetailsInstantiator<InfiniteConeDetails>();
+  //m_setup_map["cone"] = new ShapeDetailsInstantiator<ConeDetails>();
+  //m_setup_map["infinite cone"] = new ShapeDetailsInstantiator<InfiniteConeDetails>();
   m_setup_map["infinite plane"] = new ShapeDetailsInstantiator<InfinitePlaneDetails>();
   m_setup_map["cuboid"] = new ShapeDetailsInstantiator<CuboidDetails>();
   m_setup_map["hexahedron"] = new ShapeDetailsInstantiator<HexahedronDetails>();
@@ -199,10 +199,9 @@ void CreateSampleShapeDialog::update3DView()
 //     "</infinite-cylinder>\n"
 //     "<algebra val=\"((cuboid_1 sphere_1) (# (infcyl_1:(infcyl_2:infcyl_3))))\" />\n";
 
-
   Mantid::Geometry::ShapeFactory sFactory;
   boost::shared_ptr<Mantid::Geometry::Object> shape_sptr = sFactory.createShape(shapexml);
-  //  std::cerr << "\n--------- XML String -----------\n" << shapexml << "\n---------------------\n";
+  //std::cerr << "\n--------- XML String -----------\n" << shapexml << "\n---------------------\n";
   if( shape_sptr == boost::shared_ptr<Mantid::Geometry::Object>() ) return;
   try 
   {
@@ -343,9 +342,13 @@ void CreateSampleShapeDialog::addShape(QAction *shape)
   {
     m_shapeTree->insertTopLevelItem(0, child);
   }
-  else
+  else if (parent)
   {
     parent->addChildItem(child);
+  }
+  else
+  {
+    return;
   }
 
   // This calls setupDetails
@@ -360,6 +363,7 @@ void CreateSampleShapeDialog::addOperation(QAction *opt)
 {
   //Get the selected item
   BinaryTreeWidgetItem *selected = getSelectedItem();
+  if(!selected) return;
   if( selected && selected->childCount() == 2 ) return;
 
   BinaryTreeWidgetItem *operation = new BinaryTreeWidgetItem;
@@ -468,6 +472,7 @@ void CreateSampleShapeDialog::setupDetailsBox()
   if( m_uiForm.details_scroll->widget() ) m_uiForm.details_scroll->takeWidget();
 
   BinaryTreeWidgetItem *item = dynamic_cast<BinaryTreeWidgetItem*>(selection[0]);
+  if(!item) return;
   QString shapename = item->text(0);
   if( m_setup_map.contains(shapename) )
   {
@@ -484,7 +489,6 @@ void CreateSampleShapeDialog::setupDetailsBox()
     //Set it as the currently displayed widget
     m_uiForm.details_scroll->setWidget(obj);    
   }
-  
 }
 
 /**

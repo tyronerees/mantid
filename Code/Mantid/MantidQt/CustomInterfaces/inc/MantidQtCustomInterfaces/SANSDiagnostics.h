@@ -3,8 +3,8 @@
 
 #include "ui_SANSRunWindow.h"
 #include "MantidQtAPI/UserSubWindow.h"
-#include "MantidAPI/Workspace.h"
-#include "MantidAPI/MatrixWorkspace.h"
+#include "MantidAPI/Workspace_fwd.h"
+#include "MantidAPI/MatrixWorkspace_fwd.h"
 #include "MantidGeometry/IDetector.h"
 
 namespace MantidQt
@@ -20,7 +20,7 @@ namespace CustomInterfaces
   @date 03/02/2011
 
 
-  Copyright &copy; 2010 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+  Copyright &copy; 2010 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
 
   This file is part of Mantid.
 
@@ -43,7 +43,7 @@ namespace CustomInterfaces
   {
   public:
     /// constructor
-    RectDetectorDetails(){}
+    RectDetectorDetails(): m_minDetId(0), m_maxDetId(0) {}
     ///destructor
     ~RectDetectorDetails(){}
     /// set minimum detector id
@@ -73,7 +73,7 @@ namespace CustomInterfaces
     @author Sofia Antony, Rutherford Appleton Laboratory
     @date 27/01/2011
     
-    Copyright &copy; 2009 ISIS Rutherford Appleton Laboratory & NScD Oak Ridge National Laboratory
+    Copyright &copy; 2009 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge National Laboratory & European Spallation Source
 
     This file is part of Mantid.
 
@@ -141,7 +141,7 @@ private:
 
   // This method executes loadraw and sumrow column algorithm
   void IntegralClicked(const QString& range,const QString& orientation,const QString& specMin,
-                                          const QString& specMax,const QString& opws,bool bMask,bool time_pixel);
+                                          const QString& specMax,const QString& detectorName, const QString& integrationType,bool bMask,bool time_pixel);
 
   // This method executes sumspectra algorithm
   void TimeIntegralClicked(const QString& range, const QString& specMin, const QString& specMax,
@@ -188,7 +188,8 @@ private:
   void maskDetector(const QString& wsName,bool bMask,bool time_pixel);
   //getvalues of HVMin and HvMax values for sumrowcolumn algorithm
   void HVMinHVMaxStringValues(const int minVal,const int maxVal,QString& hvMin,QString& hvMax);
-
+  /// Create the name for the outputworkspace
+  QString createOutputWorkspaceName(QString originalWorkspaceName, QString detectorName, QString integrationType, QString min, QString max);
 
 private:
   QString m_dataDir; ///< default data search directory
