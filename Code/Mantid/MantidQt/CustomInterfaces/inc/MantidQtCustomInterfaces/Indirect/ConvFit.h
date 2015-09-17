@@ -61,6 +61,8 @@ private:
   QString minimizerString(QString outputName) const;
   QStringList getFunctionParameters(QString);
   void updatePlotOptions();
+  std::string constructWorkspacePrefix();
+  std::string convertFuncToShort(const std::string &original);
 
   Ui::ConvFit m_uiForm;
   QtStringPropertyManager *m_stringManager;

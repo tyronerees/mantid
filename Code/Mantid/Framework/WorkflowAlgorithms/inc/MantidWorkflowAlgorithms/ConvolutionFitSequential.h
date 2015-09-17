@@ -56,7 +56,6 @@ private:
                                                    const std::string &);
   void calculateEISF(API::ITableWorkspace_sptr &);
   std::string convertBackToShort(const std::string &);
-  std::string convertFuncToShort(const std::string &);
 };
 
 } // namespace Algorithms

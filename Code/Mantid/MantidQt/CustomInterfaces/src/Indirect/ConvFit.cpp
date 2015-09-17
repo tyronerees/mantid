@@ -247,7 +247,9 @@ void ConvFit::run() {
   // Run ConvolutionFitSequential Algorithm
   auto cfs = AlgorithmManager::Instance().create("ConvolutionFitSequential");
   cfs->setProperty("InputWorkspace", m_cfInputWS->getName());
-  cfs->setProperty("OutputWorkspace", "Test");
+  cfs->setProperty("OutputWorkspace", "Matrix");
+  cfs->setProperty("TableOutputWorkspace", "Table");
+  cfs->setProperty("GroupOutputWorkspace", "Group");
   cfs->setProperty("Function", function);
   cfs->setProperty("BackgroundType",
                    m_uiForm.cbBackground->currentText().toStdString());
@@ -265,11 +267,7 @@ void ConvFit::run() {
   if (temperature.toStdString().compare("") != 0) {
     temp = temperature.toDouble();
   }
-  /*
-  std::string baseWsName = cfs->getProperty("OutputWorkspace");
-  auto pos = baseWsName.rfind("_");
-  baseWsName = baseWsName.substr(0, pos + 1);
-  */
+    /*
   std::string baseWsName = "test_";
   std::string resultName = baseWsName + "Result";
   MatrixWorkspace_sptr resultWs =
@@ -330,7 +328,7 @@ void ConvFit::run() {
                                 specNumber, specNumber);
     }
   }
-  m_batchAlgoRunner->executeBatchAsync();
+  m_batchAlgoRunner->executeBatchAsync();*/
   updatePlot();
 }
 
@@ -1551,6 +1549,62 @@ void ConvFit::updatePlotOptions() {
     plotOptions << "All";
   }
   m_uiForm.cbPlotType->addItems(plotOptions);
+}
+
+/**
+ *
+ */
+std::string ConvFit::constructWorkspacePrefix(){
+	std::string outputWsName = m_cfInputWS->getName();
+ /* auto pos = outputWsName.rfind("_");
+  if (pos != std::string::npos) {
+    outputWsName = outputWsName.substr(0, pos + 1);
+  }
+  outputWsName += "conv_";
+  if (m_blnManager->value(m_properties["UseDeltaFunc"])) {
+    outputWsName += "Delta";
+  }
+  if (LorentzNum.compare("0") != 0) {
+    outputWsName += LorentzNum + "L";
+  } else {
+    outputWsName += convertFuncToShort(funcName);
+  }
+
+  outputWsName += backType + "_s";
+
+  // Spectra Range
+  std::string specMin = m_uiForm.spSpectraMin->text().toStdString();
+  std::string specMax = m_uiForm.spSpectraMax->text().toStdString();
+  outputWsName += specMin;
+  outputWsName += "_to_";
+  outputWsName += specMax;
+  */
+  return outputWsName;
+}
+
+/**
+ * Converts the user input for function into short hand for use in the workspace
+ * naming
+ * @param original - The original user input to the function
+ * @return The short hand of the users input
+ */
+std::string
+ConvFit::convertFuncToShort(const std::string &original) {
+  std::string result = "";
+  if (original.at(0) == 'E') {
+    result += "E";
+  } else if (original.at(0) == 'I') {
+    result += "I";
+  } else {
+    return "SFT";
+  }
+  auto pos = original.find("Circle");
+  if (pos != std::string::npos) {
+    result += "DC";
+  } else {
+    result += "DS";
+  }
+  return result;
 }
 
 } // namespace IDA
