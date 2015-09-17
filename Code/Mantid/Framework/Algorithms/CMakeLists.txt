@@ -155,6 +155,7 @@ set ( SRC_FILES
 	src/Minus.cpp
 	src/ModeratorTzero.cpp
 	src/ModeratorTzeroLinear.cpp
+        src/MonitorEfficiencyCorUser.cpp
 	src/MonteCarloAbsorption.cpp
 	src/MultipleScatteringCylinderAbsorption.cpp
 	src/Multiply.cpp
@@ -215,6 +216,8 @@ set ( SRC_FILES
 	src/RingProfile.cpp
 	src/SANSCollimationLengthEstimator.cpp
 	src/SANSDirectBeamScaling.cpp
+	src/SampleCorrections/MayersSampleCorrection.cpp
+	src/SampleCorrections/MayersSampleCorrectionStrategy.cpp
 	src/SassenaFFT.cpp
 	src/SaveGSASInstrumentFile.cpp
 	src/Scale.cpp
@@ -266,7 +269,7 @@ set ( SRC_FILES
 	src/WienerSmooth.cpp
 	src/WorkspaceJoiners.cpp
 	src/XDataConverter.cpp
-)
+    src/GenerateIPythonNotebook.cpp)
 
 set ( INC_FILES
 	#	inc/MantidAlgorithms/Q1DTOF.h
@@ -426,6 +429,7 @@ set ( INC_FILES
 	inc/MantidAlgorithms/Minus.h
 	inc/MantidAlgorithms/ModeratorTzero.h
 	inc/MantidAlgorithms/ModeratorTzeroLinear.h
+        inc/MantidAlgorithms/MonitorEfficiencyCorUser.h
 	inc/MantidAlgorithms/MonteCarloAbsorption.h
 	inc/MantidAlgorithms/MultipleScatteringCylinderAbsorption.h
 	inc/MantidAlgorithms/Multiply.h
@@ -486,6 +490,8 @@ set ( INC_FILES
 	inc/MantidAlgorithms/RingProfile.h
 	inc/MantidAlgorithms/SANSCollimationLengthEstimator.h
 	inc/MantidAlgorithms/SANSDirectBeamScaling.h
+	inc/MantidAlgorithms/SampleCorrections/MayersSampleCorrection.h
+	inc/MantidAlgorithms/SampleCorrections/MayersSampleCorrectionStrategy.h
 	inc/MantidAlgorithms/SassenaFFT.h
 	inc/MantidAlgorithms/SaveGSASInstrumentFile.h
 	inc/MantidAlgorithms/Scale.h
@@ -538,7 +544,7 @@ set ( INC_FILES
 	inc/MantidAlgorithms/WienerSmooth.h
 	inc/MantidAlgorithms/WorkspaceJoiners.h
 	inc/MantidAlgorithms/XDataConverter.h
-)
+    inc/MantidAlgorithms/GenerateIPythonNotebook.h)
 
 set(SRC_UNITY_IGNORE_FILES src/AlignDetectors.cpp
     src/FFTSmooth.cpp
@@ -672,6 +678,7 @@ set ( TEST_FILES
 	FlatPlateAbsorptionTest.h
 	GeneralisedSecondDifferenceTest.h
 	GenerateEventsFilterTest.h
+	GenerateIPythonNotebookTest.h
 	GeneratePeaksTest.h
 	GeneratePythonScriptTest.h
 	GetDetOffsetsMultiPeaksTest.h
@@ -692,11 +699,14 @@ set ( TEST_FILES
 	MaskBinsFromTableTest.h
 	MaskBinsTest.h
 	MaxMinTest.h
+	MayersSampleCorrectionStrategyTest.h
+	MayersSampleCorrectionTest.h
 	MedianDetectorTestTest.h
 	MergeRunsTest.h
 	MinusTest.h
 	ModeratorTzeroLinearTest.h
 	ModeratorTzeroTest.h
+        MonitorEfficiencyCorUserTest.h
 	MonteCarloAbsorptionTest.h
 	MultipleScatteringCylinderAbsorptionTest.h
 	MultiplyRangeTest.h
@@ -778,8 +788,8 @@ set ( TEST_FILES
 	SumNeighboursTest.h
 	SumRowColumnTest.h
 	SumSpectraTest.h
-	TOFSANSResolutionByPixelTest.h
 	TOFSANSResolutionByPixelCalculatorTest.h
+	TOFSANSResolutionByPixelTest.h
 	TimeAtSampleStrategyDirectTest.h
 	TimeAtSampleStrategyElasticTest.h
 	TimeAtSampleStrategyIndirectTest.h
