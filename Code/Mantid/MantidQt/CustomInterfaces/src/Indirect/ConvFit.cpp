@@ -247,6 +247,7 @@ void ConvFit::run() {
   // Run ConvolutionFitSequential Algorithm
   auto cfs = AlgorithmManager::Instance().create("ConvolutionFitSequential");
   cfs->setProperty("InputWorkspace", m_cfInputWS->getName());
+  cfs->setProperty("OutputWorkspace", "Test");
   cfs->setProperty("Function", function);
   cfs->setProperty("BackgroundType",
                    m_uiForm.cbBackground->currentText().toStdString());
@@ -264,11 +265,12 @@ void ConvFit::run() {
   if (temperature.toStdString().compare("") != 0) {
     temp = temperature.toDouble();
   }
-
+  /*
   std::string baseWsName = cfs->getProperty("OutputWorkspace");
   auto pos = baseWsName.rfind("_");
   baseWsName = baseWsName.substr(0, pos + 1);
-
+  */
+  std::string baseWsName = "test_";
   std::string resultName = baseWsName + "Result";
   MatrixWorkspace_sptr resultWs =
       AnalysisDataService::Instance().retrieveWS<MatrixWorkspace>(resultName);

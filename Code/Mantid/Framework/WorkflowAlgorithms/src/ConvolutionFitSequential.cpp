@@ -67,6 +67,10 @@ void ConvolutionFitSequential::init() {
       new WorkspaceProperty<>("InputWorkspace", "", Direction::Input),
       "The input workspace for the fit.");
 
+  declareProperty(
+      new WorkspaceProperty<>("OutputWorkspace", "", Direction::Output),
+      "The name to give the output workspace");
+
   auto scv = boost::make_shared<StringContainsValidator>();
   auto requires = std::vector<std::string>();
   requires.push_back("Convolution");
@@ -122,8 +126,6 @@ void ConvolutionFitSequential::init() {
   declareProperty("MaxIterations", 500, boundedV,
                   "The maximum number of iterations permitted",
                   Direction::Input);
-
-  declareProperty("OutputWorkspace", "", Direction::Output);
 }
 
 //----------------------------------------------------------------------------------------------
@@ -132,6 +134,7 @@ void ConvolutionFitSequential::init() {
 void ConvolutionFitSequential::exec() {
   // Initialise variables with properties
   MatrixWorkspace_sptr inputWs = getProperty("InputWorkspace");
+  const std::string outputWsName = getProperty("OutputWorkspace");
   const std::string function = getProperty("Function");
   const std::string backType =
       convertBackToShort(getProperty("backgroundType"));
@@ -162,26 +165,6 @@ void ConvolutionFitSequential::exec() {
   m_log.information("Fit type: Delta=" + usingDelta + "; Lorentzians=" +
                     LorentzNum);
   m_log.information("Background type: " + backType);
-
-  // Output workspace name
-  std::string outputWsName = inputWs->getName();
-  pos = outputWsName.rfind("_");
-  if (pos != std::string::npos) {
-    outputWsName = outputWsName.substr(0, pos + 1);
-  }
-  outputWsName += "conv_";
-  if (delta) {
-    outputWsName += "Delta";
-  }
-  if (LorentzNum.compare("0") != 0) {
-    outputWsName += LorentzNum + "L";
-  } else {
-    outputWsName += convertFuncToShort(funcName);
-  }
-  outputWsName += backType + "_s";
-  outputWsName += boost::lexical_cast<std::string>(specMin);
-  outputWsName += "_to_";
-  outputWsName += boost::lexical_cast<std::string>(specMax);
 
   // Convert input workspace to get Q axis
   const std::string tempFitWsName = "__convfit_fit_ws";
@@ -337,7 +320,7 @@ void ConvolutionFitSequential::exec() {
   }
 
   AnalysisDataService::Instance().addOrReplace(resultWsName, resultWs);
-  setProperty("OutputWorkspace", resultWsName);
+  setProperty("OutputWorkspace", resultWs);
 }
 
 /**
