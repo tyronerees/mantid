@@ -37,10 +37,10 @@ namespace Mantid
          update();
       }
 
-      std::vector<double> BackgroundRgbProvider::getRgb(bool viewSwitched)
+      std::vector<double> BackgroundRgbProvider::getRgb(bool useCurrentBackgroundColor)
       {
         // Get the rgb setting from the config file
-        std::vector<double> userSettingRgb = getRgbFromSetting(viewSwitched);
+        std::vector<double> userSettingRgb = getRgbFromSetting(useCurrentBackgroundColor);
         
         // Normalize the entries to 256
         userSettingRgb[0] = userSettingRgb[0]/255.0;
@@ -50,13 +50,13 @@ namespace Mantid
         return userSettingRgb;
       }
 
-      std::vector<double> BackgroundRgbProvider::getRgbFromSetting(bool viewSwitched)
+      std::vector<double> BackgroundRgbProvider::getRgbFromSetting(bool useCurrentBackgroundColor)
       {
         // Set the mantid default here
         std::vector<double> background;
         QColor userBackground;
 
-        if (viewSwitched)
+        if (useCurrentBackgroundColor)
         {
           // Update the settings
           update();
@@ -113,9 +113,9 @@ namespace Mantid
         m_mdSettings.setLastSessionBackgroundColor(currentBackgroundColor);
       }
 
-      void BackgroundRgbProvider::setBackgroundColor(pqRenderView* view, bool viewSwitched)
+      void BackgroundRgbProvider::setBackgroundColor(pqRenderView* view, bool useCurrentBackgroundColor)
       {
-        std::vector<double> backgroundRgb = getRgb(viewSwitched);
+        std::vector<double> backgroundRgb = getRgb(useCurrentBackgroundColor);
 
         vtkSMDoubleVectorProperty* background = vtkSMDoubleVectorProperty::SafeDownCast(view->getViewProxy()->GetProperty("Background"));
 
@@ -128,7 +128,6 @@ namespace Mantid
       {
         // For more information http://www.vtk.org/Wiki/VTK/Tutorials/Callbacks
         vtkSmartPointer<vtkCallbackCommand> backgroundColorChangeCallback = vtkSmartPointer<vtkCallbackCommand>::New();
-
         backgroundColorChangeCallback->SetCallback(backgroundColorChangeCallbackFunction);
 
         view->getViewProxy()->GetProperty("Background")->AddObserver(vtkCommand::ModifiedEvent, backgroundColorChangeCallback);

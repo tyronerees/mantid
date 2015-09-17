@@ -9,7 +9,6 @@ set ( SRC_FILES
 	src/BooleanBinaryOperationMD.cpp
 	src/BoxControllerSettingsAlgorithm.cpp
 	src/CalculateCoverageDGS.cpp
-	src/CalculateReflectometryQBase.cpp
 	src/CentroidPeaksMD.cpp
 	src/CentroidPeaksMD2.cpp
 	src/CloneMDWorkspace.cpp
@@ -19,6 +18,7 @@ set ( SRC_FILES
 	src/ConvToMDHistoWS.cpp
 	src/ConvToMDSelector.cpp
 	src/ConvertCWPDMDToSpectra.cpp
+	src/ConvertCWSDExpToMomentum.cpp
 	src/ConvertMDHistoToMatrixWorkspace.cpp
 	src/ConvertSpiceDataToRealSpace.cpp
 	src/ConvertToDetectorFaceMD.cpp
@@ -48,6 +48,7 @@ set ( SRC_FILES
 	src/Integrate3DEvents.cpp
 	src/IntegrateEllipsoids.cpp
 	src/IntegrateFlux.cpp
+	src/IntegrateMDHistoWorkspace.cpp
 	src/IntegratePeaksMD.cpp
 	src/IntegratePeaksMD2.cpp
 	src/InvalidParameter.cpp
@@ -95,12 +96,13 @@ set ( SRC_FILES
 	src/Quantification/ResolutionConvolvedCrossSection.cpp
 	src/Quantification/SimulateResolutionConvolvedModel.cpp
 	src/QueryMDWorkspace.cpp
-	src/ReflectometryTransform.cpp
 	src/ReflectometryTransformKiKf.cpp
 	src/ReflectometryTransformP.cpp
 	src/ReflectometryTransformQxQz.cpp
+	src/ReplicateMD.cpp
 	src/SaveIsawQvector.cpp
 	src/SaveMD.cpp
+	src/SaveMD2.cpp
 	src/SaveZODS.cpp
 	src/SetMDUsingMask.cpp
 	src/SliceMD.cpp
@@ -108,6 +110,7 @@ set ( SRC_FILES
 	src/SmoothMD.cpp
 	src/ThresholdMD.cpp
 	src/TransformMD.cpp
+	src/TransposeMD.cpp
 	src/UnaryOperationMD.cpp
 	src/UnitsConversionHelper.cpp
 	src/UserFunctionMD.cpp
@@ -127,13 +130,13 @@ set ( INC_FILES
 	inc/MantidMDAlgorithms/BooleanBinaryOperationMD.h
 	inc/MantidMDAlgorithms/BoxControllerSettingsAlgorithm.h
 	inc/MantidMDAlgorithms/CalculateCoverageDGS.h
-	inc/MantidMDAlgorithms/CalculateReflectometryQBase.h
 	inc/MantidMDAlgorithms/CentroidPeaksMD.h
 	inc/MantidMDAlgorithms/CentroidPeaksMD2.h
 	inc/MantidMDAlgorithms/CloneMDWorkspace.h
 	inc/MantidMDAlgorithms/CompareMDWorkspaces.h
 	inc/MantidMDAlgorithms/ConvToMDBase.h
 	inc/MantidMDAlgorithms/ConvertCWPDMDToSpectra.h
+	inc/MantidMDAlgorithms/ConvertCWSDExpToMomentum.h
 	inc/MantidMDAlgorithms/ConvertMDHistoToMatrixWorkspace.h
 	inc/MantidMDAlgorithms/ConvertSpiceDataToRealSpace.h
 	inc/MantidMDAlgorithms/ConvertToDetectorFaceMD.h
@@ -165,6 +168,7 @@ set ( INC_FILES
 	inc/MantidMDAlgorithms/Integrate3DEvents.h
 	inc/MantidMDAlgorithms/IntegrateEllipsoids.h
 	inc/MantidMDAlgorithms/IntegrateFlux.h
+	inc/MantidMDAlgorithms/IntegrateMDHistoWorkspace.h
 	inc/MantidMDAlgorithms/IntegratePeaksMD.h
 	inc/MantidMDAlgorithms/IntegratePeaksMD2.h
 	inc/MantidMDAlgorithms/InvalidParameter.h
@@ -212,12 +216,13 @@ set ( INC_FILES
 	inc/MantidMDAlgorithms/Quantification/ResolutionConvolvedCrossSection.h
 	inc/MantidMDAlgorithms/Quantification/SimulateResolutionConvolvedModel.h
 	inc/MantidMDAlgorithms/QueryMDWorkspace.h
-	inc/MantidMDAlgorithms/ReflectometryTransform.h
 	inc/MantidMDAlgorithms/ReflectometryTransformKiKf.h
 	inc/MantidMDAlgorithms/ReflectometryTransformP.h
 	inc/MantidMDAlgorithms/ReflectometryTransformQxQz.h
+	inc/MantidMDAlgorithms/ReplicateMD.h
 	inc/MantidMDAlgorithms/SaveIsawQvector.h
 	inc/MantidMDAlgorithms/SaveMD.h
+	inc/MantidMDAlgorithms/SaveMD2.h
 	inc/MantidMDAlgorithms/SaveZODS.h
 	inc/MantidMDAlgorithms/SetMDUsingMask.h
 	inc/MantidMDAlgorithms/SliceMD.h
@@ -225,6 +230,7 @@ set ( INC_FILES
 	inc/MantidMDAlgorithms/SmoothMD.h
 	inc/MantidMDAlgorithms/ThresholdMD.h
 	inc/MantidMDAlgorithms/TransformMD.h
+	inc/MantidMDAlgorithms/TransposeMD.h
 	inc/MantidMDAlgorithms/UnaryOperationMD.h
 	inc/MantidMDAlgorithms/UnitsConversionHelper.h
 	inc/MantidMDAlgorithms/Vector3DParameter.h
@@ -248,6 +254,7 @@ set ( TEST_FILES
 	CloneMDWorkspaceTest.h
 	CompareMDWorkspacesTest.h
 	ConvertCWPDMDToSpectraTest.h
+	ConvertCWSDExpToMomentumTest.h
 	ConvertEventsToMDTest.h
 	ConvertMDHistoToMatrixWorkspaceTest.h
 	ConvertSpiceDataToRealSpaceTest.h
@@ -279,6 +286,7 @@ set ( TEST_FILES
 	Integrate3DEventsTest.h
 	IntegrateEllipsoidsTest.h
 	IntegrateFluxTest.h
+	IntegrateMDHistoWorkspaceTest.h
 	IntegratePeaksMD2Test.h
 	IntegratePeaksMDTest.h
 	InvalidParameterParserTest.h
@@ -314,8 +322,10 @@ set ( TEST_FILES
 	ReflectometryTransformKiKfTest.h
 	ReflectometryTransformPTest.h
 	ReflectometryTransformQxQzTest.h
+	ReplicateMDTest.h
 	ResolutionConvolvedCrossSectionTest.h
 	SaveIsawQvectorTest.h
+	SaveMD2Test.h
 	SaveMDTest.h
 	SaveZODSTest.h
 	SetMDUsingMaskTest.h
@@ -329,6 +339,7 @@ set ( TEST_FILES
 	TobyFitResolutionModelTest.h
 	TobyFitYVectorTest.h
 	TransformMDTest.h
+	TransposeMDTest.h
 	UnaryOperationMDTest.h
 	UnitsConversionHelperTest.h
 	WeightedMeanMDTest.h
@@ -339,6 +350,12 @@ set ( GMOCK_TEST_FILES
 	BinaryOperationMDTest.h
 	BinMDTest.h
 )
+
+if (COVERALLS)
+    foreach( loop_var ${SRC_FILES} ${INC_FILES})
+      set_property(GLOBAL APPEND PROPERTY COVERAGE_SRCS "${CMAKE_CURRENT_SOURCE_DIR}/${loop_var}")
+    endforeach(loop_var)
+endif()
 
 if(UNITY_BUILD)
   include(UnityBuild)
@@ -361,7 +378,7 @@ endif ()
 set_property ( TARGET MDAlgorithms PROPERTY FOLDER "MantidFramework" )
 
 include_directories ( inc )
-target_link_libraries ( MDAlgorithms ${MANTIDLIBS} )
+target_link_libraries ( MDAlgorithms LINK_PRIVATE ${TCMALLOC_LIBRARIES_LINKTIME} ${MANTIDLIBS} ${GSL_LIBRARIES} ${NEXUS_LIBRARIES}  )
 
 # Add the unit tests directory
 add_subdirectory ( test )

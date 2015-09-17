@@ -5,7 +5,7 @@
 #include "MantidAPI/AlgorithmManager.h"
 #include "MantidAPI/IMDIterator.h"
 #include "MantidAPI/IMDWorkspace.h"
-#include "MantidAPI/Workspace.h"
+#include "MantidAPI/Workspace_fwd.h"
 #include "MantidGeometry/MDGeometry/IMDDimension.h"
 #include "MantidGeometry/MDGeometry/MDHistoDimension.h"
 #include "MantidGeometry/MDGeometry/MDTypes.h"
@@ -111,6 +111,12 @@ public:
   }
 
   virtual ~MockIMDWorkspace() {}
+
+private:
+  virtual MockIMDWorkspace *doClone() const {
+    throw std::runtime_error(
+        "Cloning of MockIMDWorkspace is not implemented.");
+  }
 };
 
 
@@ -419,17 +425,18 @@ Create a field data entry containing (as contents) the argument text.
   Mantid::API::Workspace_sptr createSimple3DWorkspace()
   {
     using namespace Mantid::API;
-    AnalysisDataService::Instance().remove("3D_Workspace");
-    IAlgorithm* create = FrameworkManager::Instance().createAlgorithm("CreateMDWorkspace");
 
+    IAlgorithm* create = FrameworkManager::Instance().createAlgorithm("CreateMDWorkspace");
+    create->setChild(true);
     create->initialize();
     create->setProperty("Dimensions", 4);
     create->setPropertyValue("Extents","0,5,0,5,0,5,0,5");
     create->setPropertyValue("Names","A,B,C,D");
     create->setPropertyValue("Units","A,A,A,A");
-    create->setPropertyValue("OutputWorkspace", "3D_Workspace");
+    create->setPropertyValue("OutputWorkspace", "dummy");
     create->execute();
-    return AnalysisDataService::Instance().retrieve("3D_Workspace");
+    Workspace_sptr outWs = create->getProperty("OutputWorkspace");
+    return outWs;
   }
 
   Mantid::API::Workspace_sptr get3DWorkspace(bool integratedTDimension, bool sliceMD)
@@ -439,7 +446,6 @@ Create a field data entry containing (as contents) the argument text.
 
     Mantid::API::Workspace_sptr inputWs = createSimple3DWorkspace();
 
-    AnalysisDataService::Instance().remove("binned");
     std::string binningAlgName;
     if(sliceMD)
     {
@@ -450,6 +456,7 @@ Create a field data entry containing (as contents) the argument text.
       binningAlgName = "BinMD";
     }
     IAlgorithm_sptr binningAlg = AlgorithmManager::Instance().createUnmanaged(binningAlgName);
+    binningAlg->setChild(true);
     binningAlg->initialize();
     binningAlg->setProperty("InputWorkspace", inputWs);
     binningAlg->setPropertyValue("AlignedDim0","A,0,5,2");
@@ -464,10 +471,10 @@ Create a field data entry containing (as contents) the argument text.
     {
       binningAlg->setPropertyValue("AlignedDim3","D,0,5,2");
     }
-    binningAlg->setPropertyValue("OutputWorkspace", "binned");
+    binningAlg->setPropertyValue("OutputWorkspace", "dummy");
     binningAlg->execute();
-
-    return AnalysisDataService::Instance().retrieve("binned");
+    Workspace_sptr outWs = binningAlg->getProperty("OutputWorkspace");
+    return outWs;
   }
 
   /**

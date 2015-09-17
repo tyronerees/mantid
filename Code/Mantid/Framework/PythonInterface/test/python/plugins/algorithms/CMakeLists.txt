@@ -10,28 +10,43 @@ set ( TEST_PY_FILES
   ConjoinSpectraTest.py
   CorrectLogTimesTest.py
   CreateLeBailFitInputTest.py
+  CreateMDTest.py
   IndirectCalibrationTest.py
   CreateWorkspaceTest.py
   CylinderPaalmanPingsCorrectionTest.py
+  CylinderPaalmanPingsCorrection2Test.py
   DakotaChiSquaredTest.py
-  DensityOfStatesTest.py
+  DNSMergeRunsTest.py
+  DNSFlippingRatioCorrTest.py
+  DNSDetEffCorrVanaTest.py
   DSFinterpTest.py
+  EnggCalibrateFullTest.py
+  EnggCalibrateTest.py
+  EnggFitPeaksTest.py
+  EnggFocusTest.py
+  EnggVanadiumCorrectionsTest.py
   FilterLogByTimeTest.py
   FindReflectometryLinesTest.py
   FlatPlatePaalmanPingsCorrectionTest.py
   GetEiT0atSNSTest.py
+  GetNegMuMuonicXRDTest.py
   IndirectAnnulusAbsorptionTest.py
   IndirectCylinderAbsorptionTest.py
   IndirectFlatPlateAbsorptionTest.py
   IndirectILLReductionTest.py
   IndirectTransmissionTest.py
   IndirectTransmissionMonitorTest.py
+  ILLIN16BCalibrationTest.py
+  ISISIndirectDiffractionReductionTest.py
   ISISIndirectEnergyTransferTest.py
   LoadDNSLegacyTest.py
+  LoadEmptyVesuvioTest.py
   LoadFullprofFileTest.py
   LoadLiveDataTest.py
   LoadLogPropertyTableTest.py
   LoadMultipleGSSTest.py
+  LoadNMoldyn3AsciiTest.py
+  LoadNMoldyn4AsciiTest.py
   MaskAngleTest.py
   MaskBTPTest.py
   MaskWorkspaceToCalFileTest.py
@@ -39,15 +54,19 @@ set ( TEST_PY_FILES
   MergeCalFilesTest.py
   MolDynTest.py
   MSDFitTest.py
-  PDDetermineCharacterizationsTest.py
+  MuscatSofQWTest.py
+  OSIRISDiffractionReductionTest.py
+  ResNorm2Test.py
   RetrieveRunInfoTest.py
   SANSWideAngleCorrectionTest.py
   SavePlot1DTest.py
   SaveVulcanGSSTest.py
+  SimulatedDensityOfStatesTest.py
   SortByQVectorsTest.py
   SofQWMomentsTest.py
   SortDetectorsTest.py
   SortXAxisTest.py
+  StatisticsOfTableWorkspaceTest.py
   Stitch1DManyTest.py
   SuggestTibCNCSTest.py
   SuggestTibHYSPECTest.py
@@ -55,6 +74,7 @@ set ( TEST_PY_FILES
   UpdatePeakParameterTableValueTest.py
   SANSSubtractTest.py
   TimeSliceTest.py
+  TOSCABankCorrectionTest.py
   TransformToIqtTest.py
   ExportSampleLogsToCSVFileTest.py
   ExportExperimentLogTest.py

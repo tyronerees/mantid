@@ -41,10 +41,10 @@ For the usage example there is a calculated, theoretical diffraction pattern (in
     # Find peaks in the spectrum
     si_peaks = PoldiPeakSearch(si_spectrum)
 
-    # Index the peaks, will generate a workspace named 'Indexed_Si'
+    # Index the peaks, will generate a workspace named 'si_peaks_indexed_Si'
     indexed = PoldiIndexKnownCompounds(si_peaks, CompoundWorkspaces='Si')
 
-    si_peaks_indexed = AnalysisDataService.retrieve('Indexed_Si')
+    si_peaks_indexed = AnalysisDataService.retrieve('si_peaks_indexed_Si')
 
     # 3 peaks have two possibilities for indexing, because their d-values are identical
     print "The number of peaks that were indexed:", si_peaks_indexed.rowCount()
@@ -99,3 +99,5 @@ It's important to check the output data, which is found in the workspace labeled
 .. [Pawley] Pawley, G. S. “Unit-Cell Refinement from Powder Diffraction Scans.”, J. Appl. Crystallogr. 14, 1981, 357. doi:10.1107/S0021889881009618.
 
 .. categories::
+
+.. sourcelink::

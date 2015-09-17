@@ -13,9 +13,9 @@
 #include "MantidAPI/AlgorithmManager.h"
 #include "MantidAPI/AlgorithmFactory.h"
 #include "MantidAPI/AnalysisDataService.h"
-#include "MantidAPI/IPeaksWorkspace.h"
-#include "MantidAPI/MatrixWorkspace.h"
-#include "MantidAPI/Workspace.h"
+#include "MantidAPI/IPeaksWorkspace_fwd.h"
+#include "MantidAPI/MatrixWorkspace_fwd.h"
+#include "MantidAPI/Workspace_fwd.h"
 
 #include "MantidQtAPI/AlgorithmDialog.h"
 #include "MantidQtAPI/QwtWorkspaceSpectrumData.h"
@@ -252,6 +252,9 @@ public:
 
     // Creates and shows a Table with detector ids for the workspace in the MantidMatrix
     Table* createTableDetectors(MantidMatrix *m);
+
+    /// create and shows a Table for the workspace from the Python script
+    Table* createDetectorTable(const QString &wsName);
 
     /// Create a table showing detector information for the given workspace and indices and optionally the data for that detector
     Table* createDetectorTable(const QString & wsName, const std::vector<int>& indices, bool include_data = false);

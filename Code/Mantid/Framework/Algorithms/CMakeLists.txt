@@ -4,6 +4,7 @@ set ( SRC_FILES
 	# src/UpdatePeakParameterTable.cpp
 	src/AbsorptionCorrection.cpp
 	src/AddLogDerivative.cpp
+	src/AddNote.cpp
 	src/AddPeak.cpp
 	src/AddSampleLog.cpp
 	src/AddTimeSeriesLog.cpp
@@ -32,6 +33,7 @@ set ( SRC_FILES
 	src/ChangeBinOffset.cpp
 	src/ChangeLogTime.cpp
 	src/ChangePulsetime.cpp
+	src/ChangeTimeZero.cpp
 	src/CheckWorkspacesMatch.cpp
 	src/ChopData.cpp
 	src/ClearInstrumentParameters.cpp
@@ -41,6 +43,7 @@ set ( SRC_FILES
 	src/ConjoinWorkspaces.cpp
 	src/ConvertAxesToRealSpace.cpp
 	src/ConvertAxisByFormula.cpp
+	src/ConvertDiffCal.cpp
 	src/ConvertEmptyToTof.cpp
 	src/ConvertFromDistribution.cpp
 	src/ConvertSpectrumAxis.cpp
@@ -52,6 +55,7 @@ set ( SRC_FILES
 	src/ConvertToMatrixWorkspace.cpp
 	src/ConvertToPointData.cpp
 	src/ConvertUnits.cpp
+	src/ConvertUnitsUsingDetectorTable.cpp
 	src/CopyDetectorMapping.cpp
 	src/CopyInstrumentParameters.cpp
 	src/CopyLogs.cpp
@@ -99,6 +103,7 @@ set ( SRC_FILES
 	src/ExtractMask.cpp
 	src/ExtractMaskToTable.cpp
 	src/ExtractSingleSpectrum.cpp
+	src/ExtractSpectra.cpp
 	src/FFT.cpp
 	src/FFTDerivative.cpp
 	src/FFTSmooth.cpp
@@ -150,6 +155,7 @@ set ( SRC_FILES
 	src/Minus.cpp
 	src/ModeratorTzero.cpp
 	src/ModeratorTzeroLinear.cpp
+        src/MonitorEfficiencyCorUser.cpp
 	src/MonteCarloAbsorption.cpp
 	src/MultipleScatteringCylinderAbsorption.cpp
 	src/Multiply.cpp
@@ -160,6 +166,7 @@ set ( SRC_FILES
 	src/NormaliseToMonitor.cpp
 	src/NormaliseToUnity.cpp
 	src/OneMinusExponentialCor.cpp
+	src/PDDetermineCharacterizations.cpp
 	src/PDFFourierTransform.cpp
 	src/Pause.cpp
 	src/PerformIndexOperations.cpp
@@ -197,6 +204,7 @@ set ( SRC_FILES
 	src/RemoveBins.cpp
 	src/RemoveExpDecay.cpp
 	src/RemoveLowResTOF.cpp
+	src/RemoveMaskedSpectra.cpp
 	src/RemovePromptPulse.cpp
 	src/RemoveWorkspaceHistory.cpp
 	src/RenameWorkspace.cpp
@@ -206,7 +214,10 @@ set ( SRC_FILES
 	src/ResetNegatives.cpp
 	src/ResizeRectangularDetector.cpp
 	src/RingProfile.cpp
+	src/SANSCollimationLengthEstimator.cpp
 	src/SANSDirectBeamScaling.cpp
+	src/SampleCorrections/MayersSampleCorrection.cpp
+	src/SampleCorrections/MayersSampleCorrectionStrategy.cpp
 	src/SassenaFFT.cpp
 	src/SaveGSASInstrumentFile.cpp
 	src/Scale.cpp
@@ -241,19 +252,24 @@ set ( SRC_FILES
 	src/SumSpectra.cpp
 	src/TOFSANSResolution.cpp
 	src/TOFSANSResolutionByPixel.cpp
+	src/TOFSANSResolutionByPixelCalculator.cpp
+	src/TimeAtSampleStrategyDirect.cpp
+	src/TimeAtSampleStrategyElastic.cpp
+	src/TimeAtSampleStrategyIndirect.cpp
 	src/Transpose.cpp
 	src/UnGroupWorkspace.cpp
 	src/UnaryOperation.cpp
 	src/UnwrapMonitor.cpp
 	src/UnwrapSNS.cpp
 	src/UpdateScriptRepository.cpp
+	src/VesuvioL1ThetaResolution.cpp
 	src/WeightedMean.cpp
 	src/WeightedMeanOfWorkspace.cpp
 	src/WeightingStrategy.cpp
 	src/WienerSmooth.cpp
 	src/WorkspaceJoiners.cpp
 	src/XDataConverter.cpp
-)
+    src/GenerateIPythonNotebook.cpp)
 
 set ( INC_FILES
 	#	inc/MantidAlgorithms/Q1DTOF.h
@@ -261,6 +277,7 @@ set ( INC_FILES
 	# inc/MantidAlgorithms/UpdatePeakParameterTable.h
 	inc/MantidAlgorithms/AbsorptionCorrection.h
 	inc/MantidAlgorithms/AddLogDerivative.h
+	inc/MantidAlgorithms/AddNote.h
 	inc/MantidAlgorithms/AddPeak.h
 	inc/MantidAlgorithms/AddSampleLog.h
 	inc/MantidAlgorithms/AddTimeSeriesLog.h
@@ -289,6 +306,7 @@ set ( INC_FILES
 	inc/MantidAlgorithms/ChangeBinOffset.h
 	inc/MantidAlgorithms/ChangeLogTime.h
 	inc/MantidAlgorithms/ChangePulsetime.h
+	inc/MantidAlgorithms/ChangeTimeZero.h
 	inc/MantidAlgorithms/CheckWorkspacesMatch.h
 	inc/MantidAlgorithms/ChopData.h
 	inc/MantidAlgorithms/ClearInstrumentParameters.h
@@ -298,6 +316,7 @@ set ( INC_FILES
 	inc/MantidAlgorithms/ConjoinWorkspaces.h
 	inc/MantidAlgorithms/ConvertAxesToRealSpace.h
 	inc/MantidAlgorithms/ConvertAxisByFormula.h
+	inc/MantidAlgorithms/ConvertDiffCal.h
 	inc/MantidAlgorithms/ConvertEmptyToTof.h
 	inc/MantidAlgorithms/ConvertFromDistribution.h
 	inc/MantidAlgorithms/ConvertSpectrumAxis.h
@@ -309,6 +328,7 @@ set ( INC_FILES
 	inc/MantidAlgorithms/ConvertToMatrixWorkspace.h
 	inc/MantidAlgorithms/ConvertToPointData.h
 	inc/MantidAlgorithms/ConvertUnits.h
+	inc/MantidAlgorithms/ConvertUnitsUsingDetectorTable.h
 	inc/MantidAlgorithms/CopyDetectorMapping.h
 	inc/MantidAlgorithms/CopyInstrumentParameters.h
 	inc/MantidAlgorithms/CopyLogs.h
@@ -356,6 +376,7 @@ set ( INC_FILES
 	inc/MantidAlgorithms/ExtractMask.h
 	inc/MantidAlgorithms/ExtractMaskToTable.h
 	inc/MantidAlgorithms/ExtractSingleSpectrum.h
+	inc/MantidAlgorithms/ExtractSpectra.h
 	inc/MantidAlgorithms/FFT.h
 	inc/MantidAlgorithms/FFTDerivative.h
 	inc/MantidAlgorithms/FFTSmooth.h
@@ -408,6 +429,7 @@ set ( INC_FILES
 	inc/MantidAlgorithms/Minus.h
 	inc/MantidAlgorithms/ModeratorTzero.h
 	inc/MantidAlgorithms/ModeratorTzeroLinear.h
+        inc/MantidAlgorithms/MonitorEfficiencyCorUser.h
 	inc/MantidAlgorithms/MonteCarloAbsorption.h
 	inc/MantidAlgorithms/MultipleScatteringCylinderAbsorption.h
 	inc/MantidAlgorithms/Multiply.h
@@ -418,6 +440,7 @@ set ( INC_FILES
 	inc/MantidAlgorithms/NormaliseToMonitor.h
 	inc/MantidAlgorithms/NormaliseToUnity.h
 	inc/MantidAlgorithms/OneMinusExponentialCor.h
+	inc/MantidAlgorithms/PDDetermineCharacterizations.h
 	inc/MantidAlgorithms/PDFFourierTransform.h
 	inc/MantidAlgorithms/Pause.h
 	inc/MantidAlgorithms/PerformIndexOperations.h
@@ -455,6 +478,7 @@ set ( INC_FILES
 	inc/MantidAlgorithms/RemoveBins.h
 	inc/MantidAlgorithms/RemoveExpDecay.h
 	inc/MantidAlgorithms/RemoveLowResTOF.h
+	inc/MantidAlgorithms/RemoveMaskedSpectra.h
 	inc/MantidAlgorithms/RemovePromptPulse.h
 	inc/MantidAlgorithms/RemoveWorkspaceHistory.h
 	inc/MantidAlgorithms/RenameWorkspace.h
@@ -464,7 +488,10 @@ set ( INC_FILES
 	inc/MantidAlgorithms/ResetNegatives.h
 	inc/MantidAlgorithms/ResizeRectangularDetector.h
 	inc/MantidAlgorithms/RingProfile.h
+	inc/MantidAlgorithms/SANSCollimationLengthEstimator.h
 	inc/MantidAlgorithms/SANSDirectBeamScaling.h
+	inc/MantidAlgorithms/SampleCorrections/MayersSampleCorrection.h
+	inc/MantidAlgorithms/SampleCorrections/MayersSampleCorrectionStrategy.h
 	inc/MantidAlgorithms/SassenaFFT.h
 	inc/MantidAlgorithms/SaveGSASInstrumentFile.h
 	inc/MantidAlgorithms/Scale.h
@@ -499,19 +526,25 @@ set ( INC_FILES
 	inc/MantidAlgorithms/SumSpectra.h
 	inc/MantidAlgorithms/TOFSANSResolution.h
 	inc/MantidAlgorithms/TOFSANSResolutionByPixel.h
+	inc/MantidAlgorithms/TOFSANSResolutionByPixelCalculator.h
+	inc/MantidAlgorithms/TimeAtSampleStrategy.h
+	inc/MantidAlgorithms/TimeAtSampleStrategyDirect.h
+	inc/MantidAlgorithms/TimeAtSampleStrategyElastic.h
+	inc/MantidAlgorithms/TimeAtSampleStrategyIndirect.h
 	inc/MantidAlgorithms/Transpose.h
 	inc/MantidAlgorithms/UnGroupWorkspace.h
 	inc/MantidAlgorithms/UnaryOperation.h
 	inc/MantidAlgorithms/UnwrapMonitor.h
 	inc/MantidAlgorithms/UnwrapSNS.h
 	inc/MantidAlgorithms/UpdateScriptRepository.h
+	inc/MantidAlgorithms/VesuvioL1ThetaResolution.h
 	inc/MantidAlgorithms/WeightedMean.h
 	inc/MantidAlgorithms/WeightedMeanOfWorkspace.h
 	inc/MantidAlgorithms/WeightingStrategy.h
 	inc/MantidAlgorithms/WienerSmooth.h
 	inc/MantidAlgorithms/WorkspaceJoiners.h
 	inc/MantidAlgorithms/XDataConverter.h
-)
+    inc/MantidAlgorithms/GenerateIPythonNotebook.h)
 
 set(SRC_UNITY_IGNORE_FILES src/AlignDetectors.cpp
     src/FFTSmooth.cpp
@@ -529,6 +562,7 @@ set ( TEST_FILES
 	# CountEventsInPulsesTest.h
 	# UpdatePeakParameterTableTest.h
 	AddLogDerivativeTest.h
+	AddNoteTest.h
 	AddPeakTest.h
 	AddSampleLogTest.h
 	AddTimeSeriesLogTest.h
@@ -557,6 +591,7 @@ set ( TEST_FILES
 	ChangeBinOffsetTest.h
 	ChangeLogTimeTest.h
 	ChangePulsetimeTest.h
+	ChangeTimeZeroTest.h
 	CheckWorkspacesMatchTest.h
 	ChopDataTest.h
 	ClearInstrumentParametersTest.h
@@ -566,6 +601,7 @@ set ( TEST_FILES
 	ConjoinWorkspacesTest.h
 	ConvertAxesToRealSpaceTest.h
 	ConvertAxisByFormulaTest.h
+	ConvertDiffCalTest.h
 	ConvertEmptyToTofTest.h
 	ConvertFromDistributionTest.h
 	ConvertSpectrumAxis2Test.h
@@ -577,6 +613,7 @@ set ( TEST_FILES
 	ConvertToMatrixWorkspaceTest.h
 	ConvertToPointDataTest.h
 	ConvertUnitsTest.h
+	ConvertUnitsUsingDetectorTableTest.h
 	CopyDetectorMappingTest.h
 	CopyInstrumentParametersTest.h
 	CopyLogsTest.h
@@ -620,6 +657,7 @@ set ( TEST_FILES
 	ExtractMaskTest.h
 	ExtractMaskToTableTest.h
 	ExtractSingleSpectrumTest.h
+	ExtractSpectraTest.h
 	FFTDerivativeTest.h
 	FFTSmooth2Test.h
 	FFTTest.h
@@ -638,7 +676,9 @@ set ( TEST_FILES
 	FitPeakTest.h
 	FixGSASInstrumentFileTest.h
 	FlatPlateAbsorptionTest.h
+	GeneralisedSecondDifferenceTest.h
 	GenerateEventsFilterTest.h
+	GenerateIPythonNotebookTest.h
 	GeneratePeaksTest.h
 	GeneratePythonScriptTest.h
 	GetDetOffsetsMultiPeaksTest.h
@@ -659,11 +699,14 @@ set ( TEST_FILES
 	MaskBinsFromTableTest.h
 	MaskBinsTest.h
 	MaxMinTest.h
+	MayersSampleCorrectionStrategyTest.h
+	MayersSampleCorrectionTest.h
 	MedianDetectorTestTest.h
 	MergeRunsTest.h
 	MinusTest.h
 	ModeratorTzeroLinearTest.h
 	ModeratorTzeroTest.h
+        MonitorEfficiencyCorUserTest.h
 	MonteCarloAbsorptionTest.h
 	MultipleScatteringCylinderAbsorptionTest.h
 	MultiplyRangeTest.h
@@ -673,6 +716,7 @@ set ( TEST_FILES
 	NormaliseByDetectorTest.h
 	NormaliseToMonitorTest.h
 	OneMinusExponentialCorTest.h
+	PDDetermineCharacterizationsTest.h
 	PDFFourierTransformTest.h
 	PauseTest.h
 	PerformIndexOperationsTest.h
@@ -706,6 +750,7 @@ set ( TEST_FILES
 	RemoveBinsTest.h
 	RemoveExpDecayTest.h
 	RemoveLowResTOFTest.h
+	RemoveMaskedSpectraTest.h
 	RemovePromptPulseTest.h
 	RemoveWorkspaceHistoryTest.h
 	RenameWorkspaceTest.h
@@ -715,6 +760,7 @@ set ( TEST_FILES
 	ResetNegativesTest.h
 	ResizeRectangularDetectorTest.h
 	RingProfileTest.h
+	SANSCollimationLengthEstimatorTest.h
 	SassenaFFTTest.h
 	SaveGSASInstrumentFileTest.h
 	ScaleTest.h
@@ -742,11 +788,16 @@ set ( TEST_FILES
 	SumNeighboursTest.h
 	SumRowColumnTest.h
 	SumSpectraTest.h
+	TOFSANSResolutionByPixelCalculatorTest.h
 	TOFSANSResolutionByPixelTest.h
+	TimeAtSampleStrategyDirectTest.h
+	TimeAtSampleStrategyElasticTest.h
+	TimeAtSampleStrategyIndirectTest.h
 	TransposeTest.h
 	UnGroupWorkspaceTest.h
 	UnaryOperationTest.h
 	UnwrapSNSTest.h
+	VesuvioL1ThetaResolutionTest.h
 	WeightedMeanOfWorkspaceTest.h
 	WeightedMeanTest.h
 	WeightingStrategyTest.h
@@ -756,6 +807,12 @@ set ( TEST_FILES
 )
 
 set ( TEST_PY_FILES NormaliseToUnityTest.py )
+
+if (COVERALLS)
+    foreach( loop_var ${SRC_FILES} ${INC_FILES})
+      set_property(GLOBAL APPEND PROPERTY COVERAGE_SRCS "${CMAKE_CURRENT_SOURCE_DIR}/${loop_var}")
+    endforeach(loop_var)
+endif()
 
 # Add a precompiled header where they are supported
 enable_precompiled_headers ( inc/MantidAlgorithms/PrecompiledHeader.h SRC_FILES )
@@ -773,7 +830,7 @@ set_property ( TARGET Algorithms PROPERTY FOLDER "MantidFramework" )
 
 include_directories ( inc )
 
-target_link_libraries ( Algorithms ${MANTIDLIBS} ${GSL_LIBRARIES} )
+target_link_libraries ( Algorithms LINK_PRIVATE ${TCMALLOC_LIBRARIES_LINKTIME} ${MANTIDLIBS} ${GSL_LIBRARIES} )
 
 # Add the unit tests directory
 add_subdirectory ( test )

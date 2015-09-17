@@ -1,17 +1,17 @@
 #include "MantidKernel/Strings.h"
 #include "MantidDataObjects/MDBoxFlatTree.h"
-#include "MantidDataObjects/MDEvent.h"
-#include "MantidDataObjects/MDLeanEvent.h"
 #include "MantidAPI/BoxController.h"
 #include "MantidAPI/FileBackedExperimentInfo.h"
 #include "MantidDataObjects/MDEventFactory.h"
 #include <Poco/File.h>
 
+// clang-format off
 #if defined(__GLIBCXX__) && __GLIBCXX__ >= 20100121 // libstdc++-4.4.3
 typedef std::unique_ptr< ::NeXus::File> file_holder_type;
 #else
 typedef std::auto_ptr< ::NeXus::File> file_holder_type;
 #endif
+// clang-format on
 
 namespace Mantid {
 namespace DataObjects {
@@ -459,7 +459,7 @@ void MDBoxFlatTree::loadExperimentInfos(::NeXus::File *const file, const std::st
       std::string parameterStr;
       try {
         // Get the sample, logs, instrument
-        ei->loadExperimentInfoNexus(file, parameterStr);
+        ei->loadExperimentInfoNexus(filename, file, parameterStr);
         // Now do the parameter map
         ei->readParameterMap(parameterStr);
         // And add it to the mutliple experiment info.

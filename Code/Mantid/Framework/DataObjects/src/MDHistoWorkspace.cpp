@@ -12,6 +12,7 @@
 #include "MantidAPI/IMDIterator.h"
 #include <boost/scoped_array.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/math/special_functions/fpclassify.hpp>
 
 using namespace Mantid::Kernel;
 using namespace Mantid::Geometry;
@@ -600,7 +601,12 @@ void MDHistoWorkspace::getLinePlot(const Mantid::Kernel::VMD &start,
           break;
         }
         // And add the normalized signal/error to the list too
-        y.push_back(this->getSignalAt(linearIndex) * normalizer);
+        auto signal = this->getSignalAt(linearIndex) * normalizer;
+        if (boost::math::isinf(signal)){
+          // The plotting library (qwt) doesn't like infs.
+          signal = std::numeric_limits<signal_t>::quiet_NaN();
+        }
+        y.push_back(signal);
         e.push_back(this->getErrorAt(linearIndex) * normalizer);
         // Save the position for next bin
         lastPos = pos;
@@ -1159,6 +1165,15 @@ void MDHistoWorkspace::setMDMasking(
   }
 }
 
+/**
+ * Set the masking
+ * @param index : linear index to mask
+ * @param mask : True to mask. False to clear.
+ */
+void MDHistoWorkspace::setMDMaskAt(const size_t& index, bool mask){
+    m_masks[index] = mask;
+}
+
 /// Clear any existing masking.
 void MDHistoWorkspace::clearMDMasking() {
   for (size_t i = 0; i < this->getNPoints(); ++i) {
@@ -1211,11 +1226,10 @@ size_t MDHistoWorkspace::sizeOfElement() {
 }
 
 /**
- * Clone the workspace.
- * @return Deep copy of existing workspace.
- */
-boost::shared_ptr<IMDHistoWorkspace> MDHistoWorkspace::clone() const {
-  return boost::shared_ptr<IMDHistoWorkspace>(new MDHistoWorkspace(*this));
+Preferred normalization to use for visual purposes.
+*/
+MDNormalization MDHistoWorkspace::displayNormalization() const {
+  return NumEventsNormalization; // Normalize by the number of events.
 }
 
 } // namespace Mantid

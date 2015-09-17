@@ -1,9 +1,11 @@
 #include "MantidMDAlgorithms/ConvertToReflectometryQ.h"
 
 #include "MantidAPI/IEventWorkspace.h"
+#include "MantidAPI/ITableWorkspace.h"
 #include "MantidAPI/WorkspaceValidators.h"
 
 #include "MantidDataObjects/EventWorkspace.h"
+#include "MantidDataObjects/TableWorkspace.h"
 #include "MantidDataObjects/Workspace2D.h"
 
 #include "MantidKernel/ArrayProperty.h"
@@ -18,6 +20,7 @@
 #include "MantidMDAlgorithms/ReflectometryTransformQxQz.h"
 #include "MantidMDAlgorithms/ReflectometryTransformP.h"
 
+#include <boost/optional.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 
@@ -45,6 +48,18 @@ Transform to k-space label:
 @return: associated id/label
 */
 std::string kSpaceTransform() { return "K (incident, final)"; }
+
+/*
+Center point rebinning
+@return: associated id/label
+*/
+std::string centerTransform() { return "Centre"; }
+
+/*
+Normalised polygon rebinning
+@return: associated id/label
+*/
+std::string normPolyTransform() { return "NormalisedPolygon"; }
 
 /*
 Check that the input workspace is of the correct type.
@@ -179,6 +194,17 @@ void ConvertToReflectometryQ::init() {
       "  P (lab frame): Momentum in the sample frame.\n"
       "  K initial and final vectors in the z plane.");
 
+  std::vector<std::string> transOptions;
+  transOptions.push_back(centerTransform());
+  transOptions.push_back(normPolyTransform());
+
+  declareProperty(
+      "Method", centerTransform(),
+      boost::make_shared<StringListValidator>(transOptions),
+      "What method should be used for the axis transformation?\n"
+      "  Centre: Use center point rebinning.\n"
+      "  NormalisedPolygon: Use normalised polygon rebinning.");
+
   declareProperty(
       new Kernel::PropertyWithValue<bool>("OverrideIncidentTheta", false),
       "Use the provided incident theta value.");
@@ -212,6 +238,10 @@ void ConvertToReflectometryQ::init() {
   declareProperty(new WorkspaceProperty<IMDWorkspace>("OutputWorkspace", "",
                                                       Direction::Output),
                   "Output 2D Workspace.");
+                  
+  declareProperty(new WorkspaceProperty<ITableWorkspace>("OutputVertexes", "",
+                                                      Direction::Output),
+                  "Output TableWorkspace with vertex information. See DumpVertexes property.");
 
   declareProperty(new Kernel::PropertyWithValue<int>("NumberBinsQx", 100),
                   "The number of bins along the qx axis. Optional and only "
@@ -219,6 +249,11 @@ void ConvertToReflectometryQ::init() {
   declareProperty(new Kernel::PropertyWithValue<int>("NumberBinsQz", 100),
                   "The number of bins along the qx axis. Optional and only "
                   "applies to 2D workspaces. Defaults to 100.");
+                  
+  declareProperty(
+      new Kernel::PropertyWithValue<bool>("DumpVertexes", false),
+      "If set, with 2D rebinning, the intermediate vertexes for each polygon will be written out for debugging purposes. Creates a second output table workspace.");
+      
   setPropertySettings(
       "NumberBinsQx",
       new EnabledWhenProperty("OutputAsMDWorkspace", IS_NOT_DEFAULT));
@@ -237,6 +272,8 @@ void ConvertToReflectometryQ::init() {
   setPropertySettings(
       "MaxRecursionDepth",
       new EnabledWhenProperty("OutputAsMDWorkspace", IS_DEFAULT));
+      
+   
 }
 
 //----------------------------------------------------------------------------------------------
@@ -248,6 +285,7 @@ void ConvertToReflectometryQ::exec() {
   const std::vector<double> extents = getProperty("Extents");
   double incidentTheta = getProperty("IncidentTheta");
   const std::string outputDimensions = getPropertyValue("OutputDimensions");
+  const std::string transMethod = getPropertyValue("Method");
   const bool outputAsMDWorkspace = getProperty("OutputAsMDWorkspace");
   const int numberOfBinsQx = getProperty("NumberBinsQx");
   const int numberOfBinsQz = getProperty("NumberBinsQz");
@@ -259,8 +297,6 @@ void ConvertToReflectometryQ::exec() {
   checkOutputDimensionalityChoice(outputDimensions); // TODO: This check can be
                                                      // retired as soon as all
                                                      // transforms have been
-                                                     // implemented.
-
   // Extract the incient theta angle from the logs if a user provided one is not
   // given.
   if (!bUseOwnIncidentTheta) {
@@ -269,6 +305,9 @@ void ConvertToReflectometryQ::exec() {
       Property *p = run.getLogData("stheta");
       auto incidentThetas =
           dynamic_cast<Mantid::Kernel::TimeSeriesProperty<double> *>(p);
+      if (!incidentThetas) {
+        throw std::runtime_error("stheta log not found");
+      }
       incidentTheta =
           incidentThetas->valuesAsVector().back(); // Not quite sure what to do
                                                    // with the time series for
@@ -311,21 +350,40 @@ void ConvertToReflectometryQ::exec() {
 
   IMDWorkspace_sptr outputWS;
 
-  if (outputAsMDWorkspace) {
-    auto outputMDWS = transform->executeMD(inputWs, bc);
+  TableWorkspace_sptr vertexes = boost::make_shared<Mantid::DataObjects::TableWorkspace>();
 
-    // Copy ExperimentInfo (instrument, run, sample) to the output WS
-    ExperimentInfo_sptr ei(inputWs->cloneExperimentInfo());
-    outputMDWS->addExperimentInfo(ei);
-    outputWS = outputMDWS;
+  if (outputAsMDWorkspace) {
+    if (transMethod == centerTransform()) {
+      auto outputMDWS = transform->executeMD(inputWs, bc);
+      // Copy ExperimentInfo (instrument, run, sample) to the output WS
+      ExperimentInfo_sptr ei(inputWs->cloneExperimentInfo());
+      outputMDWS->addExperimentInfo(ei);
+      outputWS = outputMDWS;
+    } else if (transMethod == normPolyTransform()) {
+      throw std::runtime_error("Normalised Polynomial rebinning not supported for multidimensional output.");
+    } else {
+      throw std::runtime_error("Unknown rebinning method: " + transMethod);
+    }
   } else {
-    auto outputWS2D = transform->execute(inputWs);
-    outputWS2D->copyExperimentInfoFrom(inputWs.get());
-    outputWS = outputWS2D;
+    if (transMethod == centerTransform()) {
+      auto outputWS2D = transform->execute(inputWs);
+      outputWS2D->copyExperimentInfoFrom(inputWs.get());
+      outputWS = outputWS2D;
+    } else if (transMethod == normPolyTransform()) {
+      const bool dumpVertexes = this->getProperty("DumpVertexes");
+      auto vertexesTable = vertexes;
+      
+      auto outputWSRB = transform->executeNormPoly(inputWs, vertexesTable, dumpVertexes, outputDimensions);
+      outputWSRB->copyExperimentInfoFrom(inputWs.get());
+      outputWS = outputWSRB;
+    } else {
+      throw std::runtime_error("Unknown rebinning method: " + transMethod);
+    }
   }
 
   // Execute the transform and bind to the output.
   setProperty("OutputWorkspace", outputWS);
+  setProperty("OutputVertexes", vertexes);
 }
 
 } // namespace Mantid

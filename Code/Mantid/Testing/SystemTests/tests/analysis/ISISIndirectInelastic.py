@@ -1,16 +1,7 @@
-#pylint: disable=no-init,invalid-name,attribute-defined-outside-init
-import stresstesting
-import os
-import platform
-from abc import ABCMeta, abstractmethod
-
-from mantid.simpleapi import *
-
-# For debugging only.
-from mantid.api import FileFinder
-
-# Import our workflows.
-from IndirectDataAnalysis import furyfitSeq, furyfitMult, confitSeq, abscorFeeder
+#pylint: disable=no-init,invalid-name,attribute-defined-outside-init,too-many-lines
+#pylint: disable=too-many-instance-attributes,non-parent-init-called,abstract-method,too-few-public-methods
+# non-parent-init-called is disabled to remove false positives from a bug in pyLint < 1.4
+# abstract-mehod checking seems to ignore the fact some classes are declared abstract using abc
 
 '''
 - TOSCA only supported by "Reduction" (the Energy Transfer tab of C2E).
@@ -76,6 +67,18 @@ stresstesting.MantidStressTest
      |
 '''
 
+import stresstesting
+import os
+import platform
+from abc import ABCMeta, abstractmethod
+
+from mantid.simpleapi import *
+
+# For debugging only.
+from mantid.api import FileFinder
+
+# Import our workflows.
+from IndirectDataAnalysis import furyfitSeq, furyfitMult
 
 class ISISIndirectInelasticBase(stresstesting.MantidStressTest):
     '''
@@ -104,8 +107,7 @@ class ISISIndirectInelasticBase(stresstesting.MantidStressTest):
             raise RuntimeError("The result workspace(s) should be in a list")
         if num_ref_files != num_results:
             raise RuntimeError("The number of result workspaces (%d) does not match"
-                               " the number of reference files (%d)." % (
-                               num_ref_files, num_results))
+                               " the number of reference files (%d)." % (num_ref_files, num_results))
         if num_ref_files < 1 or num_results < 1:
             raise RuntimeError("There needs to be a least one result and "
                                "reference.")
@@ -420,10 +422,10 @@ class ISISIndirectInelasticReductionOutput(stresstesting.MantidStressTest):
         working_directory = config['defaultsave.directory']
 
         output_names = {}
-        for format, ext in zip(self.file_formats, self.file_extensions):
+        for file_format, ext in zip(self.file_formats, self.file_extensions):
             output_file_name = self.result_name + ext
             output_file_name = os.path.join(working_directory, output_file_name)
-            output_names[format] = output_file_name
+            output_names[file_format] = output_file_name
 
         return output_names
 
@@ -527,8 +529,7 @@ class ISISIndirectInelasticResolution(ISISIndirectInelasticBase):
                            Reflection=self.reflection,
                            DetectorRange=self.detector_range,
                            BackgroundRange=self.background,
-                           RebinParam=self.rebin_params,
-                           Plot=False)
+                           RebinParam=self.rebin_params)
 
         self.result_names = ['__IndirectResolution_Test']
 
@@ -578,7 +579,7 @@ class IRISResolution(ISISIndirectInelasticResolution):
         self.analyser = 'graphite'
         self.reflection = '002'
         self.detector_range = [3, 53]
-        self.background = [-0.54, 0.65]
+        self.background = [-0.54, 0.54]
         self.rebin_params = '-0.2,0.002,0.2'
         self.files = ['IRS53664.raw']
 
@@ -606,9 +607,7 @@ class ISISIndirectInelasticDiagnostics(ISISIndirectInelasticBase):
                   OutputNameSuffix=self.suffix,
                   OutputWorkspace='__IndirectInelasticDiagnostics_out_group',
                   PeakRange=self.peak,
-                  SpectraRange=self.spectra,
-                  Plot=False,
-                  Save=False)
+                  SpectraRange=self.spectra)
 
         # Construct the result ws name.
         self.result_names = [os.path.splitext(self.rawfiles[0])[0] + self.suffix]
@@ -742,7 +741,7 @@ class ISISIndirectInelasticElwinAndMSDFit(ISISIndirectInelasticBase):
         GroupWorkspaces(InputWorkspaces=self.files, OutputWorkspace=elwin_input)
 
         ElasticWindowMultiple(InputWorkspaces=elwin_input, Plot=False,
-                              Range1Start=self.eRange[0], Range1End=self.eRange[1],
+                              IntegrationRangeStart=self.eRange[0], IntegrationRangeEnd=self.eRange[1],
                               OutputInQ=elwin_results[0], OutputInQSquared=elwin_results[1],
                               OutputELF=elwin_results[2])
 
@@ -839,14 +838,12 @@ class ISISIndirectInelasticFuryAndFuryFit(ISISIndirectInelasticBase):
             LoadNexus(sample, OutputWorkspace=sample)
         LoadNexus(self.resolution, OutputWorkspace=self.resolution)
 
-        fury_props, fury_ws = TransformToIqt(SampleWorkspace=self.samples[0],
-                                             ResolutionWorkspace=self.resolution,
-                                             EnergyMin=self.e_min,
-                                             EnergyMax=self.e_max,
-                                             BinReductionFactor=self.num_bins,
-                                             DryRun=False,
-                                             Save=False,
-                                             Plot=False)
+        _, fury_ws = TransformToIqt(SampleWorkspace=self.samples[0],
+                                    ResolutionWorkspace=self.resolution,
+                                    EnergyMin=self.e_min,
+                                    EnergyMax=self.e_max,
+                                    BinReductionFactor=self.num_bins,
+                                    DryRun=False)
 
         # Test FuryFit Sequential
         furyfitSeq_ws = furyfitSeq(fury_ws.getName(),
@@ -959,14 +956,12 @@ class ISISIndirectInelasticFuryAndFuryFitMulti(ISISIndirectInelasticBase):
             LoadNexus(sample, OutputWorkspace=sample)
         LoadNexus(self.resolution, OutputWorkspace=self.resolution)
 
-        fury_props, fury_ws = TransformToIqt(SampleWorkspace=self.samples[0],
-                                             ResolutionWorkspace=self.resolution,
-                                             EnergyMin=self.e_min,
-                                             EnergyMax=self.e_max,
-                                             BinReductionFactor=self.num_bins,
-                                             DryRun=False,
-                                             Save=False,
-                                             Plot=False)
+        _, fury_ws = TransformToIqt(SampleWorkspace=self.samples[0],
+                                    ResolutionWorkspace=self.resolution,
+                                    EnergyMin=self.e_min,
+                                    EnergyMax=self.e_max,
+                                    BinReductionFactor=self.num_bins,
+                                    DryRun=False)
 
         # Test FuryFit Sequential
         furyfitSeq_ws = furyfitMult(fury_ws.getName(),
@@ -1078,17 +1073,14 @@ class ISISIndirectInelasticConvFit(ISISIndirectInelasticBase):
         LoadNexus(self.sample, OutputWorkspace=self.sample)
         LoadNexus(self.resolution, OutputWorkspace=self.resolution)
 
-        confitSeq(
-            self.sample,
-            self.func,
-            self.startx,
-            self.endx,
-            self.ftype,
-            self.bg,
-            specMin=self.spectra_min,
-            specMax=self.spectra_max,
-            Plot='None',
-            Save=False)
+        ConvolutionFitSequential(
+            InputWorkspace=self.sample,
+            Function=self.func,
+            StartX=self.startx,
+            EndX=self.endx,
+            BackgroundType=self.bg,
+            SpecMin=self.spectra_min,
+            SpecMax=self.spectra_max)
 
     def _validate_properties(self):
         '''Check the object properties are in an expected state to continue'''
@@ -1101,8 +1093,6 @@ class ISISIndirectInelasticConvFit(ISISIndirectInelasticBase):
             raise RuntimeError("Function should be a string.")
         if type(self.bg) != str:
             raise RuntimeError("Background type should be a string.")
-        if type(self.ftype) != str:
-            raise RuntimeError("Function type should be a string.")
         if type(self.startx) != float:
             raise RuntimeError("startx should be a float")
         if type(self.endx) != float:
@@ -1125,10 +1115,9 @@ class OSIRISConvFit(ISISIndirectInelasticConvFit):
         #ConvFit fit function
         self.func = 'name=LinearBackground,A0=0,A1=0;(composite=Convolution,FixResolution=true,NumDeriv=true;'\
                     'name=Resolution,Workspace=\"%s\";name=Lorentzian,Amplitude=2,PeakCentre=0,FWHM=0.05)' % self.resolution
-        self.ftype = '1L'
         self.startx = -0.2
         self.endx = 0.2
-        self.bg = 'FitL_s'
+        self.bg = 'Fit Linear'
         self.spectra_min = 0
         self.spectra_max = 41
         self.ties = False
@@ -1148,12 +1137,11 @@ class IRISConvFit(ISISIndirectInelasticConvFit):
         self.resolution = FileFinder.getFullPath('irs53664_graphite002_res.nxs')
         #ConvFit fit function
         self.func = 'name=LinearBackground,A0=0.060623,A1=0.001343;(composite=Convolution,FixResolution=true,NumDeriv=true;'\
-                    'name=Resolution,Workspace=\"%s\";name=Lorentzian,Amplitude=1.033150,PeakCentre=-0.000841,FWHM=0.001576)' % (
-                    self.resolution)
-        self.ftype = '1L'
+                    'name=Resolution,Workspace=\"%s\";name=Lorentzian,Amplitude=1.033150,PeakCentre=-0.000841,FWHM=0.001576)'\
+                    % (self.resolution)
         self.startx = -0.2
         self.endx = 0.2
-        self.bg = 'FitL_s'
+        self.bg = 'Fit Linear'
         self.spectra_min = 0
         self.spectra_max = 50
         self.ties = False
@@ -1162,126 +1150,6 @@ class IRISConvFit(ISISIndirectInelasticConvFit):
 
     def get_reference_files(self):
         return ['II.IRISConvFitSeq.nxs']
-
-#==============================================================================
-
-class ISISIndirectInelasticApplyCorrections(ISISIndirectInelasticBase):
-    '''A base class for the ISIS indirect inelastic Apply Corrections tests
-
-    The workflow is defined in the _run() method, simply
-    define an __init__ method and set the following properties
-    on the object
-    '''
-    # Mark as an abstract class
-    __metaclass__ = ABCMeta
-
-    def _run(self):
-        '''Defines the workflow for the test'''
-        self.tolerance = 1e-4
-
-        LoadNexus(self._sample_workspace + '.nxs', OutputWorkspace=self._sample_workspace)
-        if self._corrections_workspace != '':
-            LoadNexus(self._corrections_workspace + '.nxs', OutputWorkspace=self._corrections_workspace)
-        if self._can_workspace != '':
-            LoadNexus(self._can_workspace + '.nxs', OutputWorkspace=self._can_workspace)
-
-        output_workspaces = self._run_apply_corrections()
-        self.result_names = [output_workspaces['reduced_workspace']]
-
-    def _run_apply_corrections(self):
-        abscorFeeder(self._sample_workspace, self._can_workspace, self._can_geometry,
-                     self._using_corrections, self._corrections_workspace, **self._kwargs)
-        return self._get_output_workspace_names()
-
-    def _get_output_workspace_names(self):
-        """
-        abscorFeeder doesn't return anything, these names should exist in the ADS
-        apply corrections uses the following naming convention:
-        <instrument><sample number>_<analyser><reflection>_<mode>_<can number>
-        """
-
-        if self._can_workspace != '':
-            can_run = mtd[self._can_workspace].getRun()
-            can_run_number = can_run.getProperty('run_number').value
-
-        mode = ''
-        if self._corrections_workspace != '' and self._can_workspace != '':
-            mode = 'Correct_%s' % can_run_number
-        elif self._corrections_workspace != '':
-            mode = 'Corrected'
-        else:
-            mode = 'Subtract_%s' % can_run_number
-
-        workspace_name_stem = self._sample_workspace[:-3] + mode
-
-        output_workspaces = {
-            'reduced_workspace': workspace_name_stem + '_red',
-            'rqw_workspace': workspace_name_stem + '_rqw',
-        }
-
-        if self._can_workspace != '':
-            output_workspaces['result_workspace'] = workspace_name_stem + '_Result'
-
-        return output_workspaces
-
-    def _validate_properties(self):
-        '''Check the object properties are in an expected state to continue'''
-
-#------------------------- IRIS tests -----------------------------------------
-
-class IRISApplyCorrectionsWithCan(ISISIndirectInelasticApplyCorrections):
-    """ Test applying corrections with just a can workspace """
-
-    def __init__(self):
-        ISISIndirectInelasticApplyCorrections.__init__(self)
-
-        self._sample_workspace = 'irs26176_graphite002_red'
-        self._can_workspace = 'irs26173_graphite002_red'
-        self._corrections_workspace = ''
-        self._can_geometry = 'cyl'
-        self._using_corrections = False
-
-        self._kwargs = {'RebinCan':False, 'ScaleOrNotToScale':False,
-                        'factor':1, 'Save':False, 'PlotResult':'None', 'PlotContrib':False}
-
-    def get_reference_files(self):
-        return ['II.IRISApplyCorrectionsWithCan.nxs']
-
-class IRISApplyCorrectionsWithCorrectionsWS(ISISIndirectInelasticApplyCorrections):
-    """ Test applying corrections with a corrections workspace """
-
-    def __init__(self):
-        ISISIndirectInelasticApplyCorrections.__init__(self)
-
-        self._sample_workspace = 'irs26176_graphite002_red'
-        self._can_workspace = ''
-        self._corrections_workspace = 'irs26176_graphite002_cyl_Abs'
-        self._can_geometry = 'cyl'
-        self._using_corrections = True
-
-        self._kwargs = {'RebinCan':False, 'ScaleOrNotToScale':False,
-                        'factor':1, 'Save':False, 'PlotResult':'None', 'PlotContrib':False}
-
-    def get_reference_files(self):
-        return ['II.IRISApplyCorrectionsWithCorrectionsWS.nxs']
-
-class IRISApplyCorrectionsWithBoth(ISISIndirectInelasticApplyCorrections):
-    """ Test applying corrections with both a can and a corrections workspace """
-
-    def __init__(self):
-        ISISIndirectInelasticApplyCorrections.__init__(self)
-
-        self._sample_workspace = 'irs26176_graphite002_red'
-        self._can_workspace = 'irs26173_graphite002_red'
-        self._corrections_workspace = 'irs26176_graphite002_cyl_Abs'
-        self._can_geometry = 'cyl'
-        self._using_corrections = True
-
-        self._kwargs = {'RebinCan':False, 'ScaleOrNotToScale':False,
-                        'factor':1, 'Save':False, 'PlotResult':'None', 'PlotContrib':False}
-
-    def get_reference_files(self):
-        return ['II.IRISApplyCorrections.nxs']
 
 #==============================================================================
 # Transmission Monitor Test

@@ -6,7 +6,7 @@
 from Direct.ReductionWrapper import *
 try:
     import reduce_vars as web_var
-except:
+except ImportError:
     web_var = None
 
 #
@@ -65,7 +65,8 @@ class ReduceLET_OneRep(ReductionWrapper):
 
         # Absolute units reduction properties.
         #prop['monovan_run'] = 17589
-        #prop['sample_mass'] = 10/(94.4/13) # -- this number allows to get approximately the same system test intensities for MAPS as the old test
+        #prop['sample_mass'] = 10/(94.4/13)
+        # -- this number allows to get approximately the same system test intensities for MAPS as the old test
         #prop['sample_rmm'] = 435.96 #
         return prop
 
@@ -100,8 +101,8 @@ class ReduceLET_OneRep(ReductionWrapper):
         sample_ws = 'w1'
         monitors_ws = sample_ws + '_monitors'
         LoadEventNexus(Filename='LET00006278.nxs',OutputWorkspace=sample_ws,
-                     SingleBankPixelsOnly='0',LoadMonitors='1',
-                     MonitorsAsEvents='1')
+                       SingleBankPixelsOnly='0',LoadMonitors='1',
+                       MonitorsAsEvents='1')
         ConjoinWorkspaces(InputWorkspace1=sample_ws, InputWorkspace2=monitors_ws)
         #prop.sample_run = sample_ws
 
@@ -168,7 +169,7 @@ class ReduceLET_MultiRep2015(ReductionWrapper):
         prop['bleed'] = False
         prop['norm_method']='current'
         prop['detector_van_range']=[2,7]
-        prop['background_range'] = [92000,98000] # TOF range for the calculating flat background
+        prop['background_range'] = [90000,95000] # TOF range for the calculating flat background
         prop['hardmaskOnly']='LET_hard.msk' # diag does not work well on LET. At present only use a hard mask RIB has created
 
         prop['check_background']=True
@@ -244,12 +245,12 @@ class ReduceLET_MultiRep2015(ReductionWrapper):
 #----------------------------------------------------------------------------------------------------------------------
 
 if __name__=="__main__":
-    maps_dir = r'd:\Data\MantidDevArea\Datastore\DataCopies\Testing\Data\SystemTest'
-    data_dir = r'd:\Data\Mantid_Testing\15_03_01'
-    ref_data_dir = r'd:\Data\MantidDevArea\Datastore\DataCopies\Testing\SystemTests\tests\analysis\reference'
-    config.setDataSearchDirs('{0};{1};{2}'.format(data_dir,maps_dir,ref_data_dir))
+    #maps_dir = r'd:\Data\MantidDevArea\Datastore\DataCopies\Testing\Data\SystemTest'
+    #data_dir = r'd:\Data\Mantid_Testing\15_03_01'
+    #ref_data_dir = r'd:\Data\MantidDevArea\Datastore\DataCopies\Testing\SystemTests\tests\analysis\reference'
+    #config.setDataSearchDirs('{0};{1};{2}'.format(data_dir,maps_dir,ref_data_dir))
     #config.appendDataSearchDir('d:/Data/Mantid_GIT/Test/AutoTestData')
-    config['defaultsave.directory'] = data_dir # folder to save resulting spe/nxspe files. Defaults are in
+    #config['defaultsave.directory'] = data_dir # folder to save resulting spe/nxspe files. Defaults are in
 
     # execute stuff from Mantid
     rd =ReduceLET_MultiRep2015()

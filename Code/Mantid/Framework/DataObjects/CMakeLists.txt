@@ -13,17 +13,12 @@ set ( SRC_FILES
 	src/EventWorkspaceMRU.cpp
 	src/Events.cpp
 	src/FakeMD.cpp
+	src/FractionalRebinning.cpp
 	src/GroupingWorkspace.cpp
 	src/Histogram1D.cpp
-	src/MDBin.cpp
-	src/MDBox.cpp
-	src/MDBoxBase.cpp
 	src/MDBoxFlatTree.cpp
-	src/MDBoxIterator.cpp
 	src/MDBoxSaveable.cpp
 	src/MDEventFactory.cpp
-	src/MDEventWorkspace.cpp
-	src/MDGridBox.cpp
 	src/MDHistoWorkspace.cpp
 	src/MDHistoWorkspaceIterator.cpp
 	src/MDLeanEvent.cpp
@@ -41,6 +36,7 @@ set ( SRC_FILES
 	src/PeakShapeSphericalFactory.cpp
 	src/PeaksWorkspace.cpp
 	src/RebinnedOutput.cpp
+	src/ReflectometryTransform.cpp
 	src/SpecialWorkspace2D.cpp
 	src/SplittersWorkspace.cpp
 	src/TableColumn.cpp
@@ -60,6 +56,10 @@ set ( INC_FILES
 	inc/MantidDataObjects/AffineMatrixParameter.h
 	inc/MantidDataObjects/AffineMatrixParameterParser.h
 	inc/MantidDataObjects/BoxControllerNeXusIO.h
+	inc/MantidDataObjects/CalculateReflectometry.h
+    inc/MantidDataObjects/CalculateReflectometryKiKf.h
+	inc/MantidDataObjects/CalculateReflectometryQxQz.h
+    inc/MantidDataObjects/CalculateReflectometryP.h
 	inc/MantidDataObjects/CoordTransformAffine.h
 	inc/MantidDataObjects/CoordTransformAffineParser.h
 	inc/MantidDataObjects/CoordTransformAligned.h
@@ -72,19 +72,26 @@ set ( INC_FILES
 	inc/MantidDataObjects/EventWorkspaceMRU.h
 	inc/MantidDataObjects/Events.h
 	inc/MantidDataObjects/FakeMD.h
+	inc/MantidDataObjects/FractionalRebinning.h
 	inc/MantidDataObjects/GroupingWorkspace.h
 	inc/MantidDataObjects/Histogram1D.h
 	inc/MantidDataObjects/MDBin.h
+	inc/MantidDataObjects/MDBin.tcc
 	inc/MantidDataObjects/MDBox.h
+	inc/MantidDataObjects/MDBox.tcc
 	inc/MantidDataObjects/MDBoxBase.h
+	inc/MantidDataObjects/MDBoxBase.tcc
 	inc/MantidDataObjects/MDBoxFlatTree.h
 	inc/MantidDataObjects/MDBoxIterator.h
+	inc/MantidDataObjects/MDBoxIterator.tcc
 	inc/MantidDataObjects/MDBoxSaveable.h
 	inc/MantidDataObjects/MDDimensionStats.h
 	inc/MantidDataObjects/MDEventFactory.h
 	inc/MantidDataObjects/MDEventInserter.h
 	inc/MantidDataObjects/MDEventWorkspace.h
+	inc/MantidDataObjects/MDEventWorkspace.tcc
 	inc/MantidDataObjects/MDGridBox.h
+	inc/MantidDataObjects/MDGridBox.tcc
 	inc/MantidDataObjects/MDHistoWorkspace.h
 	inc/MantidDataObjects/MDHistoWorkspaceIterator.h
 	inc/MantidDataObjects/MDLeanEvent.h
@@ -103,6 +110,7 @@ set ( INC_FILES
 	inc/MantidDataObjects/PeakShapeSphericalFactory.h
 	inc/MantidDataObjects/PeaksWorkspace.h
 	inc/MantidDataObjects/RebinnedOutput.h
+	inc/MantidDataObjects/ReflectometryTransform.h
 	inc/MantidDataObjects/SpecialWorkspace2D.h
 	inc/MantidDataObjects/SplittersWorkspace.h
 	inc/MantidDataObjects/TableColumn.h
@@ -110,6 +118,7 @@ set ( INC_FILES
 	inc/MantidDataObjects/VectorColumn.h
 	inc/MantidDataObjects/Workspace2D.h
 	inc/MantidDataObjects/WorkspaceSingleValue.h
+
 )
 
 set ( TEST_FILES
@@ -178,6 +187,12 @@ if(UNITY_BUILD)
   enable_unity_build(DataObjects SRC_FILES SRC_UNITY_IGNORE_FILES 10)
 endif(UNITY_BUILD)
 
+if (COVERALLS)
+    foreach( loop_var ${SRC_FILES} ${INC_FILES})
+      set_property(GLOBAL APPEND PROPERTY COVERAGE_SRCS "${CMAKE_CURRENT_SOURCE_DIR}/${loop_var}")
+    endforeach(loop_var)
+endif()
+
 # Use a precompiled header where they are supported
 enable_precompiled_headers( inc/MantidDataObjects/PrecompiledHeader.h SRC_FILES )
 # Add the target for this directory
@@ -199,7 +214,7 @@ endif ()
 # Add to the 'Framework' group in VS
 set_property ( TARGET DataObjects PROPERTY FOLDER "MantidFramework" )
 
-target_link_libraries ( DataObjects ${MANTIDLIBS} )
+target_link_libraries ( DataObjects LINK_PRIVATE ${TCMALLOC_LIBRARIES_LINKTIME} ${MANTIDLIBS} ${JSONCPP_LIBRARIES} ${NEXUS_LIBRARIES} )
 
 # Add the unit tests directory
 add_subdirectory ( test )
@@ -208,10 +223,5 @@ add_subdirectory ( test )
 # Installation settings
 ###########################################################################
 
-if ( WIN32 )
-  install ( TARGETS DataObjects ${SYSTEM_PACKAGE_TARGET} DESTINATION ${PLUGINS_DIR} )
-else()
-  install ( TARGETS DataObjects DESTINATION ${LIB_DIR} )
-endif ()
-
+install ( TARGETS DataObjects ${SYSTEM_PACKAGE_TARGET} DESTINATION ${LIB_DIR} )
 

@@ -1,11 +1,14 @@
 #include "MantidMDAlgorithms/MDWSDescription.h"
 
+#include "MantidAPI/MatrixWorkspace.h"
+#include "MantidAPI/IMDEventWorkspace.h"
 #include "MantidAPI/NumericAxis.h"
 
 #include "MantidKernel/TimeSeriesProperty.h"
 #include "MantidKernel/Strings.h"
 
 #include "MantidMDAlgorithms/MDTransfFactory.h"
+#include "MantidGeometry/MDGeometry/MDFrameFactory.h"
 
 #include <boost/lexical_cast.hpp>
 
@@ -67,7 +70,7 @@ void MDWSDescription::buildFromMatrixWS(
 
   // check and get energy conversion mode;
 
-  m_Emode = Kernel::DeltaEMode().fromString(dEMode);
+  m_Emode = Kernel::DeltaEMode::fromString(dEMode);
 
   // get raw pointer to Q-transformation (do not delete this pointer, its held
   // by MDTransfFactory!)
@@ -326,7 +329,7 @@ bool MDWSDescription::isPowder() const {
 
 /** Returns symbolic representation of current Emode */
 std::string MDWSDescription::getEModeStr() const {
-  return Kernel::DeltaEMode().asString(m_Emode);
+  return Kernel::DeltaEMode::asString(m_Emode);
 }
 
 /** function extracts the coordinates from additional workspace properties and
@@ -422,10 +425,36 @@ void MDWSDescription::setCoordinateSystem(
   m_coordinateSystem = system;
 }
 
+/**
+ * create the frame
+ * @param d : dimension index to get the frame for.
+ * @return MDFrame
+ */
+Geometry::MDFrame_uptr MDWSDescription::getFrame(size_t d) const{
+    auto factory = Geometry::makeMDFrameFactoryChain();
+    return factory->create(Geometry::MDFrameArgument(m_frameKey, m_DimUnits[d]));
+}
+
+/**
+ * Sets the frame.
+ * @param frameKey : Frame key desired.
+ */
+void MDWSDescription::setFrame(const std::string frameKey){
+    m_frameKey = frameKey;
+}
+
 /// @return the special coordinate system if any.
 Mantid::Kernel::SpecialCoordinateSystem
 MDWSDescription::getCoordinateSystem() const {
   return m_coordinateSystem;
+}
+
+/**
+ * Is the algorithm running in Q3D mode?
+ * @return True only if in Q3D mode
+ */
+bool MDWSDescription::isQ3DMode() const{
+    return this->AlgID.compare("Q3D") == 0;
 }
 
 } // end namespace MDAlgorithms

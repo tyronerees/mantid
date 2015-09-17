@@ -5,6 +5,8 @@
 #include "MockObjects.h"
 
 #include "MantidAPI/AnalysisDataService.h"
+#include "MantidAPI/IMDHistoWorkspace.h"
+#include "MantidAPI/ITableWorkspace.h"
 #include "MantidTestHelpers/MDEventsTestHelper.h"
 #include "MantidVatesAPI/FilteringUpdateProgressAction.h"
 #include "MantidVatesAPI/MDHWInMemoryLoadingPresenter.h"
@@ -30,7 +32,7 @@ private:
   };
 
   // Helper method. Generates and returns a valid IMDHistoWorkspace
-  static Mantid::API::Workspace_sptr getGoodWorkspace()
+  Mantid::API::Workspace_sptr getGoodWorkspace()
   {
     Mantid::DataObjects::MDHistoWorkspace_sptr ws = makeFakeMDHistoWorkspace(1.0, 4, 5, 1.0, 0.1,"MD_HISTO_WS");
     return ws;

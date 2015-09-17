@@ -509,7 +509,7 @@ void EQSANSLoad::exec() {
         loadAlg->setProperty("FilterByTofMax", m_high_TOF_cut);
     }
     loadAlg->execute();
-    IEventWorkspace_sptr dataWS_asWks = loadAlg->getProperty("OutputWorkspace");
+    Workspace_sptr dataWS_asWks = loadAlg->getProperty("OutputWorkspace");
     dataWS = boost::dynamic_pointer_cast<MatrixWorkspace>(dataWS_asWks);
 
     // Get monitor workspace as necessary
@@ -593,10 +593,7 @@ void EQSANSLoad::exec() {
   int run_number = 0;
   std::string config_file = "";
   if (dataWS->run().hasProperty("run_number")) {
-    Mantid::Kernel::Property *prop = dataWS->run().getProperty("run_number");
-    Mantid::Kernel::PropertyWithValue<std::string> *dp =
-        dynamic_cast<Mantid::Kernel::PropertyWithValue<std::string> *>(prop);
-    const std::string run_str = *dp;
+    const std::string run_str = dataWS->run().getPropertyValueAsType<std::string>("run_number");
     Poco::NumberParser::tryParse(run_str, run_number);
     // Find a proper config file
     config_file = findConfigFile(run_number);
