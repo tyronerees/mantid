@@ -1,6 +1,8 @@
 # This is mainly here so you don't get a complaint when running cmake
 cmake_minimum_required (VERSION 3.5)
 
+enable_language(Fortran)
+
 # Add the path to our custom 'find' modules
 set ( CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../buildconfig/CMake")
 

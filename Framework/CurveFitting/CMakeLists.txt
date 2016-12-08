@@ -38,6 +38,7 @@ set ( SRC_FILES
 	src/FuncMinimizers/LevenbergMarquardtMDMinimizer.cpp
 	src/FuncMinimizers/LevenbergMarquardtMinimizer.cpp
 	src/FuncMinimizers/MoreSorensenMinimizer.cpp
+	src/FuncMinimizers/RALFitMinimizer.cpp
 	src/FuncMinimizers/PRConjugateGradientMinimizer.cpp
 	src/FuncMinimizers/SimplexMinimizer.cpp
 	src/FuncMinimizers/SteepestDescentMinimizer.cpp
@@ -188,6 +189,7 @@ set ( INC_FILES
 	inc/MantidCurveFitting/FuncMinimizers/LevenbergMarquardtMDMinimizer.h
 	inc/MantidCurveFitting/FuncMinimizers/LevenbergMarquardtMinimizer.h
 	inc/MantidCurveFitting/FuncMinimizers/MoreSorensenMinimizer.h
+	inc/MantidCurveFitting/FuncMinimizers/RALFitMinimizer.h
 	inc/MantidCurveFitting/FuncMinimizers/PRConjugateGradientMinimizer.h
 	inc/MantidCurveFitting/FuncMinimizers/SimplexMinimizer.h
 	inc/MantidCurveFitting/FuncMinimizers/SteepestDescentMinimizer.h
