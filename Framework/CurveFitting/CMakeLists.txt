@@ -430,6 +430,11 @@ set ( TEST_FILES
 	SpecialFunctionSupportTest.h
 )
 
+set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fPIC")
+include_directories(${CMAKE_BINARY_DIR}/Framework/CurveFitting/libRALFit ${CMAKE_BINARY_DIR}/../Framework/CurveFitting/libRALFit/include) # BINARY_DIR for generated .mod
+add_subdirectory(libRALFit)
+
+
 if (COVERALLS)
     foreach( loop_var ${SRC_FILES} ${INC_FILES})
       set_property(GLOBAL APPEND PROPERTY COVERAGE_SRCS "${CMAKE_CURRENT_SOURCE_DIR}/${loop_var}")
@@ -445,6 +450,7 @@ endif(UNITY_BUILD)
 enable_precompiled_headers( inc/MantidCurveFitting/PrecompiledHeader.h SRC_FILES )
 # Add the target for this directory
 add_library ( CurveFitting ${SRC_FILES} ${INC_FILES})
+
 # Set the name of the generated library
 set_target_properties ( CurveFitting PROPERTIES OUTPUT_NAME MantidCurveFitting 
                                      COMPILE_DEFINITIONS IN_MANTID_CURVEFITTING )
@@ -458,7 +464,8 @@ set_property ( TARGET CurveFitting PROPERTY FOLDER "MantidFramework" )
 
 include_directories ( inc )
 
-target_link_libraries ( CurveFitting LINK_PRIVATE ${TCMALLOC_LIBRARIES_LINKTIME} ${MANTIDLIBS} ${GSL_LIBRARIES} )
+set(CMAKE_EXE_LINKER_FLAGS "-Wl,-export-dynamic")
+target_link_libraries ( CurveFitting LINK_PRIVATE ${TCMALLOC_LIBRARIES_LINKTIME}  ${MANTIDLIBS} ral_nlls ${GSL_LIBRARIES} -lm -ldl)
 
 # Add the unit tests directory
 add_subdirectory ( test )

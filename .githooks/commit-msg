@@ -52,14 +52,14 @@ msg_is_revert() {
 }
 
 # This method taken from http://github.com/stephenh/git-central
-msg_trac() {
-	grep -i '\(\(re\|refs\|qa\) #[0-9]\+\)\|\(no ticket\)' "$commit_msg" > /dev/null
-
-	if [ $? -ne 0 ]
-	then
-		die 'Please reference a trac ticket via "Re(fs)"'
-	fi
-}
+#msg_trac() {
+#	grep -i '\(\(re\|refs\|qa\) #[0-9]\+\)\|\(no ticket\)' "$commit_msg" > /dev/null
+#
+#	if [ $? -ne 0 ]
+#	then
+#		die 'Please reference a trac ticket via "Re(fs)"'
+#	fi
+#}
 
 msg_first() {
 	len=$(echo -n "$line" | wc -c)
