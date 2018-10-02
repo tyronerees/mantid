@@ -1,15 +1,15 @@
-//
 #include "MantidKernel/DeltaEMode.h"
-#include "MantidKernel/Exception.h"
 
-#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <map>
 #include <sstream>
+#include <stdexcept>
+#include <utility>
 
 namespace Mantid {
 namespace Kernel {
 namespace // unnamed
-    {
+{
 struct ModeIndex {
   std::map<DeltaEMode::Type, std::string> index{
       {DeltaEMode::Elastic, "Elastic"},
@@ -22,7 +22,7 @@ ModeIndex &typeStringLookup() {
   static ModeIndex typeLookup;
   return typeLookup;
 }
-}
+} // namespace
 
 /**
  * Returns the string list of available modes
@@ -32,12 +32,10 @@ const std::vector<std::string> DeltaEMode::availableTypes() {
   const ModeIndex &lookup = typeStringLookup();
   std::vector<std::string> modes;
   modes.reserve(lookup.index.size());
-  size_t index(0);
   for (const auto &iter : lookup.index) {
     if (iter.first == DeltaEMode::Undefined)
       continue;
     modes.push_back(iter.second);
-    ++index;
   }
   return modes;
 }
@@ -76,5 +74,5 @@ DeltaEMode::Type DeltaEMode::fromString(const std::string &modeStr) {
   throw std::invalid_argument(
       "DeltaEMode::fromString - Unknown energy transfer mode: " + modeStr);
 }
-}
-}
+} // namespace Kernel
+} // namespace Mantid

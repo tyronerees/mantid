@@ -22,10 +22,9 @@
   File change history is stored at: <https://github.com/mantidproject/mantid>.
   Code Documentation is available at: <http://doxygen.mantidproject.org>
 */
-#include "MantidMDAlgorithms/DllConfig.h"
 #include "MantidKernel/DynamicFactory.h"
-#include "MantidKernel/ClassMacros.h"
 #include "MantidKernel/SingletonHolder.h"
+#include "MantidMDAlgorithms/DllConfig.h"
 
 namespace Mantid {
 
@@ -43,7 +42,7 @@ class MANTID_MDALGORITHMS_DLL MDResolutionConvolutionFactoryImpl
     : public Kernel::DynamicFactory<MDResolutionConvolution> {
 private:
   /// Base-class type
-  typedef Kernel::DynamicFactory<MDResolutionConvolution> BaseClass;
+  using BaseClass = Kernel::DynamicFactory<MDResolutionConvolution>;
 
 public:
   /// A create method to ensure the type is initialized properly
@@ -51,12 +50,19 @@ public:
   createConvolution(const std::string &name, const std::string &fgModelName,
                     const API::IFunctionMD &fitFunction);
 
+  /// Disable copy operator
+  MDResolutionConvolutionFactoryImpl(
+      const MDResolutionConvolutionFactoryImpl &) = delete;
+
+  /// Disable assignment operator
+  MDResolutionConvolutionFactoryImpl &
+  operator=(const MDResolutionConvolutionFactoryImpl &) = delete;
+
 private:
   /// Policy needs to access constructor
   friend struct Kernel::CreateUsingNew<MDResolutionConvolutionFactoryImpl>;
   /// Default constructor. Private for singleton holder
   MDResolutionConvolutionFactoryImpl();
-  DISABLE_COPY_AND_ASSIGN(MDResolutionConvolutionFactoryImpl)
 
   // Do not allow the default create & createUnwrapped to be called
   using BaseClass::create;
@@ -64,16 +70,16 @@ private:
 };
 
 /// Typedef singleton instance to MDResolutionConvolutionFactory
-typedef Kernel::SingletonHolder<MDResolutionConvolutionFactoryImpl>
-    MDResolutionConvolutionFactory;
-}
-}
+using MDResolutionConvolutionFactory =
+    Kernel::SingletonHolder<MDResolutionConvolutionFactoryImpl>;
+} // namespace MDAlgorithms
+} // namespace Mantid
 
 namespace Mantid {
 namespace Kernel {
 EXTERN_MANTID_MDALGORITHMS template class MANTID_MDALGORITHMS_DLL Kernel::
     SingletonHolder<Mantid::MDAlgorithms::MDResolutionConvolutionFactoryImpl>;
 }
-}
+} // namespace Mantid
 
 #endif /* MANTID_MDALGORITHMS_MDRESOLUTIONCONVOLUTIONFACTORY_H_ */

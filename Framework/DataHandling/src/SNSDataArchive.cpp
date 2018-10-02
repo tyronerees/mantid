@@ -3,11 +3,11 @@
 //----------------------------------------------------------------------
 #include <sstream>
 
-#include "MantidKernel/Logger.h"
-#include "MantidKernel/InternetHelper.h"
-#include "MantidKernel/Exception.h"
-#include "MantidDataHandling/SNSDataArchive.h"
 #include "MantidAPI/ArchiveSearchFactory.h"
+#include "MantidDataHandling/SNSDataArchive.h"
+#include "MantidKernel/Exception.h"
+#include "MantidKernel/InternetHelper.h"
+#include "MantidKernel/Logger.h"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -16,8 +16,8 @@
 #include <Poco/DOM/DOMParser.h>
 #include <Poco/DOM/Document.h>
 #include <Poco/DOM/Element.h>
-#include <Poco/SAX/InputSource.h>
 #include <Poco/DOM/NodeList.h>
+#include <Poco/SAX/InputSource.h>
 
 namespace Mantid {
 namespace DataHandling {
@@ -27,7 +27,7 @@ Kernel::Logger g_log("SNSDataArchive");
 /// Base url for restful web survice
 const std::string
     BASE_URL("http://icat.sns.gov:2080/icat-rest-ws/datafile/filename/");
-}
+} // namespace
 
 DECLARE_ARCHIVESEARCH(SNSDataArchive, SNSDataSearch)
 
@@ -39,6 +39,14 @@ DECLARE_ARCHIVESEARCH(SNSDataArchive, SNSDataSearch)
 std::string
 SNSDataArchive::getArchivePath(const std::set<std::string> &filenames,
                                const std::vector<std::string> &exts) const {
+  g_log.debug() << "getArchivePath([ ";
+  for (const auto &iter : filenames)
+    g_log.debug() << iter << " ";
+  g_log.information() << "], [ ";
+  for (const auto &iter : exts)
+    g_log.debug() << iter << " ";
+  g_log.debug() << "])\n";
+
   auto iter = filenames.cbegin();
   std::string filename = *iter;
 

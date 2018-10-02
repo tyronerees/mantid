@@ -2,13 +2,13 @@
 #define MANTID_KERNEL_THREADPOOLRUNNABLE_H_
 
 #include "MantidKernel/DllConfig.h"
-#include "MantidKernel/ProgressBase.h"
-#include "MantidKernel/ThreadScheduler.h"
 #include <Poco/Runnable.h>
-#include <Poco/Thread.h>
 
 namespace Mantid {
 namespace Kernel {
+// Forward declares
+class ProgressBase;
+class ThreadScheduler;
 
 /** ThreadPoolRunnable : Class used by thread pool (and POCO) to
  * run inside a thread.
@@ -42,7 +42,7 @@ private:
   double m_waitSec;
 };
 
-} // namespace Mantid
 } // namespace Kernel
+} // namespace Mantid
 
 #endif /* MANTID_KERNEL_THREADPOOLRUNNABLE_H_ */

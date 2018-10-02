@@ -1,24 +1,24 @@
 #include <sstream>
 
-#include "MantidDataHandling/LoadDetectorsGroupingFile.h"
-#include "MantidKernel/System.h"
 #include "MantidAPI/FileProperty.h"
-#include "MantidKernel/ListValidator.h"
-#include "MantidDataObjects/Workspace2D.h"
-#include "MantidKernel/Strings.h"
-#include "MantidGeometry/Instrument.h"
-#include "MantidGeometry/ICompAssembly.h"
-#include "MantidGeometry/IDTypes.h"
 #include "MantidAPI/Run.h"
 #include "MantidAPI/SpectraAxis.h"
+#include "MantidDataHandling/LoadDetectorsGroupingFile.h"
+#include "MantidDataObjects/Workspace2D.h"
+#include "MantidGeometry/ICompAssembly.h"
+#include "MantidGeometry/IDTypes.h"
+#include "MantidGeometry/Instrument.h"
+#include "MantidKernel/ListValidator.h"
+#include "MantidKernel/OptionalBool.h"
+#include "MantidKernel/Strings.h"
+#include "MantidKernel/System.h"
 
-#include <Poco/DOM/Document.h>
 #include <Poco/DOM/DOMParser.h>
 #include <Poco/DOM/Element.h>
+#include <Poco/DOM/NamedNodeMap.h>
 #include <Poco/DOM/NodeFilter.h>
 #include <Poco/DOM/NodeIterator.h>
 #include <Poco/DOM/NodeList.h>
-#include <Poco/DOM/NamedNodeMap.h>
 #include <Poco/Exception.h>
 #include <Poco/Path.h>
 #include <Poco/String.h>
@@ -53,7 +53,7 @@ void LoadDetectorsGroupingFile::exec() {
 
   // The number of steps depends on the type of input file
   // Set them to zero for the moment
-  Progress progress(this, 0, 1, 0);
+  Progress progress(this, 0.0, 1.0, 0);
 
   if (ext == "xml") {
     // Deal with file as xml
@@ -230,7 +230,7 @@ void LoadDetectorsGroupingFile::setByComponents() {
           auto itx = indexmap.find(detid);
           if (itx != indexmap.end()) {
             size_t wsindex = itx->second;
-            m_groupWS->dataY(wsindex)[0] = componentMap.first;
+            m_groupWS->mutableY(wsindex)[0] = componentMap.first;
           } else {
             g_log.error() << "Pixel w/ ID = " << detid
                           << " Cannot Be Located\n";
@@ -280,7 +280,7 @@ void LoadDetectorsGroupingFile::setByDetectors() {
 
       if (itx != indexmap.end()) {
         size_t wsindex = itx->second;
-        m_groupWS->dataY(wsindex)[0] = detectorMap.first;
+        m_groupWS->mutableY(wsindex)[0] = detectorMap.first;
       } else {
         g_log.error() << "Pixel w/ ID = " << detid << " Cannot Be Located\n";
       }
@@ -319,7 +319,7 @@ void LoadDetectorsGroupingFile::setBySpectrumNos() {
                         << m_groupWS->getNumberHistograms() << '\n';
         } else {
           // Finally set the group workspace
-          m_groupWS->dataY(wsindex)[0] = groupid;
+          m_groupWS->mutableY(wsindex)[0] = groupid;
         } // IF-ELSE: ws index out of range
       }   // IF-ELSE: spectrum No has an entry
     }     // FOR: each spectrum No
@@ -380,9 +380,8 @@ void LoadDetectorsGroupingFile::generateNoInstrumentGroupWorkspace() {
 LoadGroupXMLFile::LoadGroupXMLFile()
     : m_instrumentName(""), m_userGiveInstrument(false), m_date(""),
       m_userGiveDate(false), m_description(""), m_userGiveDescription(false),
-      m_pDoc(nullptr), m_pRootElem(nullptr), m_groupComponentsMap(),
-      m_groupDetectorsMap(), m_groupSpectraMap(), m_startGroupID(1),
-      m_groupNamesMap() {}
+      m_pDoc(), m_groupComponentsMap(), m_groupDetectorsMap(),
+      m_groupSpectraMap(), m_startGroupID(1), m_groupNamesMap() {}
 
 void LoadGroupXMLFile::loadXMLFile(std::string xmlfilename) {
 
@@ -406,9 +405,7 @@ void LoadGroupXMLFile::initializeXMLParser(const std::string &filename) {
   } catch (...) {
     throw Kernel::Exception::FileError("Unable to parse File:", filename);
   }
-  // Get pointer to root element
-  m_pRootElem = m_pDoc->documentElement();
-  if (!m_pRootElem->hasChildNodes()) {
+  if (!m_pDoc->documentElement()->hasChildNodes()) {
     throw Kernel::Exception::InstrumentDefinitionError(
         "No root element in XML instrument file", filename);
   }
@@ -438,7 +435,7 @@ void LoadGroupXMLFile::parseXML() {
 
     const Poco::XML::XMLString value = pNode->innerText();
 
-    if (pNode->nodeName().compare("detector-grouping") == 0) {
+    if (pNode->nodeName() == "detector-grouping") {
       // Node "detector-grouping" (first level)
 
       // Optional instrument name
@@ -453,7 +450,7 @@ void LoadGroupXMLFile::parseXML() {
           getAttributeValueByName(pNode, "description", m_userGiveDescription);
 
     } // "detector-grouping"
-    else if (pNode->nodeName().compare("group") == 0) {
+    else if (pNode->nodeName() == "group") {
       // Group Node:  get ID, set map
       // a) Find group ID
       bool foundid;
@@ -471,7 +468,7 @@ void LoadGroupXMLFile::parseXML() {
       if (autogroupid) {
         curgroupid++;
       } else {
-        curgroupid = atoi(idstr.c_str());
+        curgroupid = std::stoi(idstr);
       }
 
       // b) Set in map
@@ -498,7 +495,7 @@ void LoadGroupXMLFile::parseXML() {
         m_groupSpectraMap[curgroupid] = tempspectrumids;
       }
     } // "group"
-    else if (pNode->nodeName().compare("component") == 0) {
+    else if (pNode->nodeName() == "component") {
       // Node "component" = value
       auto it = m_groupComponentsMap.find(curgroupid);
       if (it == m_groupComponentsMap.end()) {
@@ -511,9 +508,9 @@ void LoadGroupXMLFile::parseXML() {
         std::string val_value =
             this->getAttributeValueByName(pNode, "val", valfound);
         std::string finalvalue;
-        if (valfound && value.size() > 0)
-          finalvalue = value + ", " + val_value;
-        else if (value.size() == 0)
+        if (valfound && !value.empty())
+          finalvalue.append(value).append(", ").append(val_value);
+        else if (value.empty())
           finalvalue = val_value;
         else
           finalvalue = value;
@@ -521,7 +518,7 @@ void LoadGroupXMLFile::parseXML() {
       }
 
     } // Component
-    else if (pNode->nodeName().compare("detids") == 0) {
+    else if (pNode->nodeName() == "detids") {
       // Node "detids"
       auto it = m_groupDetectorsMap.find(curgroupid);
       if (it == m_groupDetectorsMap.end()) {
@@ -534,9 +531,9 @@ void LoadGroupXMLFile::parseXML() {
         std::string val_value =
             this->getAttributeValueByName(pNode, "val", valfound);
         std::string finalvalue;
-        if (valfound && value.size() > 0)
-          finalvalue = value + ", " + val_value;
-        else if (value.size() == 0)
+        if (valfound && !value.empty())
+          finalvalue.append(value).append(", ").append(val_value);
+        else if (value.empty())
           finalvalue = val_value;
         else
           finalvalue = value;
@@ -546,7 +543,7 @@ void LoadGroupXMLFile::parseXML() {
                           parsedRange.end());
       }
     } // "detids"
-    else if (pNode->nodeName().compare("ids") == 0) {
+    else if (pNode->nodeName() == "ids") {
       // Node ids: for spectrum number
       auto it = m_groupSpectraMap.find(curgroupid);
       if (it == m_groupSpectraMap.end()) {
@@ -559,9 +556,9 @@ void LoadGroupXMLFile::parseXML() {
         std::string val_value =
             this->getAttributeValueByName(pNode, "val", valfound);
         std::string finalvalue;
-        if (valfound && value.size() > 0)
-          finalvalue = value + ", " + val_value;
-        else if (value.size() == 0)
+        if (valfound && !value.empty())
+          finalvalue.append(value).append(", ").append(val_value);
+        else if (value.empty())
           finalvalue = val_value;
         else
           finalvalue = value;
@@ -592,7 +589,7 @@ std::string LoadGroupXMLFile::getAttributeValueByName(Poco::XML::Node *pNode,
   // 2. Loop to find
   for (unsigned long i = 0; i < att->length(); ++i) {
     Poco::XML::Node *cNode = att->item(i);
-    if (cNode->localName().compare(attributename) == 0) {
+    if (cNode->localName() == attributename) {
       value = cNode->getNodeValue();
       found = true;
       break;
@@ -722,5 +719,5 @@ bool LoadGroupMapFile::nextDataLine(std::string &line) {
   return false;
 }
 
-} // namespace Mantid
 } // namespace DataHandling
+} // namespace Mantid

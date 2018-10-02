@@ -43,7 +43,7 @@ SampleEnvironmentSpec::buildEnvironment(const std::string &canID) const {
 }
 
 /**
-* Adds a can definition to the known list
+ * Adds a can definition to the known list
  * @param can A pointer to a Container object
  * @throws std::invalid::argument if the id is empty
  */
@@ -60,7 +60,7 @@ void SampleEnvironmentSpec::addContainer(const Container_const_sptr &can) {
  * Add a non-can component to the specification
  * @param component A pointer to a Object
  */
-void SampleEnvironmentSpec::addComponent(const Object_const_sptr &component) {
+void SampleEnvironmentSpec::addComponent(const IObject_const_sptr &component) {
   m_components.emplace_back(component);
 }
 

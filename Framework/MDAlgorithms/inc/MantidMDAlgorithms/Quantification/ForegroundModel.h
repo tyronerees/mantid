@@ -62,6 +62,12 @@ public:
   /// Destructor
   ~ForegroundModel() override;
 
+  /// Disable copy operator
+  ForegroundModel(const ForegroundModel &) = delete;
+
+  /// Disable assignment operator
+  ForegroundModel &operator=(const ForegroundModel &) = delete;
+
   /// Function category
   const std::string category() const override { return "Quantification"; }
 
@@ -107,8 +113,6 @@ protected:
                            double &arlu2, double &arlu3);
 
 private:
-  DISABLE_COPY_AND_ASSIGN(ForegroundModel)
-
   /// Required by the interface
   void function(const Mantid::API::FunctionDomain &,
                 Mantid::API::FunctionValues &) const override {}
@@ -131,11 +135,11 @@ private:
 };
 
 /// boost::shared_ptr typedef
-typedef boost::shared_ptr<ForegroundModel> ForegroundModel_sptr;
+using ForegroundModel_sptr = boost::shared_ptr<ForegroundModel>;
 /// boost::shared_ptr to const typedef
-typedef boost::shared_ptr<const ForegroundModel> ForegroundModel_const_sptr;
-}
-}
+using ForegroundModel_const_sptr = boost::shared_ptr<const ForegroundModel>;
+} // namespace MDAlgorithms
+} // namespace Mantid
 
 /*
  * Register a class into the factory using a global RegistrationHelper

@@ -1,22 +1,21 @@
-//----------------------------------------------------------------------
-// Includes
-//----------------------------------------------------------------------
-
 #include "MantidAlgorithms/GeneratePeaks.h"
-#include "MantidAPI/WorkspaceProperty.h"
-#include "MantidAPI/WorkspaceFactory.h"
-#include "MantidAPI/FunctionFactory.h"
-#include "MantidAPI/IBackgroundFunction.h"
-#include "MantidKernel/ListValidator.h"
 #include "MantidAPI/Column.h"
 #include "MantidAPI/FunctionDomain1D.h"
+#include "MantidAPI/FunctionFactory.h"
 #include "MantidAPI/FunctionValues.h"
-#include "MantidKernel/ArrayProperty.h"
-#include "MantidKernel/RebinParamsValidator.h"
+#include "MantidAPI/IBackgroundFunction.h"
 #include "MantidAPI/SpectraAxis.h"
+#include "MantidAPI/WorkspaceFactory.h"
+#include "MantidAPI/WorkspaceProperty.h"
+#include "MantidDataObjects/WorkspaceCreation.h"
+#include "MantidIndexing/IndexInfo.h"
+#include "MantidKernel/ArrayProperty.h"
+#include "MantidKernel/ListValidator.h"
+#include "MantidKernel/RebinParamsValidator.h"
+#include "MantidTypes/SpectrumDefinition.h"
 
-#include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
 
 using namespace Mantid::Kernel;
 using namespace Mantid::API;
@@ -65,9 +64,12 @@ void GeneratePeaks::init() {
                   "mapping to PeakParameterNames list. ");
 
   // Background properties
-  std::vector<std::string> bkgdtypes{"Auto", "Flat (A0)", "Linear (A0, A1)",
-                                     "Quadratic (A0, A1, A2)", "Flat"
-                                                               "Linear",
+  std::vector<std::string> bkgdtypes{"Auto",
+                                     "Flat (A0)",
+                                     "Linear (A0, A1)",
+                                     "Quadratic (A0, A1, A2)",
+                                     "Flat"
+                                     "Linear",
                                      "Quadratic"};
   declareProperty("BackgroundType", "Linear",
                   boost::make_shared<StringListValidator>(bkgdtypes),
@@ -163,12 +165,12 @@ void GeneratePeaks::exec() {
 
 //----------------------------------------------------------------------------------------------
 /** Process algorithm properties
-  */
+ */
 void GeneratePeaks::processAlgProperties(std::string &peakfunctype,
                                          std::string &bkgdfunctype) {
   // Function parameters
   std::string paramwsname = getPropertyValue("PeakParametersWorkspace");
-  if (paramwsname.size() > 0) {
+  if (!paramwsname.empty()) {
     // Using parameter table workspace has a higher priority
     m_useFuncParamWS = true;
     m_funcParamWS = getProperty("PeakParametersWorkspace");
@@ -194,14 +196,13 @@ void GeneratePeaks::processAlgProperties(std::string &peakfunctype,
     bkgdfunctype = strs[0];
   }
 
-  if (bkgdfunctype.compare("Auto") == 0) {
+  if (bkgdfunctype == "Auto") {
     m_useAutoBkgd = true;
     bkgdfunctype = "Quadratic";
-  } else if (bkgdfunctype.compare("None") == 0) {
+  } else if (bkgdfunctype == "None") {
     m_useAutoBkgd = false;
     m_genBackground = false;
-  } else if (bkgdfunctype.compare("Linear") == 0 ||
-             bkgdfunctype.compare("Flat") == 0) {
+  } else if (bkgdfunctype == "Linear" || bkgdfunctype == "Flat") {
     m_useAutoBkgd = false;
     bkgdfunctype = bkgdfunctype + "Background";
   }
@@ -228,12 +229,12 @@ void GeneratePeaks::processAlgProperties(std::string &peakfunctype,
 
 //----------------------------------------------------------------------------------------------
 /** Import peak and background functions from table workspace
-  * @param functionmap :: (output) map contains vector of functions for each
+ * @param functionmap :: (output) map contains vector of functions for each
  * spectrum
-  */
+ */
 void GeneratePeaks::importPeaksFromTable(
-    std::map<specnum_t, std::vector<std::pair<double, API::IFunction_sptr>>> &
-        functionmap) {
+    std::map<specnum_t, std::vector<std::pair<double, API::IFunction_sptr>>>
+        &functionmap) {
   size_t numpeaks = m_funcParamWS->rowCount();
   size_t icolchi2 = m_funcParamWS->columnCount() - 1;
   size_t numpeakparams = m_peakFunction->nParams();
@@ -320,7 +321,8 @@ void GeneratePeaks::importPeaksFromTable(
       std::pair<std::map<specnum_t,
                          std::vector<std::pair<double, API::IFunction_sptr>>>::
                     iterator,
-                bool> ret;
+                bool>
+          ret;
       ret = functionmap.emplace(wsindex, tempvector);
       mapiter = ret.first;
     }
@@ -411,14 +413,14 @@ void GeneratePeaks::importPeakFromVector(
 
 //----------------------------------------------------------------------------------------------
 /** Generate peaks in the given output workspace
-  * @param functionmap :: map to contain the list of functions with key as their
+ * @param functionmap :: map to contain the list of functions with key as their
  * spectra
-  * @param dataWS :: output matrix workspace
-  */
+ * @param dataWS :: output matrix workspace
+ */
 void GeneratePeaks::generatePeaks(
     const std::map<specnum_t,
-                   std::vector<std::pair<double, API::IFunction_sptr>>> &
-        functionmap,
+                   std::vector<std::pair<double, API::IFunction_sptr>>>
+        &functionmap,
     API::MatrixWorkspace_sptr dataWS) {
   // Calcualte function
   std::map<specnum_t,
@@ -512,16 +514,16 @@ void GeneratePeaks::createFunction(std::string &peaktype,
 
 //----------------------------------------------------------------------------------------------
 /** Process table column names for peak and background function parameters names
-  */
+ */
 void GeneratePeaks::processTableColumnNames() {
   using namespace boost::algorithm;
 
   // Initial check
   std::vector<std::string> colnames = m_funcParamWS->getColumnNames();
 
-  if (colnames[0].compare("spectrum") != 0)
+  if (colnames[0] != "spectrum")
     throw std::runtime_error("First column must be 'spectrum' in integer. ");
-  if (colnames.back().compare("chi2") != 0)
+  if (colnames.back() != "chi2")
     throw std::runtime_error("Last column must be 'chi2'.");
 
   // Process column names in case that there are not same as parameter names
@@ -613,9 +615,9 @@ void GeneratePeaks::processTableColumnNames() {
 
 //----------------------------------------------------------------------------------------------
 /** Get set of spectra of the input table workspace
-  * Spectra is set to the column named 'spectrum'.
-  * Algorithm supports multiple peaks in multiple spectra
-  */
+ * Spectra is set to the column named 'spectrum'.
+ * Algorithm supports multiple peaks in multiple spectra
+ */
 void GeneratePeaks::getSpectraSet(
     DataObjects::TableWorkspace_const_sptr peakParmsWS) {
   size_t numpeaks = peakParmsWS->rowCount();
@@ -640,7 +642,7 @@ void GeneratePeaks::getSpectraSet(
 
 //----------------------------------------------------------------------------------------------
 /** Get the IPeakFunction part in the input function
-  */
+ */
 API::IPeakFunction_sptr
 GeneratePeaks::getPeakFunction(API::IFunction_sptr infunction) {
   // Not a composite function
@@ -761,33 +763,26 @@ GeneratePeaks::createDataWorkspace(std::vector<double> binparameters) {
     else
       xvalue += fabs(dx) * xvalue;
   }
-  size_t numxvalue = xarray.size();
 
-  BinEdges xArrayEdges(xarray);
-
-  // Create new workspace
-  MatrixWorkspace_sptr ws = API::WorkspaceFactory::Instance().create(
-      "Workspace2D", m_spectraSet.size(), numxvalue, numxvalue - 1);
-  for (size_t ip = 0; ip < m_spectraSet.size(); ip++) {
-    ws->setBinEdges(ip, xArrayEdges);
-  }
-  // Set spectrum numbers
-  std::map<specnum_t, specnum_t>::iterator spiter;
-  for (spiter = m_SpectrumMap.begin(); spiter != m_SpectrumMap.end();
-       ++spiter) {
-    specnum_t specid = spiter->first;
-    specnum_t wsindex = spiter->second;
-    g_log.debug() << "Build WorkspaceIndex-Spectrum  " << wsindex << " , "
-                  << specid << "\n";
-    ws->getSpectrum(wsindex).setSpectrumNo(specid);
+  std::vector<Indexing::SpectrumNumber> specNums;
+  for (const auto &item : m_SpectrumMap) {
+    specnum_t specid = item.first;
+    g_log.debug() << "Build WorkspaceIndex-Spectrum  " << specNums.size()
+                  << " , " << specid << "\n";
+    specNums.push_back(specid);
   }
 
-  return ws;
+  Indexing::IndexInfo indices(specNums.size());
+  // There is no instrument, so the automatic build of a 1:1 mapping would fail.
+  // Need to set empty grouping manually.
+  indices.setSpectrumDefinitions(
+      std::vector<SpectrumDefinition>(specNums.size()));
+  indices.setSpectrumNumbers(std::move(specNums));
+  return create<Workspace2D>(indices, BinEdges(std::move(xarray)));
 }
 
-//----------------------------------------------------------------------------------------------
 /** Add function's parameter names after peak function name
-  */
+ */
 std::vector<std::string>
 GeneratePeaks::addFunctionParameterNames(std::vector<std::string> funcnames) {
   std::vector<std::string> vec_funcparnames;
@@ -816,5 +811,5 @@ GeneratePeaks::addFunctionParameterNames(std::vector<std::string> funcnames) {
   return vec_funcparnames;
 }
 
-} // namespace Mantid
 } // namespace Algorithms
+} // namespace Mantid

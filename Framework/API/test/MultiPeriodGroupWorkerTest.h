@@ -4,15 +4,14 @@
 #include <cxxtest/TestSuite.h>
 
 #include "MantidAPI/MultiPeriodGroupWorker.h"
-#include "MultiPeriodGroupTestBase.h"
 #include "MantidKernel/ArrayProperty.h"
 #include "MantidKernel/MandatoryValidator.h"
 #include "MantidTestHelpers/FakeObjects.h"
+#include "MultiPeriodGroupTestBase.h"
 
 using Mantid::API::MultiPeriodGroupWorker;
 using namespace Mantid::API;
 
-namespace {
 class TestAlgorithm : public Algorithm {
 public:
   TestAlgorithm() {}
@@ -32,7 +31,6 @@ public:
   ~TestAlgorithm() override {}
 };
 DECLARE_ALGORITHM(TestAlgorithm)
-}
 
 class MultiPeriodGroupWorkerTest : public CxxTest::TestSuite,
                                    public MultiPeriodGroupTestBase {

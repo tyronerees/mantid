@@ -8,20 +8,19 @@
 #ifndef ALGORITHMS_TEST_CREATETRANSMISSIONWORKSPACETEST_H_
 #define ALGORITHMS_TEST_CREATETRANSMISSIONWORKSPACETEST_H_
 
-#include <cxxtest/TestSuite.h>
-#include <algorithm>
-#include "MantidAlgorithms/ReflectometryReductionOne.h"
 #include "MantidAPI/AlgorithmManager.h"
 #include "MantidAPI/Axis.h"
 #include "MantidAPI/FrameworkManager.h"
 #include "MantidAPI/MatrixWorkspace.h"
-#include "MantidTestHelpers/WorkspaceCreationHelper.h"
 #include "MantidGeometry/Instrument/ReferenceFrame.h"
+#include "MantidKernel/Unit.h"
+#include "MantidTestHelpers/WorkspaceCreationHelper.h"
+#include <algorithm>
+#include <cxxtest/TestSuite.h>
 
 using namespace Mantid;
 using namespace Mantid::Kernel;
 using namespace Mantid::API;
-using namespace Mantid::Algorithms;
 using namespace WorkspaceCreationHelper;
 
 class CreateTransmissionWorkspaceTest : public CxxTest::TestSuite {
@@ -32,8 +31,8 @@ private:
 
 private:
   IAlgorithm_sptr construct_standard_algorithm() {
-    auto alg =
-        AlgorithmManager::Instance().create("CreateTransmissionWorkspaceAuto");
+    auto alg = AlgorithmManager::Instance().create(
+        "CreateTransmissionWorkspaceAuto", 1);
     alg->initialize();
     alg->setChild(true);
     alg->setProperty("FirstTransmissionRun", m_TOF);
@@ -112,7 +111,7 @@ public:
 
   void test_must_provide_wavelengths() {
     auto alg =
-        AlgorithmManager::Instance().create("CreateTransmissionWorkspace");
+        AlgorithmManager::Instance().create("CreateTransmissionWorkspace", 1);
     alg->initialize();
     alg->setChild(true);
     alg->setProperty("FirstTransmissionRun", m_TOF);
@@ -154,7 +153,7 @@ public:
   void test_execute_one_tranmission() {
 
     IAlgorithm_sptr alg =
-        AlgorithmManager::Instance().create("CreateTransmissionWorkspace");
+        AlgorithmManager::Instance().create("CreateTransmissionWorkspace", 1);
 
     alg->setChild(true);
     alg->initialize();

@@ -1,6 +1,9 @@
+from __future__ import absolute_import, division, print_function
+
+
 class TubeCalibFitParams(object):
 
-# This class is to take the fitting method and parameters for fitting the peaks crated by the calibration slits etc
+# This class is to take the fitting method and parameters for fitting the peaks created by the calibration slits etc
 # and to deliver them to TubeCalib, so it can fit the peaks appropriately
 
 # Author: Karl Palmen ISIS
@@ -63,4 +66,5 @@ class TubeCalibFitParams(object):
         return self.automatic
 
     def __str__(self):
-        return 'peaks'+str(self.peaks)+'height'+str(self.height)+'width'+str(self.width)+'margin'+str(self.margin)+'outedge'+str(self.outEdge)+'inedge'+str(self.inEdge)+'edgegrad'+str(self.edgeGrad       )
+        return ('peaks'+str(self.peaks)+'height'+str(self.height)+'width'+str(self.width)+'margin'+
+                str(self.margin)+'outedge'+str(self.outEdge)+'inedge'+str(self.inEdge)+'edgegrad'+str(self.edgeGrad))

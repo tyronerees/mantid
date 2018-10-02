@@ -1,4 +1,9 @@
 #include "MantidKernel/ThreadPoolRunnable.h"
+#include "MantidKernel/ProgressBase.h"
+#include "MantidKernel/Task.h"
+#include "MantidKernel/ThreadScheduler.h"
+
+#include <Poco/Thread.h>
 
 namespace Mantid {
 namespace Kernel {
@@ -86,5 +91,5 @@ void ThreadPoolRunnable::run() {
   // Thread now will exit
 }
 
-} // namespace Mantid
 } // namespace Kernel
+} // namespace Mantid

@@ -7,16 +7,16 @@
 // Includes
 //----------------------------------------------------------------------
 #include "MantidDataHandling/LoadNexus.h"
-#include "MantidDataObjects/Workspace2D.h"
-#include "MantidNexus/NexusClasses.h"
-#include "MantidNexus/NexusFileIO.h"
-#include "MantidKernel/ArrayProperty.h"
 #include "MantidAPI/FileProperty.h"
 #include "MantidAPI/WorkspaceGroup.h"
+#include "MantidDataObjects/Workspace2D.h"
+#include "MantidKernel/ArrayProperty.h"
 #include "MantidKernel/BoundedValidator.h"
+#include "MantidNexus/NexusClasses.h"
+#include "MantidNexus/NexusFileIO.h"
 
-#include <cmath>
 #include <boost/shared_ptr.hpp>
+#include <cmath>
 
 namespace Mantid {
 namespace DataHandling {
@@ -123,6 +123,11 @@ void LoadNexus::runLoadMuonNexus() {
   // Set the workspace property
   std::string outputWorkspace = "OutputWorkspace";
   loadMuonNexus->setPropertyValue(outputWorkspace, m_workspace);
+  loadMuonNexus->setPropertyValue("DeadTimeTable",
+                                  m_workspace + "_DeadTimeTable");
+  loadMuonNexus->setPropertyValue("DetectorGroupingTable",
+                                  m_workspace + "DetectorGroupingTable");
+
   // Get the array passed in the spectrum_list, if an empty array was passed use
   // the default
   std::vector<int> specList = getProperty("SpectrumList");
@@ -252,10 +257,10 @@ void LoadNexus::runLoadTOFRawNexus() {
 }
 
 /**
-* Set the output workspace(s) if the load's return workspace has type
-* API::Workspace
-* @param loader :: Shared pointer to load algorithm
-*/
+ * Set the output workspace(s) if the load's return workspace has type
+ * API::Workspace
+ * @param loader :: Shared pointer to load algorithm
+ */
 void LoadNexus::setOutputWorkspace(const API::IAlgorithm_sptr &loader) {
   // Go through each OutputWorkspace property and check whether we need to make
   // a counterpart here

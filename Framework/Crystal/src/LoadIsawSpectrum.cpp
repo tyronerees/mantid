@@ -4,12 +4,13 @@
 #include "MantidAPI/WorkspaceFactory.h"
 #include "MantidDataObjects/Workspace2D.h"
 #include "MantidGeometry/Instrument/RectangularDetector.h"
-#include "MantidKernel/Utils.h"
 #include "MantidKernel/BoundedValidator.h"
+#include "MantidKernel/ListValidator.h"
+#include "MantidKernel/OptionalBool.h"
+#include "MantidKernel/PhysicalConstants.h"
 #include "MantidKernel/Unit.h"
 #include "MantidKernel/UnitFactory.h"
-#include "MantidKernel/ListValidator.h"
-#include "MantidKernel/PhysicalConstants.h"
+#include "MantidKernel/Utils.h"
 
 #include <fstream>
 
@@ -214,9 +215,9 @@ double LoadIsawSpectrum::spectrumCalc(double TOF, int iSpec,
     for (i = 1; i < spectra[0].size() - 1; ++i)
       if (TOF < time[id][i])
         break;
-    spect = spectra[id][i - 1] +
-            (TOF - time[id][i - 1]) / (time[id][i] - time[id][i - 1]) *
-                (spectra[id][i] - spectra[id][i - 1]);
+    spect = spectra[id][i - 1] + (TOF - time[id][i - 1]) /
+                                     (time[id][i] - time[id][i - 1]) *
+                                     (spectra[id][i] - spectra[id][i - 1]);
   }
 
   return spect;
@@ -299,5 +300,5 @@ LoadIsawSpectrum::getInstrument3Ways(Algorithm *alg) {
   return inst;
 }
 
-} // namespace Mantid
 } // namespace Crystal
+} // namespace Mantid

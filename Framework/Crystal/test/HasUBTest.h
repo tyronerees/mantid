@@ -3,13 +3,13 @@
 
 #include <cxxtest/TestSuite.h>
 
-#include "MantidCrystal/HasUB.h"
 #include "MantidAPI/MatrixWorkspace.h"
 #include "MantidAPI/Sample.h"
-#include "MantidGeometry/Crystal/OrientedLattice.h"
-#include "MantidTestHelpers/WorkspaceCreationHelper.h"
-#include "MantidTestHelpers/MDEventsTestHelper.h"
+#include "MantidCrystal/HasUB.h"
 #include "MantidDataObjects/TableWorkspace.h"
+#include "MantidGeometry/Crystal/OrientedLattice.h"
+#include "MantidTestHelpers/MDEventsTestHelper.h"
+#include "MantidTestHelpers/WorkspaceCreationHelper.h"
 
 using namespace Mantid::Crystal;
 using namespace Mantid::DataObjects;
@@ -21,7 +21,7 @@ class HasUBTest : public CxxTest::TestSuite {
 private:
   // Helper method to create a matrix workspace.
   std::string createMatrixWorkspace(const bool withOrientedLattice = true) {
-    auto ws = WorkspaceCreationHelper::Create2DWorkspace(1, 2);
+    auto ws = WorkspaceCreationHelper::create2DWorkspace(1, 2);
     if (withOrientedLattice) {
       OrientedLattice *latt = new OrientedLattice(1.0, 2.0, 3.0, 90, 90, 90);
       ws->mutableSample().setOrientedLattice(latt);

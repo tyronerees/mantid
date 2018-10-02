@@ -1,4 +1,5 @@
 #pylint: disable=invalid-name
+from __future__ import (absolute_import, division, print_function)
 from PyQt4 import QtGui
 
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
@@ -42,6 +43,6 @@ class MplFigureCanvas(FigureCanvas):
         return
 
     def getPlot(self):
-        """ reture figure's axes to expose the matplotlib figure to PyQt client
+        """ return figure's axes to expose the matplotlib figure to PyQt client
         """
         return self.axes

@@ -1,4 +1,5 @@
 #include "MantidKernel/UnitLabelTypes.h"
+#include "MantidKernel/UnitLabel.h"
 
 namespace Mantid {
 namespace Kernel {
@@ -21,6 +22,8 @@ const UnitLabel Symbol::InverseAngstromSq("Angstrom^-2", L"\u212b\u207b\u00b2",
                                           "\\AA^{-2}");
 /// MilliElectronVolts
 const UnitLabel Symbol::MilliElectronVolts("meV");
+/// GHz
+const UnitLabel Symbol::GHz("GHz");
 /// Metre
 const UnitLabel Symbol::Metre("m");
 /// Nanometre
@@ -31,5 +34,5 @@ const UnitLabel Symbol::InverseCM("cm^-1", L"cm\u207b\u00b9", "cm^{-1}");
 const UnitLabel Symbol::RLU("r.l.u");
 
 } // namespace Units
-}
-} // namespace Mantid::Kernel
+} // namespace Kernel
+} // namespace Mantid

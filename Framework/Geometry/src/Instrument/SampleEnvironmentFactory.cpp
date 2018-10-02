@@ -6,6 +6,7 @@
 #include "Poco/Path.h"
 
 #include <fstream>
+#include <sstream>
 
 namespace Mantid {
 namespace Geometry {
@@ -41,7 +42,7 @@ std::string createCacheKey(const std::string &facility,
                            const std::string &specName) {
   return facility + "/" + instrument + "/" + specName;
 }
-}
+} // namespace
 
 //------------------------------------------------------------------------------
 // SampleEnvironmentFactory

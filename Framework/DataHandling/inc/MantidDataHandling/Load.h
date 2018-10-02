@@ -1,10 +1,8 @@
 #ifndef MANTID_DATAHANDLING_LOAD_H_
 #define MANTID_DATAHANDLING_LOAD_H_
 
-//----------------------------------------------------------------------
-// Includes
-//----------------------------------------------------------------------
 #include "MantidAPI/Algorithm.h"
+#include "MantidAPI/WorkspaceGroup_fwd.h"
 #include <mutex>
 
 namespace Mantid {
@@ -39,8 +37,6 @@ Code Documentation is available at: <http://doxygen.mantidproject.org>
  */
 class DLLExport Load : public API::Algorithm {
 public:
-  /// Default constructor
-  Load();
   /// Algorithm's name for identification overriding a virtual method
   const std::string name() const override { return "Load"; }
   /// Summary of algorithms purpose
@@ -51,6 +47,10 @@ public:
 
   /// Algorithm's version for identification overriding a virtual method
   int version() const override { return 1; }
+  const std::vector<std::string> seeAlso() const override {
+    return {"LoadNexus", "LoadRaw", "LoadBBY"};
+  }
+
   /// Category
   const std::string category() const override { return "DataHandling"; }
   /// Aliases
@@ -58,6 +58,11 @@ public:
   /// Override setPropertyValue
   void setPropertyValue(const std::string &name,
                         const std::string &value) override;
+
+protected:
+  Parallel::ExecutionMode getParallelExecutionMode(
+      const std::map<std::string, Parallel::StorageMode> &storageModes)
+      const override;
 
 private:
   /// This method returns shared pointer to a load algorithm which got

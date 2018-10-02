@@ -2,7 +2,7 @@
 
 .. summary::
 
-.. alias::
+.. relatedalgorithms::
 
 .. properties::
 
@@ -149,7 +149,7 @@ Property Values of Examples
 How it Works
 ############
 
-The algorithm will fetch neigbours using the intesection of those inside
+The algorithm will fetch neighbours using the intesection of those inside
 the radius cut-off and those less than the NumberOfNeighbours specified.
 *Fig. 1* illustrates this process. Searching is relative to the central
 detector, those constrained by both specified number of neighbours have
@@ -208,9 +208,9 @@ Usage
    output = SmoothNeighbours(ws, Radius = 1.0,
                              RadiusUnits = 'NumberOfPixels')
 
-   print 'Number of histograms:', output.getNumberHistograms()
-   print 'Smoothed values:'
-   print output.extractY()
+   print('Number of histograms: {0}'.format(output.getNumberHistograms()))
+   print('Smoothed values:')
+   print(output.extractY())
 
 Output:
 
@@ -251,9 +251,9 @@ Output:
    # Run the algorithm
    output = SmoothNeighbours(ws, AdjX=1, AdjY=3)
 
-   print 'Number of histograms:', output.getNumberHistograms()
-   print 'Smoothed values:'
-   print output.extractY()
+   print('Number of histograms: {}'.format(output.getNumberHistograms()))
+   print('Smoothed values:')
+   print(output.extractY())
 
 Output:
 
@@ -294,9 +294,9 @@ Output:
    # Run the algorithm
    output = SmoothNeighbours(ws, SumPixelsX=3, SumPixelsY=1)
 
-   print 'Number of histograms:', output.getNumberHistograms()
-   print 'Smoothed values:'
-   print output.extractY()
+   print('Number of histograms: {}'.format(output.getNumberHistograms()))
+   print('Smoothed values:')
+   print(output.extractY())
 
 Output:
 

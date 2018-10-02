@@ -3,16 +3,16 @@
 
 #include <cxxtest/TestSuite.h>
 
-#include "MantidMDAlgorithms/SetMDFrame.h"
-#include "MantidGeometry/MDGeometry/UnknownFrame.h"
-#include "MantidGeometry/MDGeometry/QSample.h"
-#include "MantidGeometry/MDGeometry/QLab.h"
 #include "MantidGeometry/MDGeometry/HKL.h"
+#include "MantidGeometry/MDGeometry/QLab.h"
+#include "MantidGeometry/MDGeometry/QSample.h"
+#include "MantidGeometry/MDGeometry/UnknownFrame.h"
 #include "MantidKernel/MDUnit.h"
-#include "MantidTestHelpers/WorkspaceCreationHelper.h"
+#include "MantidMDAlgorithms/SetMDFrame.h"
 #include "MantidTestHelpers/MDEventsTestHelper.h"
-#include <utility>
+#include "MantidTestHelpers/WorkspaceCreationHelper.h"
 #include <memory>
+#include <utility>
 using Mantid::MDAlgorithms::SetMDFrame;
 
 class SetMDFrameTest : public CxxTest::TestSuite {
@@ -30,7 +30,7 @@ public:
 
   void test_that_is_not_executed_when_non_mdevent_and_non_mdhisto() {
     // Arrange
-    auto inputWorkspace = WorkspaceCreationHelper::Create2DWorkspace(2, 5);
+    auto inputWorkspace = WorkspaceCreationHelper::create2DWorkspace(2, 5);
     SetMDFrame alg;
     alg.setChild(true);
     alg.setRethrows(true);

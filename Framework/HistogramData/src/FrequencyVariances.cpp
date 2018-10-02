@@ -1,7 +1,7 @@
-#include "MantidHistogramData/BinEdges.h"
-#include "MantidHistogramData/CountVariances.h"
-#include "MantidHistogramData/CountStandardDeviations.h"
 #include "MantidHistogramData/FrequencyVariances.h"
+#include "MantidHistogramData/BinEdges.h"
+#include "MantidHistogramData/CountStandardDeviations.h"
+#include "MantidHistogramData/CountVariances.h"
 #include "MantidHistogramData/FrequencyStandardDeviations.h"
 
 namespace Mantid {
@@ -23,7 +23,7 @@ FrequencyVariances::FrequencyVariances(CountVariances &&counts,
     throw std::logic_error("FrequencyVariances: Cannot construct from "
                            "CountVariances -- BinEdges are NULL.");
   if ((counts.size() + 1) != edges.size())
-    if (counts.size() != 0 || edges.size() != 0)
+    if (!counts.empty() || !edges.empty())
       throw std::logic_error("FrequencyVariances: Cannot construct from "
                              "CountVariances -- BinEdges size does not match.");
   // Cannot move counts private data since it is of different type.

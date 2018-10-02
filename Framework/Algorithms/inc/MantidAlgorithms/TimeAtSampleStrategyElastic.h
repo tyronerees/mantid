@@ -1,15 +1,17 @@
 #ifndef MANTID_ALGORITHMS_TIMEATSAMPLESTRATEGYELASTIC_H_
 #define MANTID_ALGORITHMS_TIMEATSAMPLESTRATEGYELASTIC_H_
 
-#include "MantidKernel/System.h"
 #include "MantidAlgorithms/TimeAtSampleStrategy.h"
+#include "MantidKernel/System.h"
+#include "MantidKernel/V3D.h"
 #include <boost/shared_ptr.hpp>
 
 namespace Mantid {
 
 namespace API {
 class MatrixWorkspace;
-}
+class SpectrumInfo;
+} // namespace API
 namespace Algorithms {
 
 /** TimeAtSampleStrategyElastic : Time at sample stragegy for elastic scattering
@@ -44,6 +46,8 @@ public:
 
 private:
   boost::shared_ptr<const Mantid::API::MatrixWorkspace> m_ws;
+  const API::SpectrumInfo &m_spectrumInfo;
+  const Kernel::V3D m_beamDir;
 };
 
 } // namespace Algorithms

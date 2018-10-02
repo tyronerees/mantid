@@ -7,9 +7,9 @@
 
 #include "../PlotToolInterface.h"
 #include "IFunctionWrapper.h"
+#include <Qt>
 #include <qwt_plot_marker.h>
 #include <qwt_plot_picker.h>
-#include <Qt>
 
 #include "../Graph.h"
 #include "qwt_plot_item.h"
@@ -29,16 +29,17 @@ namespace MantidQt {
 namespace MantidWidgets {
 class FitPropertyBrowser;
 class PropertyHandler;
-}
-}
+class MuonFitPropertyBrowser;
+} // namespace MantidWidgets
+} // namespace MantidQt
 
 namespace Mantid {
 namespace API {
 class IFunction;
 class CompositeFunction;
 class MatrixWorkspace;
-}
-}
+} // namespace API
+} // namespace Mantid
 
 /**
     This class is for selecting peaks on a graph for subsequent fitting.
@@ -93,7 +94,7 @@ public:
   Graph *graph() const { return d_graph; }
   /// Prepare a context menu
   void prepareContextMenu(QMenu &menu);
-  /// Was the tool created successfuly?
+  /// Was the tool created successfully?
   bool isInitialized() const { return m_init; }
 
 public slots:
@@ -196,6 +197,10 @@ private:
   void addExistingFitsAndGuess(const QStringList &curvesList);
   // Test if we are fitting muon data
   bool isMuonData() const;
+  // Test if we are fitting muon multi fit data
+  bool isMuonMultiFitData() const;
+  // Returns a pointer to the MuonFitPropertyBrowser or NULL
+  const MantidQt::MantidWidgets::MuonFitPropertyBrowser *getMuonPointer() const;
 
   /// Creates a pointer to fitPropertyBrowser
   MantidQt::MantidWidgets::FitPropertyBrowser *m_fitPropertyBrowser;

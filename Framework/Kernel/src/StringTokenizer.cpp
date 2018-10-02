@@ -1,7 +1,5 @@
 #include "MantidKernel/StringTokenizer.h"
 #include <algorithm>
-#include <functional>
-#include <cassert>
 #include <iterator> //cbegin,cend
 
 namespace {
@@ -105,7 +103,7 @@ splitIgnoringWhitespaceEmptyTokens(const std::string &str,
                  });
   return output;
 }
-}
+} // namespace
 
 /**
  * Constructor requiring a string to tokenize and a string of separators.

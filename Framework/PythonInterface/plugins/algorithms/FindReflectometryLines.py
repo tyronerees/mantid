@@ -65,6 +65,8 @@ class FindReflectometryLines(PythonAlgorithm):
     def PyExec(self):
         import mantid.simpleapi as ms
 
+        self.log().warning('FindReflectometryLines algorithm version 1 has been deprecated and will be removed in a future release.')
+
         in_ws = self.getPropertyValue("InputWorkspace")
         min_wavelength = self.getPropertyValue("StartWavelength")
         keep_workspaces = self.getPropertyValue("KeepIntermediateWorkspaces")
@@ -105,5 +107,6 @@ class FindReflectometryLines(PythonAlgorithm):
             ms.DeleteWorkspace(Workspace=summed_ws)
 
         self.setProperty("OutputWorkspace", output_ws)
+
 
 AlgorithmFactory.subscribe(FindReflectometryLines())

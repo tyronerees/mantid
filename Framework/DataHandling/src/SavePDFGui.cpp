@@ -12,8 +12,8 @@
 namespace Mantid {
 namespace DataHandling {
 
-using Mantid::Kernel::Direction;
 using Mantid::API::WorkspaceProperty;
+using Mantid::Kernel::Direction;
 
 // Register the algorithm into the AlgorithmFactory
 DECLARE_ALGORITHM(SavePDFGui)
@@ -102,9 +102,9 @@ void SavePDFGui::exec() {
   out << "#L r G(r) dr dG(r)\n";
 
   // --------- write the data
-  auto x = inputWS->readX(0);
-  auto y = inputWS->readY(0);
-  auto dy = inputWS->readE(0);
+  const auto &x = inputWS->x(0);
+  const auto &y = inputWS->y(0);
+  const auto &dy = inputWS->e(0);
   HistogramData::HistogramDx dx(y.size(), 0.0);
   if (inputWS->sharedDx(0))
     dx = inputWS->dx(0);

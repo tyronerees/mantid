@@ -6,6 +6,7 @@ import numpy as np
 import re
 import os.path
 import math
+from collections import OrderedDict
 
 from mantid.kernel import *
 from mantid.api import *
@@ -332,7 +333,8 @@ class SimulatedDensityOfStates(PythonAlgorithm):
         @param weights          :: weight data from file
         """
         # Build a dictionary of ions that the user cares about
-        partial_ions = dict()
+        # systemtests check order so use OrderedDict
+        partial_ions = OrderedDict()
 
         calc_ion_index = self.getProperty('CalculateIonIndices').value
 
@@ -357,7 +359,7 @@ class SimulatedDensityOfStates(PythonAlgorithm):
 
         else:
             s_api.DeleteWorkspace(sum_workspace)
-            partial_ws_names = [ws.getName() for ws in partial_workspaces]
+            partial_ws_names = [ws.name() for ws in partial_workspaces]
             # Sort workspaces
             if calc_ion_index:
                 # Sort by index after '_'
@@ -784,6 +786,7 @@ class SimulatedDensityOfStates(PythonAlgorithm):
         return file_data
 
 #------------------------------------------------------------------------------------------
+
 
 try:
     import scipy.constants

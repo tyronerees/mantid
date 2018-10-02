@@ -16,11 +16,17 @@
 #include "MantidDataObjects/TableWorkspace.h"
 #include "MantidGeometry/Crystal/IPeak.h"
 #include "MantidGeometry/Instrument/RectangularDetector.h"
-#include "MantidKernel/cow_ptr.h"
 #include "MantidKernel/V3D.h"
+#include "MantidKernel/cow_ptr.h"
 
 #include <array>
 
+// Forward Declarations
+namespace Mantid {
+namespace HistogramData {
+class HistogramX;
+}
+} // namespace Mantid
 namespace Mantid {
 namespace Crystal {
 /**
@@ -239,6 +245,9 @@ public:
 
   /// Algorithm's version for identification overriding a virtual method
   int version() const override { return 1; }
+  const std::vector<std::string> seeAlso() const override {
+    return {"PeakIntegration"};
+  }
 
   /// Algorithm's category for identification overriding a virtual method
   const std::string category() const override { return "Crystal\\Integration"; }
@@ -259,7 +268,7 @@ private:
   Mantid::detid2index_map m_wi_to_detid_map;
 
   int *m_NeighborIDs; // Stores IDs of nearest neighbors
-  double m_R0;        ///<for Weak Peaks, these can be set using info from close
+  double m_R0; ///< for Weak Peaks, these can be set using info from close
 
   Kernel::V3D m_center; ///< for Describing the Plane at the Peak
   Kernel::V3D m_xvec;   ///< for Describing the Plane at the Peak
@@ -287,8 +296,8 @@ private:
                          Kernel::V3D &Center, double &Radius, int *&ArryofID);
 
   int CalculateTimeChannelSpan(Geometry::IPeak const &peak, const double dQ,
-                               Mantid::MantidVec const &X, const int specNum,
-                               int &Centerchan);
+                               const Mantid::HistogramData::HistogramX &X,
+                               const int specNum, int &Centerchan);
 
   double CalculatePositionSpan(Geometry::IPeak const &peak, const double dQ);
 
@@ -302,7 +311,7 @@ private:
                   const int chanMin, const int chanMax, double Radius,
                   Kernel::V3D CentPos, std::string &spec_idList
 
-                  );
+  );
 
   /**
    *  Tests several starting points in the Marquardt algorithm then calls Fit.
@@ -341,8 +350,8 @@ private:
                    const double row, const double col,
                    std::vector<double> &StatBase);
 
-  int find(std::string const &oneName,
-           std::vector<std::string> const &nameList);
+  int findNameInVector(std::string const &oneName,
+                       std::vector<std::string> const &nameList);
 
   double CalculateIsawIntegrateError(const double background,
                                      const double backError,
@@ -355,7 +364,8 @@ private:
                  double &pixWidthx, double &pixHeighty,
                  Geometry::IPeak const &peak) const;
 
-  int find(Mantid::MantidVec const &X, const double time);
+  int findTimeChannel(const Mantid::HistogramData::HistogramX &X,
+                      const double time);
 
   // returns true if Neighborhood list is changed
   bool updateNeighbors(boost::shared_ptr<Geometry::IComponent> &comp,

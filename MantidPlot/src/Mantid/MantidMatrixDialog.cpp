@@ -1,16 +1,16 @@
 #include "MantidMatrixDialog.h"
 #include "MantidMatrix.h"
 
-#include <QPushButton>
-#include <QLabel>
 #include <QComboBox>
-#include <QLayout>
 #include <QGroupBox>
-#include <QSpinBox>
+#include <QLabel>
+#include <QLayout>
 #include <QLineEdit>
+#include <QPushButton>
+#include <QSpinBox>
 
 MantidMatrixDialog::MantidMatrixDialog(QWidget *parent, Qt::WFlags fl)
-    : QDialog(parent, fl), d_matrix(0) {
+    : QDialog(parent, fl), d_matrix(nullptr) {
   setWindowTitle(tr("MantidPlot - Matrix Properties"));
 
   QGridLayout *topLayout = new QGridLayout();

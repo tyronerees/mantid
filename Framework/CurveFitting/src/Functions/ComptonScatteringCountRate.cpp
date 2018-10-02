@@ -1,7 +1,7 @@
 #include "MantidCurveFitting/Functions/ComptonScatteringCountRate.h"
-#include "MantidCurveFitting/AugmentedLagrangianOptimizer.h"
 #include "MantidAPI/FunctionFactory.h"
 #include "MantidAPI/MatrixWorkspace.h"
+#include "MantidCurveFitting/AugmentedLagrangianOptimizer.h"
 #include "MantidKernel/Math/Optimization/SLSQPMinimizer.h"
 
 #include <boost/bind.hpp>
@@ -22,7 +22,7 @@ const char *CONSTRAINT_MATRIX_NAME = "IntensityConstraints";
 const char *BKGD_ORDER_ATTR_NAME = "BackgroundOrderAttr";
 /// static logger
 Logger g_log("ComptonScatteringCountRate");
-}
+} // namespace
 
 DECLARE_FUNCTION(ComptonScatteringCountRate)
 
@@ -31,8 +31,7 @@ DECLARE_FUNCTION(ComptonScatteringCountRate)
  */
 ComptonScatteringCountRate::ComptonScatteringCountRate()
     : CompositeFunction(), m_profiles(), m_fixedParamIndices(), m_cmatrix(),
-      m_eqMatrix(), m_bkgdOrderAttr("n"), m_bkgdPolyN(0), m_errors(),
-      m_dataErrorRatio() {
+      m_eqMatrix(), m_bkgdOrderAttr("n"), m_bkgdPolyN(0), m_dataErrorRatio() {
   // Must be a string to be able to be passed through Fit
   declareAttribute(CONSTRAINT_MATRIX_NAME, IFunction::Attribute("", true));
   declareAttribute(BKGD_ORDER_ATTR_NAME, IFunction::Attribute(m_bkgdOrderAttr));
@@ -128,7 +127,7 @@ struct BkgdNorm2 {
   size_t ncols;
   const std::vector<double> &rhs;
 };
-}
+} // namespace
 
 /**
  * Calculates the new values for the intensity coefficents
@@ -208,7 +207,7 @@ void ComptonScatteringCountRate::updateCMatrixValues() const {
   for (size_t i = 0, start = 0; i < nprofiles; ++i) {
     auto *profile = m_profiles[i];
     const size_t numFilled =
-        profile->fillConstraintMatrix(m_cmatrix, start, m_errors);
+        profile->fillConstraintMatrix(m_cmatrix, start, m_hist->e());
     start += numFilled;
   }
   // Using different minimizer for background constraints as the original is not
@@ -233,31 +232,33 @@ void ComptonScatteringCountRate::updateCMatrixValues() const {
  * Cache workspace reference. Expects a MatrixWorkspace
  * @param matrix A shared_ptr to a Workspace
  * @param wsIndex A workspace index
- * @param startX Starting x-vaue (unused).
- * @param endX Ending x-vaue (unused).
+ * @param startX Starting x-value (unused).
+ * @param endX Ending x-value (unused).
  */
 void ComptonScatteringCountRate::setMatrixWorkspace(
     boost::shared_ptr<const API::MatrixWorkspace> matrix, size_t wsIndex,
     double startX, double endX) {
   CompositeFunction::setMatrixWorkspace(matrix, wsIndex, startX, endX);
 
-  const auto &values = matrix->readY(wsIndex);
-
+  this->m_hist =
+      boost::make_shared<HistogramData::Histogram>(matrix->histogram(wsIndex));
+  this->wsIndex = wsIndex;
+  const auto &values = m_hist->y();
+  const auto &errors = m_hist->e();
   // Keep the errors for the constraint calculation
-  m_errors = matrix->readE(wsIndex);
-  m_dataErrorRatio.resize(m_errors.size());
-  std::transform(values.begin(), values.end(), m_errors.begin(),
+  m_dataErrorRatio.resize(errors.size());
+  std::transform(values.begin(), values.end(), errors.begin(),
                  m_dataErrorRatio.begin(), std::divides<double>());
 
   if (g_log.is(Kernel::Logger::Priority::PRIO_DEBUG)) {
     g_log.debug() << "-- data/error --\n";
-    for (size_t i = 0; i < m_errors.size(); ++i) {
+    for (size_t i = 0; i < errors.size(); ++i) {
       g_log.debug() << m_dataErrorRatio[i] << "\n";
     }
   }
 
   cacheFunctions();
-  createConstraintMatrices(matrix->readX(wsIndex));
+  createConstraintMatrices();
 }
 
 /*
@@ -311,7 +312,7 @@ void ComptonScatteringCountRate::cacheComptonProfile(
   auto fixedParams = profile->intensityParameterIndices();
   for (auto fixedParam : fixedParams) {
     const size_t indexOfFixed = paramsOffset + fixedParam;
-    this->fix(indexOfFixed);
+    this->setParameterStatus(indexOfFixed, Tied);
     m_fixedParamIndices.push_back(indexOfFixed);
   }
 }
@@ -329,19 +330,19 @@ void ComptonScatteringCountRate::cacheBackground(
     const size_t npars =
         static_cast<size_t>(m_bkgdPolyN + 1); // + constant term
     // we assume the parameters are at index 0->N on the background so we need
-    // to
-    // reverse them
+    // to reverse them
     for (size_t i = npars; i > 0; --i) // i = from npars->1
     {
       const size_t indexOfFixed = paramsOffset + (i - 1);
-      this->fix(indexOfFixed);
+      this->setParameterStatus(indexOfFixed, Tied);
       m_fixedParamIndices.push_back(indexOfFixed);
     }
   } else {
     std::ostringstream os;
     os << "ComptonScatteringCountRate - Background function does not have "
-          "attribute named '" << m_bkgdOrderAttr
-       << "' that specifies its order. Use the '" << BKGD_ORDER_ATTR_NAME
+          "attribute named '"
+       << m_bkgdOrderAttr << "' that specifies its order. Use the '"
+       << BKGD_ORDER_ATTR_NAME
        << "' attribute to specify the name of the order attribute.";
     throw std::runtime_error(os.str());
   }
@@ -353,8 +354,7 @@ void ComptonScatteringCountRate::cacheBackground(
  * Also creates the inequality matrix
  * @param xValues The xdata from the workspace
  */
-void ComptonScatteringCountRate::createConstraintMatrices(
-    const MantidVec &xValues) {
+void ComptonScatteringCountRate::createConstraintMatrices() {
   const size_t nmasses = m_profiles.size();
 
   // Sanity check that equality constraints matrix has the same number of
@@ -362,13 +362,14 @@ void ComptonScatteringCountRate::createConstraintMatrices(
   if (m_eqMatrix.numCols() > 0 && m_eqMatrix.numCols() != nmasses) {
     std::ostringstream os;
     os << "ComptonScatteringCountRate - Equality constraint matrix (Aeq) has "
-          "incorrect number of columns (" << m_eqMatrix.numCols()
+          "incorrect number of columns ("
+       << m_eqMatrix.numCols()
        << "). The number of columns should match the number of masses ("
        << nmasses << ")";
     throw std::invalid_argument(os.str());
   }
 
-  createPositivityCM(xValues);
+  createPositivityCM();
   createEqualityCM(nmasses);
 
   if (g_log.is(Logger::Priority::PRIO_DEBUG)) {
@@ -382,15 +383,15 @@ void ComptonScatteringCountRate::createConstraintMatrices(
   }
 }
 
-/**
- * @param xValues The X data for the fitted spectrum
- */
-void ComptonScatteringCountRate::createPositivityCM(const MantidVec &xValues) {
+void ComptonScatteringCountRate::createPositivityCM() {
   // -- Constraint matrix for J(y) > 0 --
   // The first N columns are filled with J(y) for each mass + N_h for the first
   // mass hermite
   // terms included + (n+1) for each termn the background of order n
   // The background columns are filled with x^j/error where j=(1,n+1)
+  const auto &xValues = m_hist->x();
+  const auto &errors = m_hist->e();
+
   const size_t nrows(xValues.size());
   size_t nColsCMatrix(m_fixedParamIndices.size());
   m_cmatrix = Kernel::DblMatrix(nrows, nColsCMatrix);
@@ -402,7 +403,7 @@ void ComptonScatteringCountRate::createPositivityCM(const MantidVec &xValues) {
     {
       double *row = m_cmatrix[i];
       const double &xi = xValues[i];
-      const double &erri = m_errors[i];
+      const double &erri = errors[i];
       size_t polyN = m_bkgdPolyN;
       for (size_t j = polyStartCol; j < nColsCMatrix; ++j) // cols
       {

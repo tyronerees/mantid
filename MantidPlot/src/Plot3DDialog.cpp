@@ -27,34 +27,33 @@
  *                                                                         *
  ***************************************************************************/
 #include "Plot3DDialog.h"
-#include "TextDialog.h"
-#include "MyParser.h"
-#include "SymbolDialog.h"
 #include "ApplicationWindow.h"
 #include "ColorButton.h"
+#include "MyParser.h"
+#include "SymbolDialog.h"
+#include "TextDialog.h"
 #include "TextFormatButtons.h"
 
-#include <QListWidget>
-#include <QLineEdit>
-#include <QTextEdit>
-#include <QLayout>
-#include <QSpinBox>
-#include <QDoubleSpinBox>
-#include <QPushButton>
-#include <QLabel>
-#include <QStackedWidget>
-#include <QWidget>
-#include <QMessageBox>
-#include <QComboBox>
-#include <QWidgetList>
-#include <QFileDialog>
-#include <QGroupBox>
-#include <QFontDialog>
 #include <QApplication>
+#include <QComboBox>
+#include <QDoubleSpinBox>
+#include <QFontDialog>
+#include <QGroupBox>
+#include <QLabel>
+#include <QLayout>
+#include <QLineEdit>
+#include <QListWidget>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QSpinBox>
+#include <QStackedWidget>
+#include <QTextEdit>
+#include <QWidget>
+#include <QWidgetList>
 
-#include <qwt3d_color.h>
 #include "MantidKernel/ConfigService.h"
-#include "MantidQtAPI/MantidColorMap.h"
+#include "MantidQtWidgets/LegacyQwt/MantidColorMap.h"
+#include <qwt3d_color.h>
 
 using Mantid::Kernel::ConfigService;
 
@@ -63,8 +62,8 @@ Plot3DDialog::Plot3DDialog(QWidget *parent, Qt::WFlags fl)
   setObjectName("Plot3DDialog");
   setWindowTitle(tr("MantidPlot - Surface Plot Options"));
 
-  bars = 0;
-  points = 0;
+  bars = nullptr;
+  points = nullptr;
 
   QHBoxLayout *hbox = new QHBoxLayout();
   hbox->addStretch();
@@ -644,7 +643,7 @@ void Plot3DDialog::disableMeshOptions() {
 }
 
 void Plot3DDialog::pickDataColorMap() {
-  QString fileselection = MantidColorMap::loadMapDialog("", this);
+  QString fileselection = MantidColorMap::chooseColorMap("", this);
   if (!fileselection.isEmpty())
     d_plot->setDataColorMap(fileselection);
 }
@@ -770,7 +769,7 @@ bool Plot3DDialog::updatePlot() {
       parser.SetExpr(from.toAscii().constData());
       start = parser.Eval();
     } catch (mu::ParserError &e) {
-      QMessageBox::critical(0, tr("MantidPlot - Start limit error"),
+      QMessageBox::critical(nullptr, tr("MantidPlot - Start limit error"),
                             QString::fromStdString(e.GetMsg()));
       boxFrom->setFocus();
       return false;
@@ -781,7 +780,7 @@ bool Plot3DDialog::updatePlot() {
       parser.SetExpr(to.toAscii().constData());
       end = parser.Eval();
     } catch (mu::ParserError &e) {
-      QMessageBox::critical(0, tr("MantidPlot - End limit error"),
+      QMessageBox::critical(nullptr, tr("MantidPlot - End limit error"),
                             QString::fromStdString(e.GetMsg()));
       boxTo->setFocus();
       return false;

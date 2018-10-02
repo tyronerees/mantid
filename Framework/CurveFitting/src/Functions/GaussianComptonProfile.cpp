@@ -54,7 +54,7 @@ std::vector<size_t> GaussianComptonProfile::intensityParameterIndices() const {
  */
 size_t GaussianComptonProfile::fillConstraintMatrix(
     Kernel::DblMatrix &cmatrix, const size_t start,
-    const std::vector<double> &errors) const {
+    const HistogramData::HistogramE &errors) const {
   std::vector<double> result(ySpace().size());
   const double amplitude = 1.0;
   this->massProfile(result.data(), ySpace().size(), amplitude);
@@ -107,9 +107,8 @@ void GaussianComptonProfile::massProfile(double *result, const size_t nData,
   for (size_t j = 0; j < nData; ++j) {
     const double q = modq[j];
     const double prefactor = mass() * std::pow(ei[j], 0.1) / q;
-    result[j] =
-        prefactor *
-        (voigt[j] - std::pow(gaussWidth, 4.0) * voigtDiffResult[j] / (3.0 * q));
+    result[j] = prefactor * (voigt[j] - std::pow(gaussWidth, 4.0) *
+                                            voigtDiffResult[j] / (3.0 * q));
   }
 }
 

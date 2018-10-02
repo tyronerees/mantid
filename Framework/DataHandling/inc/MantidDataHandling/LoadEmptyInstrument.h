@@ -61,8 +61,6 @@ Code Documentation is available at: <http://doxygen.mantidproject.org>
 class DLLExport LoadEmptyInstrument
     : public API::IFileLoader<Kernel::FileDescriptor> {
 public:
-  /// Default constructor
-  LoadEmptyInstrument();
   /// Algorithm's name for identification overriding a virtual method
   const std::string name() const override { return "LoadEmptyInstrument"; }
   /// Summary of algorithms purpose
@@ -73,6 +71,9 @@ public:
 
   /// Algorithm's version for identification overriding a virtual method
   int version() const override { return 1; }
+  const std::vector<std::string> seeAlso() const override {
+    return {"LoadInstrument"};
+  }
   /// Algorithm's category for identification overriding a virtual method
   const std::string category() const override {
     return "DataHandling\\Instrument";
@@ -86,7 +87,9 @@ private:
   /// Overwrites Algorithm method
   void exec() override;
 
-  API::MatrixWorkspace_sptr runLoadInstrument();
+  API::MatrixWorkspace_sptr
+  runLoadInstrument(const std::string &filename,
+                    const std::string &instrumentname);
 };
 
 } // namespace DataHandling

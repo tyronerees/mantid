@@ -5,11 +5,11 @@
 #include "MantidAPI/DllConfig.h"
 #include "MantidAPI/ExperimentInfo.h"
 #include "MantidAPI/IMDEventWorkspace_fwd.h"
+#include "MantidAPI/IMDNode.h"
 #include "MantidAPI/IMDWorkspace.h"
 #include "MantidAPI/ITableWorkspace_fwd.h"
 #include "MantidAPI/MultipleExperimentInfos.h"
 #include "MantidAPI/Workspace_fwd.h"
-#include "MantidAPI/IMDNode.h"
 #include "MantidGeometry/MDGeometry/IMDDimension.h"
 #include "MantidGeometry/MDGeometry/MDDimensionExtents.h"
 #include "MantidGeometry/MDGeometry/MDHistoDimension.h"
@@ -36,6 +36,11 @@ public:
   /// Returns a clone of the workspace
   IMDEventWorkspace_uptr clone() const {
     return IMDEventWorkspace_uptr(doClone());
+  }
+
+  /// Returns a default-initialized clone of the workspace
+  IMDEventWorkspace_uptr cloneEmpty() const {
+    return IMDEventWorkspace_uptr(doCloneEmpty());
   }
 
   /// Perform initialization after dimensions (and others) have been set.
@@ -99,6 +104,11 @@ public:
       Mantid::API::MDNormalization preferredNormalization) = 0;
   Mantid::API::MDNormalization displayNormalization() const override = 0;
 
+  // Check if this class has an oriented lattice on a sample object
+  virtual bool hasOrientedLattice() const override {
+    return MultipleExperimentInfos::hasOrientedLattice();
+  }
+
 protected:
   /// Protected copy constructor. May be used by childs for cloning.
   IMDEventWorkspace(const IMDEventWorkspace &) = default;
@@ -110,9 +120,10 @@ protected:
 
 private:
   IMDEventWorkspace *doClone() const override = 0;
+  IMDEventWorkspace *doCloneEmpty() const override = 0;
 };
 
-} // namespace MDEvents
+} // namespace API
 
 } // namespace Mantid
 

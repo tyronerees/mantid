@@ -1,7 +1,9 @@
 #pylint: disable=invalid-name
+from __future__ import (absolute_import, division, print_function)
 import os
 import re
 import urllib2
+from mantid.api import AlgorithmFactory
 
 
 def readWebPage(url):
@@ -25,7 +27,8 @@ def ticketExists(alg, ticketHash):
 
 
 def outputError(alg, algVersion, description, notes=""):
-    print "%s, %i, %s, %s" % (alg, algVersion, description, notes)
+    print("%s, %i, %s, %s" % (alg, algVersion, description, notes))
+
 
 rstdir = r"C:\Mantid\Code\Mantid\docs\source\algorithms"
 ticketList = [9582,9586,9607,9610,9704,9804,9726]
@@ -35,7 +38,8 @@ for ticket in ticketList:
     ticketHash[ticket] = readWebPage( r"http://trac.mantidproject.org/mantid/ticket/" + str(ticket))
 
 usagePattern = re.compile('Usage', re.IGNORECASE)
-excusesPattern = re.compile('(rarely called directly|designed to work with other algorithms|only used for testing|deprecated)', re.IGNORECASE)
+excusesPattern = re.compile('(rarely called directly|designed to work with other algorithms|only used for testing|deprecated)',
+                            re.IGNORECASE)
 
 
 algs = AlgorithmFactory.getRegisteredAlgorithms(True)

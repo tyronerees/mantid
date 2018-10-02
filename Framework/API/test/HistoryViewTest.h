@@ -1,13 +1,13 @@
 #ifndef HISTORYVIEWTEST_H_
 #define HISTORYVIEWTEST_H_
 
-#include <cxxtest/TestSuite.h>
 #include "MantidAPI/Algorithm.h"
 #include "MantidAPI/HistoryView.h"
+#include <cxxtest/TestSuite.h>
 
 using namespace Mantid::API;
 using namespace Mantid::Kernel;
-using Mantid::Kernel::DateAndTime;
+using Mantid::Types::Core::DateAndTime;
 
 class HistoryViewTest : public CxxTest::TestSuite {
 

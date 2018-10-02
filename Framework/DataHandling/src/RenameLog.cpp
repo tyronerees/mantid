@@ -1,6 +1,6 @@
+#include "MantidDataHandling/RenameLog.h"
 #include "MantidAPI/MatrixWorkspace.h"
 #include "MantidAPI/Run.h"
-#include "MantidDataHandling/RenameLog.h"
 #include "MantidKernel/MandatoryValidator.h"
 #include "MantidKernel/TimeSeriesProperty.h"
 
@@ -48,10 +48,10 @@ void RenameLog::exec() {
   // std::cout << "Change log name\n";
   timeprop->setName(newlogname);
   // std::cout << "Add log" << timeprop->name() << '\n';
-  // std::vector<Kernel::DateAndTime> newtimes = timeprop->timesAsVector();
+  // std::vector<Types::Core::DateAndTime> newtimes = timeprop->timesAsVector();
   // std::cout << "Entries = " << newtimes.size() << '\n';
   matrixWS->mutableRun().addProperty(timeprop);
 }
 
-} // namespace Mantid
 } // namespace DataHandling
+} // namespace Mantid

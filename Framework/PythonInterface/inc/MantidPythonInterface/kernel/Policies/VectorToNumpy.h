@@ -23,16 +23,13 @@
     Code Documentation is available at: <http://doxygen.mantidproject.org>
  */
 #include "MantidKernel/System.h"
+#include "MantidPythonInterface/core/Converters/VectorToNDArray.h"
+#include "MantidPythonInterface/core/NDArray.h"
 #include "MantidPythonInterface/kernel/Converters/CloneToNumpy.h"
-#include "MantidPythonInterface/kernel/Converters/VectorToNDArray.h"
-#include "MantidPythonInterface/kernel/Converters/PyArrayType.h"
 
-#include <boost/type_traits/integral_constant.hpp>
-#include <boost/type_traits/is_reference.hpp>
-#include <boost/type_traits/remove_reference.hpp>
-#include <boost/type_traits/remove_const.hpp>
 #include <boost/mpl/and.hpp>
 #include <boost/mpl/if.hpp>
+#include <type_traits>
 #include <vector>
 
 namespace Mantid {
@@ -40,18 +37,17 @@ namespace PythonInterface {
 namespace Policies {
 
 namespace // anonymous
-    {
+{
 //-----------------------------------------------------------------------
 // MPL helper structs
 //-----------------------------------------------------------------------
 /// MPL struct to figure out if a type is a std::vector
-/// The general one inherits from boost::false_type
-template <typename T> struct is_std_vector : boost::false_type {};
+/// The general one inherits from std::false_type
+template <typename T> struct is_std_vector : std::false_type {};
 
 /// Specialization for std::vector types to inherit from
-/// boost::true_type
-template <typename T>
-struct is_std_vector<std::vector<T>> : boost::true_type {};
+/// std::true_type
+template <typename T> struct is_std_vector<std::vector<T>> : std::true_type {};
 
 //-----------------------------------------------------------------------
 // VectorRefToNumpyImpl - Policy for reference returns
@@ -66,14 +62,12 @@ struct VectorRefToNumpyImpl {
                                        ConversionPolicy>()(cvector);
   }
 
-  inline PyTypeObject const *get_pytype() const {
-    return Converters::getNDArrayType();
-  }
+  inline PyTypeObject const *get_pytype() const { return ndarrayType(); }
 };
 
 template <typename T>
 struct VectorRefToNumpy_Requires_Reference_To_StdVector_Return_Type {};
-}
+} // namespace
 
 /**
  * Implements a return value policy that
@@ -89,15 +83,14 @@ template <typename ConversionPolicy> struct VectorRefToNumpy {
   // The boost::python framework calls return_value_policy::apply<T>::type
   template <class T> struct apply {
     // Typedef that removes and const or reference qualifiers from the type
-    typedef typename boost::remove_const<
-        typename boost::remove_reference<T>::type>::type non_const_type;
+    using non_const_type = typename std::remove_const<
+        typename std::remove_reference<T>::type>::type;
     // MPL compile-time check that T is a reference to a std::vector
-    typedef typename boost::mpl::if_c<
-        boost::mpl::and_<boost::is_reference<T>,
+    using type = typename boost::mpl::if_c<
+        boost::mpl::and_<std::is_reference<T>,
                          is_std_vector<non_const_type>>::value,
         VectorRefToNumpyImpl<non_const_type, ConversionPolicy>,
-        VectorRefToNumpy_Requires_Reference_To_StdVector_Return_Type<T>>::type
-        type;
+        VectorRefToNumpy_Requires_Reference_To_StdVector_Return_Type<T>>::type;
   };
 };
 
@@ -115,14 +108,12 @@ template <typename VectorType> struct VectorToNumpyImpl {
                                        Converters::Clone>()(cvector);
   }
 
-  inline PyTypeObject const *get_pytype() const {
-    return Converters::getNDArrayType();
-  }
+  inline PyTypeObject const *get_pytype() const { return ndarrayType(); }
 };
 
 template <typename T>
 struct VectorToNumpy_Requires_StdVector_Return_By_Value {};
-}
+} // namespace
 
 /**
  * Implements a return value policy that
@@ -134,16 +125,16 @@ struct VectorToNumpy {
   // The boost::python framework calls return_value_policy::apply<T>::type
   template <class T> struct apply {
     // Typedef that removes any const from the type
-    typedef typename boost::remove_const<T>::type non_const_type;
+    using non_const_type = typename std::remove_const<T>::type;
     // MPL compile-time check that T is a std::vector
-    typedef typename boost::mpl::if_c<
+    using type = typename boost::mpl::if_c<
         is_std_vector<non_const_type>::value,
         VectorRefToNumpyImpl<non_const_type, Converters::Clone>,
-        VectorToNumpy_Requires_StdVector_Return_By_Value<T>>::type type;
+        VectorToNumpy_Requires_StdVector_Return_By_Value<T>>::type;
   };
 };
-}
-}
-}
+} // namespace Policies
+} // namespace PythonInterface
+} // namespace Mantid
 
 #endif // MANTID_PYTHONINTERFACE_VECTORTONUMPY_H_

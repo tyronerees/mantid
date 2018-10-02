@@ -1,12 +1,13 @@
 #ifndef MANTID_CRYSTAL_PEAKSINREGIONTEST_H_
 #define MANTID_CRYSTAL_PEAKSINREGIONTEST_H_
 
-#include <cxxtest/TestSuite.h>
-#include "MantidTestHelpers/WorkspaceCreationHelper.h"
-#include "MantidTestHelpers/ComponentCreationHelper.h"
-#include "MantidDataObjects/PeaksWorkspace.h"
 #include "MantidCrystal/PeaksInRegion.h"
+#include "MantidDataObjects/PeaksWorkspace.h"
+#include "MantidGeometry/Instrument/DetectorInfo.h"
+#include "MantidTestHelpers/ComponentCreationHelper.h"
+#include "MantidTestHelpers/WorkspaceCreationHelper.h"
 #include <boost/tuple/tuple.hpp>
+#include <cxxtest/TestSuite.h>
 
 using namespace Mantid::Crystal;
 using namespace Mantid::API;
@@ -18,8 +19,8 @@ Functional Tests
 class PeaksInRegionTest : public CxxTest::TestSuite {
 
 private:
-  typedef boost::tuple<PeaksWorkspace_sptr, std::vector<double>>
-      PeakWorkspaceWithExtents;
+  using PeakWorkspaceWithExtents =
+      boost::tuple<PeaksWorkspace_sptr, std::vector<double>>;
 
   /**
   Helper function. Creates a peaksworkspace with a single peak
@@ -30,7 +31,7 @@ private:
                        double yMaxFromPeak, double zMinFromPeak,
                        double zMaxFromPeak) {
     PeaksWorkspace_sptr ws = WorkspaceCreationHelper::createPeaksWorkspace(1);
-    auto detectorIds = ws->getInstrument()->getDetectorIDs();
+    const auto &detectorIds = ws->detectorInfo().detectorIDs();
     Peak &peak = ws->getPeak(0);
     peak.setDetectorID(detectorIds.front());
     Mantid::Kernel::V3D position;
@@ -398,7 +399,6 @@ public:
         0, 1, 0, 1, 0, 1}; // Extents go from 0, 1 in each dimension.
 
     PeaksWorkspace_sptr ws = WorkspaceCreationHelper::createPeaksWorkspace(1);
-    auto detectorIds = ws->getInstrument()->getDetectorIDs();
     Peak &peak = ws->getPeak(0);
     peak.setHKL(Mantid::Kernel::V3D(2, 0, 0)); // This point is actually on the
                                                // y = 0 plane, i.e. satisfies

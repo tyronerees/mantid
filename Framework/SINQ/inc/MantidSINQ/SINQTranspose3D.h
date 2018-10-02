@@ -35,19 +35,26 @@
 #ifndef TRANSPOSE3D_H_
 #define TRANSPOSE3D_H_
 
-#include "MantidSINQ/DllConfig.h"
 #include "MantidAPI/Algorithm.h"
+#include "MantidAPI/DeprecatedAlgorithm.h"
 #include "MantidAPI/IMDHistoWorkspace_fwd.h"
+#include "MantidSINQ/DllConfig.h"
 
-class MANTID_SINQ_DLL SINQTranspose3D : public Mantid::API::Algorithm {
+class MANTID_SINQ_DLL SINQTranspose3D
+    : public Mantid::API::Algorithm,
+      public Mantid::API::DeprecatedAlgorithm {
 public:
+  /// Constructor
+  SINQTranspose3D() { this->useAlgorithm("TransposeMD", 1); }
   /// Algorithm's name
   const std::string name() const override { return "Transpose3D"; }
   /// Summary of algorithms purpose
   const std::string summary() const override {
     return "SINQ specific MD data reordering";
   }
-
+  const std::vector<std::string> seeAlso() const override {
+    return {"TransposeMD", "Transpose"};
+  }
   /// Algorithm's version
   int version() const override { return (1); }
   /// Algorithm's category for identification

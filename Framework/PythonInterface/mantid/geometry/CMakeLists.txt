@@ -8,6 +8,7 @@ set ( EXPORT_FILES
   src/Exports/BoundingBox.cpp
   src/Exports/IComponent.cpp
   src/Exports/ICompAssembly.cpp
+  src/Exports/IObject.cpp
   src/Exports/IObjComponent.cpp
   src/Exports/IDetector.cpp
   src/Exports/IMDDimension.cpp
@@ -24,7 +25,7 @@ set ( EXPORT_FILES
   src/Exports/OrientedLattice.cpp
   src/Exports/ReferenceFrame.cpp
   src/Exports/Goniometer.cpp
-  src/Exports/Object.cpp
+  src/Exports/CSGObject.cpp
   src/Exports/PeakShape.cpp
   src/Exports/Group.cpp
   src/Exports/PointGroup.cpp
@@ -37,6 +38,11 @@ set ( EXPORT_FILES
   src/Exports/SymmetryOperationFactory.cpp
   src/Exports/CrystalStructure.cpp
   src/Exports/ReflectionGenerator.cpp
+  src/Exports/DetectorInfo.cpp
+  src/Exports/DetectorInfoItem.cpp
+  src/Exports/DetectorInfoIterator.cpp
+  src/Exports/DetectorInfoPythonIterator.cpp
+  src/Exports/ComponentInfo.cpp
 )
 
 #############################################################################################
@@ -79,19 +85,26 @@ add_library ( PythonGeometryModule ${EXPORT_FILES} ${MODULE_DEFINITION} ${SRC_FI
 set_python_properties( PythonGeometryModule _geometry )
 set_target_output_directory ( PythonGeometryModule ${OUTPUT_DIR} .pyd )
 # Add the required dependencies
-target_link_libraries ( PythonGeometryModule LINK_PRIVATE ${TCMALLOC_LIBRARIES_LINKTIME}
+target_link_libraries ( PythonGeometryModule PRIVATE ${TCMALLOC_LIBRARIES_LINKTIME}
+            PythonInterfaceCore
             PythonKernelModule
             Geometry
+            Beamline
+            Types
             Kernel
             ${PYTHON_LIBRARIES}
             ${POCO_LIBRARIES}
             ${Boost_LIBRARIES}
-			${TBB_LIBRARIES} 
+			${TBB_LIBRARIES}
 			${TBB_MALLOC_LIBRARIES}
             )
 
 if (OSX_VERSION VERSION_GREATER 10.8)
-  set_target_properties ( PythonGeometryModule PROPERTIES INSTALL_RPATH "@loader_path/../../../MacOS;@loader_path/../kernel/")
+  set_target_properties ( PythonGeometryModule PROPERTIES
+                          INSTALL_RPATH "@loader_path/../../../MacOS;@loader_path/../kernel/")
+elseif ( ${CMAKE_SYSTEM_NAME} STREQUAL "Linux" )
+  set_target_properties ( PythonGeometryModule PROPERTIES
+                         INSTALL_RPATH "\$ORIGIN/../../../${LIB_DIR};\$ORIGIN/../kernel/")
 endif ()
 
 ###########################################################################

@@ -1,5 +1,4 @@
 #include "MantidAlgorithms/InvertMask.h"
-#include "MantidKernel/System.h"
 #include "MantidAPI/WorkspaceProperty.h"
 #include "MantidDataObjects/MaskWorkspace.h"
 
@@ -34,7 +33,7 @@ void InvertMask::exec() {
   // 2. Do Invert by calling Child Algorithm
   API::IAlgorithm_sptr invert =
       createChildAlgorithm("BinaryOperateMasks", 0.0, 1.0, true);
-  invert->setPropertyValue("InputWorkspace1", inWS->name());
+  invert->setPropertyValue("InputWorkspace1", inWS->getName());
   invert->setProperty("OperationType", "NOT");
   invert->setProperty("OutputWorkspace", "tempws");
 
@@ -57,5 +56,5 @@ void InvertMask::exec() {
   this->setProperty("OutputWorkspace", outputws);
 }
 
-} // namespace Mantid
 } // namespace Algorithms
+} // namespace Mantid

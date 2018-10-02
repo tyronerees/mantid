@@ -1,5 +1,5 @@
-#include "MantidDataObjects/TableWorkspace.h"
 #include "MantidAPI/Column.h"
+#include "MantidDataObjects/TableWorkspace.h"
 
 namespace Mantid {
 
@@ -45,6 +45,11 @@ public:
     return std::unique_ptr<MementoTableWorkspace>(doClone());
   }
 
+  /// Returns a default-initialized clone of the workspace
+  std::unique_ptr<MementoTableWorkspace> cloneEmpty() const {
+    return std::unique_ptr<MementoTableWorkspace>(doCloneEmpty());
+  }
+
 protected:
   /// Protected copy constructor. May be used by childs for cloning.
   MementoTableWorkspace(const MementoTableWorkspace &) = default;
@@ -54,8 +59,12 @@ private:
     return new MementoTableWorkspace(*this);
   }
 
+  MementoTableWorkspace *doCloneEmpty() const override {
+    return new MementoTableWorkspace();
+  }
+
   static bool expectedColumn(Mantid::API::Column_const_sptr expected,
                              Mantid::API::Column_const_sptr candidate);
 };
-}
-}
+} // namespace DataObjects
+} // namespace Mantid

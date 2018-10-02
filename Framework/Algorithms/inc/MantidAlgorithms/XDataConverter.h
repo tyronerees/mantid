@@ -1,16 +1,14 @@
 #ifndef MANTID_ALGORITHMS_XDATACONVERTER_H_
 #define MANTID_ALGORITHMS_XDATACONVERTER_H_
 
-//------------------------------------------------------------------------------
-// Includes
-//------------------------------------------------------------------------------
-#include "MantidAPI/Algorithm.h"
+#include "MantidAPI/DistributedAlgorithm.h"
 #include "MantidKernel/cow_ptr.h"
 
 namespace Mantid {
 namespace HistogramData {
+class HistogramDx;
 class HistogramX;
-}
+} // namespace HistogramData
 namespace Algorithms {
 /**
   This is an abstract base class for sharing methods between algorithms that
@@ -43,7 +41,7 @@ namespace Algorithms {
   File change history is stored at: <https://github.com/mantidproject/mantid>
   Code Documentation is available at: <http://doxygen.mantidproject.org>
 */
-class DLLExport XDataConverter : public API::Algorithm {
+class DLLExport XDataConverter : public API::DistributedAlgorithm {
 public:
   /// Default constructor
   XDataConverter();
@@ -57,8 +55,7 @@ protected:
   virtual bool
   isProcessingRequired(const API::MatrixWorkspace_sptr inputWS) const = 0;
   /// Returns the size of the new X vector
-  virtual std::size_t
-  getNewXSize(const API::MatrixWorkspace_sptr inputWS) const = 0;
+  virtual std::size_t getNewXSize(const std::size_t ySize) const = 0;
   /// Calculate the X point values. Implement in an inheriting class.
   virtual Kernel::cow_ptr<HistogramData::HistogramX> calculateXPoints(
       const Kernel::cow_ptr<HistogramData::HistogramX> inputX) const = 0;
@@ -68,6 +65,8 @@ private:
   void init() override;
   /// Override exec
   void exec() override;
+
+  std::size_t getNewYSize(const API::MatrixWorkspace_sptr inputWS);
 
   /// Set the X data on given spectra
   void setXData(API::MatrixWorkspace_sptr outputWS,
@@ -79,7 +78,7 @@ private:
   Kernel::cow_ptr<HistogramData::HistogramX> m_cachedX{nullptr};
 };
 
-} // namespace Algorithm
+} // namespace Algorithms
 } // namespace Mantid
 
 #endif /*MANTID_ALGORITHMS_XDATACONVERTER_H_*/

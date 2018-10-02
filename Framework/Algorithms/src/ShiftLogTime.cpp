@@ -8,6 +8,7 @@
 
 using namespace Mantid::Kernel;
 using namespace Mantid::API;
+using Mantid::Types::Core::DateAndTime;
 using std::string;
 using std::stringstream;
 using std::vector;
@@ -84,8 +85,9 @@ void ShiftLogTime::exec() {
     times.erase(times.begin(), times.begin() + indexshift);
   } else // indexshift < 0
   {
-    values.erase(values.begin(), values.begin() + indexshift);
-    times.erase(times.end() - indexshift, times.end());
+    // indexshift<0, so -indexshift>0
+    values.erase(values.begin(), values.begin() - indexshift);
+    times.erase(times.end() + indexshift, times.end());
   }
 
   // Create the new log
@@ -110,5 +112,5 @@ void ShiftLogTime::exec() {
   outputWS->mutableRun().addProperty(newlog, true);
 }
 
-} // namespace Mantid
 } // namespace Algorithms
+} // namespace Mantid

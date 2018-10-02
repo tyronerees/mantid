@@ -24,11 +24,13 @@
     Code Documentation is available at: <http://doxygen.mantidproject.org>
  */
 #include "MantidKernel/Exception.h"
+#include "MantidPythonInterface/kernel/Converters/PyObjectToString.h"
 #include "MantidPythonInterface/kernel/WeakPtr.h"
 
 #include <boost/python/class.hpp>
-#include <boost/python/list.hpp>
 #include <boost/python/extract.hpp>
+#include <boost/python/list.hpp>
+#include <boost/python/str.hpp>
 
 #include <set>
 
@@ -41,8 +43,8 @@ namespace PythonInterface {
  */
 template <typename SvcType, typename SvcPtrType> struct DataServiceExporter {
   // typedef the type created by boost.python
-  typedef boost::python::class_<SvcType, boost::noncopyable> PythonType;
-  typedef boost::weak_ptr<typename SvcPtrType::element_type> WeakPtr;
+  using PythonType = boost::python::class_<SvcType, boost::noncopyable>;
+  using WeakPtr = boost::weak_ptr<typename SvcPtrType::element_type>;
 
   /**
    * Define the necessary boost.python framework to expor the templated
@@ -108,9 +110,15 @@ template <typename SvcType, typename SvcPtrType> struct DataServiceExporter {
    * @param name The name to assign to this in the service
    * @param item A boost.python wrapped SvcHeldType object
    */
-  static void addItem(SvcType &self, const std::string &name,
+  static void addItem(SvcType &self, const boost::python::object &name,
                       const boost::python::object &item) {
-    self.add(name, extractCppValue(item));
+    std::string namestr;
+    try {
+      namestr = PythonInterface::Converters::pyObjToStr(name);
+    } catch (std::invalid_argument &) {
+      throw std::invalid_argument("Failed to convert name to a string");
+    }
+    self.add(namestr, extractCppValue(item));
   }
 
   /**
@@ -120,9 +128,15 @@ template <typename SvcType, typename SvcPtrType> struct DataServiceExporter {
    * @param name The name to assign to this in the service
    * @param item A boost.python wrapped SvcHeldType object
    */
-  static void addOrReplaceItem(SvcType &self, const std::string &name,
+  static void addOrReplaceItem(SvcType &self, const boost::python::object &name,
                                const boost::python::object &item) {
-    self.addOrReplace(name, extractCppValue(item));
+    std::string namestr;
+    try {
+      namestr = PythonInterface::Converters::pyObjToStr(name);
+    } catch (std::invalid_argument &) {
+      throw std::invalid_argument("Failed to convert name to a string");
+    }
+    self.addOrReplace(namestr, extractCppValue(item));
   }
 
   /**
@@ -136,9 +150,9 @@ template <typename SvcType, typename SvcPtrType> struct DataServiceExporter {
     if (extractWeak.check()) {
       return extractWeak().lock();
     }
-    boost::python::extract<SvcPtrType &> extractShared(pyvalue);
-    if (extractShared.check()) {
-      return extractShared();
+    boost::python::extract<SvcPtrType &> extractRefShared(pyvalue);
+    if (extractRefShared.check()) {
+      return extractRefShared();
     } else {
       throw std::invalid_argument(
           "Cannot extract pointer from Python object argument. Incorrect type");
@@ -155,14 +169,23 @@ template <typename SvcType, typename SvcPtrType> struct DataServiceExporter {
    * @return A shared_ptr to the named object. If the name does not exist it
    * sets a KeyError error indicator.
    */
-  static WeakPtr retrieveOrKeyError(SvcType &self, const std::string &name) {
+  static WeakPtr retrieveOrKeyError(SvcType &self,
+                                    const boost::python::object &name) {
     using namespace Mantid::Kernel;
+
+    std::string namestr;
+    try {
+      namestr = PythonInterface::Converters::pyObjToStr(name);
+    } catch (std::invalid_argument &) {
+      throw std::invalid_argument("Failed to convert name to a string");
+    }
+
     SvcPtrType item;
     try {
-      item = self.retrieve(name);
+      item = self.retrieve(namestr);
     } catch (Exception::NotFoundError &) {
       // Translate into a Python KeyError
-      std::string err = "'" + name + "' does not exist.";
+      std::string err = "'" + namestr + "' does not exist.";
       PyErr_SetString(PyExc_KeyError, err.c_str());
       throw boost::python::error_already_set();
     }
@@ -175,7 +198,7 @@ template <typename SvcType, typename SvcPtrType> struct DataServiceExporter {
    * @param self :: A reference to the ADS object that called this method
    * @returns A python list created from the set of strings
    */
-  static boost::python::object getObjectNamesAsList(SvcType &self) {
+  static boost::python::list getObjectNamesAsList(SvcType &self) {
     boost::python::list names;
     const auto keys = self.getObjectNames();
     for (auto itr = keys.begin(); itr != keys.end(); ++itr) {
@@ -185,7 +208,7 @@ template <typename SvcType, typename SvcPtrType> struct DataServiceExporter {
     return names;
   }
 };
-}
-}
+} // namespace PythonInterface
+} // namespace Mantid
 
 #endif /* MANTID_PYTHONINTERFACE_DATASERVICEEXPORTER_H_ */

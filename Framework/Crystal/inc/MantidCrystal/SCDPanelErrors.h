@@ -4,10 +4,10 @@
 //----------------------------------------------------------------------
 // Includes
 //----------------------------------------------------------------------
-#include "MantidAPI/ParamFunction.h"
 #include "MantidAPI/IFunction1D.h"
-#include "MantidKernel/System.h"
+#include "MantidAPI/ParamFunction.h"
 #include "MantidAPI/Workspace_fwd.h"
+#include "MantidKernel/System.h"
 #include <cmath>
 
 namespace Mantid {
@@ -77,7 +77,8 @@ private:
   /// Evaluate the function for a list of arguments and given scaling factor
   void eval(double xshift, double yshift, double zshift, double xrotate,
             double yrotate, double zrotate, double scalex, double scaley,
-            double *out, const double *xValues, const size_t nData) const;
+            double *out, const double *xValues, const size_t nData,
+            double tShift) const;
 
   /// Fill in the workspace and bank names
   void setupData() const;

@@ -1,9 +1,10 @@
 #ifndef MANTID_ALGORITHMS_CALCULATEDIFC_H_
 #define MANTID_ALGORITHMS_CALCULATEDIFC_H_
 
-#include "MantidKernel/System.h"
 #include "MantidAPI/Algorithm.h"
 #include "MantidDataObjects/OffsetsWorkspace.h"
+#include "MantidGeometry/Instrument/DetectorInfo.h"
+#include "MantidKernel/System.h"
 
 namespace Mantid {
 namespace Algorithms {
@@ -33,20 +34,22 @@ namespace Algorithms {
 */
 class DLLExport CalculateDIFC : public API::Algorithm {
 public:
+  /// Algorithms name for identification. @see Algorithm::name
   const std::string name() const override;
+  /// Algorithm's version for identification. @see Algorithm::version
   int version() const override;
+  const std::vector<std::string> seeAlso() const override {
+    return {"ConvertDiffCal"};
+  }
   const std::string category() const override;
+  /// Algorithm's summary for use in the GUI and help. @see Algorithm::summary
   const std::string summary() const override;
 
 private:
   void init() override;
+  /// Cross-check properties with each other @see IAlgorithm::validateInputs
+  std::map<std::string, std::string> validateInputs() override;
   void exec() override;
-
-  /// Calculate the DIFC for every pixel
-  void calculate(API::Progress &progress, API::MatrixWorkspace_sptr &outputWs,
-                 DataObjects::OffsetsWorkspace_sptr &offsetsWS, double l1,
-                 double beamlineNorm, Kernel::V3D &beamline,
-                 Kernel::V3D &samplePos, detid2det_map &allDetectors);
 };
 
 } // namespace Algorithms

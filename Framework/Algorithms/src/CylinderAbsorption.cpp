@@ -1,9 +1,8 @@
-//----------------------------------------------------------------------
-// Includes
-//----------------------------------------------------------------------
 #include "MantidAlgorithms/CylinderAbsorption.h"
 #include "MantidAPI/MatrixWorkspace.h"
 #include "MantidGeometry/Instrument.h"
+#include "MantidGeometry/Objects/CSGObject.h"
+#include "MantidGeometry/Objects/Track.h"
 #include "MantidKernel/BoundedValidator.h"
 
 namespace Mantid {
@@ -83,7 +82,7 @@ std::string CylinderAbsorption::sampleXML() {
   xmlShapeStream << "<cylinder id=\"detector-shape\"> "
                  << "<centre-of-bottom-base x=\"" << samplePos.X() << "\" y=\""
                  << cylinderBase << "\" z=\"" << samplePos.Z() << "\" /> "
-                 << "<axis x=\"0\" y=\"1\" z=\"0\" /> "
+                 << R"(<axis x="0" y="1" z="0" /> )"
                  << "<radius val=\"" << m_cylRadius << "\" /> "
                  << "<height val=\"" << m_cylHeight << "\" /> "
                  << "</cylinder>";

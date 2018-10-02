@@ -8,7 +8,7 @@
 namespace H5 {
 class H5File;
 class Group;
-}
+} // namespace H5
 
 namespace Mantid {
 namespace DataHandling {
@@ -40,8 +40,16 @@ class DLLExport LoadDiffCal : public API::Algorithm {
 public:
   const std::string name() const override;
   int version() const override;
+  const std::vector<std::string> seeAlso() const override {
+    return {"SaveDiffCal"};
+  }
   const std::string category() const override;
   const std::string summary() const override;
+
+protected:
+  Parallel::ExecutionMode getParallelExecutionMode(
+      const std::map<std::string, Parallel::StorageMode> &storageModes)
+      const override;
 
 private:
   void init() override;

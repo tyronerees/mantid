@@ -1,17 +1,17 @@
 #ifndef MANTID_TESTCOMPONENT__
 #define MANTID_TESTCOMPONENT__
 
-#include <cxxtest/TestSuite.h>
-#include <cmath>
-#include <string>
 #include "MantidGeometry/Instrument/Component.h"
-#include "MantidKernel/V3D.h"
-#include "MantidKernel/Quat.h"
 #include "MantidKernel/Exception.h"
+#include "MantidKernel/Quat.h"
+#include "MantidKernel/V3D.h"
+#include <cmath>
+#include <cxxtest/TestSuite.h>
+#include <string>
 
 using namespace Mantid::Geometry;
-using Mantid::Kernel::V3D;
 using Mantid::Kernel::Quat;
+using Mantid::Kernel::V3D;
 
 class ComponentTest : public CxxTest::TestSuite {
 public:
@@ -327,7 +327,7 @@ public:
     TS_ASSERT_EQUALS(child.getRotation(), rot2);
     TS_ASSERT_EQUALS(child.getRotation(), child.getRelativeRot());
     // Or indeed remove the parent completely
-    child.setParent(NULL);
+    child.setParent(nullptr);
     TS_ASSERT_EQUALS(child.getRotation(), rot2);
     TS_ASSERT_EQUALS(child.getRotation(), child.getRelativeRot());
   }

@@ -38,7 +38,7 @@ void FFTDerivative::execComplexFFT() {
   MatrixWorkspace_sptr outWS;
 
   size_t n = inWS->getNumberHistograms();
-  API::Progress progress(this, 0, 1, n);
+  API::Progress progress(this, 0.0, 1.0, n);
 
   size_t ny = inWS->y(0).size();
   size_t nx = inWS->x(0).size();
@@ -95,11 +95,11 @@ void FFTDerivative::execComplexFFT() {
     size_t m2 = transWS->y(0).size() / 2;
     double dx = copyWS->x(0)[m2];
 
-    outWS->mutableX(spec)
-        .assign(transWS->x(0).cbegin() + m2, transWS->x(0).cend());
+    outWS->mutableX(spec).assign(transWS->x(0).cbegin() + m2,
+                                 transWS->x(0).cend());
     outWS->mutableX(spec) += dx;
-    outWS->mutableY(spec)
-        .assign(transWS->y(0).cbegin() + m2, transWS->y(0).cend());
+    outWS->mutableY(spec).assign(transWS->y(0).cbegin() + m2,
+                                 transWS->y(0).cend());
 
     progress.report();
   }
@@ -144,7 +144,7 @@ void FFTDerivative::symmetriseSpectrum(const HistogramData::Histogram &in,
  * @param nu :: complete real X of input histogram
  * @param &re :: complete real Y  of input histogram
  * @param &im :: complete imaginary Y of input histogram
-*/
+ */
 void FFTDerivative::multiplyTransform(HistogramX &nu, HistogramY &re,
                                       HistogramY &im) {
   int dn = getProperty("Order");
@@ -184,5 +184,5 @@ void FFTDerivative::multiplyTransform(HistogramX &nu, HistogramY &re,
   }
 }
 
-} // Algorithms
-} // Mandid
+} // namespace Algorithms
+} // namespace Mantid

@@ -5,6 +5,7 @@
 // Includes
 //---------------------------------------------------
 #include "MantidAPI/IFileLoader.h"
+#include "MantidHistogramData/Histogram.h"
 #include "MantidKernel/cow_ptr.h"
 
 #include <fstream>
@@ -56,6 +57,9 @@ public:
 
   /// Algorithm's version
   int version() const override { return (1); }
+  const std::vector<std::string> seeAlso() const override {
+    return {"SaveRKH"};
+  }
   /// Algorithm's category for identification
   const std::string category() const override {
     return "DataHandling\\Text;SANS\\DataHandling";
@@ -92,7 +96,14 @@ private:
 
   /// Check if we the data set stores an X-Error values
   bool hasXerror(std::ifstream &stream);
+
+  /// Read data from the RKH file
+  void readLinesForRKH1D(std::istream &stream, int readStart, int readEnd,
+                         HistogramData::Points &x, HistogramData::Counts &y,
+                         HistogramData::CountStandardDeviations &ye,
+                         HistogramData::PointStandardDeviations &xe,
+                         API::Progress &prog, bool readXError = false);
 };
-}
-}
+} // namespace DataHandling
+} // namespace Mantid
 #endif /*MANTID_DATAHANDLING_LOADRKH_H_*/

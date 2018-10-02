@@ -1,10 +1,7 @@
 #ifndef MANTID_DATAHANDLING_SetSampleMaterial_H_
 #define MANTID_DATAHANDLING_SetSampleMaterial_H_
 
-//--------------------------------
-// Includes
-//--------------------------------
-#include "MantidAPI/Algorithm.h"
+#include "MantidAPI/DistributedAlgorithm.h"
 #include "MantidKernel/NeutronAtom.h"
 
 namespace Mantid {
@@ -39,7 +36,7 @@ namespace DataHandling {
     File change history is stored at: <https://github.com/mantidproject/mantid>
     Code Documentation is available at: <http://doxygen.mantidproject.org>
 */
-class DLLExport SetSampleMaterial : public Mantid::API::Algorithm {
+class DLLExport SetSampleMaterial : public Mantid::API::DistributedAlgorithm {
 public:
   /// Algorithm's name
   const std::string name() const override;
@@ -50,6 +47,10 @@ public:
 
   /// Algorithm's version
   int version() const override;
+  const std::vector<std::string> seeAlso() const override {
+    return {"AbsorptionCorrection", "CreateSampleShape",
+            "CalculateSampleTransmission"};
+  }
   /// Algorithm's category for identification
   const std::string category() const override;
   std::map<std::string, std::string> validateInputs() override;
@@ -63,7 +64,7 @@ private:
   void fixNeutron(PhysicalConstants::NeutronAtom &neutron, double coh_xs,
                   double inc_xs, double abs_xs, double tot_xs);
 };
-}
-}
+} // namespace DataHandling
+} // namespace Mantid
 
 #endif /* MANTID_DATAHANDLING_SetSampleMaterial_H_*/

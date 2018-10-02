@@ -48,7 +48,7 @@ void ConvertToMatrixWorkspace::exec() {
     outputWorkspace = WorkspaceFactory::Instance().create(inputWorkspace);
 
     // ...but not the data, so do that here.
-    PARALLEL_FOR2(inputWorkspace, outputWorkspace)
+    PARALLEL_FOR_IF(Kernel::threadSafe(*inputWorkspace, *outputWorkspace))
     for (int64_t i = 0; i < static_cast<int64_t>(numHists); ++i) {
       PARALLEL_START_INTERUPT_REGION
       const auto &inSpec = inputWorkspace->getSpectrum(i);
@@ -63,10 +63,17 @@ void ConvertToMatrixWorkspace::exec() {
     }
     PARALLEL_CHECK_INTERUPT_REGION
   } else {
-    g_log.information() << "Input workspace does not need converting. Pointing "
-                           "OutputWorkspace property to input.\n";
-    outputWorkspace =
-        boost::const_pointer_cast<MatrixWorkspace>(inputWorkspace);
+    outputWorkspace = getProperty("OutputWorkspace");
+    if (inputWorkspace == outputWorkspace) {
+      g_log.information("InputWorkspace does not need converting. Pointing "
+                        "OutputWorkspace property to input.");
+      outputWorkspace =
+          boost::const_pointer_cast<MatrixWorkspace>(inputWorkspace);
+    } else {
+      g_log.information(
+          "InputWorkspace does not need converting. Cloning InputWorkspace.");
+      outputWorkspace = inputWorkspace->clone();
+    }
   }
 
   setProperty("OutputWorkspace", outputWorkspace);

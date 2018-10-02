@@ -3,6 +3,8 @@
 
 #include "MantidAPI/AlgorithmManager.h"
 
+using namespace Mantid;
+
 namespace FitTestHelpers {
 
 enum CurveBenchmarks { SingleB2BPeak, SmoothishGaussians };
@@ -124,6 +126,6 @@ static API::MatrixWorkspace_sptr generateSmoothCurveWorkspace() {
 
   return ws;
 }
-}
+} // namespace FitTestHelpers
 
 #endif /* FITTESTHELPERS_H_ */

@@ -3,8 +3,6 @@
 
 #include "MantidKernel/System.h"
 #include <list>
-#include <vector>
-#include <algorithm>
 #include <mutex>
 #ifndef Q_MOC_RUN
 #include <boost/optional.hpp>
@@ -78,7 +76,7 @@ public:
    *its image in memory
    *@param Yes -- boolean true or false --usually only load functiomn should set
    *it to true
-  */
+   */
   void setLoaded(bool Yes) { m_isLoaded = Yes; }
 
   /// @return true if it the data of the object is busy and so cannot be

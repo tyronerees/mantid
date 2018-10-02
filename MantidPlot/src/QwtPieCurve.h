@@ -26,9 +26,9 @@
  *   Boston, MA  02110-1301  USA                                           *
  *                                                                         *
  ***************************************************************************/
-#include <qwt_plot.h>
-#include "PlotCurve.h"
 #include "LegendWidget.h"
+#include "PlotCurve.h"
+#include <qwt_plot.h>
 
 class PieLabel;
 
@@ -126,7 +126,7 @@ class PieLabel : public LegendWidget {
   Q_OBJECT
 
 public:
-  PieLabel(Plot *, QwtPieCurve *pie = 0);
+  PieLabel(Plot *, QwtPieCurve *pie = nullptr);
 
   QString customText();
   void setCustomText(const QString &s) { d_custom_text = s; };

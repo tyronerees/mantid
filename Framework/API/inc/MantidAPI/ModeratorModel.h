@@ -23,7 +23,6 @@
   Code Documentation is available at: <http://doxygen.mantidproject.org>
 */
 #include "MantidAPI/DllConfig.h"
-#include "MantidKernel/ClassMacros.h"
 
 #ifndef Q_MOC_RUN
 #include <boost/shared_ptr.hpp>
@@ -74,7 +73,7 @@ private:
   /// Moderator tilt angle in radians
   double m_tiltAngle;
 };
-}
-}
+} // namespace API
+} // namespace Mantid
 
 #endif /* MANTID_API_MODERATORMODEL_H_ */

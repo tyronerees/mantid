@@ -1,10 +1,11 @@
 #ifndef MANTID_MDEVENTS_IMPORTMDHISTOWORKSPACETEST_H_
 #define MANTID_MDEVENTS_IMPORTMDHISTOWORKSPACETEST_H_
 
+#include "MantidAPI/AnalysisDataService.h"
 #include "MantidAPI/IMDHistoWorkspace.h"
+#include "MantidGeometry/MDGeometry/QSample.h"
 #include "MantidKernel/ConfigService.h"
 #include "MantidMDAlgorithms/ImportMDHistoWorkspace.h"
-#include "MantidGeometry/MDGeometry/QSample.h"
 #include <cxxtest/TestSuite.h>
 
 #include <Poco/Path.h>
@@ -227,7 +228,7 @@ public:
     IMDHistoWorkspace_sptr outWs =
         boost::dynamic_pointer_cast<IMDHistoWorkspace>(
             ADS.retrieve("test_workspace"));
-    TS_ASSERT(outWs != NULL);
+    TS_ASSERT(outWs != nullptr);
 
     // Check the dimensionality
     TS_ASSERT_EQUALS(2, outWs->getNumDims());
@@ -289,7 +290,7 @@ public:
     IMDHistoWorkspace_sptr outWs =
         boost::dynamic_pointer_cast<IMDHistoWorkspace>(
             ADS.retrieve("test_workspace"));
-    TS_ASSERT(outWs != NULL);
+    TS_ASSERT(outWs != nullptr);
 
     // Check the dimensionality
     TS_ASSERT_EQUALS(3, outWs->getNumDims());

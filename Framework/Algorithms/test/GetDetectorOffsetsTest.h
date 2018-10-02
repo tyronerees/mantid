@@ -1,15 +1,16 @@
 #ifndef GETDETECTOROFFSETSTEST_H_
 #define GETDETECTOROFFSETSTEST_H_
 
-#include "MantidAlgorithms/GetDetectorOffsets.h"
+#include "MantidAPI/AlgorithmManager.h"
 #include "MantidAPI/AnalysisDataService.h"
 #include "MantidAPI/Axis.h"
+#include "MantidAPI/FrameworkManager.h"
+#include "MantidAlgorithms/GetDetectorOffsets.h"
+#include "MantidDataObjects/OffsetsWorkspace.h"
+#include "MantidGeometry/Instrument/DetectorInfo.h"
 #include "MantidKernel/UnitFactory.h"
 #include "MantidTestHelpers/WorkspaceCreationHelper.h"
 #include <cxxtest/TestSuite.h>
-#include "MantidDataObjects/OffsetsWorkspace.h"
-#include "MantidAPI/AlgorithmManager.h"
-#include "MantidAPI/FrameworkManager.h"
 
 using namespace Mantid::API;
 using Mantid::Algorithms::GetDetectorOffsets;
@@ -85,13 +86,13 @@ public:
             maskWS));
     if (!mask)
       return;
-    TS_ASSERT(!mask->getInstrument()->getDetector(1)->isMasked());
+    TS_ASSERT(!mask->detectorInfo().isMasked(0));
   }
 
   void testExecWithGroup() {
     // --------- Workspace with summed spectra -------
     MatrixWorkspace_sptr WS =
-        WorkspaceCreationHelper::CreateGroupedWorkspace2D(3, 200, 1.0);
+        WorkspaceCreationHelper::createGroupedWorkspace2D(3, 200, 1.0);
     WS->getAxis(0)->unit() =
         Mantid::Kernel::UnitFactory::Instance().create("dSpacing");
 
@@ -136,7 +137,7 @@ public:
             maskWS));
     if (!mask)
       return;
-    TS_ASSERT(!mask->getInstrument()->getDetector(1)->isMasked());
+    TS_ASSERT(!mask->detectorInfo().isMasked(0));
   }
 
   void testExecAbsolute() {
@@ -191,7 +192,7 @@ public:
             maskWS));
     if (!mask)
       return;
-    TS_ASSERT(!mask->getInstrument()->getDetector(1)->isMasked());
+    TS_ASSERT(!mask->detectorInfo().isMasked(0));
   }
 
 private:

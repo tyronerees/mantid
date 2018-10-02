@@ -4,23 +4,21 @@
 //----------------------------------------------------------------------
 // Includes
 //----------------------------------------------------------------------
-#include "MantidAPI/ILiveListener.h"
+#include "MantidAPI/LiveListener.h"
+#include "MantidAPI/MatrixWorkspace_fwd.h"
 #include "MantidKernel/cow_ptr.h"
-
 //----------------------------------------------------------------------
 // Forward declarations
 //----------------------------------------------------------------------
 
 struct idc_info;
-typedef struct idc_info *idc_handle_t;
+using idc_handle_t = struct idc_info *;
 
 namespace Mantid {
 //----------------------------------------------------------------------
 // Forward declarations
 //----------------------------------------------------------------------
-namespace API {
-class MatrixWorkspace;
-}
+
 namespace HistogramData {
 class BinEdges;
 }
@@ -49,7 +47,7 @@ namespace LiveData {
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-class ISISHistoDataListener : public API::ILiveListener {
+class ISISHistoDataListener : public API::LiveListener {
 public:
   ISISHistoDataListener();
   ~ISISHistoDataListener() override;
@@ -59,7 +57,8 @@ public:
   bool buffersEvents() const override { return false; }
 
   bool connect(const Poco::Net::SocketAddress &address) override;
-  void start(Kernel::DateAndTime startTime = Kernel::DateAndTime()) override;
+  void start(
+      Types::Core::DateAndTime startTime = Types::Core::DateAndTime()) override;
   boost::shared_ptr<API::Workspace> extractData() override;
 
   bool isConnected() override;
@@ -129,6 +128,10 @@ private:
 
   /// Time regime to load
   int m_timeRegime;
+
+  /// Buffer workspace to store instrument data (or not only instrument in the
+  /// future), prevents loading for every chank of data
+  API::MatrixWorkspace_sptr m_bufferWorkspace;
 
   /// reporter function called when the IDC reading routines raise an error
   static void IDCReporter(int status, int code, const char *message);

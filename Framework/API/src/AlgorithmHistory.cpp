@@ -9,11 +9,11 @@ namespace Mantid {
 namespace API {
 
 using Kernel::Property;
-using Kernel::DateAndTime;
-using Kernel::PropertyHistory;
-using Kernel::PropertyHistory_sptr;
-using Kernel::PropertyHistory_const_sptr;
 using Kernel::PropertyHistories;
+using Kernel::PropertyHistory;
+using Kernel::PropertyHistory_const_sptr;
+using Kernel::PropertyHistory_sptr;
+using Types::Core::DateAndTime;
 
 /** Constructor
  *  @param alg ::      A pointer to the algorithm for which the history should
@@ -24,7 +24,7 @@ using Kernel::PropertyHistories;
  *  @param uexeccount :: an  unsigned int for algorithm execution order
  */
 AlgorithmHistory::AlgorithmHistory(const Algorithm *const alg,
-                                   const Kernel::DateAndTime &start,
+                                   const Types::Core::DateAndTime &start,
                                    const double &duration,
                                    std::size_t uexeccount)
     : m_name(alg->name()), m_version(alg->version()), m_executionDate(start),
@@ -49,7 +49,7 @@ AlgorithmHistory::~AlgorithmHistory() = default;
    @param uexeccount ::  an  unsigned int for algorithm execution order
  */
 AlgorithmHistory::AlgorithmHistory(const std::string &name, int vers,
-                                   const Kernel::DateAndTime &start,
+                                   const Types::Core::DateAndTime &start,
                                    const double &duration,
                                    std::size_t uexeccount)
     : m_name(name), m_version(vers), m_executionDate(start),
@@ -82,10 +82,9 @@ void AlgorithmHistory::setProperties(const Algorithm *const alg) {
  * (optional)
  *  @param uexeccount :: an  unsigned int for algorithm execution order
  */
-void AlgorithmHistory::fillAlgorithmHistory(const Algorithm *const alg,
-                                            const Kernel::DateAndTime &start,
-                                            const double &duration,
-                                            std::size_t uexeccount) {
+void AlgorithmHistory::fillAlgorithmHistory(
+    const Algorithm *const alg, const Types::Core::DateAndTime &start,
+    const double &duration, std::size_t uexeccount) {
   m_name = alg->name();
   m_version = alg->version();
   m_executionDate = start;
@@ -149,11 +148,11 @@ size_t AlgorithmHistory::childHistorySize() const {
 }
 
 /**
-  * Retrieve a child algorithm history by index
-  * @param index ::  An index within the child algorithm history set
-  * @returns A pointer to an AlgorithmHistory object
-  * @throws std::out_of_range error if the index is invalid
-  */
+ * Retrieve a child algorithm history by index
+ * @param index ::  An index within the child algorithm history set
+ * @returns A pointer to an AlgorithmHistory object
+ * @throws std::out_of_range error if the index is invalid
+ */
 AlgorithmHistory_sptr
 AlgorithmHistory::getChildAlgorithmHistory(const size_t index) const {
   if (index >= this->getChildHistories().size()) {
@@ -174,11 +173,11 @@ AlgorithmHistory_sptr AlgorithmHistory::operator[](const size_t index) const {
 }
 
 /**
-* Gets the value of a specified algorithm property
-* @param name ::  The property to find
-* @returns The string value of the property
-* @throw Exception::NotFoundError if the named property is unknown
-*/
+ * Gets the value of a specified algorithm property
+ * @param name ::  The property to find
+ * @returns The string value of the property
+ * @throw Exception::NotFoundError if the named property is unknown
+ */
 const std::string &
 AlgorithmHistory::getPropertyValue(const std::string &name) const {
   for (const auto &hist : m_properties) {
@@ -201,11 +200,14 @@ AlgorithmHistory::getChildAlgorithm(const size_t index) const {
 }
 
 /** Prints a text representation of itself
- *  @param os :: The ouput stream to write to
+ *  @param os :: The output stream to write to
  *  @param indent :: an indentation value to make pretty printing of object and
  * sub-objects
+ *  @param maxPropertyLength :: the max length for any property value string (0
+ * = full length)
  */
-void AlgorithmHistory::printSelf(std::ostream &os, const int indent) const {
+void AlgorithmHistory::printSelf(std::ostream &os, const int indent,
+                                 const size_t maxPropertyLength) const {
   os << std::string(indent, ' ') << "Algorithm: " << m_name;
   os << std::string(indent, ' ') << " v" << m_version << '\n';
 
@@ -217,7 +219,7 @@ void AlgorithmHistory::printSelf(std::ostream &os, const int indent) const {
   os << std::string(indent, ' ') << "Parameters:\n";
 
   for (const auto &property : m_properties) {
-    property->printSelf(os, indent + 2);
+    property->printSelf(os, indent + 2, maxPropertyLength);
   }
 }
 

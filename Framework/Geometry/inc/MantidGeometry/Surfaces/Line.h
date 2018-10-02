@@ -3,6 +3,8 @@
 
 #include "MantidGeometry/DllConfig.h"
 #include "MantidKernel/V3D.h"
+#include <complex>
+#include <list>
 
 namespace Mantid {
 
@@ -87,7 +89,7 @@ public:
   int intersect(std::list<Kernel::V3D> &, const Sphere &) const;
 };
 
-} // NAMESPACE MonteCarlo
+} // namespace Geometry
 
 } // NAMESPACE Mantid
 

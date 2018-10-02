@@ -1,10 +1,17 @@
 #ifndef MANTID_CURVEFITTING_NORMALISEBYPEAKAREA_H_
 #define MANTID_CURVEFITTING_NORMALISEBYPEAKAREA_H_
 
-#include "MantidKernel/System.h"
 #include "MantidAPI/Algorithm.h"
+#include "MantidKernel/System.h"
+#include "MantidKernel/cow_ptr.h"
 
 namespace Mantid {
+
+namespace HistogramData {
+class HistogramY;
+class HistogramE;
+} // namespace HistogramData
+
 namespace CurveFitting {
 namespace Algorithms {
 
@@ -42,6 +49,10 @@ public:
            "input mass value.";
   }
 
+  const std::vector<std::string> seeAlso() const override {
+    return {"MonitorEfficiencyCorUser", "Divide"};
+  }
+
   int version() const override;
   const std::string category() const override;
 
@@ -65,8 +76,9 @@ private:
   void normaliseTOFData(const double area, const size_t index);
   /// Stores/accumulates the results
   void saveToOutput(const API::MatrixWorkspace_sptr &accumWS,
-                    const std::vector<double> &yValues,
-                    const std::vector<double> &eValues, const size_t index);
+                    const Kernel::cow_ptr<HistogramData::HistogramY> &yValues,
+                    const Kernel::cow_ptr<HistogramData::HistogramE> &eValues,
+                    const size_t index);
   /// Symmetrises the data in yspace about the origin
   void symmetriseYSpace();
 

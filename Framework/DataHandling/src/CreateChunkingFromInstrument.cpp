@@ -1,18 +1,20 @@
-#include "MantidKernel/OptionalBool.h"
+#include "MantidDataHandling/CreateChunkingFromInstrument.h"
 #include "MantidAPI/FileProperty.h"
-#include "MantidAPI/MatrixWorkspace.h"
 #include "MantidAPI/ITableWorkspace.h"
+#include "MantidAPI/MatrixWorkspace.h"
 #include "MantidAPI/Run.h"
 #include "MantidAPI/TableRow.h"
 #include "MantidAPI/WorkspaceFactory.h"
-#include "MantidDataHandling/CreateChunkingFromInstrument.h"
 #include "MantidDataObjects/Workspace2D.h"
 #include "MantidGeometry/IDetector.h"
 #include "MantidKernel/ListValidator.h"
+#include "MantidKernel/OptionalBool.h"
 #include "MantidKernel/StringTokenizer.h"
 
+// clang-format off
 #include <nexus/NeXusFile.hpp>
 #include <nexus/NeXusException.hpp>
+// clang-format on
 
 namespace Mantid {
 namespace DataHandling {
@@ -20,9 +22,10 @@ using namespace Mantid::API;
 using namespace Mantid::DataObjects;
 using namespace Mantid::Geometry;
 using namespace Mantid::Kernel;
+using Types::Core::DateAndTime;
 using namespace std;
 
-typedef Mantid::Kernel::StringTokenizer tokenizer;
+using tokenizer = Mantid::Kernel::StringTokenizer;
 
 // Register the algorithm into the AlgorithmFactory
 DECLARE_ALGORITHM(CreateChunkingFromInstrument)
@@ -46,7 +49,7 @@ const string PARAM_MAX_RECURSE("MaxRecursionDepth");
 const string PARAM_OUT_WKSP("OutputWorkspace");
 /// Maximum number of banks to look for
 const string PARAM_MAX_BANK_NUM("MaxBankNumber");
-}
+} // namespace
 
 /// Algorithm's name for identification. @see Algorithm::name
 const string CreateChunkingFromInstrument::name() const {
@@ -195,7 +198,7 @@ bool startsWith(const string &str, const string &prefix) {
   if (str.length() < prefix.length())
     return false;
 
-  return (str.substr(0, prefix.length()).compare(prefix) == 0);
+  return (str.substr(0, prefix.length()) == prefix);
 }
 
 /**
@@ -236,7 +239,7 @@ string parentName(IComponent_const_sptr comp, const string &prefix) {
 string parentName(IComponent_const_sptr comp, const vector<string> &names) {
   // handle the special case of the component has the name
   for (const auto &name : names)
-    if (name.compare(comp->getName()) == 0)
+    if (name == comp->getName())
       return name;
 
   // find the parent with the correct name
@@ -244,7 +247,7 @@ string parentName(IComponent_const_sptr comp, const vector<string> &names) {
   if (parent) {
     // see if this is the parent
     for (const auto &name : names)
-      if (name.compare(parent->getName()) == 0)
+      if (name == parent->getName())
         return name;
 
     // or recurse
@@ -377,10 +380,9 @@ void CreateChunkingFromInstrument::exec() {
   string groupLevel = this->getPropertyValue(PARAM_CHUNK_BY);
   vector<string> groupNames =
       getGroupNames(this->getPropertyValue(PARAM_CHUNK_NAMES));
-  if (groupLevel.compare("All") == 0) {
+  if (groupLevel == "All") {
     return; // nothing to do
-  } else if (inst->getName().compare("SNAP") == 0 &&
-             groupLevel.compare("Group") == 0) {
+  } else if (inst->getName() == "SNAP" && groupLevel == "Group") {
     groupNames.clear();
     groupNames.emplace_back("East");
     groupNames.emplace_back("West");

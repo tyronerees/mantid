@@ -5,6 +5,7 @@
 #include "MantidAPI/Sample.h"
 #include "MantidDataObjects/EventWorkspace.h"
 #include "MantidGeometry/Crystal/OrientedLattice.h"
+#include "MantidGeometry/Instrument/Goniometer.h"
 #include "MantidKernel/make_unique.h"
 #include "MantidMDAlgorithms/ConvertToMD.h"
 #include "MantidMDAlgorithms/MDWSDescription.h"
@@ -39,7 +40,7 @@ public:
 
   void testExecThrow() {
     Mantid::API::MatrixWorkspace_sptr ws2D =
-        WorkspaceCreationHelper::CreateGroupedWorkspace2DWithRingsAndBoxes();
+        WorkspaceCreationHelper::createGroupedWorkspace2DWithRingsAndBoxes();
 
     AnalysisDataService::Instance().addOrReplace("testWSProcessed", ws2D);
 
@@ -61,14 +62,14 @@ public:
     if (!childAlg) {
       TSM_ASSERT("Can not create child ChildAlgorithm to found min/max values",
                  false);
-      return NULL;
+      return nullptr;
     }
     childAlg->initialize();
     if (!childAlg->isInitialized()) {
       TSM_ASSERT(
           "Can not initialize child ChildAlgorithm to found min/max values",
           false);
-      return NULL;
+      return nullptr;
     }
     childAlg->setPropertyValue("InputWorkspace", "testWSProcessed");
     childAlg->setPropertyValue("QDimensions", QMode);
@@ -80,7 +81,7 @@ public:
     if (!childAlg->isExecuted()) {
       TSM_ASSERT("Can not execute child ChildAlgorithm to found min/max values",
                  false);
-      return NULL;
+      return nullptr;
     }
     return childAlg;
   }

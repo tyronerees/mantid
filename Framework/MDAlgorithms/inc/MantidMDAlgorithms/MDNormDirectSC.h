@@ -39,6 +39,9 @@ public:
 
   const std::string name() const override;
   int version() const override;
+  const std::vector<std::string> seeAlso() const override {
+    return {"MDNormSCD", "MDNormSCDPreprocessIncoherent"};
+  }
   const std::string category() const override;
   const std::string summary() const override;
 
@@ -52,21 +55,18 @@ private:
   DataObjects::MDHistoWorkspace_sptr binInputWS();
   void createNormalizationWS(const DataObjects::MDHistoWorkspace &dataWS);
   std::vector<coord_t>
-  getValuesFromOtherDimensions(bool &skipNormalization) const;
+  getValuesFromOtherDimensions(bool &skipNormalization,
+                               uint16_t expInfoIndex = 0) const;
   Kernel::Matrix<coord_t>
   findIntergratedDimensions(const std::vector<coord_t> &otherDimValues,
                             bool &skipNormalization);
   void cacheDimensionXValues();
   void calculateNormalization(const std::vector<coord_t> &otherValues,
-                              const Kernel::Matrix<coord_t> &affineTrans);
+                              const Kernel::Matrix<coord_t> &affineTrans,
+                              uint16_t expInfoIndex);
 
-  std::vector<detid_t> removeGroupedIDs(const API::ExperimentInfo &exptInfo,
-                                        const std::vector<detid_t> &detIDs);
-  Geometry::IDetector_const_sptr
-  getThetaPhi(const detid_t detID, const API::ExperimentInfo &exptInfo,
-              double &theta, double &phi);
-  std::vector<Kernel::VMD> calculateIntersections(const double theta,
-                                                  const double phi);
+  void calculateIntersections(std::vector<std::array<double, 4>> &intersections,
+                              const double theta, const double phi);
 
   /// Normalization workspace
   DataObjects::MDHistoWorkspace_sptr m_normWS;
@@ -90,6 +90,10 @@ private:
   Kernel::V3D m_beamDir;
   /// ki-kf for Inelastic convention; kf-ki for Crystallography convention
   std::string convention;
+  /// internal flag to accumulate to an existing workspace
+  bool m_accumulate{false};
+  /// number of experiment infos
+  uint16_t m_numExptInfos;
 };
 
 } // namespace MDAlgorithms

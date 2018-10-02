@@ -1,4 +1,5 @@
 #pylint: disable=invalid-name
+from __future__ import (absolute_import, division, print_function)
 from PyQt4 import QtGui, QtCore
 from reduction_gui.settings.application_settings import GeneralSettings
 from reduction_gui.widgets.base_widget import BaseWidget
@@ -54,7 +55,8 @@ class SANSCatalogWidget(BaseWidget):
         self.connect(self._content.browse_button, QtCore.SIGNAL("clicked()"), self._browse_directory)
         self.connect(self._content.directory_edit, QtCore.SIGNAL("returnPressed()"), self._update_content)
         self._content.directory_edit.setText(self._settings.catalog_data_path)
-        self._content.directory_edit.setToolTip("Use a path of the form: /SNS/<instrument>/IPTS-<number>/data\nE.g.: /SNS/EQSANS/IPTS-1234/data")
+        self._content.directory_edit.setToolTip("Use a path of the form: /SNS/<instrument>/IPTS-<number>/data\nE.g.: "
+                                                "/SNS/EQSANS/IPTS-1234/data")
         self._update_content(False)
 
     def tableWidgetContext(self, point):
@@ -88,7 +90,7 @@ class SANSCatalogWidget(BaseWidget):
                     #TODO: At some point we want to tie the type to a given sample run too
                     self._catalog_cls().add_type(run, key)
         except:
-            print "SANSCatalogWidget: Could not access local data catalog"
+            print("SANSCatalogWidget: Could not access local data catalog")
 
     def copyCells(self):
         indices = self._content.data_set_table.selectedIndexes()

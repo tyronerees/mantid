@@ -3,6 +3,7 @@
 
 #include <cxxtest/TestSuite.h>
 
+#include "MantidAPI/AnalysisDataService.h"
 #include "MantidAPI/MatrixWorkspace.h"
 #include "MantidAPI/Run.h"
 #include "MantidAlgorithms/EstimateResolutionDiffraction.h"
@@ -17,6 +18,7 @@ using namespace Mantid;
 using namespace Mantid::API;
 using namespace Mantid::Kernel;
 using namespace Mantid::DataHandling;
+using Mantid::Types::Core::DateAndTime;
 
 class EstimateResolutionDiffractionTest : public CxxTest::TestSuite {
 public:
@@ -30,7 +32,7 @@ public:
   }
 
   /** Test init
-    */
+   */
   void test_Init() {
     EstimateResolutionDiffraction alg;
     TS_ASSERT_THROWS_NOTHING(alg.initialize());
@@ -38,7 +40,7 @@ public:
   }
 
   /** Test POWGEN
-    */
+   */
   void test_EmptyPG3() {
     // Create an empty PG3 workspace
     MatrixWorkspace_sptr ws = createInstrument();
@@ -48,9 +50,11 @@ public:
     alg.initialize();
 
     TS_ASSERT_THROWS_NOTHING(
-        alg.setPropertyValue("InputWorkspace", ws->name()));
+        alg.setPropertyValue("InputWorkspace", ws->getName()));
     TS_ASSERT_THROWS_NOTHING(
         alg.setPropertyValue("OutputWorkspace", "PG3_Resolution"));
+    TS_ASSERT_THROWS_NOTHING(
+        alg.setPropertyValue("PartialResolutionWorkspaces", "PG3_partial"));
     TS_ASSERT_THROWS_NOTHING(alg.setProperty("DeltaTOF", 40.0));
 
     alg.execute();
@@ -71,7 +75,7 @@ public:
   }
 
   /** Create an instrument
-    */
+   */
   API::MatrixWorkspace_sptr createInstrument() {
     // Create empty workspace
     LoadEmptyInstrument loader;

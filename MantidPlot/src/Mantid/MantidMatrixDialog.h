@@ -17,10 +17,10 @@ class MantidMatrixDialog : public QDialog {
 public:
   //! Constructor
   /**
-  * @param parent :: parent widget
-  * @param fl :: window flags
-  */
-  MantidMatrixDialog(QWidget *parent = 0, Qt::WFlags fl = 0);
+   * @param parent :: parent widget
+   * @param fl :: window flags
+   */
+  MantidMatrixDialog(QWidget *parent = nullptr, Qt::WFlags fl = nullptr);
   void setMatrix(MantidMatrix *m);
 
 private slots:

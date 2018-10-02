@@ -5,25 +5,22 @@
 // Includes
 //--------------------------------------------
 #include "MantidKernel/DllConfig.h"
-#include <Poco/Logger.h>
-
-#ifdef _MSC_VER
-// Disable a flood of warnings about inheriting from std streams
-// See
-// http://connect.microsoft.com/VisualStudio/feedback/details/733720/inheriting-from-std-fstream-produces-c4250-warning
-#pragma warning(push)
-#pragma warning(disable : 4250)
-#endif
 
 #include <Poco/LogStream.h>
-#include <Poco/UnbufferedStreamBuf.h>
-
-#include <istream>
+#include <Poco/Message.h>
 #include <Poco/Thread.h>
+
+#include <iosfwd>
+#include <map>
 #include <mutex>
+#include <string>
+
+// Forward Declare
+namespace Poco {
+class Logger;
+}
 
 namespace Mantid {
-
 namespace Kernel {
 /**
 
@@ -163,11 +160,7 @@ public:
   /// Sets the priority for log messages.
   ThreadSafeLogStream &priority(Poco::Message::Priority priority);
 };
-}
-}
-
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
+} // namespace Kernel
+} // namespace Mantid
 
 #endif // MANTID_KERNEL_THREADSAFELOGSTREAM

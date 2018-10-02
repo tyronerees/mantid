@@ -1,11 +1,9 @@
-//----------------------------------------------------------------------
-// Includes
-//----------------------------------------------------------------------
 #include "MantidAlgorithms/RenameWorkspace.h"
+#include "MantidAPI/AnalysisDataService.h"
 #include "MantidAPI/FrameworkManager.h"
 #include "MantidAPI/MatrixWorkspace.h"
+#include "MantidAPI/WorkspaceGroup.h"
 #include "MantidKernel/Exception.h"
-#include "MantidAPI/AnalysisDataService.h"
 
 namespace Mantid {
 namespace Algorithms {
@@ -42,10 +40,10 @@ void RenameWorkspace::init() {
 }
 
 /**
-  * Tests that the inputs are all valid
-  * @return A map containing the incorrect workspace
-  * properties and an error message
-  */
+ * Tests that the inputs are all valid
+ * @return A map containing the incorrect workspace
+ * properties and an error message
+ */
 std::map<std::string, std::string> RenameWorkspace::validateInputs() {
   using namespace std;
   map<string, string> errorList;
@@ -114,7 +112,7 @@ void RenameWorkspace::exec() {
   if (monWS) {
     std::string monWSName = monWS->getName();
     // rename the monitor workspace accordingly
-    if (monWSName.size() == 0) {
+    if (monWSName.empty()) {
       // workspace will always have name after added to ADS, so apparently not
       // the case
       AnalysisDataService::Instance().add(outputwsName + "_monitors", monWS);
@@ -134,7 +132,7 @@ void RenameWorkspace::exec() {
 bool RenameWorkspace::processGroups() {
   // Get the input & output workspace names
   Workspace_sptr inputWS = getProperty("InputWorkspace");
-  const std::string inputwsName = inputWS->name();
+  const std::string inputwsName = inputWS->getName();
   std::string outputwsName = getPropertyValue("OutputWorkspace");
 
   if (inputwsName == outputwsName) {

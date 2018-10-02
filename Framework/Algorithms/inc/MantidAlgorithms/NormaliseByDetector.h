@@ -1,10 +1,10 @@
 #ifndef MANTID_ALGORITHMS_NORMALISEBYDETECTOR_H_
 #define MANTID_ALGORITHMS_NORMALISEBYDETECTOR_H_
 
-#include "MantidKernel/System.h"
 #include "MantidAPI/Algorithm.h"
-#include "MantidGeometry/Instrument/FitParameter.h"
 #include "MantidGeometry/Instrument/Detector.h"
+#include "MantidGeometry/Instrument/FitParameter.h"
+#include "MantidKernel/System.h"
 #include <boost/shared_ptr.hpp>
 
 namespace Mantid {
@@ -13,7 +13,7 @@ namespace API {
 /// Forward declaration for MatrixWorkspace.
 class MatrixWorkspace;
 class Progress;
-}
+} // namespace API
 namespace Algorithms {
 /** NormaliseByDetector : Normalises a workspace with respect to the detector
   efficiency function stored against components in the instrument parameters.
@@ -55,6 +55,7 @@ public:
   }
 
   int version() const override;
+  const std::vector<std::string> seeAlso() const override { return {"Divide"}; }
   const std::string category() const override;
 
 private:
@@ -64,15 +65,15 @@ private:
   /// parameter.
   const Mantid::Geometry::FitParameter
   tryParseFunctionParameter(Mantid::Geometry::Parameter_sptr parameter,
-                            Geometry::IDetector_const_sptr det);
+                            const Geometry::IDetector &det);
   /// Block to process histograms.
   boost::shared_ptr<Mantid::API::MatrixWorkspace>
   processHistograms(boost::shared_ptr<Mantid::API::MatrixWorkspace> inWS);
   /// Process indivdual histogram.
   void processHistogram(
       size_t wsIndex,
-      boost::shared_ptr<Mantid::API::MatrixWorkspace> denominatorWS,
       boost::shared_ptr<const Mantid::API::MatrixWorkspace> inWS,
+      boost::shared_ptr<Mantid::API::MatrixWorkspace> denominatorWS,
       Mantid::API::Progress &prog);
 
   void init() override;

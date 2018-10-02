@@ -2,9 +2,22 @@
 // Includes
 //----------------------------------------------------------------------
 #include "MantidKernel/ThreadPool.h"
+
 #include "MantidKernel/ConfigService.h"
+#include "MantidKernel/MultiThreaded.h"
+#include "MantidKernel/ProgressBase.h"
+#include "MantidKernel/Task.h"
+#include "MantidKernel/ThreadPoolRunnable.h"
+
+#include <Poco/Thread.h>
+
+#include <algorithm>
 #include <sstream>
+#include <stdexcept>
+// needed on windows and any place missing openmp
+#if defined(_WIN32) || !defined(_OPENMP)
 #include <Poco/Environment.h>
+#endif
 
 namespace Mantid {
 namespace Kernel {
@@ -49,17 +62,24 @@ ThreadPool::~ThreadPool() {
 
 //--------------------------------------------------------------------------------
 /** Return the number of physical cores available on the system.
- * NOTE: Uses Poco::Environment::processorCount() to find the number.
+ * NOTE: Uses OPENMP or Poco::Environment::processorCount() to find the number.
  * @return how many cores are present.
  */
 size_t ThreadPool::getNumPhysicalCores() {
-  int maxCores(0);
-  int retVal = Kernel::ConfigService::Instance().getValue(
-      "MultiThreaded.MaxCores", maxCores);
-  if (retVal > 0 && maxCores > 0)
-    return maxCores;
+// windows hangs with openmp for some reason
+#if defined(_WIN32) || !defined(_OPENMP)
+  int physicalCores = Poco::Environment::processorCount();
+#else
+  int physicalCores = PARALLEL_GET_MAX_THREADS;
+#endif
+
+  auto maxCores =
+      Kernel::ConfigService::Instance().getValue<int>("MultiThreaded.MaxCores");
+
+  if (!maxCores.is_initialized())
+    return std::min(maxCores.get_value_or(0), physicalCores);
   else
-    return Poco::Environment::processorCount();
+    return physicalCores;
 }
 
 //--------------------------------------------------------------------------------

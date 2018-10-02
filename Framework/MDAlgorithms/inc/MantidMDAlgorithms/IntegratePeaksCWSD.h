@@ -2,12 +2,12 @@
 #define MANTID_MDALGORITHMS_INTEGRATEPEAKSCWSD_H_
 
 #include "MantidAPI/Algorithm.h"
+#include "MantidAPI/CompositeFunction.h"
 #include "MantidAPI/IMDEventWorkspace_fwd.h"
+#include "MantidDataObjects/MDEventWorkspace.h"
 #include "MantidDataObjects/MaskWorkspace.h"
 #include "MantidDataObjects/PeaksWorkspace.h"
 #include "MantidKernel/System.h"
-#include "MantidDataObjects/MDEventWorkspace.h"
-#include "MantidAPI/CompositeFunction.h"
 
 namespace Mantid {
 namespace MDAlgorithms {
@@ -33,6 +33,10 @@ public:
 
   /// Algorithm's version for identification
   int version() const override { return 1; }
+  const std::vector<std::string> seeAlso() const override {
+    return {"IntegratePeaksHybrid", "IntegratePeaksMDHKL", "IntegratePeaksMD",
+            "IntegratePeaksUsingClusters"};
+  }
 
   /// Algorithm's category for identification
   const std::string category() const override { return "MDAlgorithms\\Peaks"; }
@@ -67,6 +71,9 @@ private:
 
   void mergePeaks();
 
+  /// Implement this method to normalize the intensity of each Pt.
+  void normalizePeaksIntensities();
+
   DataObjects::PeaksWorkspace_sptr
   createPeakworkspace(Kernel::V3D peakCenter, API::IMDEventWorkspace_sptr mdws);
 
@@ -95,8 +102,6 @@ private:
   /// Integrated peaks' intensity per run number
   std::map<int, double> m_runPeakCountsMap;
 
-  /// Mask
-  bool m_maskDets;
   DataObjects::MaskWorkspace_sptr m_maskWS;
   std::vector<detid_t> vecMaskedDetID;
 
@@ -104,7 +109,7 @@ private:
   bool m_haveInputPeakWS;
 };
 
+} // namespace MDAlgorithms
 } // namespace Mantid
-} // namespace DataObjects
 
 #endif /* MANTID_MDALGORITHMS_INTEGRATEPEAKSCWSD_H_ */

@@ -1,13 +1,13 @@
 #include "MantidWorkflowAlgorithms/HFIRDarkCurrentSubtraction.h"
-#include "MantidAPI/MatrixWorkspace.h"
-#include "MantidAPI/WorkspaceUnitValidator.h"
+#include "MantidAPI/AlgorithmProperty.h"
 #include "MantidAPI/FileProperty.h"
+#include "MantidAPI/MatrixWorkspace.h"
+#include "MantidAPI/Run.h"
+#include "MantidAPI/WorkspaceUnitValidator.h"
+#include "MantidKernel/PropertyManager.h"
+#include "MantidKernel/PropertyManagerDataService.h"
 #include "Poco/Path.h"
 #include "Poco/String.h"
-#include "MantidAPI/AlgorithmProperty.h"
-#include "MantidAPI/Run.h"
-#include "MantidKernel/PropertyManagerDataService.h"
-#include "MantidKernel/PropertyManager.h"
 
 namespace Mantid {
 namespace WorkflowAlgorithms {
@@ -83,7 +83,7 @@ void HFIRDarkCurrentSubtraction::exec() {
     output_message += darkWSName + '\n';
   } else {
     // Load the dark current if we don't have it already
-    if (darkWSName.size() == 0) {
+    if (darkWSName.empty()) {
       darkWSName = "__dark_current_" + path.getBaseName();
       setPropertyValue("OutputDarkCurrentWorkspace", darkWSName);
     }

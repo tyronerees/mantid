@@ -1,4 +1,7 @@
 #include "MantidKernel/BinFinder.h"
+#include <cmath>
+#include <cstddef>
+#include <stdexcept>
 
 using std::size_t;
 
@@ -160,5 +163,5 @@ int BinFinder::bin(double x) {
     return index;
   }
 }
-}
-} // Namespace
+} // namespace Kernel
+} // namespace Mantid

@@ -1,18 +1,18 @@
 #ifndef FILEFINDERTEST_H_
 #define FILEFINDERTEST_H_
 
-#include <cxxtest/TestSuite.h>
 #include "MantidAPI/FileFinder.h"
 #include "MantidKernel/ConfigService.h"
 #include "MantidKernel/Exception.h"
 #include "MantidKernel/FacilityInfo.h"
+#include <cxxtest/TestSuite.h>
 
-#include <Poco/Path.h>
 #include <Poco/File.h>
+#include <Poco/Path.h>
 #include <boost/lexical_cast.hpp>
 
-#include <stdio.h>
 #include <fstream>
+#include <stdio.h>
 
 using namespace Mantid::Kernel;
 using namespace Mantid::API;
@@ -469,7 +469,7 @@ public:
         // Shun use of Poco, which is slower.
         FILE *pFile;
         pFile = fopen(cstr, "w");
-        if (pFile != NULL) {
+        if (pFile != nullptr) {
           fclose(pFile);
         }
       }

@@ -1,8 +1,8 @@
 #ifndef MANTID_KERNEL_FILTEREDTIMESERIESPROPERTYTEST_H_
 #define MANTID_KERNEL_FILTEREDTIMESERIESPROPERTYTEST_H_
 
-#include <cxxtest/TestSuite.h>
 #include "MantidKernel/FilteredTimeSeriesProperty.h"
+#include <cxxtest/TestSuite.h>
 
 using Mantid::Kernel::FilteredTimeSeriesProperty;
 
@@ -73,7 +73,7 @@ private:
     auto source = createTestSeries("name");
     auto filter = createTestFilter();
 
-    FilteredTimeSeriesProperty<double> *filtered(NULL);
+    FilteredTimeSeriesProperty<double> *filtered(nullptr);
     TS_ASSERT_THROWS_NOTHING(filtered = new FilteredTimeSeriesProperty<double>(
                                  source, *filter, transferOwnership));
 

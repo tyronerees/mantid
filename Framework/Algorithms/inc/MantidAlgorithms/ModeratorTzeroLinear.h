@@ -1,13 +1,13 @@
 #ifndef MANTID_ALGORITHMS_MODERATORTZEROLINEAR_H_
 #define MANTID_ALGORITHMS_MODERATORTZEROLINEAR_H_
 
-//----------------------------------------------------------------------
-// Includes
-//----------------------------------------------------------------------
 #include "MantidAPI/Algorithm.h"
 #include "MantidGeometry/Instrument.h"
 
 namespace Mantid {
+namespace API {
+class SpectrumInfo;
+}
 namespace Algorithms {
 /* Corrects the time of flight (TOF) by a time offset that is dependent on the
  velocity of the neutron after passing through the moderator.
@@ -88,6 +88,9 @@ public:
   const std::string summary() const override;
   /// Algorithm's version
   int version() const override;
+  const std::vector<std::string> seeAlso() const override {
+    return {"ModeratorTzero"};
+  }
   /// Algorithm's category for identification
   const std::string category() const override;
 
@@ -104,7 +107,7 @@ private:
   // Execution code for event workspace
   void execEvent();
   // Calculate time from sample to detector and initial flight path
-  void calculateTfLi(API::MatrixWorkspace_const_sptr inputWS, size_t i,
+  void calculateTfLi(const API::SpectrumInfo &spectrumInfo, size_t i,
                      double &t_f, double &L_i);
 };
 

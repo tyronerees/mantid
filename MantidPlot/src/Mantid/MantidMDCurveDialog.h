@@ -1,9 +1,9 @@
 #ifndef MANTIDMDCURVEDIALOG_H
 #define MANTIDMDCURVEDIALOG_H
 
-#include <QtGui/QWidget>
+#include "MantidQtWidgets/SliceViewer/LinePlotOptions.h"
 #include "ui_MantidMDCurveDialog.h"
-#include "MantidQtSliceViewer/LinePlotOptions.h"
+#include <QtGui/QWidget>
 
 /** Dialog asking the user for some options on how to plot a MDWorkspace
  * before plotting
@@ -12,7 +12,7 @@ class MantidMDCurveDialog : public QDialog {
   Q_OBJECT
 
 public:
-  MantidMDCurveDialog(QWidget *parent = 0, QString wsName = QString());
+  MantidMDCurveDialog(QWidget *parent = nullptr, QString wsName = QString());
   ~MantidMDCurveDialog() override;
 
   LinePlotOptions *getLineOptionsWidget() { return m_lineOptions; }

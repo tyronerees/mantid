@@ -3,12 +3,15 @@
 #include "MantidKernel/ConfigService.h"
 #include "MantidKernel/GitHubApiHelper.h"
 
+// boost
+#include <boost/algorithm/string/predicate.hpp>
+
 // Poco
 #include <Poco/DateTimeFormat.h>
 #include <Poco/DateTimeFormatter.h>
 #include <Poco/DirectoryIterator.h>
-#include <Poco/Path.h>
 #include <Poco/File.h>
+#include <Poco/Path.h>
 // Visual Studio complains with the inclusion of Poco/FileStream
 // disabling this warning.
 #if defined(_WIN32) || defined(_WIN64)
@@ -40,7 +43,7 @@ DECLARE_ALGORITHM(DownloadInstrument)
 
 //----------------------------------------------------------------------------------------------
 /** Constructor
-*/
+ */
 DownloadInstrument::DownloadInstrument() : m_proxyInfo() {}
 
 //----------------------------------------------------------------------------------------------
@@ -66,7 +69,7 @@ const std::string DownloadInstrument::summary() const {
 
 //----------------------------------------------------------------------------------------------
 /** Initialize the algorithm's properties.
-*/
+ */
 void DownloadInstrument::init() {
   using Kernel::Direction;
 
@@ -78,7 +81,7 @@ void DownloadInstrument::init() {
 
 //----------------------------------------------------------------------------------------------
 /** Execute the algorithm.
-*/
+ */
 void DownloadInstrument::exec() {
   StringToStringMap fileMap;
   setProperty("FileDownloadCount", 0);
@@ -109,6 +112,10 @@ void DownloadInstrument::exec() {
   for (auto &itMap : fileMap) {
     // download a file
     doDownloadFile(itMap.first, itMap.second);
+    if (boost::algorithm::ends_with(itMap.second, "Facilities.xml")) {
+      g_log.notice("A new Facilities.xml file has been downloaded, this will "
+                   "take effect next time Mantid is started.");
+    }
   }
 
   setProperty("FileDownloadCount", static_cast<int>(fileMap.size()));
@@ -197,7 +204,7 @@ DownloadInstrument::StringToStringMap DownloadInstrument::processRepository() {
     if ((sha != installSha) && (sha != localSha)) {
       fileMap.emplace(htmlUrl,
                       filePath.toString()); // ACTION - DOWNLOAD to localPath
-    } else if ((localSha != "") && (sha == installSha) &&
+    } else if ((!localSha.empty()) && (sha == installSha) &&
                (sha != localSha)) // matches install, but different local
     {
       fileMap.emplace(
@@ -228,9 +235,9 @@ std::string DownloadInstrument::getValueOrDefault(
 }
 
 /** Creates or updates the json file of a directories contents
-* @param directoryPath The path to the directory to catalog
-* @return A map of file names to sha1 values
-**/
+ * @param directoryPath The path to the directory to catalog
+ * @return A map of file names to sha1 values
+ **/
 DownloadInstrument::StringToStringMap
 DownloadInstrument::getFileShas(const std::string &directoryPath) {
   StringToStringMap filesToSha;
@@ -261,10 +268,10 @@ DownloadInstrument::getFileShas(const std::string &directoryPath) {
 }
 
 /** removes any .xml files in a directory that are not in filenamesToKeep
-* @param directoryPath the directory to work in
-* @param filenamesToKeep a set of filenames to keep
-* @returns the number of files removed
-**/
+ * @param directoryPath the directory to work in
+ * @param filenamesToKeep a set of filenames to keep
+ * @returns the number of files removed
+ **/
 size_t DownloadInstrument::removeOrphanedFiles(
     const std::string &directoryPath,
     const std::unordered_set<std::string> &filenamesToKeep) const {
@@ -282,7 +289,8 @@ size_t DownloadInstrument::removeOrphanedFiles(
       if (filenamesToKeep.find(entryPath.getFileName()) ==
           filenamesToKeep.end()) {
         g_log.debug() << "File not found in remote instrument repository, will "
-                         "be deleted: " << entryPath.getFileName() << '\n';
+                         "be deleted: "
+                      << entryPath.getFileName() << '\n';
         filesToDelete.push_back(it->path());
       }
     }
@@ -320,9 +328,9 @@ size_t DownloadInstrument::removeOrphanedFiles(
 }
 
 /** Converts a github file page to a downloadable url for the file.
-* @param filename a github file page url
-* @returns a downloadable url for the file
-**/
+ * @param filename a github file page url
+ * @returns a downloadable url for the file
+ **/
 const std::string
 DownloadInstrument::getDownloadableRepoUrl(const std::string &filename) const {
   return filename + "?raw=1";

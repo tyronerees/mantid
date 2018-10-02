@@ -21,12 +21,14 @@
 // Includes
 //----------------------------------------------------------------------
 #include "MantidAPI/DllConfig.h"
-#include "MantidKernel/DynamicFactory.h"
-#include "MantidKernel/SingletonHolder.h"
 #include "MantidAPI/ILiveListener.h"
+#include "MantidKernel/DynamicFactory.h"
+#include "MantidKernel/LiveListenerInfo.h"
+#include "MantidKernel/SingletonHolder.h"
 
 namespace Mantid {
 namespace API {
+class IAlgorithm;
 /** The factory for creating instances of ILiveListener implementations.
 
     Copyright &copy; 2012 ISIS Rutherford Appleton Laboratory, NScD Oak Ridge
@@ -51,11 +53,16 @@ class MANTID_API_DLL LiveListenerFactoryImpl
     : public Kernel::DynamicFactory<ILiveListener> {
 public:
   boost::shared_ptr<ILiveListener>
-  create(const std::string &instrumentName, bool connect,
-         const Kernel::IPropertyManager *properties = nullptr) const;
+  create(const std::string &instrumentName, bool connect = false,
+         const API::IAlgorithm *callingAlgorithm = nullptr,
+         const std::string &listenerConnectionName = "") const;
+
+  boost::shared_ptr<ILiveListener>
+  create(const Kernel::LiveListenerInfo &info, bool connect = false,
+         const API::IAlgorithm *callingAlgorithm = nullptr) const;
+
   LiveListenerFactoryImpl(const LiveListenerFactoryImpl &) = delete;
   LiveListenerFactoryImpl &operator=(const LiveListenerFactoryImpl &) = delete;
-  bool checkConnection(const std::string &instrumentName) const;
 
 private:
   friend struct Kernel::CreateUsingNew<LiveListenerFactoryImpl>;
@@ -73,7 +80,7 @@ private:
   ILiveListener *createUnwrapped(const std::string &className) const override;
 };
 
-typedef Kernel::SingletonHolder<LiveListenerFactoryImpl> LiveListenerFactory;
+using LiveListenerFactory = Kernel::SingletonHolder<LiveListenerFactoryImpl>;
 
 } // namespace API
 } // namespace Mantid
@@ -83,6 +90,6 @@ namespace Kernel {
 EXTERN_MANTID_API template class MANTID_API_DLL
     Kernel::SingletonHolder<Mantid::API::LiveListenerFactoryImpl>;
 }
-}
+} // namespace Mantid
 
 #endif /* MANTID_API_LIVELISTENERFACTORYIMPL_H_ */

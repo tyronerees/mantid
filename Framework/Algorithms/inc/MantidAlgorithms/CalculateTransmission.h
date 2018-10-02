@@ -1,10 +1,7 @@
 #ifndef MANTID_ALGORITHMS_CALCULATETRANSMISSION_H_
 #define MANTID_ALGORITHMS_CALCULATETRANSMISSION_H_
 
-//----------------------------------------------------------------------
-// Includes
-//----------------------------------------------------------------------
-#include "MantidAPI/Algorithm.h"
+#include "MantidAPI/ParallelAlgorithm.h"
 #include "MantidKernel/System.h"
 
 namespace Mantid {
@@ -66,7 +63,7 @@ namespace Algorithms {
     File change history is stored at: <https://github.com/mantidproject/mantid>
     Code Documentation is available at: <http://doxygen.mantidproject.org>
 */
-class DLLExport CalculateTransmission : public API::Algorithm {
+class DLLExport CalculateTransmission : public API::ParallelAlgorithm {
 public:
   /// Algorithm's name
   const std::string name() const override { return "CalculateTransmission"; }
@@ -79,6 +76,9 @@ public:
 
   /// Algorithm's version
   int version() const override { return (1); }
+  const std::vector<std::string> seeAlso() const override {
+    return {"CalculateTransmissionBeamSpreader", "ApplyTransmissionCorrection"};
+  }
   /// Algorithm's category for identification
   const std::string category() const override {
     return "SANS;CorrectionFunctions\\TransmissionCorrections";
@@ -87,7 +87,7 @@ public:
 private:
   /// stores an estimate of the progress so far as a proportion (starts at zero
   /// goes to 1.0)
-  mutable double m_done = 0.0;
+  mutable double m_done{0.0};
 
   /// Initialisation code
   void init() override;
@@ -118,7 +118,7 @@ private:
                        API::MatrixWorkspace_sptr directWS, size_t index);
 };
 
-} // namespace Algorithm
+} // namespace Algorithms
 } // namespace Mantid
 
 #endif /*MANTID_ALGORITHMS_CALCULATETRANSMISSION_H_*/

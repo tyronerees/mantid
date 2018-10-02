@@ -5,11 +5,11 @@
 // Includes
 //---------------------------------------------------
 
-#include "MantidAPI/IFileLoader.h"
-#include "MantidGeometry/Instrument.h"
-#include "MantidDataObjects/EventWorkspace.h"
-#include "MantidNexus/NexusClasses.h"
 #include "LoadANSTOHelper.h"
+#include "MantidAPI/IFileLoader.h"
+#include "MantidDataObjects/EventWorkspace.h"
+#include "MantidGeometry/Instrument.h"
+#include "MantidNexus/NexusClasses.h"
 
 namespace Mantid {
 namespace DataHandling {
@@ -49,12 +49,29 @@ class DLLExport LoadBBY : public API::IFileLoader<Kernel::FileDescriptor> {
     //
     int32_t bm_counts;
     int32_t att_pos;
-    bool is_tof; // tof or wavelength data
-    double wavelength;
+    bool is_tof;       // tof or wavelength data
+    double wavelength; // -> /nvs067/lambda
+    //
+    std::string sample_name;
+    std::string sample_description;
+    double sample_aperture;
+    double sample_x;
+    double sample_y;
+    double sample_z;
+    //
+    double source_aperture;
+    int32_t master1_chopper_id;
+    int32_t master2_chopper_id;
     //
     double period_master;
     double period_slave;
     double phase_slave;
+    //
+    double Lt0_value;
+    double Ltof_curtainl_value;
+    double Ltof_curtainr_value;
+    double Ltof_curtainu_value;
+    double Ltof_curtaind_value;
     //
     double L1_chopper_value;
     double L1_source_value;
@@ -74,6 +91,9 @@ class DLLExport LoadBBY : public API::IFileLoader<Kernel::FileDescriptor> {
 public:
   // description
   int version() const override { return 1; }
+  const std::vector<std::string> seeAlso() const override {
+    return {"Load", "LoadQKK"};
+  }
   const std::string name() const override { return "LoadBBY"; }
   const std::string category() const override { return "DataHandling\\ANSTO"; }
   const std::string summary() const override {
@@ -111,7 +131,7 @@ private:
                          EventProcessor &eventProcessor);
 };
 
-} // DataHandling
-} // Mantid
+} // namespace DataHandling
+} // namespace Mantid
 
 #endif // DATAHANDING_LOADBBY_H_

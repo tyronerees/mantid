@@ -5,9 +5,10 @@
 
 #include "MantidAPI/InstrumentValidator.h"
 #include "MantidGeometry/Instrument/ObjComponent.h"
-#include "MantidTestHelpers/FakeObjects.h"
 #include "MantidTestHelpers/ComponentCreationHelper.h"
+#include "MantidTestHelpers/FakeObjects.h"
 
+using namespace Mantid::Kernel;
 using Mantid::API::InstrumentValidator;
 
 class InstrumentValidatorTest : public CxxTest::TestSuite {

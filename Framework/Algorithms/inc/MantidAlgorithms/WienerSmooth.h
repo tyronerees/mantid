@@ -2,6 +2,7 @@
 #define MANTID_ALGORITHMS_WIENERSMOOTH_H_
 
 #include "MantidAPI/Algorithm.h"
+#include "MantidHistogramData/HistogramX.h"
 #include "MantidKernel/cow_ptr.h"
 
 namespace Mantid {
@@ -36,6 +37,9 @@ class DLLExport WienerSmooth : public API::Algorithm {
 public:
   const std::string name() const override { return "WienerSmooth"; }
   int version() const override;
+  const std::vector<std::string> seeAlso() const override {
+    return {"FFTSmooth"};
+  }
   const std::string category() const override;
   const std::string summary() const override;
 
@@ -43,8 +47,9 @@ private:
   void init() override;
   void exec() override;
 
-  std::pair<double, double> getStartEnd(const MantidVec &X,
-                                        bool isHistogram) const;
+  std::pair<double, double>
+  getStartEnd(const Mantid::HistogramData::HistogramX &X,
+              bool isHistogram) const;
   API::MatrixWorkspace_sptr copyInput(API::MatrixWorkspace_sptr inputWS,
                                       size_t wsIndex);
   API::MatrixWorkspace_sptr

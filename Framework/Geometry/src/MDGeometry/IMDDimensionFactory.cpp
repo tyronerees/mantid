@@ -1,15 +1,15 @@
-#include "MantidGeometry/MDGeometry/MDHistoDimension.h"
 #include "MantidGeometry/MDGeometry/IMDDimensionFactory.h"
 #include "MantidGeometry/MDGeometry/MDFrameFactory.h"
+#include "MantidGeometry/MDGeometry/MDHistoDimension.h"
 
-#include <boost/make_shared.hpp>
 #include <Poco/AutoPtr.h>
-#include <Poco/DOM/Element.h>
 #include <Poco/DOM/DOMParser.h>
 #include <Poco/DOM/Document.h>
+#include <Poco/DOM/Element.h>
 #include <Poco/DOM/NamedNodeMap.h>
 #include <Poco/NumberParser.h>
 #include <Poco/XML/XMLException.h>
+#include <boost/make_shared.hpp>
 
 namespace Mantid {
 namespace Geometry {
@@ -108,10 +108,10 @@ IMDDimension_sptr createDimension(const Poco::XML::Element &dimensionXML) {
   Poco::XML::Element *integrationXML =
       dimensionXML.getChildElement("Integrated");
   if (nullptr != integrationXML) {
-    double upperLimit = atof(
-        integrationXML->getChildElement("UpperLimit")->innerText().c_str());
-    double lowerLimit = atof(
-        integrationXML->getChildElement("LowerLimit")->innerText().c_str());
+    double upperLimit =
+        std::stod(integrationXML->getChildElement("UpperLimit")->innerText());
+    double lowerLimit =
+        std::stod(integrationXML->getChildElement("LowerLimit")->innerText());
 
     // As it is not currently possible to set integration ranges on a
     // MDDimension or MDGeometryDescription, boundaries become integration
@@ -145,5 +145,5 @@ IMDDimension_sptr createDimension(const std::string &dimensionXMLString,
   return dimension;
 }
 
-} // namespace
-} // namespace
+} // namespace Geometry
+} // namespace Mantid

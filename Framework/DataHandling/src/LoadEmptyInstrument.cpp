@@ -1,12 +1,19 @@
+#include "MantidDataHandling/LoadEmptyInstrument.h"
 #include "MantidAPI/FileProperty.h"
 #include "MantidAPI/RegisterFileLoader.h"
+#include "MantidAPI/SpectrumInfo.h"
 #include "MantidAPI/WorkspaceFactory.h"
-#include "MantidDataHandling/LoadEmptyInstrument.h"
 #include "MantidDataObjects/EventWorkspace.h"
 #include "MantidDataObjects/Workspace2D.h"
+#include "MantidDataObjects/WorkspaceCreation.h"
 #include "MantidGeometry/Instrument.h"
-#include "MantidKernel/ConfigService.h"
+#include "MantidIndexing/IndexInfo.h"
 #include "MantidKernel/BoundedValidator.h"
+#include "MantidKernel/ConfigService.h"
+#include "MantidKernel/FileDescriptor.h"
+#include "MantidKernel/NexusDescriptor.h"
+#include "MantidKernel/OptionalBool.h"
+#include "MantidNexusGeometry/NexusGeometryParser.h"
 
 namespace Mantid {
 namespace DataHandling {
@@ -17,18 +24,34 @@ using namespace Kernel;
 using namespace API;
 using namespace Geometry;
 using namespace DataObjects;
-using HistogramData::Counts;
-using HistogramData::CountStandardDeviations;
+using namespace HistogramData;
 
-/// Empty default constructor
-LoadEmptyInstrument::LoadEmptyInstrument() {}
+namespace {
+bool isIDF(const std::string &filename, const std::string &instrumentname) {
+  if (!filename.empty()) {
+    FileDescriptor descriptor(filename);
+    return ((descriptor.isAscii() && descriptor.extension() == ".xml"));
+  }
+  return !instrumentname.empty();
+}
+
+bool isNexus(const std::string &filename) {
+  if (!filename.empty() && !FileDescriptor(filename).isAscii(filename)) {
+    NexusDescriptor descriptor(filename);
+    return descriptor.isHDF(filename) &&
+           (descriptor.classTypeExists("NXcylindrical_geometry") ||
+            descriptor.classTypeExists("NXoff_geometry"));
+  }
+  return false;
+}
+} // namespace
 
 /**
-* Return the confidence with with this algorithm can load the file
-* @param descriptor A descriptor for the file
-* @returns An integer specifying the confidence level. 0 indicates it will not
-* be used
-*/
+ * Return the confidence with with this algorithm can load the file
+ * @param descriptor A descriptor for the file
+ * @returns An integer specifying the confidence level. 0 indicates it will not
+ * be used
+ */
 int LoadEmptyInstrument::confidence(Kernel::FileDescriptor &descriptor) const {
   const std::string &filePath = descriptor.filename();
 
@@ -53,16 +76,18 @@ int LoadEmptyInstrument::confidence(Kernel::FileDescriptor &descriptor) const {
 
 /// Initialisation method.
 void LoadEmptyInstrument::init() {
+  const std::vector<std::string> extensions{".xml", ".nxs", ".hdf5"};
   declareProperty(
       make_unique<FileProperty>("Filename", "", FileProperty::OptionalLoad,
-                                ".xml"),
+                                extensions),
       "The filename (including its full or relative path) of an instrument "
       "definition file. The file extension must either be .xml or .XML when "
-      "specifying an instrument definition file. Note Filename or "
+      "specifying an instrument definition file. Files can also be .hdf5 or "
+      ".nxs for usage with NeXus Geometry files. Note Filename or "
       "InstrumentName must be specified but not both.");
-  declareProperty(
-      "InstrumentName", "",
-      "Name of instrument. Can be used instead of Filename to specify an IDF");
+  declareProperty("InstrumentName", "",
+                  "Name of instrument. Can be used instead of Filename to "
+                  "specify an IDF");
   declareProperty(
       make_unique<WorkspaceProperty<MatrixWorkspace>>("OutputWorkspace", "",
                                                       Direction::Output),
@@ -96,13 +121,20 @@ void LoadEmptyInstrument::init() {
  *values
  */
 void LoadEmptyInstrument::exec() {
-  // Get other properties
-  const double detector_value = getProperty("DetectorValue");
-  const double monitor_value = getProperty("MonitorValue");
-
   // load the instrument into this workspace
-  MatrixWorkspace_sptr ws = this->runLoadInstrument();
-  Instrument_const_sptr instrument = ws->getInstrument();
+  const std::string filename = getPropertyValue("Filename");
+  const std::string instrumentname = getPropertyValue("InstrumentName");
+  Instrument_const_sptr instrument;
+  Progress prog(this, 0.0, 1.0, 10);
+  if (isNexus(filename)) {
+    prog.reportIncrement(0, "Loading geometry from file");
+    instrument = NexusGeometry::NexusGeometryParser::createInstrument(filename);
+  } else if (isIDF(filename, instrumentname)) {
+    MatrixWorkspace_sptr ws = this->runLoadInstrument(filename, instrumentname);
+    instrument = ws->getInstrument();
+  } else {
+    throw std::invalid_argument("Input " + filename + " cannot be read");
+  }
 
   // Get number of detectors stored in instrument
   const size_t number_spectra = instrument->getNumberDetectors();
@@ -115,53 +147,45 @@ void LoadEmptyInstrument::exec() {
         "No detectors found in instrument");
   }
 
+  Indexing::IndexInfo indexInfo(number_spectra);
   bool MakeEventWorkspace = getProperty("MakeEventWorkspace");
-
-  MatrixWorkspace_sptr outWS;
-
+  prog.reportIncrement(5, "Creating Data");
   if (MakeEventWorkspace) {
-    // Make a brand new EventWorkspace
-    outWS = WorkspaceFactory::Instance().create("EventWorkspace",
-                                                number_spectra, 2, 1);
-    // Copy geometry over.
-    WorkspaceFactory::Instance().initializeFromParent(ws, outWS, true);
+    setProperty("OutputWorkspace",
+                create<EventWorkspace>(
+                    std::move(instrument), indexInfo,
+                    BinEdges{0.0, std::numeric_limits<double>::min()}));
   } else {
-    // Now create the outputworkspace and copy over the instrument object
-    outWS = WorkspaceFactory::Instance().create(ws, number_spectra, 2, 1);
-  }
+    const double detector_value = getProperty("DetectorValue");
+    const double monitor_value = getProperty("MonitorValue");
+    auto ws2D = create<Workspace2D>(
+        std::move(instrument), indexInfo,
+        Histogram(BinEdges{0.0, 1.0}, Counts(1, detector_value),
+                  CountStandardDeviations(1, detector_value)));
 
-  outWS->rebuildSpectraMapping(true /* include monitors */);
-
-  // ---- Set the values ----------
-  if (!MakeEventWorkspace) {
-    auto ws2D = boost::dynamic_pointer_cast<Workspace2D>(outWS);
-    Counts v_y(1, detector_value);
     Counts v_monitor_y(1, monitor_value);
-    CountStandardDeviations v_e(1, detector_value);
     CountStandardDeviations v_monitor_e(1, monitor_value);
 
-    for (size_t i = 0; i < ws2D->getNumberHistograms(); i++) {
-      IDetector_const_sptr det = ws2D->getDetector(i);
-      if (det->isMonitor()) {
+    const auto &spectrumInfo = ws2D->spectrumInfo();
+    const auto size = static_cast<int64_t>(spectrumInfo.size());
+#pragma omp parallel for
+    for (int64_t i = 0; i < size; i++) {
+      if (spectrumInfo.isMonitor(i)) {
         ws2D->setCounts(i, v_monitor_y);
         ws2D->setCountStandardDeviations(i, v_monitor_e);
-      } else {
-        ws2D->setCounts(i, v_y);
-        ws2D->setCountStandardDeviations(i, v_e);
       }
     }
+    setProperty("OutputWorkspace", std::move(ws2D));
   }
-  // Save in output
-  this->setProperty("OutputWorkspace", outWS);
 }
 
 /// Run the Child Algorithm LoadInstrument (or LoadInstrumentFromRaw)
-API::MatrixWorkspace_sptr LoadEmptyInstrument::runLoadInstrument() {
-  const std::string filename = getPropertyValue("Filename");
-  const std::string instrumentName = getPropertyValue("InstrumentName");
-  IAlgorithm_sptr loadInst = createChildAlgorithm("LoadInstrument", 0, 1);
+API::MatrixWorkspace_sptr
+LoadEmptyInstrument::runLoadInstrument(const std::string &filename,
+                                       const std::string &instrumentname) {
+  IAlgorithm_sptr loadInst = createChildAlgorithm("LoadInstrument", 0, 0.5);
   loadInst->setPropertyValue("Filename", filename);
-  loadInst->setPropertyValue("InstrumentName", instrumentName);
+  loadInst->setPropertyValue("InstrumentName", instrumentname);
   loadInst->setProperty("RewriteSpectraMap", OptionalBool(true));
   auto ws = WorkspaceFactory::Instance().create("Workspace2D", 1, 2, 1);
   loadInst->setProperty<MatrixWorkspace_sptr>("Workspace", ws);

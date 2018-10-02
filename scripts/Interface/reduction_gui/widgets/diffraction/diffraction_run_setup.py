@@ -2,6 +2,7 @@
 ################################################################################
 # This is my first attempt to make a tab from quasi-scratch
 ################################################################################
+from __future__ import (absolute_import, division, print_function)
 from PyQt4 import QtGui, QtCore
 from reduction_gui.widgets.base_widget import BaseWidget
 from mantid.kernel import Logger
@@ -133,6 +134,8 @@ class RunSetupWidget(BaseWidget):
                      self._calfile_browse)
         self.connect(self._content.charfile_browse, QtCore.SIGNAL("clicked()"),
                      self._charfile_browse)
+        self.connect(self._content.groupfile_browse, QtCore.SIGNAL("clicked()"),
+                     self._groupfile_browse)
         self.connect(self._content.pushButton_browseExpIniFile, QtCore.SIGNAL('clicked()'),
                      self.do_browse_ini_file)
         self.connect(self._content.outputdir_browse, QtCore.SIGNAL("clicked()"),
@@ -173,9 +176,10 @@ class RunSetupWidget(BaseWidget):
             @param state: RunSetupScript object
         """
         self._content.runnumbers_edit.setText(state.runnumbers)
-        self._content.runnumbers_edit.setValidator(generateRegExpValidator(self._content.runnumbers_edit, r'[\d,-]*'))
+        self._content.runnumbers_edit.setValidator(generateRegExpValidator(self._content.runnumbers_edit, r'[\d,-:]*'))
 
         self._content.calfile_edit.setText(state.calibfilename)
+        self._content.groupfile_edit.setText(state.groupfilename)
         self._content.lineEdit_expIniFile.setText(state.exp_ini_file_name)
         self._content.charfile_edit.setText(state.charfilename)
         self._content.sum_checkbox.setChecked(state.dosum)
@@ -246,13 +250,17 @@ class RunSetupWidget(BaseWidget):
         """
         s = RunSetupScript(self._instrument_name)
 
-        s.runnumbers = self._content.runnumbers_edit.text()
+        s.runnumbers = str(self._content.runnumbers_edit.text())
         rtup = self.validateIntegerList(s.runnumbers)
         isvalid = rtup[0]
         if isvalid is False:
             raise NotImplementedError("Run number error @ %s" % (rtup[1]))
+        else:
+            # s.runnumbers = rtup[2]
+            pass
 
         s.calibfilename = self._content.calfile_edit.text()
+        s.groupfilename = self._content.groupfile_edit.text()
         s.exp_ini_file_name = str(self._content.lineEdit_expIniFile.text())
         s.charfilename = self._content.charfile_edit.text()
         s.dosum = self._content.sum_checkbox.isChecked()
@@ -306,20 +314,29 @@ class RunSetupWidget(BaseWidget):
         return s
 
     def _calfile_browse(self):
-        """ Event handing for browsing calibrtion file
+        """ Event handing for browsing calibration file
         """
-        fname = self.data_browse_dialog(data_type="*.h5;;*.cal;;*.hd5;;*.hdf;;*.*")
+        fname = self.data_browse_dialog(data_type="*.h5;;*.cal;;*.hd5;;*.hdf;;*")
         if fname:
             self._content.calfile_edit.setText(fname)
 
         return
 
     def _charfile_browse(self):
-        """ Event handing for browsing calibrtion file
+        """ Event handing for browsing calibration file
         """
-        fname = self.data_browse_dialog("*.txt;;*.*")
+        fname = self.data_browse_dialog("*.txt;;*", multi=True)
         if fname:
-            self._content.charfile_edit.setText(fname)
+            self._content.charfile_edit.setText(','.join(fname))
+
+        return
+
+    def _groupfile_browse(self):
+        ''' Event handling for browsing for a grouping file
+        '''
+        fname = self.data_browse_dialog(data_type='*.xml;;*.h5;;*')
+        if fname:
+            self._content.groupfile_edit.setText(fname)
 
         return
 
@@ -327,7 +344,7 @@ class RunSetupWidget(BaseWidget):
         """ Event handling for browsing Exp Ini file
         :return:
         """
-        exp_ini_file_name = self.data_browse_dialog(data_type="*.ini;;*.*")
+        exp_ini_file_name = self.data_browse_dialog(data_type="*.ini;;*")
         if exp_ini_file_name:
             self._content.lineEdit_expIniFile.setText(exp_ini_file_name)
 
@@ -374,11 +391,16 @@ class RunSetupWidget(BaseWidget):
 
     def validateIntegerList(self, intliststring):
         """ Validate whether the string can be divided into integer strings.
-        Allowed: a, b, c-d, e, f
+        Allowed: a, b, c-d, e, f, g:h
+        and replace ':' by ':'
+        :return: 3-tuple: state/error message/new integer list string
         """
         intliststring = str(intliststring)
         if intliststring == "":
-            return (True, "")
+            return True, "", intliststring
+
+        # replace ':' by '-'
+        intliststring = intliststring.replace(':', '-')
 
         # 1. Split by ","
         termlevel0s = intliststring.split(",")
@@ -392,9 +414,11 @@ class RunSetupWidget(BaseWidget):
                 try:
                     intvalue = int(valuestr)
                     if str(intvalue) != valuestr:
-                        return (False, valuestr)
+                        err_msg = 'String {0} cannot be converted to an integer properly.'.format(valuestr)
+                        return False, err_msg, ''
                 except ValueError:
-                    return (False, valuestr)
+                    err_msg = 'String {0} cannot be converted to an integer.'.format(valuestr)
+                    return False, err_msg, ''
 
             elif numdashes == 1:
                 # Integer range
@@ -409,13 +433,13 @@ class RunSetupWidget(BaseWidget):
                 # ENDFOR
 
             else:
-                return (False, level0term)
+                return False, level0term, intliststring
         # ENDFOR
 
-        return (True, "")
+        return True, '', intliststring
 
     def _overrideemptyrun_clicked(self):
-        """ Handling event if overriding emptry run
+        """ Handling event if overriding empty run
         """
         if self._content.override_emptyrun_checkBox.isChecked() is True:
             self._content.emptyrun_edit.setEnabled(True)
@@ -427,7 +451,7 @@ class RunSetupWidget(BaseWidget):
         return
 
     def _overridevanrun_clicked(self):
-        """ Handling event if overriding emptry run
+        """ Handling event if overriding empty run
         """
         if self._content.override_vanrun_checkBox.isChecked() is True:
             self._content.vanrun_edit.setEnabled(True)
@@ -439,7 +463,7 @@ class RunSetupWidget(BaseWidget):
         return
 
     def _overridevanbkgdrun_clicked(self):
-        """ Handling event if overriding emptry run
+        """ Handling event if overriding empty run
         """
         if self._content.override_vanbkgdrun_checkBox.isChecked() is True:
             self._content.vanbkgdrun_edit.setEnabled(True)

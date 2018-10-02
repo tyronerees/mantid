@@ -1,4 +1,5 @@
 #pylint: disable=no-init,attribute-defined-outside-init
+from __future__ import (absolute_import, division, print_function)
 import stresstesting
 import mantid.simpleapi as ms
 
@@ -33,7 +34,7 @@ class MolDynCdlTest(stresstesting.MantidStressTest):
         Used when the result of a test produces more than a single workspace
         """
 
-        checker = ms.AlgorithmManager.create("CheckWorkspacesMatch")
+        checker = ms.AlgorithmManager.create("CompareWorkspaces")
         checker.setLogging(True)
         checker.setPropertyValue("Workspace1", ws1)
         checker.setPropertyValue("Workspace2", ws2)
@@ -42,8 +43,8 @@ class MolDynCdlTest(stresstesting.MantidStressTest):
 
         checker.execute()
 
-        if checker.getPropertyValue("Result") != 'Success!':
-            print self.__class__.__name__
+        if not checker.getProperty("Result"):
+            print(self.__class__.__name__)
             ms.SaveNexus(InputWorkspace=ws2,Filename=self.__class__.__name__+'-mismatch.nxs')
             return False
 

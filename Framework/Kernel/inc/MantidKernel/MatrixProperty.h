@@ -5,8 +5,8 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include "MantidKernel/Matrix.h"
-#include "MantidKernel/PropertyWithValue.h"
 #include "MantidKernel/NullValidator.h"
+#include "MantidKernel/PropertyWithValue.h"
 
 namespace Mantid {
 namespace Kernel {
@@ -33,9 +33,9 @@ File change history is stored at: <https://github.com/mantidproject/mantid>.
 Code Documentation is available at: <http://doxygen.mantidproject.org>
 */
 template <class TYPE = double>
-class DLLExport MatrixProperty : public PropertyWithValue<Matrix<TYPE>> {
+class MatrixProperty : public PropertyWithValue<Matrix<TYPE>> {
   /// Typedef the held type
-  typedef Kernel::Matrix<TYPE> HeldType;
+  using HeldType = Kernel::Matrix<TYPE>;
 
 public:
   /// Constructor
@@ -64,7 +64,7 @@ private:
   /// Default constructor
   MatrixProperty();
 };
-}
-}
+} // namespace Kernel
+} // namespace Mantid
 
 #endif // MANTID_KERNEL_MATRIXPROPERTY_H_

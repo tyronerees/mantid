@@ -22,7 +22,7 @@ DECLARE_ALGORITHM(CalculateZscore)
 
 //----------------------------------------------------------------------------------------------
 /** Define properties
-  */
+ */
 void CalculateZscore::init() {
   declareProperty(Kernel::make_unique<WorkspaceProperty<MatrixWorkspace>>(
                       "InputWorkspace", "Anonymous", Direction::Input),
@@ -39,7 +39,7 @@ void CalculateZscore::init() {
 
 //----------------------------------------------------------------------------------------------
 /** Execute body
-  */
+ */
 void CalculateZscore::exec() {
   // 1. Get input and validate
   MatrixWorkspace_const_sptr inpWS = getProperty("InputWorkspace");
@@ -64,7 +64,7 @@ void CalculateZscore::exec() {
       WorkspaceFactory::Instance().create("Workspace2D", numspec, sizex,
                                           sizey));
 
-  Progress progress(this, 0, 1, numspec);
+  Progress progress(this, 0.0, 1.0, numspec);
 
   // 3. Get Z values
   for (size_t i = 0; i < numspec; ++i) {

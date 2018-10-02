@@ -3,9 +3,8 @@
 
 #include <string>
 
-#include "MantidKernel/ClassMacros.h"
-#include "MantidKernel/System.h"
 #include "MantidAPI/Workspace_fwd.h"
+#include "MantidKernel/System.h"
 
 namespace Mantid {
 namespace API {
@@ -58,6 +57,12 @@ public:
   /// Destructor
   virtual ~ScopedWorkspace();
 
+  /// Disable copy operator
+  ScopedWorkspace(const ScopedWorkspace &) = delete;
+
+  /// Disable assignment operator
+  ScopedWorkspace &operator=(const ScopedWorkspace &) = delete;
+
   /// Returns ADS name of the workspace
   std::string name() const { return m_name; }
 
@@ -74,8 +79,6 @@ public:
   void set(Workspace_sptr newWS);
 
 private:
-  DISABLE_COPY_AND_ASSIGN(ScopedWorkspace)
-
   /// ADS name of the workspace
   const std::string m_name;
 

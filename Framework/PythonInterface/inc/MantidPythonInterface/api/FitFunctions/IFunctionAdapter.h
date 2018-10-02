@@ -26,8 +26,8 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include "MantidAPI/IFunction.h"
-#include "MantidKernel/ClassMacros.h"
 
+#include <boost/python/list.hpp>
 #include <boost/python/object.hpp>
 
 namespace Mantid {
@@ -39,7 +39,14 @@ namespace PythonInterface {
 class IFunctionAdapter : virtual public API::IFunction {
 public:
   /// A constructor that looks like a Python __init__ method
-  IFunctionAdapter(PyObject *self);
+  IFunctionAdapter(PyObject *self, std::string functionMethod,
+                   std::string derivMethod);
+
+  /// The PyObject must be supplied to construct the object
+  IFunctionAdapter(const IFunctionAdapter &) = delete;
+
+  /// Disable assignment operator
+  IFunctionAdapter &operator=(const IFunctionAdapter &) = delete;
 
   /// Returns the name of the function
   std::string name() const override;
@@ -56,12 +63,14 @@ public:
   /// Returns the attribute's value as a Python object
   static PyObject *getAttributeValue(IFunction &self,
                                      const API::IFunction::Attribute &attr);
+  /// Set the attribute's value
+  static void setAttributePythonValue(IFunction &self, const std::string &name,
+                                      const boost::python::object &value);
   /// Called by the framework when an attribute has been set
   void setAttribute(const std::string &attName,
                     const API::IFunction::Attribute &attr) override;
-  /// Store the attribute's value in the default IFunction's cache
-  void storeAttributePythonValue(const std::string &name,
-                                 const boost::python::object &value);
+  /// Split this function (if needed) into a list of independent functions
+  static boost::python::list createPythonEquivalentFunctions(IFunction &self);
 
   // Each overload of declareParameter requires a different name as we
   // can't use a function pointer with a virtual base class
@@ -102,22 +111,28 @@ public:
   void setActiveParameter(size_t i, double value) override;
 
 protected:
-  /**
-   * Returns the PyObject that owns this wrapper, i.e. self
-   * @returns A pointer to self
-   */
+  /// @returns The PyObject that owns this wrapper, i.e. self
   inline PyObject *getSelf() const { return m_self; }
+  /// @returns True if the instance overrides the derivative method
+  inline bool derivativeOverridden() const { return m_derivOveridden; }
+  /// Evaluate the function by calling the overridden method
+  void evaluateFunction(double *out, const double *xValues,
+                        const size_t nData) const;
+  /// Evaluate the derivative by calling the overridden method
+  void evaluateDerivative(API::Jacobian *out, const double *xValues,
+                          const size_t nData) const;
 
 private:
-  /// The PyObject must be supplied to construct the object
-  DISABLE_COPY_AND_ASSIGN(IFunctionAdapter)
-
-  /// The name of the function
-  std::string m_name;
   /// The Python portion of the object
   PyObject *m_self;
+  /// The name of the method to evaluate the function
+  std::string m_functionName;
+  /// The name of the method to evaluate the derivative
+  std::string m_derivName;
+  /// Flag if the derivateive method is overridden (avoids multiple checks)
+  bool m_derivOveridden;
 };
-}
-}
+} // namespace PythonInterface
+} // namespace Mantid
 
 #endif /* MANTID_PYTHONINTERFACE_IFUNCTIONADAPTER_H_ */

@@ -1,8 +1,11 @@
 #ifndef MANTID_KERNEL_ARRAYBOUNDEDVALIDATOR_H_
 #define MANTID_KERNEL_ARRAYBOUNDEDVALIDATOR_H_
 
-#include "MantidKernel/TypedValidator.h"
 #include "MantidKernel/BoundedValidator.h"
+#include "MantidKernel/DllConfig.h"
+#include "MantidKernel/IValidator.h"
+#include "MantidKernel/TypedValidator.h"
+#include <string>
 #include <vector>
 
 namespace Mantid {
@@ -76,7 +79,7 @@ private:
   boost::shared_ptr<BoundedValidator<TYPE>> boundVal;
 };
 
-} // Kernel
-} // Mantid
+} // namespace Kernel
+} // namespace Mantid
 
 #endif /* MANTID_KERNEL_ARRAYBOUNDEDVALIDATOR_H_ */

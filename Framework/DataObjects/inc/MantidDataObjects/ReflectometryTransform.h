@@ -1,10 +1,10 @@
 #ifndef MANTID_DATAOBJECTS_REFLECTOMETRYMDTRANFORM_H_
 #define MANTID_DATAOBJECTS_REFLECTOMETRYMDTRANFORM_H_
 
-#include "MantidDataObjects/DllConfig.h"
 #include "MantidAPI/BoxController.h"
 #include "MantidAPI/IEventWorkspace_fwd.h"
 #include "MantidAPI/IMDEventWorkspace_fwd.h"
+#include "MantidDataObjects/DllConfig.h"
 
 #include "MantidDataObjects/MDEventFactory.h"
 #include <boost/shared_ptr.hpp>
@@ -91,7 +91,7 @@ public:
 
   /// Execuate transformation using normalised polynomial binning
   Mantid::API::MatrixWorkspace_sptr executeNormPoly(
-      Mantid::API::MatrixWorkspace_const_sptr inputWS,
+      const Mantid::API::MatrixWorkspace_const_sptr &inputWS,
       boost::shared_ptr<Mantid::DataObjects::TableWorkspace> &vertexes,
       bool dumpVertexes, std::string outputDimensions) const;
 
@@ -123,7 +123,7 @@ MANTID_DATAOBJECTS_DLL DetectorAngularCache
 initAngularCaches(const Mantid::API::MatrixWorkspace *const workspace);
 
 // Helper typedef for scoped pointer of this type.
-typedef boost::shared_ptr<ReflectometryTransform> ReflectometryTransform_sptr;
-}
-}
+using ReflectometryTransform_sptr = boost::shared_ptr<ReflectometryTransform>;
+} // namespace DataObjects
+} // namespace Mantid
 #endif

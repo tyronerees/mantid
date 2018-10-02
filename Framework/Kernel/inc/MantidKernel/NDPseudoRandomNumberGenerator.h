@@ -25,7 +25,6 @@
 //------------------------------------------------------------------------------
 // Includes
 //------------------------------------------------------------------------------
-#include "MantidKernel/ClassMacros.h"
 #include "MantidKernel/DllConfig.h"
 #include "MantidKernel/NDRandomNumberGenerator.h"
 #ifndef Q_MOC_RUN
@@ -52,6 +51,17 @@ public:
   NDPseudoRandomNumberGenerator(const unsigned int ndims,
                                 const size_t seedValue, const double start,
                                 const double end);
+
+  /// Disable default constructor
+  NDPseudoRandomNumberGenerator() = delete;
+
+  /// Disable copy operator
+  NDPseudoRandomNumberGenerator(const NDPseudoRandomNumberGenerator &) = delete;
+
+  /// Disable assignment operator
+  NDPseudoRandomNumberGenerator &
+  operator=(const NDPseudoRandomNumberGenerator &) = delete;
+
   /// Set the random number seed
   void setSeed(const size_t seedValue);
   /// Generates the next ND point
@@ -65,9 +75,6 @@ public:
   void restore() override;
 
 private:
-  DISABLE_DEFAULT_CONSTRUCT(NDPseudoRandomNumberGenerator)
-  DISABLE_COPY_AND_ASSIGN(NDPseudoRandomNumberGenerator)
-
   /// The single value generator
   SingleValueGenerator m_singleValueGen;
 };
@@ -146,7 +153,7 @@ template <typename SingleValueGenerator>
 void NDPseudoRandomNumberGenerator<SingleValueGenerator>::restore() {
   m_singleValueGen.restore();
 }
-}
-}
+} // namespace Kernel
+} // namespace Mantid
 
 #endif /* MANTID_KERNEL_NDPSEUDORANDOMNUMBERGENERATOR_H_ */

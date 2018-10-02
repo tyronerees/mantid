@@ -1,5 +1,4 @@
 #include "MantidDataObjects/WorkspaceSingleValue.h"
-#include "MantidAPI/WorkspaceProperty.h"
 #include "MantidAPI/WorkspaceFactory.h"
 #include "MantidKernel/IPropertyManager.h"
 
@@ -11,8 +10,10 @@ using std::size_t;
 DECLARE_WORKSPACE(WorkspaceSingleValue)
 
 /// Constructor
-WorkspaceSingleValue::WorkspaceSingleValue(double value, double error)
-    : API::MatrixWorkspace() {
+WorkspaceSingleValue::WorkspaceSingleValue(
+    double value, double error, const Parallel::StorageMode storageMode)
+    : API::HistoWorkspace(storageMode) {
+  initialize(1, 1, 1);
   // Set the "histogram" to the single value
   data.dataX().resize(1, 0.0);
   data.setCounts(1, value);
@@ -23,16 +24,16 @@ WorkspaceSingleValue::WorkspaceSingleValue(double value, double error)
 }
 
 WorkspaceSingleValue::WorkspaceSingleValue(const WorkspaceSingleValue &other)
-    : MatrixWorkspace(other), data(other.data) {
+    : HistoWorkspace(other), data(other.data) {
   setDistribution(true);
 }
 
 /** Does nothing in this case
-*  @param NVectors :: This value can only be equal to one, otherwise exception
-* is thrown
-*  @param XLength :: The number of X data points/bin boundaries
-*  @param YLength :: The number of data/error points
-*/
+ *  @param NVectors :: This value can only be equal to one, otherwise exception
+ * is thrown
+ *  @param XLength :: The number of X data points/bin boundaries
+ *  @param YLength :: The number of data/error points
+ */
 void WorkspaceSingleValue::init(const std::size_t &NVectors,
                                 const std::size_t &XLength,
                                 const std::size_t &YLength) {
@@ -41,8 +42,13 @@ void WorkspaceSingleValue::init(const std::size_t &NVectors,
   (void)YLength; // Avoid compiler warning
 }
 
+void WorkspaceSingleValue::init(const HistogramData::Histogram &histogram) {
+  UNUSED_ARG(histogram);
+}
+
 /// Return the underlying Histogram1D at the given workspace index.
 Histogram1D &WorkspaceSingleValue::getSpectrum(const size_t /*index*/) {
+  data.setMatrixWorkspace(this, 0);
   return data;
 }
 
@@ -71,11 +77,6 @@ size_t WorkspaceSingleValue::getNumDims() const { return 0; }
 
 } // namespace DataObjects
 } // namespace Mantid
-
-///\cond TEMPLATE
-
-template class DLLExport
-    Mantid::API::WorkspaceProperty<Mantid::DataObjects::WorkspaceSingleValue>;
 
 namespace Mantid {
 namespace Kernel {

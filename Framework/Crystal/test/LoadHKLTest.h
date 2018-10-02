@@ -1,6 +1,9 @@
 #ifndef MANTID_CRYSTAL_LOADHKLTEST_H_
 #define MANTID_CRYSTAL_LOADHKLTEST_H_
 
+#include "MantidAPI/AnalysisDataService.h"
+#include "MantidAPI/Run.h"
+#include "MantidAPI/Sample.h"
 #include "MantidCrystal/LoadHKL.h"
 #include "MantidCrystal/SaveHKL.h"
 #include "MantidDataObjects/Peak.h"
@@ -9,12 +12,10 @@
 #include "MantidKernel/Material.h"
 #include "MantidKernel/System.h"
 #include "MantidKernel/Timer.h"
-#include "MantidAPI/Run.h"
-#include "MantidAPI/Sample.h"
 #include "MantidTestHelpers/ComponentCreationHelper.h"
+#include <Poco/File.h>
 #include <cxxtest/TestSuite.h>
 #include <fstream>
-#include <Poco/File.h>
 
 using namespace Mantid;
 using namespace Mantid::Crystal;
@@ -41,8 +42,8 @@ public:
     double amu = 0.011;
     NeutronAtom neutron(static_cast<uint16_t>(EMPTY_DBL()),
                         static_cast<uint16_t>(0), 0.0, 0.0, smu, 0.0, smu, amu);
-    Object sampleShape;
-    sampleShape.setMaterial(Material("SetInAnvredCorrection", neutron, 1.0));
+    auto sampleShape = boost::make_shared<CSGObject>();
+    sampleShape->setMaterial(Material("SetInAnvredCorrection", neutron, 1.0));
     ws->mutableSample().setShape(sampleShape);
 
     API::Run &mrun = ws->mutableRun();

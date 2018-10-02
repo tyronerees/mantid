@@ -1,18 +1,18 @@
 #ifndef MANTID_TESTCompAssembly__
 #define MANTID_TESTCompAssembly__
 
-#include <cxxtest/TestSuite.h>
-#include <cmath>
-#include <string>
 #include "MantidGeometry/Instrument/CompAssembly.h"
-#include "MantidKernel/V3D.h"
-#include "MantidKernel/Quat.h"
-#include "MantidTestHelpers/ComponentCreationHelper.h"
 #include "MantidGeometry/Instrument/RectangularDetector.h"
+#include "MantidKernel/Quat.h"
+#include "MantidKernel/V3D.h"
+#include "MantidTestHelpers/ComponentCreationHelper.h"
+#include <cmath>
+#include <cxxtest/TestSuite.h>
+#include <string>
 
 using namespace Mantid::Geometry;
-using Mantid::Kernel::V3D;
 using Mantid::Kernel::Quat;
+using Mantid::Kernel::V3D;
 
 class CompAssemblyTest : public CxxTest::TestSuite {
 public:
@@ -503,7 +503,7 @@ public:
     CompAssembly *bank3 = new CompAssembly("bank 111", detectors);
 
     // add some rectangular detectors
-    boost::shared_ptr<Object> cuboidShape =
+    boost::shared_ptr<IObject> cuboidShape =
         ComponentCreationHelper::createCuboid(0.5);
 
     for (size_t i = 0; i < 15; i++) {
@@ -548,7 +548,7 @@ public:
         "bank 11(1,1)");
     TS_ASSERT_EQUALS(
         inst->getComponentByName(
-                  "inst/detectors/Rectangle bank 4/Rectangle bank 4(3,5)")
+                "inst/detectors/Rectangle bank 4/Rectangle bank 4(3,5)")
             ->getFullName(),
         "inst/detectors/Rectangle bank 4/Rectangle bank 4(x=3)/Rectangle bank "
         "4(3,5)");

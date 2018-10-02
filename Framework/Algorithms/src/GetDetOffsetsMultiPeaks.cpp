@@ -1,11 +1,12 @@
 #include "MantidAlgorithms/GetDetOffsetsMultiPeaks.h"
 #include "MantidAPI/CompositeFunction.h"
 #include "MantidAPI/FileProperty.h"
-#include "MantidAPI/FunctionFactory.h"
 #include "MantidAPI/FuncMinimizerFactory.h"
-#include "MantidAPI/ITableWorkspace.h"
-#include "MantidAPI/IPeakFunction.h"
+#include "MantidAPI/FunctionFactory.h"
 #include "MantidAPI/IBackgroundFunction.h"
+#include "MantidAPI/IPeakFunction.h"
+#include "MantidAPI/ITableWorkspace.h"
+#include "MantidAPI/SpectrumInfo.h"
 #include "MantidAPI/TableRow.h"
 #include "MantidAPI/WorkspaceFactory.h"
 #include "MantidAPI/WorkspaceUnitValidator.h"
@@ -32,12 +33,12 @@ const double BAD_OFFSET(1000.); // mark things that didn't work with this
 
 //--------------------------------------------------------------------------------------------
 /** Helper function for calculating costs in gsl.
-  * cost = \sum_{p}|d^0_p - (1+offset)*d^{(f)}_p|\cdot H^2_p, where d^{(f)} is
+ * cost = \sum_{p}|d^0_p - (1+offset)*d^{(f)}_p|\cdot H^2_p, where d^{(f)} is
  * within minD and maxD
-   * @param v Vector of offsets.
-   * @param params Array of input parameters.
-   * @returns Sum of the errors.
-   */
+ * @param v Vector of offsets.
+ * @param params Array of input parameters.
+ * @returns Sum of the errors.
+ */
 double gsl_costFunction(const gsl_vector *v, void *params) {
   // FIXME - there is no need to use vectors peakPosToFit, peakPosFitted and
   // chisq
@@ -69,17 +70,17 @@ double gsl_costFunction(const gsl_vector *v, void *params) {
   }
   return errsum;
 }
-}
+} // namespace
 
 //----------------------------------------------------------------------------------------------
 /** The windows should be half of the distance between the peaks of maxWidth,
  * whichever is smaller.
-   * @param dmin :: The minimum d-spacing for the workspace
-   * @param dmax :: The maximum d-spacing for the workspace
-   * @param vec_peakcentre :: The list of peaks to generate windows for
-   * @param maxWidth :: The maximum width of a window
-   * @return The list of windows for each peak
-   */
+ * @param dmin :: The minimum d-spacing for the workspace
+ * @param dmax :: The maximum d-spacing for the workspace
+ * @param vec_peakcentre :: The list of peaks to generate windows for
+ * @param maxWidth :: The maximum width of a window
+ * @return The list of windows for each peak
+ */
 std::vector<double> generateWindows(const double dmin, const double dmax,
                                     const std::vector<double> &vec_peakcentre,
                                     const double maxWidth) {
@@ -123,7 +124,7 @@ DECLARE_ALGORITHM(GetDetOffsetsMultiPeaks)
 
 //----------------------------------------------------------------------------------------------
 /** Constructor
-  */
+ */
 GetDetOffsetsMultiPeaks::GetDetOffsetsMultiPeaks()
     : API::Algorithm(), m_inputWS(), m_eventW(), m_isEvent(false), m_backType(),
       m_peakType(), m_minimizer(), m_maxChiSq(0.), m_minPeakHeight(0.),
@@ -135,7 +136,7 @@ GetDetOffsetsMultiPeaks::GetDetOffsetsMultiPeaks()
 
 //----------------------------------------------------------------------------------------------
 /** Initialisation method. Declares properties to be used in algorithm.
-   */
+ */
 void GetDetOffsetsMultiPeaks::init() {
   declareProperty(make_unique<WorkspaceProperty<>>(
                       "InputWorkspace", "", Direction::Input,
@@ -246,10 +247,10 @@ void GetDetOffsetsMultiPeaks::init() {
 
 //-----------------------------------------------------------------------------------------
 /** Executes the algorithm
-   *
-   *  @throw Exception::FileError If the grouping file cannot be opened or read
-  *successfully
-   */
+ *
+ *  @throw Exception::FileError If the grouping file cannot be opened or read
+ *successfully
+ */
 void GetDetOffsetsMultiPeaks::exec() {
   // Process input information
   processProperties();
@@ -286,7 +287,7 @@ void GetDetOffsetsMultiPeaks::exec() {
 
 //----------------------------------------------------------------------------------------------
 /** Process input and output properties
-  */
+ */
 void GetDetOffsetsMultiPeaks::processProperties() {
   m_inputWS = getProperty("InputWorkspace");
 
@@ -303,7 +304,7 @@ void GetDetOffsetsMultiPeaks::processProperties() {
   // Fit windows
   std::string fitwinwsname = getPropertyValue("FitwindowTableWorkspace");
   g_log.notice() << "FitWindowTableWorkspace name: " << fitwinwsname << "\n";
-  if (fitwinwsname.size() > 0) {
+  if (!fitwinwsname.empty()) {
     // Use fit window workspace for each spectrum
     TableWorkspace_sptr fitwintablews = getProperty("FitwindowTableWorkspace");
     importFitWindowTableWorkspace(fitwintablews);
@@ -360,7 +361,7 @@ void GetDetOffsetsMultiPeaks::processProperties() {
 
   // Input resolution
   std::string reswsname = getPropertyValue("InputResolutionWorkspace");
-  if (reswsname.size() == 0)
+  if (reswsname.empty())
     m_hasInputResolution = false;
   else {
     m_inputResolutionWS = getProperty("InputResolutionWorkspace");
@@ -383,9 +384,9 @@ void GetDetOffsetsMultiPeaks::processProperties() {
 
 //-----------------------------------------------------------------------------------------
 /** Executes the algorithm
-   *
-   *  @throw Exception::RuntimeError If ... ...
-   */
+ *
+ *  @throw Exception::RuntimeError If ... ...
+ */
 void GetDetOffsetsMultiPeaks::importFitWindowTableWorkspace(
     TableWorkspace_sptr windowtablews) {
   // Check number of columns matches number of peaks
@@ -464,7 +465,7 @@ void GetDetOffsetsMultiPeaks::importFitWindowTableWorkspace(
 
 //-----------------------------------------------------------------------------------------
 /** Calculate (all) detectors' offsets
-  */
+ */
 void GetDetOffsetsMultiPeaks::calculateDetectorsOffsets() {
   int nspec = static_cast<int>(m_inputWS->getNumberHistograms());
 
@@ -473,8 +474,9 @@ void GetDetOffsetsMultiPeaks::calculateDetectorsOffsets() {
       m_maskWS->getDetectorIDToWorkspaceIndexMap(true);
 
   // Fit all the spectra with a gaussian
-  Progress prog(this, 0, 1.0, nspec);
+  Progress prog(this, 0.0, 1.0, nspec);
 
+  auto &spectrumInfo = m_maskWS->mutableSpectrumInfo();
   // cppcheck-suppress syntaxError
     PRAGMA_OMP(parallel for schedule(dynamic, 1) )
     for (int wi = 0; wi < nspec; ++wi) {
@@ -509,7 +511,8 @@ void GetDetOffsetsMultiPeaks::calculateDetectorsOffsets() {
           const size_t workspaceIndex = mapEntry->second;
           if (offsetresult.mask > 0.9) {
             // Being masked
-            m_maskWS->maskWorkspaceIndex(workspaceIndex);
+            m_maskWS->getSpectrum(workspaceIndex).clearData();
+            spectrumInfo.setMasked(workspaceIndex, true);
             m_maskWS->mutableY(workspaceIndex)[0] = offsetresult.mask;
           } else {
             // Using the detector
@@ -524,9 +527,9 @@ void GetDetOffsetsMultiPeaks::calculateDetectorsOffsets() {
               double pixelresolution = m_inputResolutionWS->y(wi)[0];
               if (offsetresult.resolution > 10 * pixelresolution ||
                   offsetresult.resolution < 0.1 * pixelresolution)
-                g_log.warning() << "Spectrum " << wi
-                                << " delta(d)/d = " << offsetresult.resolution
-                                << "\n";
+                g_log.warning()
+                    << "Spectrum " << wi
+                    << " delta(d)/d = " << offsetresult.resolution << "\n";
             }
           }
         } // ENDFOR (detectors)
@@ -545,7 +548,7 @@ void GetDetOffsetsMultiPeaks::calculateDetectorsOffsets() {
 
 //----------------------------------------------------------------------------------------------
 /** Calculate offset for one spectrum
-  */
+ */
 FitPeakOffsetResult GetDetOffsetsMultiPeaks::calculatePeakOffset(
     const int wi, std::vector<double> &vec_peakPosFitted,
     std::vector<double> &vec_peakPosRef) {
@@ -672,7 +675,7 @@ FitPeakOffsetResult GetDetOffsetsMultiPeaks::calculatePeakOffset(
 
 //----------------------------------------------------------------------------------------------
 /** Fit peaks' offset by minimize the fitting function
-  */
+ */
 void GetDetOffsetsMultiPeaks::fitPeaksOffset(
     const size_t inpnparams, const double minD, const double maxD,
     const std::vector<double> &vec_peakPosRef,
@@ -795,27 +798,27 @@ void deletePeaks(std::vector<size_t> &banned, std::vector<double> &peakPosToFit,
   }
   banned.clear();
 }
-}
+} // namespace
 
 //-----------------------------------------------------------------------------------------
 /** Calls Gaussian1D as a child algorithm to fit the offset peak in a spectrum
-  *
-  * @param wi :: The Workspace Index to fit.
-  * @param inputW :: Input workspace.
-  * @param peakPositions :: Peak positions.
-  * @param fitWindows :: Fit windows.
-  * @param nparams :: Number of parameters.
-  * @param minD :: Min distance.
-  * @param maxD :: Max distance.
-  * @param peakPosToFit :: Actual peak positions to fit (output).
-  * @param peakPosFitted :: Actual peak positions fitted (output).
-  * @param chisq :: chisq.
-  * @param peakHeights :: vector for fitted heights of peaks
-  * @param i_highestpeak:: index of the highest peak among all peaks
-  * @param resolution :: spectrum's resolution delta(d)/d
-  * @param dev_resolution :: standard deviation resolution
-  * @return The number of peaks in range
-  */
+ *
+ * @param wi :: The Workspace Index to fit.
+ * @param inputW :: Input workspace.
+ * @param peakPositions :: Peak positions.
+ * @param fitWindows :: Fit windows.
+ * @param nparams :: Number of parameters.
+ * @param minD :: Min distance.
+ * @param maxD :: Max distance.
+ * @param peakPosToFit :: Actual peak positions to fit (output).
+ * @param peakPosFitted :: Actual peak positions fitted (output).
+ * @param chisq :: chisq.
+ * @param peakHeights :: vector for fitted heights of peaks
+ * @param i_highestpeak:: index of the highest peak among all peaks
+ * @param resolution :: spectrum's resolution delta(d)/d
+ * @param dev_resolution :: standard deviation resolution
+ * @return The number of peaks in range
+ */
 int GetDetOffsetsMultiPeaks::fitSpectra(
     const int64_t wi, MatrixWorkspace_sptr inputW,
     const std::vector<double> &peakPositions,
@@ -937,23 +940,23 @@ int GetDetOffsetsMultiPeaks::fitSpectra(
 
 //----------------------------------------------------------------------------------------------
 /** Generate a list of peaks that meets= all the requirements for fitting offset
-  * @param peakslist :: table workspace as the output of FindPeaks
-  * @param wi :: workspace index of the spectrum
-  * @param peakPositionRef :: reference peaks positions
-  * @param peakPosToFit :: output of reference centres of the peaks used to fit
+ * @param peakslist :: table workspace as the output of FindPeaks
+ * @param wi :: workspace index of the spectrum
+ * @param peakPositionRef :: reference peaks positions
+ * @param peakPosToFit :: output of reference centres of the peaks used to fit
  * offset
-  * @param peakPosFitted :: output of fitted centres of the peaks used to fit
+ * @param peakPosFitted :: output of fitted centres of the peaks used to fit
  * offset
-  * @param peakHeightFitted :: heights of the peaks used to fit offset
-  * @param chisq :: chi squares of the peaks used to fit offset
-  * @param useFitWindows :: boolean whether FitWindows is used
-  * @param fitWindowsToUse :: fit windows
-  * @param minD :: minimum d-spacing of the spectrum
-  * @param maxD :: minimum d-spacing of the spectrum
-  * @param deltaDovD :: delta(d)/d of the peak for fitting
-  * @param dev_deltaDovD :: standard deviation of delta(d)/d of all the peaks in
+ * @param peakHeightFitted :: heights of the peaks used to fit offset
+ * @param chisq :: chi squares of the peaks used to fit offset
+ * @param useFitWindows :: boolean whether FitWindows is used
+ * @param fitWindowsToUse :: fit windows
+ * @param minD :: minimum d-spacing of the spectrum
+ * @param maxD :: minimum d-spacing of the spectrum
+ * @param deltaDovD :: delta(d)/d of the peak for fitting
+ * @param dev_deltaDovD :: standard deviation of delta(d)/d of all the peaks in
  * the spectrum
-  */
+ */
 void GetDetOffsetsMultiPeaks::generatePeaksList(
     const API::ITableWorkspace_sptr &peakslist, int wi,
     const std::vector<double> &peakPositionRef,
@@ -1114,7 +1117,7 @@ void GetDetOffsetsMultiPeaks::generatePeaksList(
 
 //----------------------------------------------------------------------------------------------
 /**
-  */
+ */
 void GetDetOffsetsMultiPeaks::createInformationWorkspaces() {
   // Init
   size_t numspec = m_inputWS->getNumberHistograms();
@@ -1164,7 +1167,7 @@ void GetDetOffsetsMultiPeaks::createInformationWorkspaces() {
 //----------------------------------------------------------------------------------------------
 /** Add result of offset-calculation to information table workspaces
  * (thread-safe)
-  */
+ */
 void GetDetOffsetsMultiPeaks::addInfoToReportWS(
     int wi, FitPeakOffsetResult offsetresult,
     const std::vector<double> &tofitpeakpositions,
@@ -1180,7 +1183,7 @@ void GetDetOffsetsMultiPeaks::addInfoToReportWS(
 
   // Peak width delta(d)/d
   m_resolutionWS->mutableX(wi)[0] = static_cast<double>(wi);
-  if (offsetresult.fitoffsetstatus.compare("success") == 0) {
+  if (offsetresult.fitoffsetstatus == "success") {
     // Only add successfully calculated value
     m_resolutionWS->mutableY(wi)[0] = offsetresult.resolution;
     m_resolutionWS->mutableE(wi)[0] = offsetresult.dev_resolution;
@@ -1245,7 +1248,7 @@ void GetDetOffsetsMultiPeaks::addInfoToReportWS(
 
 //----------------------------------------------------------------------------------------------
 /** Clean peak offset table workspace
-  */
+ */
 void GetDetOffsetsMultiPeaks::removeEmptyRowsFromPeakOffsetTable() {
   size_t numrows = m_infoTableWS->rowCount();
   if (m_peakOffsetTableWS->rowCount() != numrows) {
@@ -1277,7 +1280,7 @@ void GetDetOffsetsMultiPeaks::removeEmptyRowsFromPeakOffsetTable() {
 
 //----------------------------------------------------------------------------------------------
 /** Make a summary of fitting
-  */
+ */
 void GetDetOffsetsMultiPeaks::makeFitSummary() {
   g_log.notice("Making summary... ...");
   size_t numrows = m_infoTableWS->rowCount();
@@ -1325,5 +1328,5 @@ void GetDetOffsetsMultiPeaks::makeFitSummary() {
                  << "Weighted avg. chi-sq = " << wtavgchi2 << "\n";
 }
 
-} // namespace Algorithm
+} // namespace Algorithms
 } // namespace Mantid

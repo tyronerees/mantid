@@ -2,7 +2,6 @@
 //----------------------------------------------------------------------
 //----------------------------------------------------------------------
 #include "MantidAlgorithms/Multiply.h"
-#include "MantidDataObjects/WorkspaceSingleValue.h"
 
 using namespace Mantid::API;
 using namespace Mantid::Kernel;
@@ -187,7 +186,7 @@ std::string Multiply::checkSizeCompatibility(
     if (m_matchXSize) {
       // Past this point, for a 2D WS operation, we require the X arrays to
       // match. Note this only checks the first spectrum
-      if (!WorkspaceHelpers::matchingBins(lhs, rhs, true)) {
+      if (!WorkspaceHelpers::matchingBins(*lhs, *rhs, true)) {
         return "X arrays must match when multiplying 2D workspaces.";
       }
     }

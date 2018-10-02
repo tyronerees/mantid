@@ -1,7 +1,7 @@
 #include "MantidAlgorithms/CopyLogs.h"
 
-#include "MantidAPI/Run.h"
 #include "MantidAPI/MatrixWorkspace.h"
+#include "MantidAPI/Run.h"
 #include "MantidKernel/ListValidator.h"
 #include "MantidKernel/Property.h"
 
@@ -56,7 +56,7 @@ void CopyLogs::exec() {
 
   // get logs from input workspace
   Run &inputRun = inputWs->mutableRun();
-  auto inputLogs = inputRun.getLogData();
+  const auto &inputLogs = inputRun.getLogData();
 
   // get run from output workspace
   Run &outputRun = outputWs->mutableRun();
@@ -73,7 +73,8 @@ void CopyLogs::exec() {
     throw std::runtime_error("Cannot copy logs using unknown merge strategy");
   }
 
-  setProperty("OutputWorkspace", outputWs->getName());
+  if (!outputWs->getName().empty())
+    setProperty("OutputWorkspace", outputWs->getName());
 }
 
 /**

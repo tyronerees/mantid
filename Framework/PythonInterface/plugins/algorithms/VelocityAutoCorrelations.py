@@ -1,4 +1,5 @@
 # pylint: disable=too-many-branches,too-many-locals, invalid-name
+from __future__ import (absolute_import, division, print_function)
 from mantid.simpleapi import *
 from mantid.kernel import *
 from mantid.api import *
@@ -42,7 +43,7 @@ class VelocityAutoCorrelations(PythonAlgorithm):
         # Convert description object to string via for loop. The original object has strange formatting
         particleID = ''
         for i in description:
-            particleID += i
+            particleID += i.decode('UTF-8')
 
         # Extract particle id's from string using regular expressions
         p_atoms=re.findall(r"A\('[a-z]+\d+',\d+", particleID)
@@ -307,7 +308,7 @@ class VelocityAutoCorrelations(PythonAlgorithm):
 
     def fold_correlation(self,w):
         # Folds an array with symmetrical values into half by averaging values around the centre
-        right_half=w[len(w)/2:]
+        right_half=w[len(w)//2:]
         left_half=w[:int(np.ceil(len(w)/2.0))][::-1]
 
         return (left_half+right_half)/2.0

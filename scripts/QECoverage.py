@@ -1,5 +1,6 @@
-﻿# pylint: disable=line-too-long, too-many-instance-attributes, invalid-name, missing-docstring, too-many-statements
+# pylint: disable=line-too-long, too-many-instance-attributes, invalid-name, missing-docstring, too-many-statements
 # pylint: disable= too-many-branches, no-self-use
+from __future__ import (absolute_import, division, print_function)
 import sys
 
 import numpy as np
@@ -99,7 +100,7 @@ class QECoverageGUI(QtGui.QWidget):
         self.direct_emin_label = QtGui.QLabel("Emin", self.direct_emin)
         self.direct_emin_grid.addWidget(self.direct_emin_label)
         self.direct_emin_input = QtGui.QLineEdit("-10", self.direct_emin)
-        self.direct_emin_input.setToolTip("Mininum energy transfer to plot down to.")
+        self.direct_emin_input.setToolTip("Minimum energy transfer to plot down to.")
         self.direct_emin_grid.addWidget(self.direct_emin_input)
         self.direct_grid.addWidget(self.direct_emin)
         self.direct_plotbtn = QtGui.QPushButton("Plot Q-E", self.tab_direct)
@@ -203,7 +204,7 @@ class QECoverageGUI(QtGui.QWidget):
 
     def onHelp(self):
         from pymantidplot.proxies import showCustomInterfaceHelp
-        showCustomInterfaceHelp("QECoverage")
+        showCustomInterfaceHelp("QE Coverage")
 
     def onDirectPlotOverChanged(self, state):
         self.indirect_plotover.setCheckState(state)

@@ -10,10 +10,10 @@ namespace DataHandling {
 // Register the algorithm into the AlgorithmFactory
 DECLARE_ALGORITHM(CreateChopperModel)
 
-using Kernel::Direction;
-using API::WorkspaceProperty;
 using API::MatrixWorkspace_sptr;
+using API::WorkspaceProperty;
 using Kernel::BoundedValidator;
+using Kernel::Direction;
 using Kernel::Direction;
 using Kernel::ListValidator;
 using Kernel::MandatoryValidator;
@@ -42,7 +42,7 @@ void CreateChopperModel::init() {
                                                            Direction::InOut),
                   "An workspace to attach the model");
 
-  std::vector<std::string> keys(1, "FermiChopperModel");
+  std::array<std::string, 1> keys = {{"FermiChopperModel"}};
   declareProperty("ModelType", "",
                   boost::make_shared<ListValidator<std::string>>(keys),
                   "The string identifier for the model", Direction::Input);

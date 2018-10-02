@@ -1,9 +1,9 @@
 #ifndef MANTID_WORKFLOWALGORITHMS_IMUONASYMMETRYCALCULATOR_H_
 #define MANTID_WORKFLOWALGORITHMS_IMUONASYMMETRYCALCULATOR_H_
 
+#include "MantidAPI/AlgorithmManager.h"
 #include "MantidAPI/MatrixWorkspace.h"
 #include "MantidAPI/WorkspaceGroup.h"
-#include "MantidAPI/AlgorithmManager.h"
 
 #include <vector>
 
@@ -40,7 +40,6 @@ public:
                            const std::vector<int> summedPeriods,
                            const std::vector<int> subtractedPeriods);
   virtual ~IMuonAsymmetryCalculator() = default;
-
   /// Overridden in derived classes to perform asymmetry calculation
   virtual API::MatrixWorkspace_sptr calculate() const = 0;
 

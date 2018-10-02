@@ -1,10 +1,11 @@
 #ifndef MANTID_DATAHANDLING_LOADLLB_H_
 #define MANTID_DATAHANDLING_LOADLLB_H_
 
-#include "MantidKernel/System.h"
 #include "MantidAPI/IFileLoader.h"
-#include "MantidNexus/NexusClasses.h"
 #include "MantidDataHandling/LoadHelper.h"
+#include "MantidHistogramData/Histogram.h"
+#include "MantidKernel/System.h"
+#include "MantidNexus/NexusClasses.h"
 
 namespace Mantid {
 namespace DataHandling {
@@ -55,7 +56,7 @@ private:
   void loadTimeDetails(NeXus::NXEntry &entry);
   void loadDataIntoTheWorkSpace(NeXus::NXEntry &);
   int getDetectorElasticPeakPosition(const NeXus::NXFloat &);
-  std::vector<double> getTimeBinning(int, double);
+  void setTimeBinning(HistogramData::HistogramX &histX, int, double);
   /// Calculate error for y
   static double calculateError(double in) { return sqrt(in); }
   void loadExperimentDetails(NeXus::NXEntry &);

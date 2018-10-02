@@ -27,7 +27,6 @@
 //-----------------------------------------------------------------------------
 #include "MantidAPI/Algorithm.h"
 
-#include "MantidKernel/ClassMacros.h"
 #include <boost/python/wrapper.hpp>
 #include <map>
 
@@ -43,11 +42,21 @@ namespace PythonInterface {
  */
 template <typename BaseAlgorithm>
 class AlgorithmAdapter : public BaseAlgorithm {
-  typedef BaseAlgorithm SuperClass;
+  using SuperClass = BaseAlgorithm;
 
 public:
   /// A constructor that looks like a Python __init__ method
   AlgorithmAdapter(PyObject *self);
+
+  /// Disable default constructor - The PyObject must be supplied to construct
+  /// the object
+  AlgorithmAdapter() = delete;
+
+  /// Disable copy operator
+  AlgorithmAdapter(const AlgorithmAdapter &) = delete;
+
+  /// Disable assignment operator
+  AlgorithmAdapter &operator=(const AlgorithmAdapter &) = delete;
 
   /** @name Algorithm virtual methods */
   ///@{
@@ -59,6 +68,10 @@ public:
   const std::string summary() const override;
   /// Returns a category of the algorithm.
   const std::string category() const override;
+  /// Returns seeAlso related algorithms.
+  const std::vector<std::string> seeAlso() const override;
+  /// Returns optional documentation URL of the algorithm
+  const std::string helpURL() const override;
   /// Allow the isRunning method to be overridden
   bool isRunning() const override;
   /// Allow the cancel method to be overridden
@@ -114,10 +127,6 @@ protected:
   inline PyObject *getSelf() const { return m_self; }
 
 private:
-  /// The PyObject must be supplied to construct the object
-  DISABLE_DEFAULT_CONSTRUCT(AlgorithmAdapter)
-  DISABLE_COPY_AND_ASSIGN(AlgorithmAdapter)
-
   /// Private init for this algorithm
   void init() override;
   /// Private exec for this algorithm
@@ -134,7 +143,7 @@ private:
   /// Here for deprecated setWikiSummary method
   std::string m_wikiSummary;
 };
-}
-}
+} // namespace PythonInterface
+} // namespace Mantid
 
 #endif /* MANTID_PYTHONINTERFACE_ALGORITHMADAPTER_H_ */

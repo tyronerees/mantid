@@ -4,13 +4,14 @@
 //----------------------------------------------------------------------
 // Includes
 //----------------------------------------------------------------------
-#include "MantidKernel/EmptyValues.h"
+#include "MantidKernel/DllConfig.h"
+
+#include <boost/shared_ptr.hpp>
+
+#include <iosfwd>
 #include <string>
 #include <vector>
-#ifndef Q_MOC_RUN
-#include <boost/shared_ptr.hpp>
-#include <boost/lexical_cast.hpp>
-#endif
+
 namespace Mantid {
 namespace Kernel {
 //----------------------------------------------------------------------
@@ -69,7 +70,8 @@ public:
   /// get direction flag of algorithm parameter const
   unsigned int direction() const { return m_direction; };
   /// print contents of object
-  void printSelf(std::ostream &, const int indent = 0) const;
+  void printSelf(std::ostream &, const int indent = 0,
+                 const size_t maxPropertyLength = 0) const;
   /// get whether algorithm parameter was left as default EMPTY_INT,LONG,DBL
   /// const
   bool isEmptyDefault() const;
@@ -94,9 +96,9 @@ private:
 };
 
 // typedefs for property history pointers
-typedef boost::shared_ptr<PropertyHistory> PropertyHistory_sptr;
-typedef boost::shared_ptr<const PropertyHistory> PropertyHistory_const_sptr;
-typedef std::vector<PropertyHistory_sptr> PropertyHistories;
+using PropertyHistory_sptr = boost::shared_ptr<PropertyHistory>;
+using PropertyHistory_const_sptr = boost::shared_ptr<const PropertyHistory>;
+using PropertyHistories = std::vector<PropertyHistory_sptr>;
 
 MANTID_KERNEL_DLL std::ostream &operator<<(std::ostream &,
                                            const PropertyHistory &);

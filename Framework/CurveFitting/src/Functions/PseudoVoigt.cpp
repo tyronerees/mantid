@@ -1,6 +1,7 @@
 #include "MantidCurveFitting/Functions/PseudoVoigt.h"
 #include "MantidAPI/FunctionFactory.h"
 #include "MantidCurveFitting/Constraints/BoundaryConstraint.h"
+#include "MantidKernel/make_unique.h"
 
 #include <cmath>
 
@@ -65,12 +66,14 @@ void PseudoVoigt::functionDerivLocal(Jacobian *out, const double *xValues,
 
     out->set(i, 0, h * (expTerm - lorentzTerm));
     out->set(i, 1, gFraction * expTerm + lFraction * lorentzTerm);
-    out->set(i, 2, h * xDiff * (gFraction * expTerm / sSquared +
-                                lFraction * lorentzTerm * 2.0 /
-                                    (xDiffSquared + gSquared)));
-    out->set(i, 3, h * (gFraction * expTerm * xDiffSquared / sSquared / f +
-                        lFraction * lorentzTerm *
-                            (1.0 / g - g / (xDiffSquared + gSquared))));
+    out->set(i, 2,
+             h * xDiff *
+                 (gFraction * expTerm / sSquared +
+                  lFraction * lorentzTerm * 2.0 / (xDiffSquared + gSquared)));
+    out->set(i, 3,
+             h * (gFraction * expTerm * xDiffSquared / sSquared / f +
+                  lFraction * lorentzTerm *
+                      (1.0 / g - g / (xDiffSquared + gSquared))));
   }
 }
 
@@ -80,11 +83,11 @@ void PseudoVoigt::init() {
   declareParameter("PeakCentre");
   declareParameter("FWHM");
 
-  BoundaryConstraint *mixingConstraint =
-      new BoundaryConstraint(this, "Mixing", 0.0, 1.0, true);
+  auto mixingConstraint =
+      Kernel::make_unique<BoundaryConstraint>(this, "Mixing", 0.0, 1.0, true);
   mixingConstraint->setPenaltyFactor(1e9);
 
-  addConstraint(mixingConstraint);
+  addConstraint(std::move(mixingConstraint));
 }
 
 } // namespace Functions

@@ -1,4 +1,4 @@
-﻿#pylint: disable=invalid-name
+#pylint: disable=invalid-name
 """ Sample MERLIN reduction scrip """
 from Direct.ReductionWrapper import *
 try:
@@ -54,6 +54,7 @@ class ReduceMERLIN(ReductionWrapper):
         """ sets properties defaults for the instrument with Name"""
         ReductionWrapper.__init__(self,'MER',web_var)
 #----------------------------------------------------------------------------------------------------------------------
+
 
 if __name__=="__main__":
     #import os

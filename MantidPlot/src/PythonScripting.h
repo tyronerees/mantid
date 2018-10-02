@@ -64,7 +64,7 @@ public:
   /// Set the argv attribute on the sys module
   void setSysArgs(const QStringList &args) override;
 
-  /// Create a new script object that can execute code within this enviroment
+  /// Create a new script object that can execute code within this environment
   Script *newScript(const QString &name, QObject *context,
                     const Script::InteractionType interact) const override;
 
@@ -77,7 +77,7 @@ public:
   /// Does this support abort requests?
   bool supportsAbortRequests() const override { return true; }
 
-  /// Return a string represenation of the given object
+  /// Return a string representation of the given object
   QString toString(PyObject *object, bool decref = false);
   /// Convert a Python list object to a Qt QStringList
   QStringList toStringList(PyObject *py_seq);
@@ -96,7 +96,7 @@ public:
   bool setQObject(QObject *, const char *, PyObject *dict);
   /// Set a reference to a QObject in the global dictionary
   bool setQObject(QObject *val, const char *name) override {
-    return setQObject(val, name, NULL);
+    return setQObject(val, name, nullptr);
   }
   /// Set a reference to an int in the global dictionary
   bool setInt(int, const char *) override;

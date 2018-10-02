@@ -58,7 +58,7 @@ T checkForMandatoryInstrumentDefault(
   auto algProperty = alg->getPointerToProperty(propName);
   if (algProperty->isDefault()) {
     auto defaults = instrument->getNumberParameter(idf_name);
-    if (defaults.size() == 0) {
+    if (defaults.empty()) {
       throw std::runtime_error("No data could be retrieved from the parameters "
                                "and argument wasn't provided: " +
                                propName);
@@ -71,18 +71,18 @@ T checkForMandatoryInstrumentDefault(
 }
 
 /**
-* Checks for the default values of an optional algorithm property associated
-* with
-* an instrument component. i.e MonitorIndex
-*
-* @param alg : A pointer to the algorithm to which the property belongs
-* @param propName : The name of the property in the algorithm
-* @param instrument : A pointer to the instrument
-* @param idf_name : The name of the property in the Instrument Defintion
-* @return A boost optional value of type T that is either the default value, the
-* user supplied value or an uninitialized boost::optional.
-*
-*/
+ * Checks for the default values of an optional algorithm property associated
+ * with
+ * an instrument component. i.e MonitorIndex
+ *
+ * @param alg : A pointer to the algorithm to which the property belongs
+ * @param propName : The name of the property in the algorithm
+ * @param instrument : A pointer to the instrument
+ * @param idf_name : The name of the property in the Instrument Defintion
+ * @return A boost optional value of type T that is either the default value,
+ * the user supplied value or an uninitialized boost::optional.
+ *
+ */
 template <typename T>
 boost::optional<T> checkForOptionalInstrumentDefault(
     Mantid::API::Algorithm *const alg, std::string propName,
@@ -90,7 +90,7 @@ boost::optional<T> checkForOptionalInstrumentDefault(
   auto algProperty = alg->getPointerToProperty(propName);
   if (algProperty->isDefault()) {
     auto defaults = instrument->getNumberParameter(idf_name);
-    if (defaults.size() != 0) {
+    if (!defaults.empty()) {
       return boost::optional<T>(static_cast<T>(defaults[0]));
     } else {
       return boost::optional<T>();
@@ -101,7 +101,7 @@ boost::optional<T> checkForOptionalInstrumentDefault(
     return boost::optional<T>(static_cast<T>(value));
   }
 }
-} // Algorithms
-} // Mantid
+} // namespace Algorithms
+} // namespace Mantid
 
 #endif // MANTID_ALGORITHMS_BOOSTOPTIONALTOALGORITHMPROPERTY_H_

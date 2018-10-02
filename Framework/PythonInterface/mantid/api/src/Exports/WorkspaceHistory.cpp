@@ -12,8 +12,6 @@
 #include <boost/python/self.hpp>
 
 using Mantid::API::WorkspaceHistory;
-using Mantid::API::AlgorithmHistory;
-using Mantid::API::IAlgorithm;
 using namespace boost::python;
 namespace Policies = Mantid::PythonInterface::Policies;
 
@@ -25,9 +23,9 @@ GET_POINTER_SPECIALIZATION(WorkspaceHistory)
  * @param self :: A reference to the WorkspaceHistory that called this method
  * @returns A python list created from the set of algorithm histories
  */
-boost::python::object getHistoriesAsList(WorkspaceHistory &self) {
+boost::python::list getHistoriesAsList(WorkspaceHistory &self) {
   boost::python::list names;
-  const auto histories = self.getAlgorithmHistories();
+  const auto &histories = self.getAlgorithmHistories();
   for (const auto &historie : histories) {
     names.append(historie);
   }

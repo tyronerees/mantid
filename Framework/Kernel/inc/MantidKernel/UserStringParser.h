@@ -6,13 +6,9 @@
 //----------------------------------------------------------------------
 
 #include "MantidKernel/DllConfig.h"
-
-#ifndef Q_MOC_RUN
-#include <boost/tokenizer.hpp>
-#include <boost/shared_ptr.hpp>
-#endif
-
+#include <string>
 #include <vector>
+
 namespace Mantid {
 namespace Kernel {
 
@@ -94,6 +90,6 @@ private:
   bool isValidStepSeparator(const std::string &input,
                             const std::vector<std::string> &tokens);
 };
-}
-}
+} // namespace Kernel
+} // namespace Mantid
 #endif

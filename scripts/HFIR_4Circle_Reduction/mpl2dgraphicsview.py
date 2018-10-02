@@ -1,4 +1,5 @@
-#pylint: disable=invalid-name,too-many-public-methods,too-many-arguments,non-parent-init-called,R0902,too-many-branches,C0302
+#pylint: disable=invalid-name,too-many-public-methods,too-many-arguments,non-parent-init-called,R0901,R0902,too-many-branches,C0302
+from __future__ import (absolute_import, division, print_function)
 import os
 import numpy as np
 
@@ -35,7 +36,18 @@ class Mpl2dGraphicsView(QtGui.QWidget):
         self._myImageIndex = 0
         self._myImageDict = dict()
 
+        # current 2D plot
+        self._2dPlot = None
+
         return
+
+    @property
+    def array2d(self):
+        """
+        return the matrix (2d-array) plot on the canvas
+        :return:
+        """
+        return self._myCanvas.array2d
 
     def add_plot_2d(self, array2d, x_min, x_max, y_min, y_max, hold_prev_image=True, y_tick_label=None):
         """
@@ -49,9 +61,9 @@ class Mpl2dGraphicsView(QtGui.QWidget):
         :param y_tick_label:
         :return:
         """
-        self._myCanvas.add_2d_plot(array2d, x_min, x_max, y_min, y_max, hold_prev_image, y_tick_label)
+        self._2dPlot = self._myCanvas.add_2d_plot(array2d, x_min, x_max, y_min, y_max, hold_prev_image, y_tick_label)
 
-        return
+        return self._2dPlot
 
     def add_image(self, imagefilename):
         """ Add an image to canvas from an image file
@@ -87,6 +99,17 @@ class Mpl2dGraphicsView(QtGui.QWidget):
         :return:
         """
         # There is no operation that is defined now
+        return
+
+    def remove_last_plot(self):
+        """
+
+        :return:
+        """
+        if self._2dPlot is not None:
+            self._2dPlot.remove()
+            self._2dPlot = None
+
         return
 
     @property
@@ -145,8 +168,8 @@ class Qt4Mpl2dCanvas(FigureCanvas):
         # legend and color bar
         self._colorBar = None
 
-        # polygon
-        self._myPolygon = None
+        # Buffer of data
+        self._currentArray2D = None
 
         # image management data structure
         self._currIndex = 0
@@ -157,6 +180,14 @@ class Qt4Mpl2dCanvas(FigureCanvas):
         self._yLimit = [0., 1.]
 
         return
+
+    @property
+    def array2d(self):
+        """
+        get the matrix plot now
+        :return:
+        """
+        return self._currentArray2D
 
     def add_2d_plot(self, array2d, x_min, x_max, y_min, y_max, hold_prev, yticklabels=None):
         """ Add a 2D plot
@@ -169,7 +200,7 @@ class Qt4Mpl2dCanvas(FigureCanvas):
         :param x_max:
         :param y_min:
         :param y_max:
-        :param hold_prev: hold previous image
+        :param hold_prev: hold previous image.  If False, all 2D image and polygon patches will be removed
         :param yticklabels: list of string for y ticks
         :return:
         """
@@ -187,14 +218,14 @@ class Qt4Mpl2dCanvas(FigureCanvas):
         img_plot = self.axes.imshow(array2d,
                                     extent=[x_min, x_max, y_min, y_max],
                                     interpolation='none')
+        self._currentArray2D = array2d
 
         # set y ticks as an option:
         if yticklabels is not None:
             # it will always label the first N ticks even image is zoomed in
             # FUTURE-VZ : The way to set up the Y-axis ticks is wrong!"
             # self.axes.set_yticklabels(yticklabels)
-            print '[Warning] The method to set up the Y-axis ticks to 2D image is ' \
-                  'wrong!'
+            print('[Warning] The method to set up the Y-axis ticks to 2D image is wrong!')
 
         # explicitly set aspect ratio of the image
         self.axes.set_aspect('auto')
@@ -216,11 +247,22 @@ class Qt4Mpl2dCanvas(FigureCanvas):
 
         return self._currIndex
 
+    def add_patch(self, patch):
+        """
+        add an artist patch such as polygon
+        :param patch:
+        :return:
+        """
+        self.axes.add_artist(patch)
+
+        # Flush...
+        self._flush()
+
+        return
+
     def addImage(self, imagefilename):
         """ Add an image by file
         """
-        #import matplotlib.image as mpimg
-
         # set aspect to auto mode
         self.axes.set_aspect('auto')
 
@@ -257,10 +299,7 @@ class Qt4Mpl2dCanvas(FigureCanvas):
             self.fig.clear()
             # Re-create subplot
             self.axes = self.fig.add_subplot(111)
-
-        # clear polygon
-        if self._myPolygon is not None:
-            self._myPolygon.remove()
+        # END-FOR
 
         # flush/commit
         self._flush()

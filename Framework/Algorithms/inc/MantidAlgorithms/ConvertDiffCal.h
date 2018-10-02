@@ -1,8 +1,8 @@
 #ifndef MANTID_ALGORITHMS_CONVERTDIFFCAL_H_
 #define MANTID_ALGORITHMS_CONVERTDIFFCAL_H_
 
+#include "MantidAPI/ParallelAlgorithm.h"
 #include "MantidKernel/System.h"
-#include "MantidAPI/Algorithm.h"
 namespace Mantid {
 namespace Algorithms {
 
@@ -29,10 +29,13 @@ namespace Algorithms {
   File change history is stored at: <https://github.com/mantidproject/mantid>
   Code Documentation is available at: <http://doxygen.mantidproject.org>
 */
-class DLLExport ConvertDiffCal : public API::Algorithm {
+class DLLExport ConvertDiffCal : public API::ParallelAlgorithm {
 public:
   const std::string name() const override;
   int version() const override;
+  const std::vector<std::string> seeAlso() const override {
+    return {"CalculateDIFC"};
+  }
   const std::string category() const override;
   const std::string summary() const override;
 

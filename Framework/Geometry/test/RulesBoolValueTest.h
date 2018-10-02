@@ -1,20 +1,20 @@
 #ifndef MANTID_RULESBOOLVALUE_TEST__
 #define MANTID_RULESBOOLVALUE_TEST__
-#include <cxxtest/TestSuite.h>
-#include <cmath>
-#include <vector>
+#include "MantidGeometry/Objects/CSGObject.h"
+#include "MantidGeometry/Objects/Rules.h"
+#include "MantidGeometry/Surfaces/Cone.h"
+#include "MantidGeometry/Surfaces/Cylinder.h"
+#include "MantidGeometry/Surfaces/Plane.h"
+#include "MantidGeometry/Surfaces/Quadratic.h"
+#include "MantidGeometry/Surfaces/Sphere.h"
 #include "MantidKernel/Logger.h"
 #include "MantidKernel/System.h"
-#include <cfloat>
 #include "MantidKernel/V3D.h"
 #include "MantidKernel/make_unique.h"
-#include "MantidGeometry/Surfaces/Quadratic.h"
-#include "MantidGeometry/Objects/Object.h"
-#include "MantidGeometry/Objects/Rules.h"
-#include "MantidGeometry/Surfaces/Plane.h"
-#include "MantidGeometry/Surfaces/Sphere.h"
-#include "MantidGeometry/Surfaces/Cylinder.h"
-#include "MantidGeometry/Surfaces/Cone.h"
+#include <cfloat>
+#include <cmath>
+#include <cxxtest/TestSuite.h>
+#include <vector>
 
 using namespace Mantid;
 using namespace Geometry;
@@ -27,8 +27,8 @@ public:
   void testConstructor() {
     BoolValue A;
     TS_ASSERT_EQUALS(A.display(), " Unknown ");
-    TS_ASSERT_EQUALS(A.leaf(0), (Rule *)0);
-    TS_ASSERT_EQUALS(A.leaf(1), (Rule *)0);
+    TS_ASSERT_EQUALS(A.leaf(0), (Rule *)nullptr);
+    TS_ASSERT_EQUALS(A.leaf(1), (Rule *)nullptr);
     A.setStatus(0);
     TS_ASSERT_EQUALS(A.display(), " False ");
     A.setStatus(1);
@@ -38,8 +38,8 @@ public:
   void testBoolValueConstructor() {
     BoolValue A;
     TS_ASSERT_EQUALS(A.display(), " Unknown ");
-    TS_ASSERT_EQUALS(A.leaf(0), (Rule *)0);
-    TS_ASSERT_EQUALS(A.leaf(1), (Rule *)0);
+    TS_ASSERT_EQUALS(A.leaf(0), (Rule *)nullptr);
+    TS_ASSERT_EQUALS(A.leaf(1), (Rule *)nullptr);
     A.setStatus(0);
     TS_ASSERT_EQUALS(A.display(), " False ");
   }
@@ -47,21 +47,21 @@ public:
   void testClone() {
     BoolValue A;
     TS_ASSERT_EQUALS(A.display(), " Unknown ");
-    TS_ASSERT_EQUALS(A.leaf(0), (Rule *)0);
-    TS_ASSERT_EQUALS(A.leaf(1), (Rule *)0);
+    TS_ASSERT_EQUALS(A.leaf(0), (Rule *)nullptr);
+    TS_ASSERT_EQUALS(A.leaf(1), (Rule *)nullptr);
     A.setStatus(0);
     TS_ASSERT_EQUALS(A.display(), " False ");
     auto B = A.clone();
-    TS_ASSERT_EQUALS(B->leaf(0), (Rule *)0);
-    TS_ASSERT_EQUALS(B->leaf(1), (Rule *)0);
+    TS_ASSERT_EQUALS(B->leaf(0), (Rule *)nullptr);
+    TS_ASSERT_EQUALS(B->leaf(1), (Rule *)nullptr);
     TS_ASSERT_EQUALS(B->display(), " False ");
   }
 
   void testAssignment() {
     BoolValue A;
     TS_ASSERT_EQUALS(A.display(), " Unknown ");
-    TS_ASSERT_EQUALS(A.leaf(0), (Rule *)0);
-    TS_ASSERT_EQUALS(A.leaf(1), (Rule *)0);
+    TS_ASSERT_EQUALS(A.leaf(0), (Rule *)nullptr);
+    TS_ASSERT_EQUALS(A.leaf(1), (Rule *)nullptr);
     A.setStatus(0);
     TS_ASSERT_EQUALS(A.display(), " False ");
   }
@@ -69,8 +69,8 @@ public:
   void testLeafOperations() {
     BoolValue A;
     TS_ASSERT_EQUALS(A.display(), " Unknown ");
-    TS_ASSERT_EQUALS(A.leaf(0), (Rule *)0);
-    TS_ASSERT_EQUALS(A.leaf(1), (Rule *)0);
+    TS_ASSERT_EQUALS(A.leaf(0), (Rule *)nullptr);
+    TS_ASSERT_EQUALS(A.leaf(1), (Rule *)nullptr);
     A.setStatus(0);
     TS_ASSERT_EQUALS(A.display(), " False ");
     auto B = Mantid::Kernel::make_unique<BoolValue>();
@@ -88,8 +88,8 @@ public:
   void testFindOperations() {
     BoolValue A;
     TS_ASSERT_EQUALS(A.display(), " Unknown ");
-    TS_ASSERT_EQUALS(A.leaf(0), (Rule *)0);
-    TS_ASSERT_EQUALS(A.leaf(1), (Rule *)0);
+    TS_ASSERT_EQUALS(A.leaf(0), (Rule *)nullptr);
+    TS_ASSERT_EQUALS(A.leaf(1), (Rule *)nullptr);
     A.setStatus(0);
     TS_ASSERT_EQUALS(A.display(), " False ");
     auto B = Mantid::Kernel::make_unique<BoolValue>();
@@ -100,14 +100,14 @@ public:
     TS_ASSERT_EQUALS(A.display(), " True ");
     TS_ASSERT_EQUALS(A.findLeaf(&A), 0);
     TS_ASSERT_EQUALS(A.findLeaf(ptrB), -1);
-    TS_ASSERT_EQUALS(A.findKey(0), (Rule *)0);
+    TS_ASSERT_EQUALS(A.findKey(0), (Rule *)nullptr);
   }
 
   void testIsValid() {
     BoolValue A;
     TS_ASSERT_EQUALS(A.display(), " Unknown ");
-    TS_ASSERT_EQUALS(A.leaf(0), (Rule *)0);
-    TS_ASSERT_EQUALS(A.leaf(1), (Rule *)0);
+    TS_ASSERT_EQUALS(A.leaf(0), (Rule *)nullptr);
+    TS_ASSERT_EQUALS(A.leaf(1), (Rule *)nullptr);
     A.setStatus(0);
     TS_ASSERT_EQUALS(A.display(), " False ");
     TS_ASSERT_EQUALS(A.isValid(V3D(0, 0, 0)), false);
@@ -129,8 +129,8 @@ public:
   void testSimplyfy() {
     BoolValue A;
     TS_ASSERT_EQUALS(A.display(), " Unknown ");
-    TS_ASSERT_EQUALS(A.leaf(0), (Rule *)0);
-    TS_ASSERT_EQUALS(A.leaf(1), (Rule *)0);
+    TS_ASSERT_EQUALS(A.leaf(0), (Rule *)nullptr);
+    TS_ASSERT_EQUALS(A.leaf(1), (Rule *)nullptr);
     A.setStatus(0);
     TS_ASSERT_EQUALS(A.display(), " False ");
     TS_ASSERT_EQUALS(A.simplify(),

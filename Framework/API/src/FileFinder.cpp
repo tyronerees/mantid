@@ -2,25 +2,25 @@
 // Includes
 //----------------------------------------------------------------------
 #include "MantidAPI/FileFinder.h"
-#include "MantidAPI/IArchiveSearch.h"
 #include "MantidAPI/ArchiveSearchFactory.h"
+#include "MantidAPI/FrameworkManager.h"
+#include "MantidAPI/IArchiveSearch.h"
 #include "MantidKernel/ConfigService.h"
 #include "MantidKernel/Exception.h"
 #include "MantidKernel/FacilityInfo.h"
 #include "MantidKernel/Glob.h"
 #include "MantidKernel/InstrumentInfo.h"
-#include "MantidKernel/LibraryManager.h"
 #include "MantidKernel/Strings.h"
 
-#include <Poco/Path.h>
-#include <Poco/File.h>
 #include <MantidKernel/StringTokenizer.h>
 #include <Poco/Exception.h>
-#include <boost/regex.hpp>
+#include <Poco/File.h>
+#include <Poco/Path.h>
 #include <boost/lexical_cast.hpp>
+#include <boost/regex.hpp>
 
-#include <cctype>
 #include <algorithm>
+#include <cctype>
 
 #include <boost/algorithm/string.hpp>
 
@@ -39,7 +39,7 @@ Mantid::Kernel::Logger g_log("FileFinder");
 bool containsWildCard(const std::string &ext) {
   return std::string::npos != ext.find('*');
 }
-}
+} // namespace
 
 namespace Mantid {
 namespace API {
@@ -56,23 +56,15 @@ const std::string FileFinderImpl::ALLOWED_SUFFIX = "-add";
  */
 FileFinderImpl::FileFinderImpl() {
   // Make sure plugins are loaded
-  std::string libpath =
-      Kernel::ConfigService::Instance().getString("plugins.directory");
-  if (!libpath.empty()) {
-    Kernel::LibraryManager::Instance().OpenAllLibraries(libpath);
-  }
+  FrameworkManager::Instance().loadPlugins();
 
 // determine from Mantid property how sensitive Mantid should be
 #ifdef _WIN32
   m_globOption = Poco::Glob::GLOB_DEFAULT;
 #else
-  std::string casesensitive =
-      Mantid::Kernel::ConfigService::Instance().getString(
-          "filefinder.casesensitive");
-  if (boost::iequals("Off", casesensitive))
-    m_globOption = Poco::Glob::GLOB_CASELESS;
-  else
-    m_globOption = Poco::Glob::GLOB_DEFAULT;
+  setCaseSensitive(Kernel::ConfigService::Instance()
+                       .getValue<bool>("filefinder.casesensitive")
+                       .get_value_or(false));
 #endif
 }
 
@@ -134,9 +126,8 @@ std::string FileFinderImpl::getFullPath(const std::string &filename,
     if (fName.find("*") != std::string::npos) {
 #endif
       Poco::Path path(searchPath, fName);
-      Poco::Path pathPattern(path);
       std::set<std::string> files;
-      Kernel::Glob::glob(pathPattern, files, m_globOption);
+      Kernel::Glob::glob(path, files, m_globOption);
       if (!files.empty()) {
         Poco::File matchPath(*files.begin());
         if (ignoreDirs && matchPath.isDirectory()) {
@@ -423,6 +414,54 @@ FileFinderImpl::getExtension(const std::string &filename,
   return "";
 }
 
+std::vector<IArchiveSearch_sptr>
+FileFinderImpl::getArchiveSearch(const Kernel::FacilityInfo &facility) const {
+  std::vector<IArchiveSearch_sptr> archs;
+
+  // get the searchive option from config service and format it
+  std::string archiveOpt =
+      Kernel::ConfigService::Instance().getString("datasearch.searcharchive");
+  std::transform(archiveOpt.begin(), archiveOpt.end(), archiveOpt.begin(),
+                 tolower);
+
+  // if it is turned off, not specified, or the facility doesn't have
+  // IArchiveSearch defined, return an empty vector
+  if (archiveOpt.empty() || archiveOpt == "off" ||
+      facility.archiveSearch().empty())
+    return archs;
+
+  // determine if the user wants archive search for this facility
+  bool createArchiveSearch = bool(archiveOpt == "all");
+
+  // then see if the facility name appears in the list or if we just want the
+  // default facility
+  if (!createArchiveSearch) {
+    std::string faciltyName = facility.name();
+    std::transform(faciltyName.begin(), faciltyName.end(), faciltyName.begin(),
+                   tolower);
+    if (archiveOpt == "on") { // only default facilty
+      std::string defaultFacility =
+          Kernel::ConfigService::Instance().getString("default.facility");
+      std::transform(defaultFacility.begin(), defaultFacility.end(),
+                     defaultFacility.begin(), tolower);
+      createArchiveSearch = bool(faciltyName == defaultFacility);
+    } else { // everything in the list
+      createArchiveSearch =
+          bool(archiveOpt.find(faciltyName) != std::string::npos);
+    }
+  }
+
+  // put together the list of IArchiveSearch to use
+  if (createArchiveSearch) {
+    for (const auto &facilityname : facility.archiveSearch()) {
+      g_log.debug() << "get archive search for the facility..." << facilityname
+                    << "\n";
+      archs.push_back(ArchiveSearchFactory::Instance().create(facilityname));
+    }
+  }
+  return archs;
+}
+
 std::string
 FileFinderImpl::findRun(const std::string &hintstr,
                         const std::vector<std::string> &exts) const {
@@ -467,23 +506,6 @@ FileFinderImpl::findRun(const std::string &hintstr,
   g_log.debug() << "Add facility extensions defined in the Facility.xml file"
                 << "\n";
   extensions.assign(facility_extensions.begin(), facility_extensions.end());
-
-  // initialize the archive searcher
-  std::vector<IArchiveSearch_sptr> archs;
-  { // hide in a local namespace so things fall out of scope
-    std::string archiveOpt =
-        Kernel::ConfigService::Instance().getString("datasearch.searcharchive");
-    std::transform(archiveOpt.begin(), archiveOpt.end(), archiveOpt.begin(),
-                   tolower);
-    if (!archiveOpt.empty() && archiveOpt != "off" &&
-        !facility.archiveSearch().empty()) {
-      for (const auto &facilityname : facility.archiveSearch()) {
-        g_log.debug() << "get archive search for the facility..."
-                      << facilityname << "\n";
-        archs.push_back(ArchiveSearchFactory::Instance().create(facilityname));
-      }
-    }
-  }
 
   // Do we need to try and form a filename from our preset rules
   std::string filename(hint);
@@ -570,6 +592,9 @@ FileFinderImpl::findRun(const std::string &hintstr,
     }
   }
 
+  // determine which archive search facilities to use
+  std::vector<IArchiveSearch_sptr> archs = getArchiveSearch(facility);
+
   std::string path = getPath(archs, filenames, uniqueExts);
   if (!path.empty()) {
     g_log.information() << "found path = " << path << '\n';
@@ -598,8 +623,9 @@ FileFinderImpl::findRuns(const std::string &hintstr) const {
   g_log.debug() << "findRuns hint = " << hint << "\n";
   std::vector<std::string> res;
   Mantid::Kernel::StringTokenizer hints(
-      hint, ",", Mantid::Kernel::StringTokenizer::TOK_TRIM |
-                     Mantid::Kernel::StringTokenizer::TOK_IGNORE_EMPTY);
+      hint, ",",
+      Mantid::Kernel::StringTokenizer::TOK_TRIM |
+          Mantid::Kernel::StringTokenizer::TOK_IGNORE_EMPTY);
   auto h = hints.begin();
 
   for (; h != hints.end(); ++h) {
@@ -617,8 +643,9 @@ FileFinderImpl::findRuns(const std::string &hintstr) const {
     }
 
     Mantid::Kernel::StringTokenizer range(
-        *h, "-", Mantid::Kernel::StringTokenizer::TOK_TRIM |
-                     Mantid::Kernel::StringTokenizer::TOK_IGNORE_EMPTY);
+        *h, "-",
+        Mantid::Kernel::StringTokenizer::TOK_TRIM |
+            Mantid::Kernel::StringTokenizer::TOK_IGNORE_EMPTY);
     if ((range.count() > 2) && (!fileSuspected)) {
       throw std::invalid_argument("Malformed range of runs: " + *h);
     } else if ((range.count() == 2) && (!fileSuspected)) {
@@ -683,6 +710,14 @@ std::string
 FileFinderImpl::getArchivePath(const std::vector<IArchiveSearch_sptr> &archs,
                                const std::set<std::string> &filenames,
                                const std::vector<std::string> &exts) const {
+  g_log.debug() << "getArchivePath([IArchiveSearch_sptr], [ ";
+  for (const auto &iter : filenames)
+    g_log.debug() << iter << " ";
+  g_log.debug() << "], [ ";
+  for (const auto &iter : exts)
+    g_log.debug() << iter << " ";
+  g_log.debug() << "])\n";
+
   std::string path;
   for (const auto &arch : archs) {
     try {
@@ -787,5 +822,5 @@ std::string FileFinderImpl::toUpper(const std::string &src) const {
   return result;
 }
 
-} // API
-} // Mantid
+} // namespace API
+} // namespace Mantid

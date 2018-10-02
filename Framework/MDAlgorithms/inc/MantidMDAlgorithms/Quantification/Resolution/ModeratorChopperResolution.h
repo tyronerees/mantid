@@ -23,7 +23,6 @@
   Code Documentation is available at: <http://doxygen.mantidproject.org>
 */
 #include "MantidGeometry/IDTypes.h"
-#include "MantidKernel/ClassMacros.h"
 
 #include <boost/shared_ptr.hpp>
 
@@ -35,7 +34,7 @@ namespace API {
 class ChopperModel;
 class ExperimentInfo;
 class ModeratorModel;
-}
+} // namespace API
 
 namespace MDAlgorithms {
 class CachedExperimentInfo;
@@ -50,13 +49,20 @@ public:
   /// Constructor
   ModeratorChopperResolution(const CachedExperimentInfo &observation);
 
+  /// Disable default constructor
+  ModeratorChopperResolution() = delete;
+
+  /// Disable copy operator
+  ModeratorChopperResolution(const ModeratorChopperResolution &) = delete;
+
+  /// Disable assignment operator
+  ModeratorChopperResolution &
+  operator=(const ModeratorChopperResolution &) = delete;
+
   /// Return a width in energy for the model
   double energyWidth(const double deltaE) const;
 
 private:
-  DISABLE_DEFAULT_CONSTRUCT(ModeratorChopperResolution)
-  DISABLE_COPY_AND_ASSIGN(ModeratorChopperResolution)
-
   /// Store required cached variables
   void initCaches();
 
@@ -72,7 +78,7 @@ private:
   /// ChopperModel-sample distance
   double m_chopSampleDist;
 };
-}
-}
+} // namespace MDAlgorithms
+} // namespace Mantid
 
 #endif /* MANTID_MDALGORITHMS_MODERATORCHOPPERRESOLUTION_H_ */

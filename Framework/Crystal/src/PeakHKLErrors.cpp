@@ -4,15 +4,15 @@
  *  Created on: Jan 26, 2013
  *      Author: ruth
  */
+#include "MantidCrystal/PeakHKLErrors.h"
+#include "MantidAPI/AnalysisDataService.h"
 #include "MantidAPI/FunctionFactory.h"
 #include "MantidAPI/IConstraint.h"
 #include "MantidAPI/IFunction1D.h"
+#include "MantidAPI/ParamFunction.h"
 #include "MantidAPI/Sample.h"
 #include "MantidGeometry/Crystal/IPeak.h"
 #include "MantidGeometry/Instrument/Goniometer.h"
-#include "MantidAPI/ParamFunction.h"
-#include "MantidCrystal/PeakHKLErrors.h"
-#include "MantidAPI/AnalysisDataService.h"
 #include <boost/math/special_functions/round.hpp>
 
 using namespace Mantid::DataObjects;
@@ -20,8 +20,8 @@ using namespace Mantid::API;
 using namespace Mantid::Kernel;
 using namespace Mantid::Kernel::Units;
 using Mantid::Geometry::CompAssembly;
-using Mantid::Geometry::IObjComponent_const_sptr;
 using Mantid::Geometry::IComponent_const_sptr;
+using Mantid::Geometry::IObjComponent_const_sptr;
 using Mantid::Geometry::IPeak;
 
 namespace Mantid {
@@ -30,7 +30,7 @@ namespace Crystal {
 namespace {
 /// static logger
 Kernel::Logger g_log("PeakHKLErrors");
-}
+} // namespace
 
 DECLARE_FUNCTION(PeakHKLErrors)
 
@@ -51,7 +51,7 @@ void PeakHKLErrors::init() {
   declareParameter("GonRotz", 0.0,
                    "1st Rotation of Goniometer about the z axis");
   initMode = 1;
-  if (OptRuns == "")
+  if (OptRuns.empty())
     return;
 
   initMode = 2;
@@ -65,10 +65,10 @@ void PeakHKLErrors::setUpOptRuns() {
 
   std::vector<std::string> OptRunNums;
   std::string OptRunstemp(OptRuns);
-  if (OptRuns.size() > 0 && OptRuns.at(0) == '/')
+  if (!OptRuns.empty() && OptRuns.at(0) == '/')
     OptRunstemp = OptRunstemp.substr(1, OptRunstemp.size() - 1);
 
-  if (OptRunstemp.size() > 0 && OptRunstemp.at(OptRunstemp.size() - 1) == '/')
+  if (!OptRunstemp.empty() && OptRunstemp.at(OptRunstemp.size() - 1) == '/')
     OptRunstemp = OptRunstemp.substr(0, OptRunstemp.size() - 1);
 
   boost::split(OptRunNums, OptRunstemp, boost::is_any_of("/"));
@@ -300,16 +300,16 @@ Matrix<double> PeakHKLErrors::RotationMatrixAboutRegAxis(double theta,
 }
 
 /**
-  *  Returns the derivative of the matrix corresponding to a rotation of
-  *theta(degrees) around axis
-  *  with respect to the angle or rotation in degrees.
-  *
-  *  @param theta   the angle of rotation in degrees
-  *  @param  axis   either x,y,z, or X,Y, or Z.
-  *
-  *  @return The derivative of the matrix that corresponds to this action with
-  *respect to degree rotation.
-  */
+ *  Returns the derivative of the matrix corresponding to a rotation of
+ *theta(degrees) around axis
+ *  with respect to the angle or rotation in degrees.
+ *
+ *  @param theta   the angle of rotation in degrees
+ *  @param  axis   either x,y,z, or X,Y, or Z.
+ *
+ *  @return The derivative of the matrix that corresponds to this action with
+ *respect to degree rotation.
+ */
 Matrix<double> PeakHKLErrors::DerivRotationMatrixAboutRegAxis(double theta,
                                                               char axis) {
   int cint = toupper(axis);
@@ -479,7 +479,7 @@ void PeakHKLErrors::functionDeriv1D(Jacobian *out, const double *xValues,
     for (int kk = 0; kk < static_cast<int>(nParams()); kk++) {
       out->set(i, kk, 0.0);
       out->set(i + 1, kk, 0.0);
-      out->set(i + 1, kk, 0.0);
+      out->set(i + 2, kk, 0.0);
     }
 
     double chi, phi, omega;
@@ -656,5 +656,5 @@ Peak PeakHKLErrors::createNewPeak(const Geometry::IPeak &peak_old,
   //!!!peak.setDetectorID(ID);
   return peak;
 }
-}
-}
+} // namespace Crystal
+} // namespace Mantid

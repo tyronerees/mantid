@@ -1,14 +1,15 @@
 #ifndef MANTID_DATAHANDLING_SETSAMPLE_H_
 #define MANTID_DATAHANDLING_SETSAMPLE_H_
 
-#include "MantidDataHandling/DllConfig.h"
 #include "MantidAPI/Algorithm.h"
+#include "MantidDataHandling/DllConfig.h"
 #include "MantidKernel/PropertyManager_fwd.h"
 
 namespace Mantid {
 namespace Geometry {
+class ReferenceFrame;
 class SampleEnvironment;
-}
+} // namespace Geometry
 namespace DataHandling {
 
 /**
@@ -39,6 +40,9 @@ class MANTID_DATAHANDLING_DLL SetSample final : public API::Algorithm {
 public:
   const std::string name() const override final;
   int version() const override final;
+  const std::vector<std::string> seeAlso() const override {
+    return {"SetSampleMaterial", "CopySample", "SetBeam"};
+  }
   const std::string category() const override final;
   const std::string summary() const override final;
 
@@ -49,13 +53,18 @@ private:
 
   const Geometry::SampleEnvironment *
   setSampleEnvironment(API::MatrixWorkspace_sptr &workspace,
-                       const Kernel::PropertyManager &args);
+                       const Kernel::PropertyManager_const_sptr &args);
   void setSampleShape(API::MatrixWorkspace_sptr &workspace,
-                      const Kernel::PropertyManager_sptr &args,
+                      const Kernel::PropertyManager_const_sptr &args,
                       const Geometry::SampleEnvironment *sampleEnv);
-  std::string tryCreateXMLFromArgsOnly(const Kernel::PropertyManager_sptr args);
-  std::string createFlatPlateXML(const Kernel::PropertyManager &args) const;
+  std::string
+  tryCreateXMLFromArgsOnly(const Kernel::PropertyManager &args,
+                           const Geometry::ReferenceFrame &refFrame);
+  std::string
+  createFlatPlateXML(const Kernel::PropertyManager &args,
+                     const Geometry::ReferenceFrame &refFrame) const;
   std::string createCylinderLikeXML(const Kernel::PropertyManager &args,
+                                    const Geometry::ReferenceFrame &refFrame,
                                     bool hollow) const;
 
   void runSetSampleShape(API::MatrixWorkspace_sptr &workspace,

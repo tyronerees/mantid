@@ -1,8 +1,8 @@
 #ifndef MANTID_MANAGE_CUSTOM_MENUS_H
 #define MANTID_MANAGE_CUSTOM_MENUS_H
 
-#include <QDialog>
 #include "ui_ManageCustomMenus.h"
+#include <QDialog>
 
 class ApplicationWindow;
 
@@ -37,7 +37,7 @@ Code Documentation is available at: <http://doxygen.mantidproject.org>
 class ManageCustomMenus : public QDialog {
   Q_OBJECT
 public:
-  explicit ManageCustomMenus(QWidget *parent = 0);
+  explicit ManageCustomMenus(QWidget *parent = nullptr);
 
 private:
   void initLayout();

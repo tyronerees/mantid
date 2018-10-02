@@ -1,8 +1,8 @@
 #ifndef ERRORBARSETTINGS_H
 #define ERRORBARSETTINGS_H
 
-#include <QObject>
 #include <QColor>
+#include <QObject>
 
 /** Holds the settings for how a set of error bars are to be drawn.
     The class is a QObject purely so that our python proxy objects will work
@@ -29,7 +29,7 @@
 class ErrorBarSettings : public QObject {
   Q_OBJECT
 public:
-  explicit ErrorBarSettings(QObject *parent = 0);
+  explicit ErrorBarSettings(QObject *parent = nullptr);
 
   int capLength() const;
   void setCapLength(int t);

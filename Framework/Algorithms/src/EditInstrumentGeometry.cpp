@@ -1,8 +1,8 @@
 #include "MantidAlgorithms/EditInstrumentGeometry.h"
-#include "MantidGeometry/Instrument/Detector.h"
 #include "MantidAPI/ISpectrum.h"
 #include "MantidAPI/MatrixWorkspace.h"
 #include "MantidGeometry/Instrument.h"
+#include "MantidGeometry/Instrument/Detector.h"
 #include "MantidKernel/ArrayProperty.h"
 #include "MantidKernel/MandatoryValidator.h"
 
@@ -299,9 +299,6 @@ void EditInstrumentGeometry::exec() {
   instrument->markAsSource(source);
   source->setPos(0.0, 0.0, -1.0 * l1);
 
-  // Add the new instrument
-  workspace->setInstrument(instrument);
-
   // Add/copy detector information
   for (size_t i = 0; i < workspace->getNumberHistograms(); i++) {
     // Create a new detector.
@@ -335,7 +332,10 @@ void EditInstrumentGeometry::exec() {
     instrument->markAsDetector(detector);
 
   } // ENDFOR workspace index
+
+  // Add the new instrument
+  workspace->setInstrument(instrument);
 }
 
-} // namespace Mantid
 } // namespace Algorithms
+} // namespace Mantid

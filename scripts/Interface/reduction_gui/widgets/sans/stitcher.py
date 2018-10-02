@@ -1,4 +1,5 @@
 # pylint: disable=invalid-name, protected-access, super-on-old-class
+from __future__ import (absolute_import, division, print_function)
 from PyQt4 import QtGui, QtCore
 import os
 from reduction_gui.settings.application_settings import GeneralSettings
@@ -256,7 +257,7 @@ class StitcherWidget(BaseWidget):
             data_object = DataSet(file_in)
             try:
                 data_object.load(True)
-            except (StandardError, Warning):
+            except (AttributeError, ImportError, NameError, TypeError, ValueError, Warning):
                 data_object = None
                 util.set_valid(dataset_control.lineEdit(), False)
                 QtGui.QMessageBox.warning(self, "Error loading file",
@@ -320,7 +321,7 @@ class StitcherWidget(BaseWidget):
             self._high_q_data = DataSet(file_in)
             try:
                 self._high_q_data.load(True)
-            except (StandardError, Warning):
+            except (AttributeError, ImportError, NameError, TypeError, ValueError, Warning):
                 self._high_q_data = None
                 util.set_valid(self._content.high_q_combo.lineEdit(), False)
                 QtGui.QMessageBox.warning(self, "Error loading file",
@@ -342,7 +343,7 @@ class StitcherWidget(BaseWidget):
         fname = QtCore.QFileInfo(QtGui.QFileDialog.getOpenFileName(self, title,
                                                                    self._output_dir,
                                                                    "Reduced XML files (*.xml);; Reduced Nexus files"
-                                                                   " (*.nxs);; All files (*.*)")).filePath()
+                                                                   " (*.nxs);; All files (*)")).filePath()
         if fname:
             # Store the location of the loaded file
             self._output_dir = str(QtCore.QFileInfo(fname).path())

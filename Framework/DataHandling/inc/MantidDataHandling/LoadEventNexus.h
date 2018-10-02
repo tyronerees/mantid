@@ -1,33 +1,36 @@
 #ifndef MANTID_DATAHANDLING_LOADEVENTNEXUS_H_
 #define MANTID_DATAHANDLING_LOADEVENTNEXUS_H_
 
-//----------------------------------------------------------------------
-// Includes
-//----------------------------------------------------------------------
 #include "MantidAPI/IFileLoader.h"
+#include "MantidAPI/WorkspaceGroup.h"
 #include "MantidDataHandling/BankPulseTimes.h"
+#include "MantidDataHandling/EventWorkspaceCollection.h"
 #include "MantidDataObjects/EventWorkspace.h"
 #include "MantidDataObjects/Events.h"
-#include "MantidAPI/WorkspaceGroup.h"
 #include "MantidGeometry/Instrument.h"
 #include "MantidGeometry/Instrument/ParameterMap.h"
+#include "MantidKernel/OptionalBool.h"
 #include "MantidKernel/TimeSeriesProperty.h"
-#include "MantidDataHandling/EventWorkspaceCollection.h"
 
 #ifdef _WIN32 // fixing windows issue causing conflict between
 // winnt char and nexus char
 #undef CHAR
 #endif
 
+// clang-format off
 #include <nexus/NeXusFile.hpp>
 #include <nexus/NeXusException.hpp>
+// clang-format on
 
+#include <boost/lexical_cast.hpp>
+#include <boost/scoped_array.hpp>
+#include <functional>
+#include <random>
 #include <memory>
 #include <mutex>
-#include <boost/lexical_cast.hpp>
+#include <numeric>
 
 namespace Mantid {
-
 namespace DataHandling {
 
 /** @class LoadEventNexus LoadEventNexus.h Nexus/LoadEventNexus.h
@@ -67,7 +70,6 @@ class DLLExport LoadEventNexus
 
 public:
   LoadEventNexus();
-  ~LoadEventNexus() override;
 
   const std::string name() const override { return "LoadEventNexus"; };
 
@@ -80,16 +82,15 @@ public:
 
   /// Version
   int version() const override { return 1; };
+  const std::vector<std::string> seeAlso() const override {
+    return {"LoadISISNexus", "LoadEventAndCompress"};
+  }
 
   /// Category
   const std::string category() const override { return "DataHandling\\Nexus"; }
 
   /// Returns a confidence value that this algorithm can load a file
   int confidence(Kernel::NexusDescriptor &descriptor) const override;
-
-  /** Sets whether the pixel counts will be pre-counted.
-   * @param value :: true if you want to precount. */
-  void setPrecount(bool value) { precount = value; }
 
   template <typename T>
   static boost::shared_ptr<BankPulseTimes> runLoadNexusLogs(
@@ -138,25 +139,15 @@ public:
   /// Filter by a maximum time-of-flight
   double filter_tof_max;
 
-  /// Spectra list to load
-  std::vector<int32_t> m_specList;
   /// Minimum spectrum to load
   int32_t m_specMin;
   /// Maximum spectrum to load
   int32_t m_specMax;
 
   /// Filter by start time
-  Kernel::DateAndTime filter_time_start;
+  Mantid::Types::Core::DateAndTime filter_time_start;
   /// Filter by stop time
-  Kernel::DateAndTime filter_time_stop;
-  /// chunk number
-  int chunk;
-  /// number of chunks
-  int totalChunks;
-  /// for multiple chunks per bank
-  int firstChunkForBank;
-  /// number of chunks per bank
-  size_t eventsPerChunk;
+  Mantid::Types::Core::DateAndTime filter_time_stop;
 
   /// Mutex protecting tof limits
   std::mutex m_tofMutex;
@@ -172,55 +163,20 @@ public:
   /// the IDF
   size_t discarded_events;
 
-  /// Do we pre-count the # of events in each pixel ID?
-  bool precount;
-
   /// Tolerance for CompressEvents; use -1 to mean don't compress.
   double compressTolerance;
-
-  /// Pointer to the vector of events
-  typedef std::vector<Mantid::DataObjects::TofEvent> *EventVector_pt;
-
-  /// Vector where index = event_id; value = ptr to std::vector<TofEvent> in the
-  /// event list.
-  std::vector<std::vector<EventVector_pt>> eventVectors;
-
-  /// Mutex to protect eventVectors from each task
-  std::recursive_mutex m_eventVectorMutex;
-
-  /// Maximum (inclusive) event ID possible for this instrument
-  int32_t eventid_max;
-
-  /// Vector where (index = pixel ID+pixelID_to_wi_offset), value = workspace
-  /// index)
-  std::vector<size_t> pixelID_to_wi_vector;
-
-  /// Offset in the pixelID_to_wi_vector to use.
-  detid_t pixelID_to_wi_offset;
-
-  /// One entry of pulse times for each preprocessor
-  std::vector<boost::shared_ptr<BankPulseTimes>> m_bankPulseTimes;
 
   /// Pulse times for ALL banks, taken from proton_charge log.
   boost::shared_ptr<BankPulseTimes> m_allBanksPulseTimes;
 
   /// name of top level NXentry to use
   std::string m_top_entry_name;
-  ::NeXus::File *m_file;
+  std::unique_ptr<::NeXus::File> m_file;
 
-  /// whether or not to launch multiple ProcessBankData jobs per bank
-  bool splitProcessing;
-
-  /// Flag for dealing with a simulated file
-  bool m_haveWeights;
-
-  /// Pointer to the vector of weighted events
-  typedef std::vector<Mantid::DataObjects::WeightedEvent> *
-      WeightedEventVector_pt;
-
-  /// Vector where index = event_id; value = ptr to std::vector<WeightedEvent>
-  /// in the event list.
-  std::vector<std::vector<WeightedEventVector_pt>> weightedEventVectors;
+protected:
+  Parallel::ExecutionMode getParallelExecutionMode(
+      const std::map<std::string, Parallel::StorageMode> &storageModes)
+      const override;
 
 private:
   /// Intialisation code
@@ -229,14 +185,12 @@ private:
   /// Execution code
   void exec() override;
 
+  bool canUseParallelLoader(const bool haveWeights,
+                            const bool oldNeXusFileNames,
+                            const std::string &classType) const;
+
   DataObjects::EventWorkspace_sptr createEmptyEventWorkspace();
 
-  /// Map detector IDs to event lists.
-  template <class T>
-  void makeMapToEventLists(std::vector<std::vector<T>> &vectors);
-
-  void createWorkspaceIndexMaps(const bool monitors,
-                                const std::vector<std::string> &bankNames);
   void loadEvents(API::Progress *const prog, const bool monitors);
   void createSpectraMapping(
       const std::string &nxsfile, const bool monitorsOnly,
@@ -244,28 +198,15 @@ private:
   void deleteBanks(EventWorkspaceCollection_sptr workspace,
                    std::vector<std::string> bankNames);
   bool hasEventMonitors();
-  void runLoadMonitorsAsEvents(API::Progress *const prog);
   void runLoadMonitors();
   /// Set the filters on TOF.
   void setTimeFilters(const bool monitors);
 
   /// Load a spectra mapping from the given file
-  bool loadSpectraMapping(const std::string &filename, const bool monitorsOnly,
-                          const std::string &entry_name);
+  std::unique_ptr<std::pair<std::vector<int32_t>, std::vector<int32_t>>>
+  loadISISVMSSpectraMapping(const std::string &entry_name);
 
-  /// ISIS specific methods for dealing with wide events
-  void loadTimeOfFlight(EventWorkspaceCollection_sptr WS,
-                        const std::string &entry_name,
-                        const std::string &classType);
-
-  void loadTimeOfFlightData(::NeXus::File &file,
-                            EventWorkspaceCollection_sptr WS,
-                            const std::string &binsName, size_t start_wi = 0,
-                            size_t end_wi = 0);
   template <typename T> void filterDuringPause(T workspace);
-
-  // Validate the optional spectra input properties and initialize m_specList
-  void createSpectraList(int32_t min, int32_t max);
 
   /// Set the top entry field name
   void setTopEntryName();
@@ -286,15 +227,240 @@ private:
 };
 
 //-----------------------------------------------------------------------------
+//               ISIS event corrections
+//-----------------------------------------------------------------------------
+
+/**
+ * Load the time of flight data. file must have open the group containing
+ * "time_of_flight" data set. This will add a offset to all of the
+ * time-of-flight values or a random number to each time-of-flight. It
+ * should only ever be called on event files that have a "detector_1_events"
+ * group inside the "NXentry". It is an old ISIS requirement that is rarely
+ * used now.
+ *
+ * Due to hardware issues with retro-fitting event mode to old electronics,
+ * ISIS event mode is really a very fine histogram with between 1 and 2
+ * microseconds bins.
+ *
+ * If we just took "middle of bin" as the true event time here then WISH
+ * observed strange ripples when they added spectra. The solution was to
+ * randomise the probability of an event within the bin.
+ *
+ * This randomisation is now performed in the control program which also writes
+ * the "event_time_offset_shift" dataset (with a single value of "random") when
+ * it has been performed. If this dataset is present in an event file then no
+ * randomisation is performed in LoadEventNexus.
+ *
+ * This code should remain for loading older ISIS event datasets.
+ *
+ * @param file :: The nexus file to read from.
+ * @param localWorkspace :: The event workspace collection to write to.
+ * @param binsName :: bins name
+ * @param start_wi :: First workspace index to process
+ * @param end_wi :: Last workspace index to process
+ */
+template <typename T>
+void makeTimeOfFlightDataFuzzy(::NeXus::File &file, T localWorkspace,
+                               const std::string &binsName, size_t start_wi = 0,
+                               size_t end_wi = 0) {
+  const std::string EVENT_TIME_SHIFT_TAG("event_time_offset_shift");
+  // first check if the data is already randomized
+  const auto entries = file.getEntries();
+  if (entries.find(EVENT_TIME_SHIFT_TAG) != entries.end()) {
+    std::string event_shift_type;
+    file.readData(EVENT_TIME_SHIFT_TAG, event_shift_type);
+    if (event_shift_type == "random") {
+      return;
+    }
+  }
+
+  // if the data is not randomized randomize it uniformly within each bin
+  file.openData(binsName);
+  // time of flights of events
+  std::vector<float> tofsFile;
+  file.getData(tofsFile);
+  file.closeData();
+
+  // todo: try to find if tof can be reduced to just 3 numbers: start, end and
+  // dt
+  if (end_wi <= start_wi) {
+    end_wi = localWorkspace->getNumberHistograms();
+  }
+
+  // random number generator
+  std::mt19937 rng;
+
+  // loop over spectra
+  for (size_t wi = start_wi; wi < end_wi; ++wi) {
+    DataObjects::EventList &event_list = localWorkspace->getSpectrum(wi);
+    if (event_list.empty())
+      continue;
+    // sort the events
+    event_list.sortTof();
+    auto tofsEventList = event_list.getTofs();
+
+    size_t n = tofsFile.size();
+    // iterate over the events and time bins
+    auto ev = tofsEventList.begin();
+    auto ev_end = tofsEventList.end();
+    for (size_t i = 1; i < n; ++i) {
+      double right = double(tofsFile[i]);
+      // find the right boundary for the current event
+      if ((ev != ev_end) && (right < *ev)) {
+        continue;
+      }
+      // count events which have the same right boundary
+      size_t m = 0;
+      while ((ev != ev_end) && (*ev < right)) {
+        ++ev;
+        ++m; // count events in the i-th bin
+      }
+
+      if (m > 0) { // m events in this bin
+        double left = double(tofsFile[i - 1]);
+        // spread the events uniformly inside the bin
+        std::uniform_real_distribution<double> flat(left, right);
+        std::vector<double> random_numbers(m);
+        for (double &random_number : random_numbers) {
+          random_number = flat(rng);
+        }
+        std::sort(random_numbers.begin(), random_numbers.end());
+        auto it = random_numbers.begin();
+        for (auto ev1 = ev - m; ev1 != ev; ++ev1, ++it) {
+          *ev1 = *it;
+        }
+      }
+
+    } // for i
+    event_list.setTofs(tofsEventList);
+
+    event_list.sortTof();
+  } // for wi
+}
+
+/**
+ * ISIS specific method for dealing with wide events. Check if time_of_flight
+ * can be found in the file and load it.
+ *
+ * THIS ONLY APPLIES TO ISIS FILES WITH "detector_1_events" IN THE "NXentry."
+ *
+ * @param file :: The nexus file to read from.
+ * @param localWorkspace :: The event workspace collection which events will be
+ *modified.
+ * @param entry_name :: An NXentry tag in the file
+ * @param classType :: The type of the events: either detector or monitor
+ */
+template <typename T>
+void adjustTimeOfFlightISISLegacy(::NeXus::File &file, T localWorkspace,
+                                  const std::string &entry_name,
+                                  const std::string &classType) {
+  bool done = false;
+  // Go to the root, and then top entry
+  file.openPath("/");
+  file.openGroup(entry_name, "NXentry");
+
+  using string_map_t = std::map<std::string, std::string>;
+  string_map_t entries = file.getEntries();
+
+  if (entries.find("detector_1_events") == entries.end()) { // not an ISIS file
+    return;
+  }
+
+  // try if monitors have their own bins
+  if (classType == "NXmonitor") {
+    std::vector<std::string> bankNames;
+    for (string_map_t::const_iterator it = entries.begin(); it != entries.end();
+         ++it) {
+      std::string entry_name(it->first);
+      std::string entry_class(it->second);
+      if (entry_class == classType) {
+        bankNames.push_back(entry_name);
+      }
+    }
+    for (size_t i = 0; i < bankNames.size(); ++i) {
+      const std::string &mon = bankNames[i];
+      file.openGroup(mon, classType);
+      entries = file.getEntries();
+      if (entries.find("event_time_bins") == entries.end()) {
+        // bins = entries.find("time_of_flight"); // I think time_of_flight
+        // doesn't work here
+        // if (bins == entries.end())
+        //{
+        done = false;
+        file.closeGroup();
+        break; // done == false => use bins from the detectors
+               //}
+      }
+      done = true;
+      makeTimeOfFlightDataFuzzy(file, localWorkspace, "event_time_bins", i,
+                                i + 1);
+      file.closeGroup();
+    }
+  }
+
+  if (!done) {
+    // first check detector_1_events
+    file.openGroup("detector_1_events", "NXevent_data");
+    entries = file.getEntries();
+    for (string_map_t::const_iterator it = entries.begin(); it != entries.end();
+         ++it) {
+      if (it->first == "time_of_flight" || it->first == "event_time_bins") {
+        makeTimeOfFlightDataFuzzy(file, localWorkspace, it->first);
+        done = true;
+      }
+    }
+    file.closeGroup(); // detector_1_events
+
+    if (!done) { // if time_of_flight was not found try
+                 // instrument/dae/time_channels_#
+      file.openGroup("instrument", "NXinstrument");
+      file.openGroup("dae", "IXdae");
+      entries = file.getEntries();
+      size_t time_channels_number = 0;
+      for (string_map_t::const_iterator it = entries.begin();
+           it != entries.end(); ++it) {
+        // check if there are groups with names "time_channels_#" and select the
+        // one with the highest number
+        if (it->first.size() > 14 &&
+            it->first.substr(0, 14) == "time_channels_") {
+          size_t n = boost::lexical_cast<size_t>(it->first.substr(14));
+          if (n > time_channels_number) {
+            time_channels_number = n;
+          }
+        }
+      }
+      if (time_channels_number > 0) // the numbers start with 1
+      {
+        file.openGroup("time_channels_" + std::to_string(time_channels_number),
+                       "IXtime_channels");
+        entries = file.getEntries();
+        for (string_map_t::const_iterator it = entries.begin();
+             it != entries.end(); ++it) {
+          if (it->first == "time_of_flight" || it->first == "event_time_bins") {
+            makeTimeOfFlightDataFuzzy(file, localWorkspace, it->first);
+          }
+        }
+        file.closeGroup();
+      }
+      file.closeGroup(); // dae
+      file.closeGroup(); // instrument
+    }
+  }
+
+  // close top entry (or entry given in entry_name)
+  file.closeGroup();
+}
+
+//-----------------------------------------------------------------------------
 /** Load the instrument definition file specified by info in the NXS file.
-*
-*  @param nexusfilename :: Used to pick the instrument.
-*  @param localWorkspace :: Templated workspace in which to put the instrument
-*geometry
-*  @param top_entry_name :: entry name at the top of the NXS file
-*  @param alg :: Handle of the algorithm
-*  @return true if successful
-*/
+ *
+ *  @param nexusfilename :: Used to pick the instrument.
+ *  @param localWorkspace :: Templated workspace in which to put the instrument
+ *geometry
+ *  @param top_entry_name :: entry name at the top of the NXS file
+ *  @param alg :: Handle of the algorithm
+ *  @return true if successful
+ */
 template <typename T>
 bool LoadEventNexus::runLoadInstrument(const std::string &nexusfilename,
                                        T localWorkspace,
@@ -311,8 +477,8 @@ bool LoadEventNexus::runLoadInstrument(const std::string &nexusfilename,
   try {
     nxfile.openData("name");
     instrument = nxfile.getStrData();
-    alg->getLogger().debug() << "Instrument name read from NeXus file is "
-                             << instrument << '\n';
+    alg->getLogger().debug()
+        << "Instrument name read from NeXus file is " << instrument << '\n';
   } catch (::NeXus::Exception &) {
     // Try to fall back to isis compatibility options
     nxfile.closeGroup();
@@ -330,10 +496,9 @@ bool LoadEventNexus::runLoadInstrument(const std::string &nexusfilename,
       }
     }
   }
-  if (instrument.compare("POWGEN3") ==
-      0) // hack for powgen b/c of bad long name
+  if (instrument == "POWGEN3") // hack for powgen b/c of bad long name
     instrument = "POWGEN";
-  if (instrument.compare("NOM") == 0) // hack for nomad
+  if (instrument == "NOM") // hack for nomad
     instrument = "NOMAD";
 
   if (instrument.empty())
@@ -382,7 +547,7 @@ bool LoadEventNexus::runLoadInstrument(const std::string &nexusfilename,
 
   // Ticket #2049: Cleanup all loadinstrument members to a single instance
   // If requested update the instrument to positions in the data file
-  const Geometry::ParameterMap &pmap = localWorkspace->instrumentParameters();
+  const auto &pmap = localWorkspace->constInstrumentParameters();
   if (!pmap.contains(localWorkspace->getInstrument()->getComponentID(),
                      "det-pos-source"))
     return executionSuccessful;
@@ -480,18 +645,35 @@ void LoadEventNexus::loadEntryMetadata(const std::string &nexusfilename, T WS,
     // let it drop on floor
   }
 
-  // get the sample name
+  // get the sample name - nested try/catch to leave the handle in an
+  // appropriate state
   try {
     file.openGroup("sample", "NXsample");
-    file.openData("name");
-    std::string name;
-    if (file.getInfo().type == ::NeXus::CHAR) {
-      name = file.getStrData();
+    try {
+      file.openData("name");
+      const auto info = file.getInfo();
+      std::string name;
+      if (info.type == ::NeXus::CHAR) {
+        if (info.dims.size() == 1) {
+          name = file.getStrData();
+        } else { // something special for 2-d array
+          const int64_t total_length = std::accumulate(
+              info.dims.begin(), info.dims.end(), static_cast<int64_t>(1),
+              std::multiplies<int64_t>());
+          boost::scoped_array<char> val_array(new char[total_length]);
+          file.getData(val_array.get());
+          file.closeData();
+          name = std::string(val_array.get(), total_length);
+        }
+      }
+      file.closeData();
+
+      if (!name.empty()) {
+        WS->mutableSample().setName(name);
+      }
+    } catch (::NeXus::Exception &) {
+      // let it drop on floor
     }
-    if (!name.empty()) {
-      WS->mutableSample().setName(name);
-    }
-    file.closeData();
     file.closeGroup();
   } catch (::NeXus::Exception &) {
     // let it drop on floor
@@ -508,7 +690,7 @@ void LoadEventNexus::loadEntryMetadata(const std::string &nexusfilename, T WS,
     std::string units;
     for (std::vector< ::NeXus::AttrInfo>::const_iterator it = infos.begin();
          it != infos.end(); ++it) {
-      if (it->name.compare("units") == 0) {
+      if (it->name == "units") {
         units = file.getStrAttr(*it);
         break;
       }
@@ -526,15 +708,15 @@ void LoadEventNexus::loadEntryMetadata(const std::string &nexusfilename, T WS,
 
 //-----------------------------------------------------------------------------
 /** Load the instrument from the nexus file or if not found from the IDF file
-*  specified by the info in the Nexus file
-*
-*  @param nexusfilename :: The Nexus file name
-*  @param localWorkspace :: templated workspace in which to put the instrument
-*geometry
-*  @param top_entry_name :: entry name at the top of the Nexus file
-*  @param alg :: Handle of the algorithm
-*  @return true if successful
-*/
+ *  specified by the info in the Nexus file
+ *
+ *  @param nexusfilename :: The Nexus file name
+ *  @param localWorkspace :: templated workspace in which to put the instrument
+ *geometry
+ *  @param top_entry_name :: entry name at the top of the Nexus file
+ *  @param alg :: Handle of the algorithm
+ *  @return true if successful
+ */
 template <typename T>
 bool LoadEventNexus::loadInstrument(const std::string &nexusfilename,
                                     T localWorkspace,
@@ -550,14 +732,14 @@ bool LoadEventNexus::loadInstrument(const std::string &nexusfilename,
 
 //-----------------------------------------------------------------------------
 /** Load the instrument from the nexus file
-*
-*  @param nexusfilename :: The name of the nexus file being loaded
-*  @param localWorkspace :: templated workspace in which to put the instrument
-*geometry
-*  @param top_entry_name :: entry name at the top of the Nexus file
-*  @param alg :: Handle of the algorithm
-*  @return true if successful
-*/
+ *
+ *  @param nexusfilename :: The name of the nexus file being loaded
+ *  @param localWorkspace :: templated workspace in which to put the instrument
+ *geometry
+ *  @param top_entry_name :: entry name at the top of the Nexus file
+ *  @param alg :: Handle of the algorithm
+ *  @return true if successful
+ */
 template <typename T>
 bool LoadEventNexus::runLoadIDFFromNexus(const std::string &nexusfilename,
                                          T localWorkspace,

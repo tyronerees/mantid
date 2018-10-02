@@ -9,6 +9,7 @@
 #include "MantidKernel/BoundedValidator.h"
 #include "MantidKernel/EnabledWhenProperty.h"
 #include "MantidKernel/ListValidator.h"
+#include "MantidKernel/Strings.h"
 
 using namespace Mantid::API;
 using namespace Mantid::DataObjects;
@@ -210,7 +211,7 @@ void QueryMDWorkspace::exec() {
   output->getColumn(signalColumnName)->setPlotType(2);
   output->getColumn(errorColumnName)->setPlotType(5);
 
-  IMDIterator *it = input->createIterator();
+  auto it = input->createIterator();
   it->setNormalization(requestedNormalisation);
 
   bool bLimitRows = getProperty("LimitRows");
@@ -223,7 +224,7 @@ void QueryMDWorkspace::exec() {
   // entry.
   int rowCounter = 0;
 
-  Progress progress(this, 0, 1, int64_t(input->getNPoints()));
+  Progress progress(this, 0.0, 1.0, int64_t(input->getNPoints()));
   while (true) {
     size_t cellIndex = 0;
     output->appendRow();
@@ -250,12 +251,11 @@ void QueryMDWorkspace::exec() {
     rowCounter++;
   }
   setProperty("OutputWorkspace", output);
-  delete it;
 
   //
   IMDEventWorkspace_sptr mdew;
   CALL_MDEVENT_FUNCTION(this->getBoxData, input);
 }
 
-} // namespace Mantid
 } // namespace MDAlgorithms
+} // namespace Mantid

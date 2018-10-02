@@ -1,13 +1,12 @@
-#include "MantidPythonInterface/kernel/GetPointer.h"
 #include "MantidGeometry/Instrument/ReferenceFrame.h"
+#include "MantidPythonInterface/kernel/GetPointer.h"
 
-#include <boost/shared_ptr.hpp>
 #include <boost/python/class.hpp>
 #include <boost/python/enum.hpp>
 #include <boost/python/register_ptr_to_python.hpp>
+#include <boost/shared_ptr.hpp>
 
 using Mantid::Geometry::ReferenceFrame;
-using Mantid::Kernel::V3D;
 using namespace boost::python;
 
 GET_POINTER_SPECIALIZATION(ReferenceFrame)

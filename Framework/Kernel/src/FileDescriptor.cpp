@@ -1,8 +1,9 @@
 #include "MantidKernel/FileDescriptor.h"
-#include "MantidKernel/Exception.h"
 
 #include <Poco/File.h>
 #include <Poco/Path.h>
+
+#include <stdexcept>
 
 namespace Mantid {
 namespace Kernel {
@@ -68,11 +69,11 @@ bool FileDescriptor::isAscii(std::istream &data, const size_t nbytes) {
 }
 
 /**
-* Check if a file is a text file
-* @param file :: The file pointer
-* @param nbytes The number of bytes of the file to check (Default=256)
-* @returns true if the file an ascii text file, false otherwise
-*/
+ * Check if a file is a text file
+ * @param file :: The file pointer
+ * @param nbytes The number of bytes of the file to check (Default=256)
+ * @returns true if the file an ascii text file, false otherwise
+ */
 bool FileDescriptor::isAscii(FILE *file, const size_t nbytes) {
   // read the data and reset the seek index back to the beginning
   auto data = new char[nbytes];

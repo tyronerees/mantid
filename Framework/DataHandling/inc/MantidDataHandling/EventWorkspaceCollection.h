@@ -1,18 +1,21 @@
 #ifndef MANTID_DATAHANDLING_EventWorkspaceCollection_H_
 #define MANTID_DATAHANDLING_EventWorkspaceCollection_H_
 
+#include "MantidAPI/MatrixWorkspace.h"
+#include "MantidAPI/WorkspaceGroup.h"
+#include "MantidDataHandling/DllConfig.h"
+#include "MantidDataObjects/EventWorkspace.h"
 #include "MantidKernel/System.h"
 #include "MantidKernel/TimeSeriesProperty.h"
-#include "MantidAPI/WorkspaceGroup.h"
-#include "MantidDataObjects/EventWorkspace.h"
-#include "MantidAPI/MatrixWorkspace.h"
-#include "MantidDataHandling/DllConfig.h"
-#include <vector>
-#include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
+#include <boost/shared_ptr.hpp>
 #include <memory>
+#include <vector>
 
 namespace Mantid {
+namespace Indexing {
+class IndexInfo;
+}
 namespace DataHandling {
 
 /** EventWorkspaceCollection : Collection of EventWorspaces to give
@@ -93,24 +96,22 @@ public:
   std::vector<size_t>
   getDetectorIDToWorkspaceIndexVector(Mantid::specnum_t &offset,
                                       bool dothrow) const;
-  Kernel::DateAndTime getFirstPulseTime() const;
+  Types::Core::DateAndTime getFirstPulseTime() const;
   void setAllX(const HistogramData::BinEdges &x);
   size_t getNumberEvents() const;
-  void resizeTo(const size_t size);
-  void padSpectra(const std::vector<int32_t> &padding);
+  void setIndexInfo(const Indexing::IndexInfo &indexInfo);
   void setInstrument(const Geometry::Instrument_const_sptr &inst);
   void
   setMonitorWorkspace(const boost::shared_ptr<API::MatrixWorkspace> &monitorWS);
   void updateSpectraUsing(const API::SpectrumDetectorMapping &map);
-  void populateInstrumentParameters();
   void setTitle(std::string title);
   void applyFilter(boost::function<void(API::MatrixWorkspace_sptr)> func);
   virtual bool threadSafe() const;
 };
 
-typedef boost::shared_ptr<EventWorkspaceCollection>
-    EventWorkspaceCollection_sptr;
-typedef std::unique_ptr<EventWorkspaceCollection> EventWorkspaceCollection_uptr;
+using EventWorkspaceCollection_sptr =
+    boost::shared_ptr<EventWorkspaceCollection>;
+using EventWorkspaceCollection_uptr = std::unique_ptr<EventWorkspaceCollection>;
 
 } // namespace DataHandling
 } // namespace Mantid

@@ -4,9 +4,9 @@
 #include "MantidSINQ/PoldiAutoCorrelation5.h"
 
 #include "MantidAPI/MatrixWorkspace.h"
-#include "MantidDataObjects/Workspace2D.h"
 #include "MantidDataObjects/MaskWorkspace.h"
 #include "MantidDataObjects/TableWorkspace.h"
+#include "MantidDataObjects/Workspace2D.h"
 
 #include "MantidSINQ/PoldiUtilities/PoldiDeadWireDecorator.h"
 #include "MantidSINQ/PoldiUtilities/PoldiInstrumentAdapter.h"
@@ -83,7 +83,7 @@ void PoldiAutoCorrelation5::exec() {
 
   PoldiAbstractDetector_sptr detector = instrumentAdapter.detector();
   boost::shared_ptr<PoldiDeadWireDecorator> cleanDetector(
-      new PoldiDeadWireDecorator(localWorkspace->getInstrument(), detector));
+      new PoldiDeadWireDecorator(localWorkspace->detectorInfo(), detector));
 
   // log configuration information
   logConfigurationInformation(cleanDetector, chopper);
@@ -129,10 +129,10 @@ void PoldiAutoCorrelation5::logConfigurationInformation(
 
     if (g_log.is(Poco::Message::PRIO_DEBUG)) {
       for (size_t i = 0; i < chopper->slitPositions().size(); ++i) {
-        g_log.information() << "_Poldi -     Slits: " << i
-                            << ": Position = " << chopper->slitPositions()[i]
-                            << "\t Time = " << chopper->slitTimes()[i]
-                            << " µs\n";
+        g_log.information()
+            << "_Poldi -     Slits: " << i
+            << ": Position = " << chopper->slitPositions()[i]
+            << "\t Time = " << chopper->slitTimes()[i] << " µs\n";
       }
     }
 

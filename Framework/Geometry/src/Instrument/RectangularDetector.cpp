@@ -1,25 +1,30 @@
-#include "MantidGeometry/Instrument/Detector.h"
 #include "MantidGeometry/Instrument/RectangularDetector.h"
-#include "MantidKernel/Matrix.h"
+#include "MantidGeometry/Instrument/ComponentInfo.h"
+#include "MantidGeometry/Instrument/ComponentVisitor.h"
+#include "MantidGeometry/Instrument/Detector.h"
+#include "MantidGeometry/Instrument/RectangularDetectorPixel.h"
 #include "MantidGeometry/Objects/BoundingBox.h"
-#include "MantidGeometry/Objects/Object.h"
+#include "MantidGeometry/Objects/CSGObject.h"
+#include "MantidGeometry/Objects/IObject.h"
 #include "MantidGeometry/Objects/ShapeFactory.h"
-#include "MantidGeometry/Rendering/BitmapGeometryHandler.h"
+#include "MantidGeometry/Objects/Track.h"
+#include "MantidGeometry/Rendering/GeometryHandler.h"
 #include "MantidKernel/Exception.h"
 #include "MantidKernel/Material.h"
+#include "MantidKernel/Matrix.h"
 #include <algorithm>
+#include <boost/make_shared.hpp>
+#include <boost/regex.hpp>
 #include <ostream>
 #include <stdexcept>
-#include <boost/regex.hpp>
-#include "MantidGeometry/Instrument/RectangularDetectorPixel.h"
 
 namespace {
 /**
-* Return the number of pixels to make a texture in, given the
-* desired pixel size. A texture has to have 2^n pixels per side.
-* @param desired :: the requested pixel size
-* @return number of pixels for texture
-*/
+ * Return the number of pixels to make a texture in, given the
+ * desired pixel size. A texture has to have 2^n pixels per side.
+ * @param desired :: the requested pixel size
+ * @return number of pixels for texture
+ */
 int getOneTextureSize(int desired) {
   int size = 2;
   while (desired > size) {
@@ -32,9 +37,8 @@ int getOneTextureSize(int desired) {
 namespace Mantid {
 namespace Geometry {
 
-using Kernel::V3D;
-using Kernel::Quat;
 using Kernel::Matrix;
+using Kernel::V3D;
 
 /** Empty constructor
  */
@@ -43,7 +47,7 @@ RectangularDetector::RectangularDetector()
       m_minDetId(0), m_maxDetId(0) {
 
   init();
-  setGeometryHandler(new BitmapGeometryHandler(this));
+  setGeometryHandler(new GeometryHandler(this));
 }
 
 /** Constructor for a parametrized RectangularDetector
@@ -55,7 +59,7 @@ RectangularDetector::RectangularDetector(const RectangularDetector *base,
     : CompAssembly(base, map), IObjComponent(nullptr), m_rectBase(base),
       m_minDetId(0), m_maxDetId(0) {
   init();
-  setGeometryHandler(new BitmapGeometryHandler(this));
+  setGeometryHandler(new GeometryHandler(this));
 }
 
 /** Valued constructor
@@ -73,7 +77,7 @@ RectangularDetector::RectangularDetector(const std::string &n,
       m_minDetId(0), m_maxDetId(0) {
   init();
   this->setName(n);
-  setGeometryHandler(new BitmapGeometryHandler(this));
+  setGeometryHandler(new GeometryHandler(this));
 }
 
 bool RectangularDetector::compareName(const std::string &proposedMatch) {
@@ -365,7 +369,7 @@ V3D RectangularDetector::getRelativePosAtXY(int x, int y) const {
  *            and idstep=100 and idstart=1 then (0,0)=1; (0,1)=101; and so on
  *
  */
-void RectangularDetector::initialize(boost::shared_ptr<Object> shape,
+void RectangularDetector::initialize(boost::shared_ptr<IObject> shape,
                                      int xpixels, double xstart, double xstep,
                                      int ypixels, double ystart, double ystep,
                                      int idstart, bool idfillbyfirst_y,
@@ -453,7 +457,7 @@ void RectangularDetector::initialize(boost::shared_ptr<Object> shape,
 
 //-------------------------------------------------------------------------------------------------
 /** Returns the minimum detector id
-  * @return minimum detector id
+ * @return minimum detector id
  */
 int RectangularDetector::minDetectorID() {
   if (m_map)
@@ -463,7 +467,7 @@ int RectangularDetector::minDetectorID() {
 
 //-------------------------------------------------------------------------------------------------
 /** Returns the maximum detector id
-  * @return maximum detector id
+ * @return maximum detector id
  */
 int RectangularDetector::maxDetectorID() {
   if (m_map)
@@ -487,7 +491,7 @@ RectangularDetector::getComponentByName(const std::string &cname,
 
   // check that the searched for name starts with the detector's
   // name as they are generated
-  if (cname.substr(0, MEMBER_NAME.length()).compare(MEMBER_NAME) != 0) {
+  if (cname.substr(0, MEMBER_NAME.length()) != MEMBER_NAME) {
     return boost::shared_ptr<const IComponent>();
   } else {
     return CompAssembly::getComponentByName(cname, nlevels);
@@ -617,6 +621,12 @@ int RectangularDetector::getPointInObject(V3D &) const {
  * @param assemblyBox :: A BoundingBox object that will be overwritten
  */
 void RectangularDetector::getBoundingBox(BoundingBox &assemblyBox) const {
+  if (m_map) {
+    if (hasComponentInfo()) {
+      assemblyBox = m_map->componentInfo().boundingBox(index(), &assemblyBox);
+      return;
+    }
+  }
   if (!m_cachedBoundingBox) {
     m_cachedBoundingBox = new BoundingBox();
     // Get all the corner
@@ -665,7 +675,7 @@ void RectangularDetector::draw() const {
   if (Handle() == nullptr)
     return;
   // Render the ObjComponent and then render the object
-  Handle()->Render();
+  Handle()->render();
 }
 
 /**
@@ -688,12 +698,12 @@ void RectangularDetector::initDraw() const {
     return;
   // Render the ObjComponent and then render the object
   // if(shape!=NULL)    shape->initDraw();
-  Handle()->Initialize();
+  Handle()->initialize();
 }
 
 //-------------------------------------------------------------------------------------------------
 /// Returns the shape of the Object
-const boost::shared_ptr<const Object> RectangularDetector::shape() const {
+const boost::shared_ptr<const IObject> RectangularDetector::shape() const {
   // --- Create a cuboid shape for your pixels ----
   double szX = m_xpixels;
   double szY = m_ypixels;
@@ -712,7 +722,7 @@ const boost::shared_ptr<const Object> RectangularDetector::shape() const {
 
   std::string xmlCuboidShape(xmlShapeStream.str());
   Geometry::ShapeFactory shapeCreator;
-  boost::shared_ptr<Geometry::Object> cuboidShape =
+  boost::shared_ptr<Geometry::IObject> cuboidShape =
       shapeCreator.createShape(xmlCuboidShape);
 
   return cuboidShape;
@@ -720,6 +730,11 @@ const boost::shared_ptr<const Object> RectangularDetector::shape() const {
 
 const Kernel::Material RectangularDetector::material() const {
   return Kernel::Material();
+}
+
+size_t RectangularDetector::registerContents(
+    ComponentVisitor &componentVisitor) const {
+  return componentVisitor.registerRectangularBank(*this);
 }
 
 //-------------------------------------------------------------------------------------------------

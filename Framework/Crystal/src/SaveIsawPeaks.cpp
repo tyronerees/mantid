@@ -1,14 +1,17 @@
+#include "MantidCrystal/SaveIsawPeaks.h"
 #include "MantidAPI/FileProperty.h"
 #include "MantidAPI/InstrumentValidator.h"
 #include "MantidAPI/Run.h"
-#include "MantidCrystal/SaveIsawPeaks.h"
 #include "MantidDataObjects/Peak.h"
 #include "MantidDataObjects/PeaksWorkspace.h"
-#include "MantidGeometry/Instrument/RectangularDetector.h"
-#include "MantidKernel/Utils.h"
 #include "MantidDataObjects/Workspace2D.h"
-#include <fstream>
+#include "MantidGeometry/Instrument/Goniometer.h"
+#include "MantidGeometry/Instrument/RectangularDetector.h"
+#include "MantidKernel/Strings.h"
+#include "MantidKernel/Utils.h"
 #include <Poco/File.h>
+#include <boost/algorithm/string/trim.hpp>
+#include <fstream>
 
 using namespace Mantid::Geometry;
 using namespace Mantid::DataObjects;
@@ -29,8 +32,9 @@ void SaveIsawPeaks::init() {
                       boost::make_shared<InstrumentValidator>()),
                   "An input PeaksWorkspace with an instrument.");
 
-  declareProperty("AppendFile", false, "Append to file if true.\n"
-                                       "If false, new file (default).");
+  declareProperty("AppendFile", false,
+                  "Append to file if true.\n"
+                  "If false, new file (default).");
 
   const std::vector<std::string> exts{".peaks", ".integrate"};
   declareProperty(Kernel::make_unique<FileProperty>("Filename", "",
@@ -55,16 +59,39 @@ void SaveIsawPeaks::exec() {
   PeaksWorkspace_sptr ws = getProperty("InputWorkspace");
   std::vector<Peak> peaks = ws->getPeaks();
   inst = ws->getInstrument();
-
-  // We cannot assume the peaks have bank type detector modules, so we have a
-  // string to check this
-  std::string bankPart = "?";
+  const auto &detectorInfo = ws->detectorInfo();
 
   // We must sort the peaks first by run, then bank #, and save the list of
   // workspace indices of it
-  typedef std::map<int, std::vector<size_t>> bankMap_t;
-  typedef std::map<int, bankMap_t> runMap_t;
+  using bankMap_t = std::map<int, std::vector<size_t>>;
+  using runMap_t = std::map<int, bankMap_t>;
   std::set<int, std::less<int>> uniqueBanks;
+  if (!inst)
+    throw std::runtime_error(
+        "No instrument in the Workspace. Cannot save DetCal file.");
+  // We cannot assume the peaks have bank type detector modules, so we have a
+  // string to check this
+  std::string bankPart = "bank";
+  if (inst->getName() == "WISH")
+    bankPart = "WISHpanel";
+
+  // Get all children
+  std::vector<IComponent_const_sptr> comps;
+  inst->getChildren(comps, true);
+
+  for (auto &comp : comps) {
+    std::string bankName = comp->getName();
+    boost::trim(bankName);
+    boost::erase_all(bankName, bankPart);
+    int bank = 0;
+    Strings::convert(bankName, bank);
+    if (bank == 0)
+      continue;
+    if (bankMasked(comp, detectorInfo))
+      continue;
+    // Track unique bank numbers
+    uniqueBanks.insert(bank);
+  }
   runMap_t runMap;
   for (size_t i = 0; i < peaks.size(); ++i) {
     Peak &p = peaks[i];
@@ -88,8 +115,6 @@ void SaveIsawPeaks::exec() {
 
     // Save in the map
     runMap[run][bank].push_back(i);
-    // Track unique bank numbers
-    uniqueBanks.insert(bank);
   }
 
   if (!inst)
@@ -127,7 +152,7 @@ void SaveIsawPeaks::exec() {
     // TODO: The experiment date might be more useful than the instrument date.
     // For now, this allows the proper instrument to be loaded back after
     // saving.
-    Kernel::DateAndTime expDate = inst->getValidFromDate() + 1.0;
+    Types::Core::DateAndTime expDate = inst->getValidFromDate() + 1.0;
     out << expDate.toISO8601String() << '\n';
 
     out << "6         L1    T0_SHIFT\n";
@@ -138,8 +163,7 @@ void SaveIsawPeaks::exec() {
     const API::Run &run = ws->run();
     double T0 = 0.0;
     if (run.hasProperty("T0")) {
-      Kernel::Property *prop = run.getProperty("T0");
-      T0 = boost::lexical_cast<double, std::string>(prop->value());
+      T0 = run.getPropertyValueAsType<double>("T0");
       if (T0 != 0) {
         g_log.notice() << "T0 = " << T0 << '\n';
       }
@@ -167,8 +191,8 @@ void SaveIsawPeaks::exec() {
         // Retrieve it
         boost::shared_ptr<const IComponent> det =
             inst->getComponentByName(bankName);
-        if (inst->getName().compare("CORELLI") ==
-            0) // for Corelli with sixteenpack under bank
+        if (inst->getName() ==
+            "CORELLI") // for Corelli with sixteenpack under bank
         {
           std::vector<Geometry::IComponent_const_sptr> children;
           boost::shared_ptr<const Geometry::ICompAssembly> asmb =
@@ -236,13 +260,14 @@ void SaveIsawPeaks::exec() {
     qSign = 1.0;
   // ============================== Save all Peaks
   // =========================================
-  // Sequence number
-  int seqNum = 1;
 
   // Go in order of run numbers
+  int maxPeakNumb = 0;
+  int appendPeakNumb = 0;
   runMap_t::iterator runMap_it;
   for (runMap_it = runMap.begin(); runMap_it != runMap.end(); ++runMap_it) {
     // Start of a new run
+    appendPeakNumb += maxPeakNumb;
     int run = runMap_it->first;
     bankMap_t &bankMap = runMap_it->second;
 
@@ -287,7 +312,8 @@ void SaveIsawPeaks::exec() {
           Peak &p = peaks[wi];
 
           // Sequence (run) number
-          out << "3" << std::setw(7) << seqNum;
+          maxPeakNumb = std::max(maxPeakNumb, p.getPeakNumber());
+          out << "3" << std::setw(7) << p.getPeakNumber() + appendPeakNumb;
 
           // HKL's are flipped by -1 because of the internal Q convention
           // unless Crystallography convention
@@ -360,8 +386,6 @@ void SaveIsawPeaks::exec() {
               }
             }
           }
-          // Count the sequence
-          seqNum++;
         }
       }
     }
@@ -371,10 +395,45 @@ void SaveIsawPeaks::exec() {
   out.close();
 }
 
+bool SaveIsawPeaks::bankMasked(IComponent_const_sptr parent,
+                               const Geometry::DetectorInfo &detectorInfo) {
+  std::vector<Geometry::IComponent_const_sptr> children;
+  boost::shared_ptr<const Geometry::ICompAssembly> asmb =
+      boost::dynamic_pointer_cast<const Geometry::ICompAssembly>(parent);
+  asmb->getChildren(children, false);
+  if (children[0]->getName() == "sixteenpack") {
+    asmb =
+        boost::dynamic_pointer_cast<const Geometry::ICompAssembly>(children[0]);
+    children.clear();
+    asmb->getChildren(children, false);
+  }
+
+  for (auto &col : children) {
+    boost::shared_ptr<const Geometry::ICompAssembly> asmb2 =
+        boost::dynamic_pointer_cast<const Geometry::ICompAssembly>(col);
+    std::vector<Geometry::IComponent_const_sptr> grandchildren;
+    asmb2->getChildren(grandchildren, false);
+
+    for (auto &row : grandchildren) {
+      Detector *d =
+          dynamic_cast<Detector *>(const_cast<IComponent *>(row.get()));
+      if (d) {
+        auto detID = d->getID();
+        if (detID < 0)
+          continue;
+        const auto index = detectorInfo.indexOf(detID);
+        if (!detectorInfo.isMasked(index))
+          return false;
+      }
+    }
+  }
+  return true;
+}
+
 V3D SaveIsawPeaks::findPixelPos(std::string bankName, int col, int row) {
   boost::shared_ptr<const IComponent> parent =
       inst->getComponentByName(bankName);
-  if (parent->type().compare("RectangularDetector") == 0) {
+  if (parent->type() == "RectangularDetector") {
     boost::shared_ptr<const RectangularDetector> RDet =
         boost::dynamic_pointer_cast<const RectangularDetector>(parent);
 
@@ -385,7 +444,7 @@ V3D SaveIsawPeaks::findPixelPos(std::string bankName, int col, int row) {
     boost::shared_ptr<const Geometry::ICompAssembly> asmb =
         boost::dynamic_pointer_cast<const Geometry::ICompAssembly>(parent);
     asmb->getChildren(children, false);
-    if (children[0]->getName().compare("sixteenpack") == 0) {
+    if (children[0]->getName() == "sixteenpack") {
       asmb = boost::dynamic_pointer_cast<const Geometry::ICompAssembly>(
           children[0]);
       children.clear();
@@ -406,11 +465,11 @@ V3D SaveIsawPeaks::findPixelPos(std::string bankName, int col, int row) {
 }
 void SaveIsawPeaks::sizeBanks(std::string bankName, int &NCOLS, int &NROWS,
                               double &xsize, double &ysize) {
-  if (bankName.compare("None") == 0)
+  if (bankName == "None")
     return;
   boost::shared_ptr<const IComponent> parent =
       inst->getComponentByName(bankName);
-  if (parent->type().compare("RectangularDetector") == 0) {
+  if (parent->type() == "RectangularDetector") {
     boost::shared_ptr<const RectangularDetector> RDet =
         boost::dynamic_pointer_cast<const RectangularDetector>(parent);
 
@@ -423,7 +482,7 @@ void SaveIsawPeaks::sizeBanks(std::string bankName, int &NCOLS, int &NROWS,
     boost::shared_ptr<const Geometry::ICompAssembly> asmb =
         boost::dynamic_pointer_cast<const Geometry::ICompAssembly>(parent);
     asmb->getChildren(children, false);
-    if (children[0]->getName().compare("sixteenpack") == 0) {
+    if (children[0]->getName() == "sixteenpack") {
       asmb = boost::dynamic_pointer_cast<const Geometry::ICompAssembly>(
           children[0]);
       children.clear();
@@ -444,5 +503,5 @@ void SaveIsawPeaks::sizeBanks(std::string bankName, int &NCOLS, int &NROWS,
   }
 }
 
-} // namespace Mantid
 } // namespace Crystal
+} // namespace Mantid

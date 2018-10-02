@@ -30,15 +30,14 @@
  ***************************************************************************/
 
 #include "ExtensibleFileDialog.h"
-#include <QGridLayout>
-#include <QDesktopServices>
-#include <QUrl>
 #include <QComboBox>
+#include <QGridLayout>
+#include <QUrl>
 
 ExtensibleFileDialog::ExtensibleFileDialog(QWidget *parent, bool extended,
                                            Qt::WFlags flags)
     : QFileDialog(parent, flags) {
-  d_extension = 0;
+  d_extension = nullptr;
   d_extension_row = 0;
 
   d_extension_toggle = new QPushButton();

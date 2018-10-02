@@ -2,6 +2,7 @@
 """
     Detector options for reduction
 """
+from __future__ import (absolute_import, division, print_function)
 import xml.dom.minidom
 from reduction_gui.reduction.scripter import BaseScriptElement
 
@@ -66,7 +67,8 @@ class Detector(BaseScriptElement):
                 raise RuntimeError("Sensitivity correction was selected but no sensitivity data file was entered.")
 
             if len(str(self.sensitivity_dark).strip())>0:
-                script += "SensitivityCorrection(\"%s\", min_sensitivity=%g, max_sensitivity=%g, dark_current=\"%s\", use_sample_dc=%s)\n" % \
+                script += "SensitivityCorrection(\"%s\", min_sensitivity=%g, "\
+                          "max_sensitivity=%g, dark_current=\"%s\", use_sample_dc=%s)\n" % \
                     (self.sensitivity_data, self.min_sensitivity, self.max_sensitivity, self.sensitivity_dark, self.use_sample_dark)
             else:
                 script += "SensitivityCorrection(\"%s\", min_sensitivity=%g, max_sensitivity=%g, use_sample_dc=%s)\n" % \

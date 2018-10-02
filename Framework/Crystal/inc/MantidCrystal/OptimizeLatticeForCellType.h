@@ -2,12 +2,12 @@
 #define MANTID_CRYSTAL_OptimizeLatticeForCellType_H_
 
 #include "MantidAPI/Algorithm.h"
-#include "MantidKernel/System.h"
-#include "MantidDataObjects/OffsetsWorkspace.h"
-#include "MantidDataObjects/PeaksWorkspace.h"
 #include "MantidAPI/IFunction.h"
 #include "MantidAPI/ILatticeFunction.h"
+#include "MantidDataObjects/OffsetsWorkspace.h"
+#include "MantidDataObjects/PeaksWorkspace.h"
 #include "MantidGeometry/Crystal/UnitCell.h"
+#include "MantidKernel/System.h"
 #include <gsl/gsl_blas.h>
 #include <gsl/gsl_multifit_nlin.h>
 #include <gsl/gsl_multimin.h>
@@ -55,6 +55,10 @@ public:
 
   /// Algorithm's version for identification overriding a virtual method
   int version() const override { return 1; }
+  const std::vector<std::string> seeAlso() const override {
+    return {"FindUBUsingFFT", "FindUBUsingIndexedPeaks",
+            "FindUBUsingLatticeParameters"};
+  }
   /// Algorithm's category for identification overriding a virtual method
   const std::string category() const override { return "Crystal\\Cell"; }
 
@@ -66,12 +70,9 @@ private:
   // Overridden Algorithm methods
   void init() override;
   void exec() override;
-  /// Function to find peaks near detector edge
-  bool edgePixel(DataObjects::PeaksWorkspace_sptr ws, std::string bankName,
-                 int col, int row, int Edge);
 };
 
-} // namespace Algorithm
+} // namespace Crystal
 } // namespace Mantid
 
 #endif /*MANTID_CRYSTAL_OptimizeLatticeForCellType_H_*/

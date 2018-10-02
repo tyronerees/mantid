@@ -1,20 +1,14 @@
 #ifndef MANTID_DATAHANDLING_LOADPARAMETERFILE_H_
 #define MANTID_DATAHANDLING_LOADPARAMETERFILE_H_
 
-//----------------------------------------------------------------------
-// Includes
-//----------------------------------------------------------------------
-#include "MantidAPI/Algorithm.h"
+#include "MantidAPI/DistributedAlgorithm.h"
 
-//----------------------------------------------------------------------
-// Forward declaration
-//----------------------------------------------------------------------
 /// @cond Exclude from doxygen documentation
 namespace Poco {
 namespace XML {
 class Element;
 }
-}
+} // namespace Poco
 /// @endcond
 
 namespace Mantid {
@@ -24,10 +18,10 @@ class V3D;
 namespace Geometry {
 class CompAssembly;
 class Component;
-class Object;
+class CSGObject;
 class ObjComponent;
 class Instrument;
-}
+} // namespace Geometry
 
 namespace DataHandling {
 /** @class LoadParameterFile LoadParameterFile.h
@@ -68,10 +62,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 File change history is stored at: <https://github.com/mantidproject/mantid>
 */
-class DLLExport LoadParameterFile : public API::Algorithm {
+class DLLExport LoadParameterFile : public API::DistributedAlgorithm {
 public:
-  /// Default constructor
-  LoadParameterFile();
   /// Algorithm's name for identification overriding a virtual method
   const std::string name() const override { return "LoadParameterFile"; };
   /// Summary of algorithms purpose
@@ -84,6 +76,9 @@ public:
 
   /// Algorithm's version for identification overriding a virtual method
   int version() const override { return 1; };
+  const std::vector<std::string> seeAlso() const override {
+    return {"SaveParameterFile"};
+  }
   /// Algorithm's category for identification overriding a virtual method
   const std::string category() const override {
     return "DataHandling\\Instrument";

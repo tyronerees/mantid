@@ -1,10 +1,10 @@
 #ifndef MANTID_ALGORITHMS_REBIN2DTEST_H_
 #define MANTID_ALGORITHMS_REBIN2DTEST_H_
 
-#include <cxxtest/TestSuite.h>
+#include "MantidAPI/NumericAxis.h"
 #include "MantidAlgorithms/Rebin2D.h"
 #include "MantidTestHelpers/WorkspaceCreationHelper.h"
-#include "MantidAPI/NumericAxis.h"
+#include <cxxtest/TestSuite.h>
 
 #include "MantidKernel/Timer.h"
 
@@ -39,7 +39,7 @@ MatrixWorkspace_sptr makeInputWS(const bool distribution,
     }
   }
 
-  MatrixWorkspace_sptr ws = WorkspaceCreationHelper::Create2DWorkspaceBinned(
+  MatrixWorkspace_sptr ws = WorkspaceCreationHelper::create2DWorkspaceBinned(
       int(nhist), int(nbins), x0, deltax);
 
   // We need something other than a spectrum axis, call this one theta
@@ -77,10 +77,14 @@ MatrixWorkspace_sptr runAlgorithm(MatrixWorkspace_sptr inputWS,
   TS_ASSERT(outputWS);
   return outputWS;
 }
-}
+} // namespace
 
 class Rebin2DTest : public CxxTest::TestSuite {
 public:
+  // This means the constructor isn't called when running other tests
+  static Rebin2DTest *createSuite() { return new Rebin2DTest(); }
+  static void destroySuite(Rebin2DTest *suite) { delete suite; }
+
   void test_Init() {
     Rebin2D alg;
     TS_ASSERT_THROWS_NOTHING(alg.initialize())
@@ -126,19 +130,21 @@ public:
     TS_ASSERT_EQUALS(outputWS->getNumberHistograms(), 4);
     TS_ASSERT_EQUALS(outputWS->blocksize(), 6);
 
-    double errors[6] = {2.716615541, 2.50998008,  2.437211521,
-                        2.50998008,  2.716615541, 2.121320344};
+    double errors[6] = {3., 3., 3., 3., 3., 2.236067977};
 
     const double epsilon(1e-08);
     for (size_t i = 0; i < outputWS->getNumberHistograms(); ++i) {
-      for (size_t j = 0; j < outputWS->blocksize(); ++j) {
+      const auto &y = outputWS->y(i);
+      const auto &e = outputWS->e(i);
+      const size_t numBins = y.size();
+      for (size_t j = 0; j < numBins; ++j) {
         if (j < 5) {
-          TS_ASSERT_DELTA(outputWS->readY(i)[j], 9, epsilon);
+          TS_ASSERT_DELTA(y[j], 9, epsilon);
         } else {
           // Last bin
-          TS_ASSERT_DELTA(outputWS->readY(i)[j], 5, epsilon);
+          TS_ASSERT_DELTA(y[j], 5, epsilon);
         }
-        TS_ASSERT_DELTA(outputWS->readE(i)[j], errors[j], epsilon);
+        TS_ASSERT_DELTA(e[j], errors[j], epsilon);
       }
     }
   }
@@ -152,48 +158,49 @@ private:
     // Axis sizes
     TS_ASSERT_EQUALS(outputWS->getAxis(0)->length(), nxvalues);
     TS_ASSERT_EQUALS(outputWS->getAxis(1)->length(), nhist + 1);
-    TS_ASSERT_EQUALS(outputWS->readX(0).size(), nxvalues);
-    TS_ASSERT_EQUALS(outputWS->readY(0).size(), nxvalues - 1);
+    TS_ASSERT_EQUALS(outputWS->x(0).size(), nxvalues);
+    TS_ASSERT_EQUALS(outputWS->y(0).size(), nxvalues - 1);
 
     const double epsilon(1e-08);
     for (size_t i = 0; i < nhist; ++i) {
+      const auto &x = outputWS->x(i);
+      const auto &y = outputWS->y(i);
+      const auto &e = outputWS->e(i);
       for (size_t j = 0; j < nxvalues - 1; ++j) {
         std::ostringstream os;
         os << "Bin " << i << "," << j;
         if (onAxis1) {
           if (small_bins) {
 
-            TS_ASSERT_DELTA(outputWS->readX(i)[j],
-                            5.0 + 0.2 * static_cast<double>(j), epsilon);
+            TS_ASSERT_DELTA(x[j], 5.0 + 0.2 * static_cast<double>(j), epsilon);
           } else {
             if (dist) {
-              TS_ASSERT_DELTA(outputWS->readX(i)[j],
-                              5.0 + 4.0 * static_cast<double>(j), epsilon);
+              TS_ASSERT_DELTA(x[j], 5.0 + 4.0 * static_cast<double>(j),
+                              epsilon);
             } else {
-              TS_ASSERT_DELTA(outputWS->readX(i)[j],
-                              5.0 + 2.0 * static_cast<double>(j), epsilon);
+              TS_ASSERT_DELTA(x[j], 5.0 + 2.0 * static_cast<double>(j),
+                              epsilon);
             }
           }
         } else {
-          TS_ASSERT_DELTA(outputWS->readX(i)[j], 5.0 + static_cast<double>(j),
-                          epsilon);
+          TS_ASSERT_DELTA(x[j], 5.0 + static_cast<double>(j), epsilon);
         }
         if (dist) {
-          TS_ASSERT_DELTA(outputWS->readY(i)[j], 1.0, epsilon);
-          TS_ASSERT_DELTA(outputWS->readE(i)[j], 0.5, epsilon);
+          TS_ASSERT_DELTA(y[j], 1.0, epsilon);
+          TS_ASSERT_DELTA(e[j], 0.5, epsilon);
         } else {
-          TSM_ASSERT_DELTA(os.str(), outputWS->readY(i)[j], 4.0, epsilon);
-          TS_ASSERT_DELTA(outputWS->readE(i)[j], 2.0, epsilon);
+          TSM_ASSERT_DELTA(os.str(), y[j], 4.0, epsilon);
+          TS_ASSERT_DELTA(e[j], 2.0, epsilon);
         }
       }
       // Final X boundary
       if (small_bins) {
-        TS_ASSERT_DELTA(outputWS->readX(i)[nxvalues - 1], 6.0, epsilon);
+        TS_ASSERT_DELTA(x[nxvalues - 1], 6.0, epsilon);
       } else {
         if (dist) {
-          TS_ASSERT_DELTA(outputWS->readX(i)[nxvalues - 1], 25.0, epsilon);
+          TS_ASSERT_DELTA(x[nxvalues - 1], 25.0, epsilon);
         } else {
-          TS_ASSERT_DELTA(outputWS->readX(i)[nxvalues - 1], 15.0, epsilon);
+          TS_ASSERT_DELTA(x[nxvalues - 1], 15.0, epsilon);
         }
       }
     }
@@ -209,7 +216,16 @@ private:
 class Rebin2DTestPerformance : public CxxTest::TestSuite {
 
 public:
-  Rebin2DTestPerformance() { m_inputWS = makeInputWS(false, true); }
+  // This pair of boilerplate methods prevent the suite being created statically
+  // This means the constructor isn't called when running other tests
+  static Rebin2DTestPerformance *createSuite() {
+    return new Rebin2DTestPerformance();
+  }
+  static void destroySuite(Rebin2DTestPerformance *suite) { delete suite; }
+
+  Rebin2DTestPerformance() {
+    m_inputWS = makeInputWS(distribution, perf_test, small_bins);
+  }
 
   void test_On_Large_Workspace() {
     runAlgorithm(m_inputWS, "100,200,41000", "-0.5,2,499.5");
@@ -217,6 +233,10 @@ public:
 
 private:
   MatrixWorkspace_sptr m_inputWS;
+
+  const bool distribution = false;
+  const bool perf_test = true;
+  const bool small_bins = false;
 };
 
 #endif /* MANTID_ALGORITHMS_REBIN2DTEST_H_ */

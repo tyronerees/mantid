@@ -1,11 +1,11 @@
 #ifndef MANTID_GEOMETRY_SPACEGROUP_H_
 #define MANTID_GEOMETRY_SPACEGROUP_H_
 
-#include "MantidGeometry/DllConfig.h"
 #include "MantidGeometry/Crystal/Group.h"
 #include "MantidGeometry/Crystal/PointGroup.h"
 #include "MantidGeometry/Crystal/SymmetryOperation.h"
 #include "MantidGeometry/Crystal/UnitCell.h"
+#include "MantidGeometry/DllConfig.h"
 #include "MantidKernel/V3D.h"
 
 #include <set>
@@ -98,8 +98,11 @@ protected:
   std::string m_hmSymbol;
 };
 
-typedef boost::shared_ptr<SpaceGroup> SpaceGroup_sptr;
-typedef boost::shared_ptr<const SpaceGroup> SpaceGroup_const_sptr;
+MANTID_GEOMETRY_DLL std::ostream &operator<<(std::ostream &stream,
+                                             const SpaceGroup &self);
+
+using SpaceGroup_sptr = boost::shared_ptr<SpaceGroup>;
+using SpaceGroup_const_sptr = boost::shared_ptr<const SpaceGroup>;
 
 } // namespace Geometry
 } // namespace Mantid

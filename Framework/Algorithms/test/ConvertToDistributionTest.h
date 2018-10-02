@@ -1,11 +1,12 @@
 #ifndef CONVERTTODISTRIBUTIONTEST_H_
 #define CONVERTTODISTRIBUTIONTEST_H_
 
-#include <cxxtest/TestSuite.h>
 #include "MantidTestHelpers/WorkspaceCreationHelper.h"
+#include <cxxtest/TestSuite.h>
 
-#include "MantidAlgorithms/ConvertToDistribution.h"
 #include "MantidAPI/AnalysisDataService.h"
+#include "MantidAPI/WorkspaceGroup.h"
+#include "MantidAlgorithms/ConvertToDistribution.h"
 
 using namespace Mantid::API;
 using Mantid::Algorithms::ConvertToDistribution;
@@ -84,7 +85,7 @@ public:
 
 private:
   Workspace_sptr createTestWorkspace() {
-    return WorkspaceCreationHelper::Create2DWorkspaceBinned(1, 10, 0, 0.5);
+    return WorkspaceCreationHelper::create2DWorkspaceBinned(1, 10, 0, 0.5);
   }
 };
 

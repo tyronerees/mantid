@@ -4,6 +4,7 @@ from __future__ import (absolute_import, division, print_function)
 from mantid.simpleapi import *
 from mantid.kernel import *
 from mantid.api import *
+from six import PY3
 
 
 class SelectNexusFilesByMetadata(PythonAlgorithm):
@@ -19,7 +20,6 @@ class SelectNexusFilesByMetadata(PythonAlgorithm):
     def validateInputs(self):
         issues = dict()
         criteria = self.getPropertyValue('NexusCriteria')
-
         # at least one nexus entry should be specified
         dollars = criteria.count('$')
         if dollars % 2 != 0 or dollars < 2:
@@ -102,6 +102,8 @@ class SelectNexusFilesByMetadata(PythonAlgorithm):
 
                     if str(value.dtype).startswith('|S'):
                         # string value, need to quote for eval
+                        if PY3:
+                            value = value.decode()
                         toeval += '\"' + value + '\"'
                     else:
                         toeval += str(value)
@@ -120,6 +122,7 @@ class SelectNexusFilesByMetadata(PythonAlgorithm):
             # the nexus entry value itself can be spurious for a given file
             self.log().warning('Invalid value for the nexus entry %s in file %s. Skipping the file.' % (item, run))
             return False
+
 
 # Register algorithm with Mantid
 AlgorithmFactory.subscribe(SelectNexusFilesByMetadata)

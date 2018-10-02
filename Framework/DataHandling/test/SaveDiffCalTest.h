@@ -1,13 +1,14 @@
 #ifndef MANTID_DATAHANDLING_SAVEDIFFCALTEST_H_
 #define MANTID_DATAHANDLING_SAVEDIFFCALTEST_H_
 
-#include <cxxtest/TestSuite.h>
 #include <Poco/File.h>
+#include <cxxtest/TestSuite.h>
 
+#include "MantidAPI/SpectrumInfo.h"
 #include "MantidAPI/TableRow.h"
 #include "MantidDataHandling/SaveDiffCal.h"
-#include "MantidDataObjects/MaskWorkspace.h"
 #include "MantidDataObjects/GroupingWorkspace.h"
+#include "MantidDataObjects/MaskWorkspace.h"
 #include "MantidDataObjects/TableWorkspace.h"
 #include "MantidTestHelpers/ComponentCreationHelper.h"
 
@@ -20,7 +21,7 @@ using namespace Mantid::DataHandling;
 namespace {
 const size_t NUM_BANK = 5;
 const std::string FILENAME = "SaveDiffCalTest.h5";
-}
+} // namespace
 
 class SaveDiffCalTest : public CxxTest::TestSuite {
 public:
@@ -50,7 +51,8 @@ public:
 
   MaskWorkspace_sptr createMasking(Instrument_sptr instr) {
     MaskWorkspace_sptr maskWS = boost::make_shared<MaskWorkspace>(instr);
-    maskWS->maskWorkspaceIndex(0);
+    maskWS->getSpectrum(0).clearData();
+    maskWS->mutableSpectrumInfo().setMasked(0, true);
     return maskWS;
   }
 

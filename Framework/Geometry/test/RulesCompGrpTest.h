@@ -1,22 +1,22 @@
 #ifndef MANTID_RULESCOMPGRPTEST__
 #define MANTID_RULESCOMPGRPTEST__
-#include <cxxtest/TestSuite.h>
-#include <cmath>
-#include <vector>
 #include "MantidKernel/Logger.h"
 #include "MantidKernel/System.h"
 #include <cfloat>
+#include <cmath>
+#include <cxxtest/TestSuite.h>
+#include <vector>
 
-#include "boost/make_shared.hpp"
-#include "MantidKernel/make_unique.h"
-#include "MantidKernel/V3D.h"
-#include "MantidGeometry/Surfaces/Quadratic.h"
-#include "MantidGeometry/Objects/Object.h"
+#include "MantidGeometry/Objects/CSGObject.h"
 #include "MantidGeometry/Objects/Rules.h"
-#include "MantidGeometry/Surfaces/Plane.h"
-#include "MantidGeometry/Surfaces/Sphere.h"
-#include "MantidGeometry/Surfaces/Cylinder.h"
 #include "MantidGeometry/Surfaces/Cone.h"
+#include "MantidGeometry/Surfaces/Cylinder.h"
+#include "MantidGeometry/Surfaces/Plane.h"
+#include "MantidGeometry/Surfaces/Quadratic.h"
+#include "MantidGeometry/Surfaces/Sphere.h"
+#include "MantidKernel/V3D.h"
+#include "MantidKernel/make_unique.h"
+#include "boost/make_shared.hpp"
 
 using namespace Mantid;
 using namespace Geometry;
@@ -27,7 +27,7 @@ public:
   void testConstructor() {
     CompGrp A;
     TS_ASSERT_EQUALS(A.display(), "");
-    TS_ASSERT_EQUALS(A.leaf(0), (Rule *)0);
+    TS_ASSERT_EQUALS(A.leaf(0), (Rule *)nullptr);
     TS_ASSERT_EQUALS(A.isComplementary(), 1);
   }
 
@@ -93,7 +93,7 @@ public:
     auto ptruSC = uSC.get();
     A.setLeaf(std::move(uSC), 0);
     TS_ASSERT_EQUALS(A.leaf(0), ptruSC);
-    TS_ASSERT_EQUALS(A.findKey(0), (Rule *)0); // Always returns 0
+    TS_ASSERT_EQUALS(A.findKey(0), (Rule *)nullptr); // Always returns 0
   }
 
   void testIsValid() {

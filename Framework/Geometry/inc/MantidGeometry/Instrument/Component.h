@@ -1,37 +1,23 @@
 #ifndef MANTID_GEOMETRY_Component_H_
 #define MANTID_GEOMETRY_Component_H_
 
-//----------------------------------------------------------------------
-// Includes
-//----------------------------------------------------------------------
 #include "MantidGeometry/DllConfig.h"
 #include "MantidGeometry/Instrument/ParameterMap.h"
+#include "MantidKernel/Quat.h"
+#include "MantidKernel/V3D.h"
+
 #include <string>
-#include <sstream>
 #include <typeinfo>
 #include <vector>
-#include <Poco/SAX/Attributes.h>
-#ifdef _MSC_VER
-// Disable a flood of warnings from Poco about inheriting from
-// std::basic_istream
-// See
-// http://connect.microsoft.com/VisualStudio/feedback/details/733720/inheriting-from-std-fstream-produces-c4250-warning
-#pragma warning(push)
-#pragma warning(disable : 4250)
-#endif
 
-#include <Poco/XML/XMLWriter.h>
-
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
+namespace Poco {
+namespace XML {
+class Attributes;
+class XMLWriter;
+} // namespace XML
+} // namespace Poco
 
 namespace Mantid {
-namespace Kernel {
-class V3D;
-class Quat;
-}
-
 namespace Geometry {
 
 //----------------------------------------------------------------------
@@ -142,17 +128,17 @@ public:
   void rotate(double, const Kernel::V3D &) override;
 
   //! Get the position relative to the parent IComponent (absolute if no parent)
-  const Kernel::V3D getRelativePos() const override;
+  Kernel::V3D getRelativePos() const override;
 
   //! Get the position of the IComponent. Tree structure is traverse through the
   // parent chain
   Kernel::V3D getPos() const override;
 
   //! Get the relative Orientation
-  const Kernel::Quat &getRelativeRot() const override;
+  Kernel::Quat getRelativeRot() const override;
 
   //! Get the absolute orientation of the IComponent
-  const Kernel::Quat getRotation() const override;
+  Kernel::Quat getRotation() const override;
 
   //! Get the distance to another IComponent
   double getDistance(const IComponent &) const override;
@@ -175,38 +161,38 @@ public:
                     bool recursive = true) const override;
 
   /**
-  * Get a parameter defined as a double
-  * @param pname :: The name of the parameter
-  * @param recursive :: If true the search will walk up through the parent
-  * components
-  * @returns A list of values
-  */
+   * Get a parameter defined as a double
+   * @param pname :: The name of the parameter
+   * @param recursive :: If true the search will walk up through the parent
+   * components
+   * @returns A list of values
+   */
   std::vector<double> getNumberParameter(const std::string &pname,
                                          bool recursive = true) const override {
     return getParameter<double>(pname, recursive);
   }
 
   /**
-  * Get a parameter defined as an int
-  * @param pname :: The name of the parameter
-  * @param recursive :: If true the search will walk up through the parent
-  * components
-  * @returns A list of values
-  */
+   * Get a parameter defined as an int
+   * @param pname :: The name of the parameter
+   * @param recursive :: If true the search will walk up through the parent
+   * components
+   * @returns A list of values
+   */
   std::vector<int> getIntParameter(const std::string &pname,
                                    bool recursive = true) const override {
     return getParameter<int>(pname, recursive);
   }
 
   /**
-  * Get a parameter's type -- this is HACK until Python can export property
-  * regardless of the property type
-  * @param pname :: The name of the parameter
-  * @param recursive :: If true the search will walk up through the parent
-  * components
-  * @returns std::string describing parameter type or empty string if the type
-  * is not found
-  */
+   * Get a parameter's type -- this is HACK until Python can export property
+   * regardless of the property type
+   * @param pname :: The name of the parameter
+   * @param recursive :: If true the search will walk up through the parent
+   * components
+   * @returns std::string describing parameter type or empty string if the type
+   * is not found
+   */
   std::string getParameterType(const std::string &pname,
                                bool recursive = true) const override {
     Parameter_sptr param = Parameter_sptr(); // Null shared pointer
@@ -236,24 +222,24 @@ public:
   /**Set components description. Works for parameterized components only */
   void setDescription(const std::string &descr);
   /**
-  * Get a parameter defined as a bool
-  * @param pname :: The name of the parameter
-  * @param recursive :: If true the search will walk up through the parent
-  * components
-  * @returns A list of values
-  */
+   * Get a parameter defined as a bool
+   * @param pname :: The name of the parameter
+   * @param recursive :: If true the search will walk up through the parent
+   * components
+   * @returns A list of values
+   */
   std::vector<bool> getBoolParameter(const std::string &pname,
                                      bool recursive = true) const override {
     return getParameter<bool>(pname, recursive);
   }
 
   /**
-  * Get a parameter defined as a Kernel::V3D
-  * @param pname :: The name of the parameter
-  * @param recursive :: If true the search will walk up through the parent
-  * components
-  * @returns A list of values
-  */
+   * Get a parameter defined as a Kernel::V3D
+   * @param pname :: The name of the parameter
+   * @param recursive :: If true the search will walk up through the parent
+   * components
+   * @returns A list of values
+   */
   std::vector<Kernel::V3D>
   getPositionParameter(const std::string &pname,
                        bool recursive = true) const override {
@@ -261,12 +247,12 @@ public:
   }
 
   /**
-  * Get a parameter defined as a Kernel::Quaternion
-  * @param pname :: The name of the parameter
-  * @param recursive :: If true the search will walk up through the parent
-  * components
-  * @returns A list of values
-  */
+   * Get a parameter defined as a Kernel::Quaternion
+   * @param pname :: The name of the parameter
+   * @param recursive :: If true the search will walk up through the parent
+   * components
+   * @returns A list of values
+   */
   std::vector<Kernel::Quat>
   getRotationParameter(const std::string &pname,
                        bool recursive = true) const override {
@@ -274,12 +260,12 @@ public:
   }
 
   /**
-  * Get a parameter defined as a string
-  * @param pname :: The name of the parameter
-  * @param recursive :: If true the search will walk up through the parent
-  * components
-  * @returns A list of values
-  */
+   * Get a parameter defined as a string
+   * @param pname :: The name of the parameter
+   * @param recursive :: If true the search will walk up through the parent
+   * components
+   * @returns A list of values
+   */
   std::vector<std::string>
   getStringParameter(const std::string &pname,
                      bool recursive = true) const override {
@@ -313,6 +299,11 @@ public:
 
   bool isParametrized() const override;
 
+  virtual size_t
+  registerContents(class ComponentVisitor &componentVisitor) const override;
+  bool hasComponentInfo() const;
+  size_t index() const;
+
 protected:
   /// Parent component in the tree
   const IComponent *m_parent;
@@ -332,13 +323,13 @@ protected:
   Kernel::Quat m_rot;
 
   /**
-  *  Get a parameter from the parameter map
-  * @param p_name :: The name of the parameter
-  * @param recursive :: If true then the lookup will walk up the tree if this
-  * component does not have parameter
-  * @return A list of size 0 or 1 containing the parameter value or
-  * nothing if it does not exist
-  */
+   *  Get a parameter from the parameter map
+   * @param p_name :: The name of the parameter
+   * @param recursive :: If true then the lookup will walk up the tree if this
+   * component does not have parameter
+   * @return A list of size 0 or 1 containing the parameter value or
+   * nothing if it does not exist
+   */
   template <class TYPE>
   std::vector<TYPE> getParameter(const std::string &p_name,
                                  bool recursive) const {

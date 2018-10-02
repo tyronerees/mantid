@@ -2,6 +2,8 @@
 """
     Main window for reduction UIs
 """
+from __future__ import (absolute_import, division, print_function)
+import six
 import sys
 import os
 import traceback
@@ -12,14 +14,15 @@ try:
     import mantidplot # noqa
     IS_IN_MANTIDPLOT = True
     from mantid.kernel import ConfigService
-    from mantid.api import AlgorithmFactory
-    CLUSTER_ENABLED = "SubmitRemoteJob" in AlgorithmFactory.getRegisteredAlgorithms(True)
 except:
     import sip
     sip.setapi('QString',2)
     sip.setapi('QVariant',2)
 
 from PyQt4 import QtGui, QtCore # noqa
+
+if six.PY3:
+    unicode = str
 
 REDUCTION_WARNING = False
 WARNING_MESSAGE = ""
@@ -40,11 +43,10 @@ if IS_IN_MANTIDPLOT:
         WARNING_MESSAGE = "Please contact the Mantid team with the following message:\n\n\n"
         WARNING_MESSAGE += unicode(traceback.format_exc())
 
-from reduction_gui.instruments.instrument_factory import instrument_factory, INSTRUMENT_DICT # noqa
-from reduction_gui.settings.application_settings import GeneralSettings # noqa
-import ui.ui_reduction_main # noqa
-import ui.ui_instrument_dialog # noqa
-import ui.ui_cluster_details_dialog # noqa
+from reduction_gui.instruments.instrument_factory import instrument_factory, INSTRUMENT_DICT  # noqa
+from reduction_gui.settings.application_settings import GeneralSettings  # noqa
+import ui.ui_reduction_main  # noqa
+import ui.ui_instrument_dialog  # noqa
 
 
 class ReductionGUI(QtGui.QMainWindow, ui.ui_reduction_main.Ui_SANSReduction):
@@ -106,7 +108,6 @@ class ReductionGUI(QtGui.QMainWindow, ui.ui_reduction_main.Ui_SANSReduction):
         # Event connections
         if not IS_IN_MANTIDPLOT:
             self.reduce_button.hide()
-        self.cluster_button.hide()
         self.connect(self.export_button, QtCore.SIGNAL("clicked()"), self._export)
         self.connect(self.reduce_button, QtCore.SIGNAL("clicked()"), self.reduce_clicked)
         self.connect(self.save_button, QtCore.SIGNAL("clicked()"), self._save)
@@ -177,21 +178,10 @@ class ReductionGUI(QtGui.QMainWindow, ui.ui_reduction_main.Ui_SANSReduction):
             else:
                 self.interface_chk.hide()
 
-            # Show the parallel reduction button if enabled
-            if self._interface.is_cluster_enabled() and IS_IN_MANTIDPLOT \
-                    and CLUSTER_ENABLED:
-                config = ConfigService.Instance()
-                if config.hasProperty("cluster.submission") \
-                        and config.getString("cluster.submission").lower()=='on':
-                    self.cluster_button.show()
-                    self.connect(self.cluster_button, QtCore.SIGNAL("clicked()"), self.cluster_clicked)
-            else:
-                self.cluster_button.hide()
-
             if load_last:
                 self._interface.load_last_reduction()
         else:
-            print "Could not generate an interface for instrument %s" % self._instrument
+            print("Could not generate an interface for instrument %s" % self._instrument)
             self.close()
 
         return True
@@ -261,14 +251,6 @@ class ReductionGUI(QtGui.QMainWindow, ui.ui_reduction_main.Ui_SANSReduction):
         self.tools_menu.clear()
         self.tools_menu.addAction(instrAction)
         self.tools_menu.addAction(debugAction)
-
-        # Cluster submission details
-        if IS_IN_MANTIDPLOT and CLUSTER_ENABLED:
-            jobAction = QtGui.QAction("Remote submission details", self)
-            jobAction.setShortcut("Ctrl+R")
-            jobAction.setStatusTip("Set the cluster information for remote job submission")
-            self.connect(jobAction, QtCore.SIGNAL("triggered()"), self._cluster_details_dialog)
-            self.tools_menu.addAction(jobAction)
 
         recent_files = []
         for fname in self._recent_files:
@@ -342,40 +324,6 @@ class ReductionGUI(QtGui.QMainWindow, ui.ui_reduction_main.Ui_SANSReduction):
             self.close()
             return False
 
-    def _cluster_details_dialog(self):
-        """
-            Show dialog to get cluster submission details
-        """
-        class ClusterDialog(QtGui.QDialog, ui.ui_cluster_details_dialog.Ui_Dialog):
-            def __init__(self, compute_resources=None):
-                QtGui.QDialog.__init__(self)
-                self.setupUi(self)
-                self.resource_combo.clear()
-                for res in compute_resources:
-                    self.resource_combo.addItem(QtGui.QApplication.translate("Dialog", res, None, QtGui.QApplication.UnicodeUTF8))
-
-        # Fill out the defaults
-        dialog = ClusterDialog(self._compute_resources)
-        if self.general_settings.cluster_user is not None:
-            dialog.username_edit.setText(str(self.general_settings.cluster_user))
-            dialog.pass_edit.setText(str(self.general_settings.cluster_pass))
-
-        dialog.nodes_box.setValue(int(self._number_of_nodes))
-        dialog.cores_box.setValue(int(self._cores_per_node))
-        for i in range(dialog.resource_combo.count()):
-            if dialog.resource_combo.itemText(i)==self.general_settings.compute_resource:
-                dialog.resource_combo.setCurrentIndex(i)
-                break
-
-        dialog.exec_()
-        if dialog.result()==1:
-            self.general_settings.cluster_user = str(dialog.username_edit.text())
-            self.general_settings.cluster_pass = str(dialog.pass_edit.text())
-            self._cluster_details_set = True
-            self._number_of_nodes = int(dialog.nodes_box.value())
-            self._cores_per_node = int(dialog.cores_box.value())
-            self.general_settings.compute_resource = dialog.resource_combo.currentText()
-
     def _clear_and_close(self):
         """
             Clear all QSettings parameters
@@ -393,7 +341,8 @@ class ReductionGUI(QtGui.QMainWindow, ui.ui_reduction_main.Ui_SANSReduction):
         """
         if False:
             reply = QtGui.QMessageBox.question(self, 'Message',
-                                               "Are you sure you want to quit this application?", QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+                                               "Are you sure you want to quit this application?",
+                                               QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
 
             if reply == QtGui.QMessageBox.Yes:
                 event.accept()
@@ -481,7 +430,7 @@ class ReductionGUI(QtGui.QMainWindow, ui.ui_reduction_main.Ui_SANSReduction):
                   + file_path+"\n\n" \
                   + "Please make sure it has been produced by this application."
             QtGui.QMessageBox.warning(self, "Error loading reduction parameter file", msg)
-            print sys.exc_value
+            print(sys.exc_info()[1])
             return
 
         if not found_instrument == self._instrument:
@@ -545,7 +494,7 @@ class ReductionGUI(QtGui.QMainWindow, ui.ui_reduction_main.Ui_SANSReduction):
                 self._set_window_title()
             except:
                 #TODO: put this in a log window, and in a file
-                print sys.exc_value
+                print(sys.exc_info()[1])
                 self.statusBar().showMessage("Failed to save %s" % self._filename)
 
     def _save_as(self):
@@ -614,6 +563,7 @@ def start(argv):
     reducer.setup_layout(load_last=True)
     reducer.show()
     app.exec_()
+
 
 if __name__ == '__main__':
     start(argv=sys.argv)

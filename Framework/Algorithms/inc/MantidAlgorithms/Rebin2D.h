@@ -4,12 +4,11 @@
 //------------------------------------------------------------------------------
 // Includes
 //------------------------------------------------------------------------------
-#include "MantidKernel/System.h"
 #include "MantidAPI/Algorithm.h"
 #include "MantidDataObjects/RebinnedOutput.h"
+#include "MantidKernel/System.h"
 
 namespace Mantid {
-
 namespace Algorithms {
 
 /**
@@ -49,6 +48,9 @@ public:
 
   /// Algorithm's version for identification
   int version() const override { return 1; }
+  const std::vector<std::string> seeAlso() const override {
+    return {"Rebin", "SofQW"};
+  }
   /// Algorithm's category for identification
   const std::string category() const override { return "Transforms\\Rebin"; }
 
@@ -63,8 +65,9 @@ private:
   void exec() override;
   /// Setup the output workspace
   API::MatrixWorkspace_sptr
-  createOutputWorkspace(API::MatrixWorkspace_const_sptr parent,
-                        MantidVec &newXBins, MantidVec &newYBins,
+  createOutputWorkspace(const API::MatrixWorkspace_const_sptr &parent,
+                        HistogramData::BinEdges &newXBins,
+                        HistogramData::BinEdges &newYBins,
                         const bool useFractionalArea) const;
 };
 

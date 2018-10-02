@@ -21,7 +21,14 @@ namespace FuncMinimisers {
 namespace {
 // Get a reference to the logger
 Kernel::Logger g_log("LevenbergMarquardtMinimizer");
+
+bool cannotReachSpecifiedToleranceInF(int errorCode) {
+  return errorCode == GSL_ETOLF;
 }
+bool cannotReachSpecifiedToleranceInX(int errorCode) {
+  return errorCode == GSL_ETOLX;
+}
+} // namespace
 
 // clang-format off
 DECLARE_FUNCMINIMIZER(LevenbergMarquardtMinimizer, Levenberg-Marquardt)
@@ -30,12 +37,14 @@ DECLARE_FUNCMINIMIZER(LevenbergMarquardtMinimizer, Levenberg-Marquardt)
 LevenbergMarquardtMinimizer::LevenbergMarquardtMinimizer()
     : m_data(nullptr), gslContainer(), m_gslSolver(nullptr), m_function(),
       m_absError(1e-4), m_relError(1e-4) {
-  declareProperty("AbsError", m_absError, "Absolute error allowed for "
-                                          "parameters - a stopping parameter "
-                                          "in success.");
-  declareProperty("RelError", m_relError, "Relative error allowed for "
-                                          "parameters - a stopping parameter "
-                                          "in success.");
+  declareProperty("AbsError", m_absError,
+                  "Absolute error allowed for "
+                  "parameters - a stopping parameter "
+                  "in success.");
+  declareProperty("RelError", m_relError,
+                  "Relative error allowed for "
+                  "parameters - a stopping parameter "
+                  "in success.");
 }
 
 void LevenbergMarquardtMinimizer::initialize(
@@ -114,12 +123,15 @@ bool LevenbergMarquardtMinimizer::iterate(size_t) {
 
   if (retVal && retVal != GSL_CONTINUE) {
     m_errorString = gsl_strerror(retVal);
+    if (cannotReachSpecifiedToleranceInF(retVal)) {
+      m_errorString = "Changes in function value are too small";
+    } else if (cannotReachSpecifiedToleranceInX(retVal)) {
+      m_errorString = "Changes in parameter value are too small";
+    }
     return false;
   }
 
   retVal = hasConverged();
-  m_errorString = gsl_strerror(retVal);
-
   return retVal != GSL_SUCCESS;
 }
 

@@ -1,19 +1,18 @@
 #ifndef MANTID_SINQ_POLDISPECTRUMDOMAINFUNCTION_H_
 #define MANTID_SINQ_POLDISPECTRUMDOMAINFUNCTION_H_
 
-#include "MantidSINQ/DllConfig.h"
+#include "MantidAPI/FunctionDomain1D.h"
 #include "MantidAPI/FunctionParameterDecorator.h"
 #include "MantidAPI/IFunction1DSpectrum.h"
-#include "MantidAPI/FunctionDomain1D.h"
-#include <string>
-
 #include "MantidAPI/IPeakFunction.h"
+#include "MantidDataObjects/Workspace2D.h"
+#include "MantidSINQ/DllConfig.h"
 #include "MantidSINQ/PoldiUtilities/IPoldiFunction1D.h"
+#include "MantidSINQ/PoldiUtilities/PoldiConversions.h"
 #include "MantidSINQ/PoldiUtilities/PoldiInstrumentAdapter.h"
 #include "MantidSINQ/PoldiUtilities/PoldiTimeTransformer.h"
 
-#include "MantidDataObjects/Workspace2D.h"
-#include "MantidSINQ/PoldiUtilities/PoldiConversions.h"
+#include <string>
 
 namespace Mantid {
 namespace Poldi {
@@ -98,7 +97,7 @@ struct MANTID_SINQ_DLL Poldi2DHelper {
   int minTOFN;
 };
 
-typedef boost::shared_ptr<Poldi2DHelper> Poldi2DHelper_sptr;
+using Poldi2DHelper_sptr = boost::shared_ptr<Poldi2DHelper>;
 
 class WrapAroundJacobian : public API::Jacobian {
 public:
@@ -112,8 +111,9 @@ public:
 
   void set(size_t iY, size_t iP, double value) override {
     size_t realY = (m_offset + iY) % m_domainSize;
-    m_jacobian.set(realY, iP, m_jacobian.get(realY, iP) +
-                                  value * m_factors[m_factorOffset + iY]);
+    m_jacobian.set(realY, iP,
+                   m_jacobian.get(realY, iP) +
+                       value * m_factors[m_factorOffset + iY]);
   }
 
   void zero() override { m_jacobian.zero(); }

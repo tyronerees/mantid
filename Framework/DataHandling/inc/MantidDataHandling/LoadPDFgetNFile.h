@@ -1,9 +1,9 @@
 #ifndef MANTID_DATAHANDLING_LOADPDFGETNFILE_H_
 #define MANTID_DATAHANDLING_LOADPDFGETNFILE_H_
 
-#include "MantidKernel/System.h"
 #include "MantidAPI/IFileLoader.h"
 #include "MantidDataObjects/Workspace2D.h"
+#include "MantidKernel/System.h"
 
 namespace Mantid {
 namespace DataHandling {
@@ -43,6 +43,9 @@ public:
 
   /// Algorithm's version for identification overriding a virtual method
   int version() const override { return 1; }
+  const std::vector<std::string> seeAlso() const override {
+    return {"LoadAscii"};
+  }
 
   /// Algorithm's category for identification overriding a virtual method
   const std::string category() const override {
@@ -83,6 +86,8 @@ private:
 
   /// Set X and Y axis unit and lebel
   void setUnit(DataObjects::Workspace2D_sptr ws);
+
+  void checkSameSize(const std::vector<size_t> &numptsvec, size_t numsets);
 };
 
 } // namespace DataHandling

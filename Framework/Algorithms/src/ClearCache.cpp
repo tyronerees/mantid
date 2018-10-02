@@ -1,11 +1,11 @@
 #include "MantidAlgorithms/ClearCache.h"
-#include "MantidAPI/AnalysisDataService.h"
 #include "MantidAPI/AlgorithmManager.h"
+#include "MantidAPI/AnalysisDataService.h"
 #include "MantidAPI/InstrumentDataService.h"
 #include "MantidKernel/UsageService.h"
-#include <Poco/Path.h>
 #include <Poco/File.h>
 #include <Poco/Glob.h>
+#include <Poco/Path.h>
 
 namespace Mantid {
 namespace Algorithms {
@@ -136,7 +136,7 @@ int ClearCache::deleteFiles(const std::string &path,
   std::set<std::string> files;
   Poco::Glob::glob(pathPattern, files, Poco::Glob::GLOB_CASELESS);
 
-  for (auto filepath : files) {
+  for (const auto &filepath : files) {
     Poco::File file(filepath);
     g_log.debug("Deleting file " + filepath);
     try {

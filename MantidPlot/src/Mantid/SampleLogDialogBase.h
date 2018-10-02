@@ -4,9 +4,11 @@
 //----------------------------------
 // Includes
 //----------------------------------
+#include "MantidAPI/ExperimentInfo.h"
+#include "MantidAPI/LogFilterGenerator.h"
+#include "MantidKernel/TimeSeriesProperty.h"
 #include <QDialog>
-#include <MantidAPI/ExperimentInfo.h>
-
+#include <memory>
 //----------------------------------
 // Forward declarations
 //----------------------------------
@@ -73,7 +75,10 @@ protected slots:
 
   /// Show the stats of the selected log
   virtual void showLogStatistics();
-  virtual void showLogStatisticsOfItem(QTreeWidgetItem *item);
+  virtual void showLogStatisticsOfItem(
+      QTreeWidgetItem *item,
+      const Mantid::API::LogFilterGenerator::FilterType filter =
+          Mantid::API::LogFilterGenerator::FilterType::None);
 
   /// Context menu popup
   virtual void popupMenu(const QPoint &pos);
@@ -86,7 +91,7 @@ protected slots:
 protected:
   /// This function is not virtual because it is called from derived classes
   /// without overriding
-  /// This function initalises everything in the tree widget
+  /// This function initialises everything in the tree widget
   void init();
 
   /// Sets the dialog's window title
@@ -103,6 +108,11 @@ protected:
 
   /// Sets up the QTreeWidget's connections for functionality
   void setUpTreeWidgetConnections();
+
+  /// Which type of filtering is selected - in base class case, none
+  virtual Mantid::API::LogFilterGenerator::FilterType getFilterType() const {
+    return Mantid::API::LogFilterGenerator::FilterType::None;
+  }
 
   /// A tree widget
   QTreeWidget *m_tree;
@@ -123,7 +133,7 @@ protected:
   QPushButton *buttonPlot, *buttonClose;
 
   /// Number of statistic values
-  static const std::size_t NUM_STATS = 7;
+  static const std::size_t NUM_STATS = 8;
 
   /// Testboxes with stats data
   QLineEdit *statValues[NUM_STATS];
@@ -134,13 +144,30 @@ protected:
   /// these values are used to specify the format of the log file, all of which
   /// are stored as strings
   enum logType {
-    string,        ///< indicates the log is a string, no other known formating
+    string,        ///< indicates the log is a string, no other known formatting
     numTSeries,    ///< for time series properties that contain numbers
     stringTSeries, ///< for logs that are string time series properties
     numeric,       ///< for logs that are single numeric values (int or double)
     numericArray   ///< for logs that are an array of numeric values (int or
                    /// double)
   };
+};
+
+/// Object that applies a filter to a property for as long as it is in scope.
+/// When scope ends, filter is cleared.
+template <typename T> class ScopedFilter {
+public:
+  ScopedFilter(Mantid::Kernel::TimeSeriesProperty<T> *prop,
+               const std::unique_ptr<Mantid::Kernel::LogFilter> &logFilter)
+      : m_prop(prop) {
+    if (logFilter && logFilter->filter()) {
+      m_prop->filterWith(logFilter->filter());
+    }
+  }
+  ~ScopedFilter() { m_prop->clearFilter(); }
+
+private:
+  Mantid::Kernel::TimeSeriesProperty<T> *m_prop;
 };
 
 #endif // SAMPLELOGDIALOGBASE_H_

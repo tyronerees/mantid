@@ -1,8 +1,8 @@
 #include "MantidDataObjects/EventWorkspaceHelpers.h"
-#include "MantidDataObjects/Workspace2D.h"
 #include "MantidAPI/AnalysisDataService.h"
-#include "MantidKernel/Exception.h"
 #include "MantidAPI/WorkspaceFactory.h"
+#include "MantidDataObjects/Workspace2D.h"
+#include "MantidKernel/Exception.h"
 
 using namespace Mantid::API;
 using namespace Mantid::DataObjects;
@@ -28,7 +28,7 @@ EventWorkspaceHelpers::convertEventTo2D(MatrixWorkspace_sptr inputMatrixW) {
   MatrixWorkspace_sptr outputW;
   outputW = WorkspaceFactory::Instance().create(
       "Workspace2D", inputW->getNumberHistograms(), numBins + 1, numBins);
-  WorkspaceFactory::Instance().initializeFromParent(inputW, outputW, false);
+  WorkspaceFactory::Instance().initializeFromParent(*inputW, *outputW, false);
 
   // Now let's set all the X bins and values
   for (size_t i = 0; i < inputW->getNumberHistograms(); i++) {
@@ -49,5 +49,5 @@ EventWorkspaceHelpers::convertEventTo2D(MatrixWorkspace_sptr inputMatrixW) {
   return outputW;
 }
 
-} // namespace Mantid
 } // namespace DataObjects
+} // namespace Mantid

@@ -1,12 +1,12 @@
 #ifndef MANTID_MDALGORITHMS_CONVERTCWSDEXPTOMOMENTUM_H_
 #define MANTID_MDALGORITHMS_CONVERTCWSDEXPTOMOMENTUM_H_
 
-#include "MantidKernel/System.h"
 #include "MantidAPI/Algorithm.h"
-#include "MantidAPI/ITableWorkspace.h"
 #include "MantidAPI/IMDEventWorkspace.h"
+#include "MantidAPI/ITableWorkspace.h"
 #include "MantidDataObjects/MDEventInserter.h"
 #include "MantidKernel/Matrix.h"
+#include "MantidKernel/System.h"
 
 namespace Mantid {
 namespace MDAlgorithms {
@@ -96,6 +96,12 @@ private:
   API::ITableWorkspace_sptr m_detectorListTableWS;
   API::IMDEventWorkspace_sptr m_outputWS;
   Geometry::Instrument_sptr m_virtualInstrument;
+
+  /// Shifts in detector position set from user (calibration): all in the unit
+  /// as meter
+  double m_detSampleDistanceShift;
+  double m_detXShift;
+  double m_detYShift;
 
   Kernel::V3D m_samplePos;
   Kernel::V3D m_sourcePos;

@@ -1,18 +1,19 @@
 #ifndef TOFSANSRESOLUTIONBYPIXELTEST_H_
 #define TOFSANSRESOLUTIONBYPIXELTEST_H_
 
-#include <cxxtest/TestSuite.h>
-#include "MantidAlgorithms/TOFSANSResolutionByPixel.h"
 #include "MantidAPI/AnalysisDataService.h"
 #include "MantidAPI/Axis.h"
 #include "MantidAPI/DataProcessorAlgorithm.h"
 #include "MantidAPI/IAlgorithm.h"
 #include "MantidAPI/Workspace.h"
+#include "MantidAlgorithms/TOFSANSResolutionByPixel.h"
 #include "MantidDataObjects/Workspace2D.h"
-#include "MantidTestHelpers/WorkspaceCreationHelper.h"
-#include "MantidGeometry/Objects/ShapeFactory.h"
 #include "MantidGeometry/Instrument.h"
+#include "MantidGeometry/Objects/CSGObject.h"
+#include "MantidGeometry/Objects/ShapeFactory.h"
 #include "MantidKernel/TimeSeriesProperty.h"
+#include "MantidTestHelpers/WorkspaceCreationHelper.h"
+#include <cxxtest/TestSuite.h>
 
 #include "boost/shared_ptr.hpp"
 #include <stdexcept>
@@ -58,12 +59,12 @@ createTestInstrument(const Mantid::detid_t id,
   inst->markAsSamplePos(sampleHolder);
 
   // Just give it a single detector
-  Detector *det0(NULL);
+  Detector *det0(nullptr);
   if (!detShapeXML.empty()) {
     auto shape = ShapeFactory().createShape(detShapeXML);
-    det0 = new Detector("det0", id, shape, NULL);
+    det0 = new Detector("det0", id, shape, nullptr);
   } else {
-    det0 = new Detector("det0", id, NULL);
+    det0 = new Detector("det0", id, nullptr);
   }
   det0->setPos(detPos);
   inst->add(det0);
@@ -116,7 +117,7 @@ void addSampleLog(Mantid::API::MatrixWorkspace_sptr workspace,
                   unsigned int length) {
   auto timeSeries =
       new Mantid::Kernel::TimeSeriesProperty<double>(sampleLogName);
-  Mantid::Kernel::DateAndTime startTime("2010-01-01T00:10:00");
+  Mantid::Types::Core::DateAndTime startTime("2010-01-01T00:10:00");
   timeSeries->setUnits("mm");
   for (unsigned int i = 0; i < length; i++) {
     timeSeries->addValue(startTime + static_cast<double>(i), value);
@@ -137,10 +138,10 @@ Mantid::API::MatrixWorkspace_sptr createTestWorkspace(
     std::vector<double> guideLogDetails = std::vector<double>()) {
   Mantid::API::MatrixWorkspace_sptr ws2d;
   if (isModerator) {
-    ws2d = WorkspaceCreationHelper::Create2DWorkspaceFromFunction(
+    ws2d = WorkspaceCreationHelper::create2DWorkspaceFromFunction(
         twos(), static_cast<int>(nhist), x0, x1, dx, true);
   } else {
-    ws2d = WorkspaceCreationHelper::Create2DWorkspaceFromFunction(
+    ws2d = WorkspaceCreationHelper::create2DWorkspaceFromFunction(
         ones(), static_cast<int>(nhist), x0, x1, dx, true);
   }
 
@@ -180,7 +181,7 @@ Mantid::API::MatrixWorkspace_sptr createTestWorkspace(
   }
   return ws2d;
 }
-}
+} // namespace
 
 class TOFSANSResolutionByPixelTest : public CxxTest::TestSuite {
 public:
@@ -236,8 +237,8 @@ public:
         result = boost::dynamic_pointer_cast<Mantid::API::MatrixWorkspace>(
             Mantid::API::AnalysisDataService::Instance().retrieve(outputWS)));
 
-    const Mantid::MantidVec &xOUT = result->dataX(0);
-    const Mantid::MantidVec &xIN = testWorkspace->dataX(0);
+    const auto &xOUT = result->x(0);
+    const auto &xIN = testWorkspace->x(0);
 
     TSM_ASSERT_EQUALS("Output should have the same binning as the input.",
                       xOUT.size(), xIN.size());

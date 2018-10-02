@@ -1,4 +1,5 @@
-﻿#pylint: disable=invalid-name
+#pylint: disable=invalid-name
+from __future__ import (absolute_import, division, print_function)
 from mantid.simpleapi import *
 
 
@@ -176,7 +177,7 @@ class DarkRunNormalizationExtractor(object):
         @param prop: the property from which we extract the frames
         @returns the number of good frames
         '''
-        # Since we are dealing with a cummulative sample log, we can extract
+        # Since we are dealing with a cumulative sample log, we can extract
         # the total number of good frames by looking at the last frame
         frames = prop.value
         return frames[-1]

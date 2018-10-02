@@ -58,6 +58,7 @@ public:
 
   /// Algorithm's version
   int version() const override { return (1); }
+  const std::vector<std::string> seeAlso() const override { return {"Q1D"}; }
   /// Algorithm's category for identification
   const std::string category() const override { return "SANS"; }
 
@@ -67,8 +68,10 @@ private:
   /// Execution code
   void exec() override;
 
+  std::vector<double> logBinning(double min, double max, int num);
   API::MatrixWorkspace_sptr
   setUpOutputWorkspace(API::MatrixWorkspace_const_sptr inputWorkspace);
+  double getQminFromWs(const API::MatrixWorkspace &inputWorkspace);
 };
 
 } // namespace Algorithms

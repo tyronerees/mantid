@@ -3,10 +3,12 @@
 
 #include "MantidKernel/DataService.h"
 #include "MantidKernel/MultiThreaded.h"
-#include <cxxtest/TestSuite.h>
 #include <Poco/NObserver.h>
 #include <boost/make_shared.hpp>
+#include <cxxtest/TestSuite.h>
+
 #include <mutex>
+#include <sstream>
 
 using namespace Mantid;
 using namespace Mantid::Kernel;
@@ -76,15 +78,17 @@ public:
     svc.notificationCenter.removeObserver(observer);
   }
 
-  void handlePreDeleteNotification(const Poco::AutoPtr<
-      FakeDataService::PreDeleteNotification> &notification) {
+  void handlePreDeleteNotification(
+      const Poco::AutoPtr<FakeDataService::PreDeleteNotification>
+          &notification) {
     TS_ASSERT_EQUALS(notification->objectName(), "one");
     TS_ASSERT_EQUALS(*notification->object(), 1);
     ++notificationFlag;
   }
 
-  void handlePostDeleteNotification(const Poco::AutoPtr<
-      FakeDataService::PostDeleteNotification> &notification) {
+  void handlePostDeleteNotification(
+      const Poco::AutoPtr<FakeDataService::PostDeleteNotification>
+          &notification) {
     TS_ASSERT_EQUALS(notification->objectName(), "one");
     ++notificationFlag;
   }
@@ -129,8 +133,8 @@ public:
                      std::runtime_error);
   }
 
-  void handleAfterReplaceNotification(
-      const Poco::AutoPtr<FakeDataService::AfterReplaceNotification> &) {
+  void handleBeforeReplaceNotification(
+      const Poco::AutoPtr<FakeDataService::BeforeReplaceNotification> &) {
     ++notificationFlag;
   }
 
@@ -140,8 +144,8 @@ public:
   }
 
   void test_rename() {
-    Poco::NObserver<DataServiceTest, FakeDataService::AfterReplaceNotification>
-        observer(*this, &DataServiceTest::handleAfterReplaceNotification);
+    Poco::NObserver<DataServiceTest, FakeDataService::BeforeReplaceNotification>
+        observer(*this, &DataServiceTest::handleBeforeReplaceNotification);
     svc.notificationCenter.addObserver(observer);
     Poco::NObserver<DataServiceTest, FakeDataService::RenameNotification>
         observer2(*this, &DataServiceTest::handleRenameNotification);
@@ -157,7 +161,9 @@ public:
                               svc.rename("One", "One"));
     TSM_ASSERT_THROWS_NOTHING("Should be just a warning if object not there",
                               svc.rename("NotThere", "NewName"));
-
+    // We aren't doing anything so no notifications should post
+    TSM_ASSERT_EQUALS("No notifications should have been posted",
+                      notificationFlag, 0);
     svc.rename(
         "one",
         "anotherOne"); // Note: Rename is case-insensitive on the old name
@@ -167,17 +173,20 @@ public:
     TSM_ASSERT_EQUALS("One should have been renamed to anotherOne",
                       svc.retrieve("anotherOne"), one);
 
-    TSM_ASSERT_EQUALS("The observers should have been called 2 times in total",
-                      notificationFlag, 2);
+    TSM_ASSERT_EQUALS("The observers should have been called once",
+                      notificationFlag, 1);
 
+    notificationFlag = 0;
     svc.rename("Two", "anotherOne");
     TS_ASSERT_EQUALS(svc.size(), 1);
     TSM_ASSERT_THROWS("Two should have been renamed to anotherOne",
                       svc.retrieve("two"), Exception::NotFoundError);
     TSM_ASSERT_EQUALS("Two should have been renamed to anotherOne",
                       svc.retrieve("anotherOne"), two);
-    TSM_ASSERT_EQUALS("The observers should have been called 4 times in total",
-                      notificationFlag, 4);
+    // As we are renaming to an existing workspace there should be 2
+    // notifications
+    TSM_ASSERT_EQUALS("The observers should have been called 2 times in total",
+                      notificationFlag, 2);
 
     svc.notificationCenter.removeObserver(observer);
     svc.notificationCenter.removeObserver(observer2);
@@ -222,6 +231,49 @@ public:
     TS_ASSERT(svc.doesExist("one"));
     TSM_ASSERT("doesExist should be case-insensitive", svc.doesExist("oNE"));
     TS_ASSERT(!svc.doesExist("NOTone"));
+  }
+
+  void test_does_all_exist() {
+    auto one = boost::make_shared<int>(1);
+    auto two = boost::make_shared<int>(2);
+
+    const std::string oneName = "one";
+    const std::string twoName = "two";
+
+    svc.add(oneName, one);
+    svc.add(twoName, two);
+
+    std::vector<std::string> expectedNames{oneName, twoName};
+
+    TS_ASSERT(svc.doAllWsExist(expectedNames));
+  }
+
+  void test_does_all_exist_partial() {
+    auto one = boost::make_shared<int>(1);
+
+    const std::string oneName = "one";
+
+    svc.add(oneName, one);
+
+    std::vector<std::string> expectedNames{oneName};
+
+    TS_ASSERT(svc.doAllWsExist(expectedNames));
+  }
+
+  void test_does_all_exist_missing_ws() {
+    auto one = boost::make_shared<int>(1);
+    auto two = boost::make_shared<int>(2);
+
+    const std::string oneName = "one";
+    const std::string twoName = "two";
+    const std::string threeName = "three";
+
+    svc.add(oneName, one);
+    svc.add(twoName, two);
+
+    std::vector<std::string> expectedNames{oneName, twoName, threeName};
+
+    TS_ASSERT(!svc.doAllWsExist(expectedNames));
   }
 
   void test_size() {
@@ -279,6 +331,89 @@ public:
     TS_ASSERT_EQUALS(objects.at(std::distance(names.cbegin(), cit)), three);
   }
 
+  void test_getObjectsReturnsConfigOption() {
+    svc.clear();
+
+    ConfigService::Instance().setString("MantidOptions.InvisibleWorkspaces",
+                                        "0");
+    auto one = boost::make_shared<int>(1);
+    auto two = boost::make_shared<int>(2);
+    auto three = boost::make_shared<int>(3);
+    svc.add("One", one);
+    svc.add("Two", two);
+    svc.add("TwoAgain",
+            two); // Same pointer again - should appear twice in getObjects()
+    svc.add("__Three", three);
+
+    auto objects = svc.getObjects(DataServiceHidden::Auto);
+    auto objectsDefaultCall = svc.getObjects();
+
+    TSM_ASSERT_EQUALS("Default parameter is not set to auto", objects,
+                      objectsDefaultCall);
+
+    TSM_ASSERT_EQUALS("Hidden entries should not be returned", objects.size(),
+                      3);
+    // Check the hidden ws isn't present
+    TS_ASSERT_EQUALS(objects.at(0), one);
+    TS_ASSERT_EQUALS(objects.at(1), two);
+    TS_ASSERT_EQUALS(objects.at(2), two);
+    TSM_ASSERT_EQUALS("Hidden entries should not be returned",
+                      std::find(objects.cbegin(), objects.cend(), three),
+                      objects.end());
+
+    ConfigService::Instance().setString("MantidOptions.InvisibleWorkspaces",
+                                        "1");
+    objects = svc.getObjects();
+    TS_ASSERT_EQUALS(objects.size(), 4);
+  }
+
+  void test_getObjectsReturnsNoHiddenOption() {
+    svc.clear();
+
+    ConfigService::Instance().setString("MantidOptions.InvisibleWorkspaces",
+                                        "1");
+    auto one = boost::make_shared<int>(1);
+    auto two = boost::make_shared<int>(2);
+    auto three = boost::make_shared<int>(3);
+    svc.add("One", one);
+    svc.add("Two", two);
+    svc.add("__Three", three);
+
+    auto objects = svc.getObjects(DataServiceHidden::Exclude);
+    TSM_ASSERT_EQUALS("Hidden entries should not be returned", objects.size(),
+                      2);
+    // Check the hidden ws isn't present
+    TS_ASSERT_EQUALS(objects.at(0), one);
+    TS_ASSERT_EQUALS(objects.at(1), two);
+    TSM_ASSERT_EQUALS("Hidden entries should not be returned",
+                      std::find(objects.cbegin(), objects.cend(), three),
+                      objects.end());
+  }
+
+  void test_getObjectsReturnsHiddenOption() {
+    svc.clear();
+
+    ConfigService::Instance().setString("MantidOptions.InvisibleWorkspaces",
+                                        "0");
+    auto one = boost::make_shared<int>(1);
+    auto two = boost::make_shared<int>(2);
+    auto three = boost::make_shared<int>(3);
+    svc.add("One", one);
+    svc.add("Two", two);
+    svc.add("__Three", three);
+
+    auto objects = svc.getObjects(DataServiceHidden::Include);
+    TSM_ASSERT_EQUALS("Hidden entries should be returned", objects.size(), 3);
+    // Check the hidden ws isn't present
+    TS_ASSERT_DIFFERS(std::find(objects.begin(), objects.end(), one),
+                      objects.end());
+    TS_ASSERT_DIFFERS(std::find(objects.begin(), objects.end(), two),
+                      objects.end());
+    TSM_ASSERT_DIFFERS("Hidden entries should be returned",
+                       std::find(objects.cbegin(), objects.cend(), three),
+                       objects.end());
+  }
+
   void test_sortedAndHiddenGetNames() {
     auto one = boost::make_shared<int>(1);
     auto two = boost::make_shared<int>(2);
@@ -290,8 +425,8 @@ public:
     svc.add("Four", four);
     svc.add("Two", two);
 
-    typedef Mantid::Kernel::DataServiceSort sortedEnum;
-    typedef Mantid::Kernel::DataServiceHidden hiddenEnum;
+    using sortedEnum = Mantid::Kernel::DataServiceSort;
+    using hiddenEnum = Mantid::Kernel::DataServiceHidden;
 
     // First assert that sort does not impact size
     TS_ASSERT_EQUALS(svc.getObjectNames(sortedEnum::Sorted).size(),

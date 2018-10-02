@@ -29,19 +29,19 @@
 #include "LayerDialog.h"
 #include "ApplicationWindow.h"
 
-#include <QLayout>
-#include <QSpinBox>
 #include <QCheckBox>
-#include <QGroupBox>
-#include <QPushButton>
-#include <QLabel>
 #include <QComboBox>
-#include <QFontDialog>
 #include <QFont>
+#include <QFontDialog>
+#include <QGroupBox>
+#include <QLabel>
+#include <QLayout>
 #include <QMessageBox>
+#include <QPushButton>
+#include <QSpinBox>
 
 LayerDialog::LayerDialog(QWidget *parent, Qt::WFlags fl)
-    : QDialog(parent, fl), multi_layer(NULL) {
+    : QDialog(parent, fl), multi_layer(nullptr) {
   setObjectName("LayerDialog");
   setWindowTitle(tr("MantidPlot - Arrange Layers"));
 
@@ -224,7 +224,7 @@ void LayerDialog::update() {
   int dn = multi_layer->layers() - graphs;
   if (dn > 0 &&
       QMessageBox::question(
-          0, tr("MantidPlot - Delete Layers?"),
+          nullptr, tr("MantidPlot - Delete Layers?"),
           tr("You are about to delete %1 existing layers.").arg(dn) + "\n" +
               tr("Are you sure you want to continue this operation?"),
           tr("&Continue"), tr("&Cancel"), QString(), 0, 1))
@@ -249,7 +249,8 @@ void LayerDialog::update() {
   if (cols > graphs && !fitBox->isChecked()) {
     QMessageBox::about(this, tr("MantidPlot - Columns input error"),
                        tr("The number of columns you've entered is greater "
-                          "than the number of graphs (%1)!").arg(graphs));
+                          "than the number of graphs (%1)!")
+                           .arg(graphs));
     boxX->setFocus();
     return;
   }
@@ -257,7 +258,8 @@ void LayerDialog::update() {
   if (rows > graphs && !fitBox->isChecked()) {
     QMessageBox::about(this, tr("MantidPlot - Rows input error"),
                        tr("The number of rows you've entered is greater than "
-                          "the number of graphs (%1)!").arg(graphs));
+                          "the number of graphs (%1)!")
+                           .arg(graphs));
     boxY->setFocus();
     return;
   }

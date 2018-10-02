@@ -1,4 +1,5 @@
 #include "MantidGeometry/MDGeometry/MDHistoDimension.h"
+#include <sstream>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
@@ -97,5 +98,5 @@ std::string MDHistoDimension::toXMLString() const {
 
   return xmlstream.str();
 }
-}
-}
+} // namespace Geometry
+} // namespace Mantid

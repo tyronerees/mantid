@@ -1,5 +1,7 @@
-﻿#pylint: disable=invalid-name
-from mantid.simpleapi import *
+#pylint: disable=invalid-name
+
+from __future__ import (absolute_import, division, print_function)
+import mantid  # noqa
 import ISISCommandInterface as i
 import isis_reducer
 import isis_instrument
@@ -28,6 +30,7 @@ class SANS2DGUISearchCentre(sansgui.SANS2DGUIReduction):
     def validate(self):
       # there is no workspace to be checked against
         return True
+
 
 if __name__ == "__main__":
     test = SANS2DGUISearchCentre()

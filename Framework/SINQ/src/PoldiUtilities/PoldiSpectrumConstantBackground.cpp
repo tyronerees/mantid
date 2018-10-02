@@ -38,7 +38,7 @@ void PoldiSpectrumConstantBackground::setWorkspace(
       boost::dynamic_pointer_cast<const MatrixWorkspace>(ws);
 
   if (matrixWs && matrixWs->getNumberHistograms() > 0) {
-    m_timeBinCount = matrixWs->readX(0).size();
+    m_timeBinCount = matrixWs->x(0).size();
   }
 }
 
@@ -97,5 +97,5 @@ void PoldiSpectrumConstantBackground::init() {
   declareParameter("A0");
 }
 
-} // namespace SINQ
+} // namespace Poldi
 } // namespace Mantid

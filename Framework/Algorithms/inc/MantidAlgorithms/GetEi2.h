@@ -6,8 +6,9 @@
 //----------------------------------------------------------------------
 #include "MantidAPI/Algorithm.h"
 #include "MantidAPI/MatrixWorkspace_fwd.h"
-#include "MantidKernel/cow_ptr.h"
+#include "MantidAPI/SpectrumInfo.h"
 #include "MantidKernel/System.h"
+#include "MantidKernel/cow_ptr.h"
 
 //----------------------------------------------------------------------
 // Forward Declarations
@@ -17,8 +18,8 @@ namespace HistogramData {
 class HistogramY;
 class HistogramX;
 class HistogramE;
-}
-}
+} // namespace HistogramData
+} // namespace Mantid
 namespace Mantid {
 namespace Algorithms {
 /** Requires an estimate for the initial neutron energy which it uses to
@@ -79,6 +80,9 @@ public:
 
   /// Algorithm's version for identification overriding a virtual method
   int version() const override { return 2; }
+  const std::vector<std::string> seeAlso() const override {
+    return {"GetAllEi", "GetEiMonDet", "GetEiT0atSNS"};
+  }
   /// Algorithm's category for identification overriding a virtual method
   const std::string category() const override { return "Inelastic\\Ei"; }
 
@@ -87,7 +91,8 @@ private:
   double calculateEi(const double initial_guess);
   /// Get the distance from the source of the detector at the workspace index
   /// given
-  double getDistanceFromSource(const size_t ws_index) const;
+  double getDistanceFromSource(const size_t ws_index,
+                               const API::SpectrumInfo &spectrumInfo) const;
   /// Calculate the peak position within the given window
   double calculatePeakPosition(const size_t ws_index, const double t_min,
                                const double t_max);

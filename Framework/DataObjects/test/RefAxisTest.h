@@ -8,10 +8,10 @@
 #include <cxxtest/TestSuite.h>
 
 #include "MantidAPI/RefAxis.h"
+#include "MantidDataObjects/Workspace2D.h"
+#include "MantidKernel/Exception.h"
 #include "MantidKernel/Unit.h"
 #include "MantidKernel/UnitFactory.h"
-#include "MantidKernel/Exception.h"
-#include "MantidDataObjects/Workspace2D.h"
 
 using namespace Mantid::API;
 using namespace Mantid::Kernel;
@@ -43,7 +43,7 @@ public:
     delete[] b;
 
     // Create the axis that the tests will be performed on
-    refAxis = new RefAxis(5, space);
+    refAxis = new RefAxis(space);
     refAxis->title() = "test axis";
     refAxis->unit() = UnitFactory::Instance().create("TOF");
   }
@@ -102,12 +102,12 @@ public:
   }
 
   void testGetMin() {
-    boost::scoped_ptr<Axis> newRefAxis(refAxis->clone(5, space2));
+    std::unique_ptr<Axis> newRefAxis(refAxis->clone(5, space2));
     TS_ASSERT_THROWS(newRefAxis->getMin(), std::runtime_error)
   }
 
   void testGetMax() {
-    boost::scoped_ptr<Axis> newRefAxis(refAxis->clone(5, space2));
+    std::unique_ptr<Axis> newRefAxis(refAxis->clone(5, space2));
     TS_ASSERT_THROWS(newRefAxis->getMax(), std::runtime_error)
   }
 

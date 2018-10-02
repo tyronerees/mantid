@@ -17,11 +17,11 @@ private:
   class MockImplicitFunctionParameter
       : public Mantid::API::ImplicitFunctionParameter {
   public:
-    GCC_DIAG_OFF_SUGGEST_OVERRIDE
+    GNU_DIAG_OFF_SUGGEST_OVERRIDE
     MOCK_CONST_METHOD0(getName, std::string());
     MOCK_CONST_METHOD0(isValid, bool());
     MOCK_CONST_METHOD0(toXMLString, std::string());
-    GCC_DIAG_ON_SUGGEST_OVERRIDE
+    GNU_DIAG_ON_SUGGEST_OVERRIDE
   protected:
     ImplicitFunctionParameter *clone() const override {
       return new MockImplicitFunctionParameter;
@@ -70,7 +70,7 @@ public:
         dynamic_cast<MockImplicitFunctionParameterParserA *>(parser);
     TSM_ASSERT("The correct implicit implicit function parameter parser type "
                "has not been generated",
-               NULL != a);
+               nullptr != a);
     delete parser;
   }
 
@@ -82,7 +82,7 @@ public:
         dynamic_cast<MockImplicitFunctionParameterParserB *>(parser);
     TSM_ASSERT("The correct implicit function parameter parser type has not "
                "been generated",
-               NULL != b);
+               nullptr != b);
     delete parser;
   }
 

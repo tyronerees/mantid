@@ -3,17 +3,19 @@
 
 #include <cxxtest/TestSuite.h>
 
-#include "MantidDataHandling/LoadFullprofResolution.h"
-#include "MantidDataObjects/TableWorkspace.h"
 #include "MantidAPI/TableRow.h"
 #include "MantidAPI/WorkspaceFactory.h"
+#include "MantidAPI/WorkspaceGroup.h"
+#include "MantidDataHandling/LoadFullprofResolution.h"
 #include "MantidDataHandling/LoadInstrument.h"
+#include "MantidDataObjects/TableWorkspace.h"
 #include "MantidDataObjects/Workspace2D.h"
 #include "MantidGeometry/Instrument.h"
 #include "MantidGeometry/Instrument/Component.h"
 #include "MantidGeometry/Instrument/FitParameter.h"
-#include <fstream>
+#include "MantidKernel/OptionalBool.h"
 #include <Poco/File.h>
+#include <fstream>
 
 using Mantid::DataHandling::LoadFullprofResolution;
 
@@ -36,7 +38,7 @@ public:
 
   //----------------------------------------------------------------------------------------------
   /** Test import from a 1-bank irf file
-    */
+   */
   void test_1BankCase() {
     // 1. Generate file
     string filename("Test1Bank.irf");
@@ -81,7 +83,7 @@ public:
 
   //----------------------------------------------------------------------------------------------
   /** Test import from a 1-bank irf file
-    */
+   */
   void test_2BankCase() {
     // 1. Generate file
     string filename("Test2Bank.irf");
@@ -224,7 +226,7 @@ public:
 
   //----------------------------------------------------------------------------------------------
   /** Test import all banks from a 3-bank irf file
-    */
+   */
   void test_Load3BankCase() {
     // Generate file
     string filename("Test3Bank.irf");
@@ -268,8 +270,8 @@ public:
 
   //----------------------------------------------------------------------------------------------
   /** Test import of ALFBE, GAMMA and SIGMA parameters
-  *   and check they are given their expected names.
-  */
+   *   and check they are given their expected names.
+   */
   void test_ags_parameters() {
     // 1. Generate file
     string filename("TestAGS.irf");
@@ -347,7 +349,7 @@ public:
     gws = AnalysisDataService::Instance().retrieveWS<WorkspaceGroup>(wsName);
     Workspace_sptr wsi = gws->getItem(0);
     auto ws = boost::dynamic_pointer_cast<MatrixWorkspace>(wsi);
-    Mantid::Geometry::ParameterMap &paramMap = ws->instrumentParameters();
+    const auto &paramMap = ws->constInstrumentParameters();
     boost::shared_ptr<const Mantid::Geometry::Instrument> instr =
         ws->getInstrument();
 
@@ -457,19 +459,19 @@ public:
     // 1st Workspace - bank 2
     Workspace_sptr wsi = gws->getItem(0);
     auto ws1 = boost::dynamic_pointer_cast<MatrixWorkspace>(wsi);
-    Mantid::Geometry::ParameterMap &paramMap1 = ws1->instrumentParameters();
+    const auto &paramMap1 = ws1->constInstrumentParameters();
     boost::shared_ptr<const Mantid::Geometry::Instrument> instr1 =
         ws1->getInstrument();
     // 2nd Workspace - bank 3
     wsi = gws->getItem(1);
     auto ws2 = boost::dynamic_pointer_cast<MatrixWorkspace>(wsi);
-    Mantid::Geometry::ParameterMap &paramMap2 = ws2->instrumentParameters();
+    const auto &paramMap2 = ws2->constInstrumentParameters();
     boost::shared_ptr<const Mantid::Geometry::Instrument> instr2 =
         ws2->getInstrument();
     // 3rd Workspace - bank 4
     wsi = gws->getItem(2);
     auto ws3 = boost::dynamic_pointer_cast<MatrixWorkspace>(wsi);
-    Mantid::Geometry::ParameterMap &paramMap3 = ws3->instrumentParameters();
+    const auto &paramMap3 = ws3->constInstrumentParameters();
     boost::shared_ptr<const Mantid::Geometry::Instrument> instr3 =
         ws3->getInstrument();
 
@@ -521,13 +523,13 @@ public:
     // 1st Workspace - bank 4
     wsi = gws->getItem(0);
     auto ws01 = boost::dynamic_pointer_cast<MatrixWorkspace>(wsi);
-    Mantid::Geometry::ParameterMap &paramMap01 = ws01->instrumentParameters();
+    const auto &paramMap01 = ws01->constInstrumentParameters();
     boost::shared_ptr<const Mantid::Geometry::Instrument> instr01 =
         ws01->getInstrument();
     // 3rd Workspace - bank 2
     wsi = gws->getItem(2);
     auto ws03 = boost::dynamic_pointer_cast<MatrixWorkspace>(wsi);
-    Mantid::Geometry::ParameterMap &paramMap03 = ws03->instrumentParameters();
+    const auto &paramMap03 = ws03->constInstrumentParameters();
     boost::shared_ptr<const Mantid::Geometry::Instrument> instr03 =
         ws03->getInstrument();
 
@@ -588,7 +590,7 @@ public:
     gws = AnalysisDataService::Instance().retrieveWS<WorkspaceGroup>(wsName);
     Workspace_sptr wsi = gws->getItem(0);
     auto ws = boost::dynamic_pointer_cast<MatrixWorkspace>(wsi);
-    Mantid::Geometry::ParameterMap &paramMap = ws->instrumentParameters();
+    const auto &paramMap = ws->constInstrumentParameters();
     boost::shared_ptr<const Mantid::Geometry::Instrument> instr =
         ws->getInstrument();
 
@@ -646,9 +648,9 @@ public:
 
   //----------------------------------------------------------------------------------------------
   /** Test that algorithm does not run,
-  *   if neither the OutputTableWorkspace nor Workspace
-  **  property is set.
-  */
+   *   if neither the OutputTableWorkspace nor Workspace
+   **  property is set.
+   */
   void test_no_output() {
     // Generate file
     string filename("TestNoOutput.irf");
@@ -712,7 +714,7 @@ public:
 
   //----------------------------------------------------------------------------------------------
   /** Test Exception
-    */
+   */
   void test_WrongInputBankCase() {
     // 1. Generate file
     string filename("Test2Bank.irf");
@@ -739,7 +741,7 @@ public:
 
   //----------------------------------------------------------------------------------------------
   /** Parse a TableWorkspace to a map
-    */
+   */
   void parseTableWorkspace(TableWorkspace_sptr tablews,
                            map<string, double> &parammap) {
     parammap.clear();
@@ -758,7 +760,7 @@ public:
 
   //----------------------------------------------------------------------------------------------
   /** Parse a TableWorkspace's 2nd bank to a map
-    */
+   */
   void parseTableWorkspace2(TableWorkspace_sptr tablews,
                             map<string, double> &parammap) {
     parammap.clear();
@@ -777,7 +779,7 @@ public:
 
   //----------------------------------------------------------------------------------------------
   /** Generate a GEM workspace group with specified number of workspaces.
-    */
+   */
   void load_GEM(size_t numberOfWorkspaces, std::string workspaceName) {
     LoadInstrument loaderGEM;
 
@@ -810,7 +812,7 @@ public:
 
   //----------------------------------------------------------------------------------------------
   /** Generate a 1 bank .irf file
-    */
+   */
   void generate1BankIrfFile(string filename) {
     ofstream ofile;
     ofile.open(filename.c_str());
@@ -871,7 +873,7 @@ public:
 
   //----------------------------------------------------------------------------------------------
   /** Generate a 2 bank .irf file
-    */
+   */
   void generate2BankIrfFile(string filename) {
     ofstream ofile;
     ofile.open(filename.c_str());
@@ -969,7 +971,7 @@ public:
   }
 
   /** Generate a 3 bank .irf file
-    */
+   */
   void generate3BankIrfFile(string filename) {
     ofstream ofile;
     ofile.open(filename.c_str());
@@ -1108,7 +1110,7 @@ public:
 
   //----------------------------------------------------------------------------------------------
   /** Generate a 1 bank .irf file for BackToBackExponential fitting function
-  */
+   */
   void generate1BankIrfBBXFile(string filename) {
     ofstream ofile;
     ofile.open(filename.c_str());
@@ -1160,7 +1162,7 @@ public:
   }
 
   /* Return the number of rows the table must have
-  */
+   */
   int getExpectedNumberOfRows() {
     return 29; // Change this value if you add or remove any rows from the
                // OutputTableWorkspace

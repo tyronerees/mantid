@@ -1,10 +1,10 @@
 #ifndef MANTID_LIVEDATA_LOADLIVEDATA_H_
 #define MANTID_LIVEDATA_LOADLIVEDATA_H_
 
-#include "MantidKernel/System.h"
 #include "MantidAPI/Algorithm.h"
-#include "MantidLiveData/LiveDataAlgorithm.h"
 #include "MantidAPI/Workspace_fwd.h"
+#include "MantidKernel/System.h"
+#include "MantidLiveData/LiveDataAlgorithm.h"
 
 namespace Mantid {
 namespace LiveData {
@@ -59,14 +59,14 @@ private:
 
   void replaceChunk(Mantid::API::Workspace_sptr chunkWS);
   void addChunk(Mantid::API::Workspace_sptr chunkWS);
-  void addMatrixWSChunk(const std::string &algoName,
-                        API::Workspace_sptr accumWS,
+  void addMatrixWSChunk(API::Workspace_sptr accumWS,
                         API::Workspace_sptr chunkWS);
+  void addMDWSChunk(API::Workspace_sptr &accumWS,
+                    const API::Workspace_sptr &chunkWS);
   void appendChunk(Mantid::API::Workspace_sptr chunkWS);
   API::Workspace_sptr appendMatrixWSChunk(API::Workspace_sptr accumWS,
                                           Mantid::API::Workspace_sptr chunkWS);
-
-  void doSortEvents(Mantid::API::Workspace_sptr ws);
+  void resetAllXToSingleBin(API::Workspace *workspace);
 
   /// The "accumulation" workspace = after adding, but before post-processing
   Mantid::API::Workspace_sptr m_accumWS;

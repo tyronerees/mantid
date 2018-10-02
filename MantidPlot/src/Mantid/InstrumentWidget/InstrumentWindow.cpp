@@ -1,17 +1,17 @@
+#include "InstrumentWindow.h"
 #include "ApplicationWindow.h"
 #include "Mantid/MantidUI.h"
-#include "InstrumentWindow.h"
 #include "MantidAPI/IPeaksWorkspace.h"
 #include "MantidAPI/MatrixWorkspace.h"
 #include "MantidAPI/Workspace.h"
 #include "MantidKernel/UsageService.h"
-#include "MantidQtAPI/TSVSerialiser.h"
+#include "MantidQtWidgets/Common/TSVSerialiser.h"
 
 #include <QApplication>
 #include <QMessageBox>
 
-#include <MantidQtMantidWidgets/InstrumentView/InstrumentWidget.h>
-#include <MantidQtMantidWidgets/InstrumentView/ProjectionSurface.h>
+#include <MantidQtWidgets/InstrumentView/InstrumentWidget.h>
+#include <MantidQtWidgets/InstrumentView/ProjectionSurface.h>
 
 // Register the window into the WindowFactory
 DECLARE_WINDOW(InstrumentWindow)
@@ -23,7 +23,7 @@ using namespace MantidQt::MantidWidgets;
 InstrumentWindow::InstrumentWindow(const QString &wsName, const QString &label,
                                    ApplicationWindow *parent,
                                    const QString &name)
-    : MdiSubWindow(parent, label, name, 0) {
+    : MdiSubWindow(parent, label, name, nullptr) {
 
   m_instrumentWidget = new InstrumentWidget(wsName, this);
   this->setWidget(m_instrumentWidget);
@@ -97,6 +97,14 @@ MantidQt::API::IProjectSerialisable *InstrumentWindow::loadFromProject(
   }
 
   return nullptr;
+}
+
+std::vector<std::string> InstrumentWindow::getWorkspaceNames() {
+  return {m_instrumentWidget->getWorkspaceNameStdString()};
+}
+
+std::string InstrumentWindow::getWindowName() {
+  return m_instrumentWidget->windowTitle().toStdString();
 }
 
 /**

@@ -1,11 +1,12 @@
 #ifndef MANTID_KERNEL_VMDTEST_H_
 #define MANTID_KERNEL_VMDTEST_H_
 
-#include <cxxtest/TestSuite.h>
-#include "MantidKernel/Timer.h"
 #include "MantidKernel/System.h"
+#include "MantidKernel/Timer.h"
 #include <cmath>
+#include <cxxtest/TestSuite.h>
 
+#include "MantidKernel/V3D.h"
 #include "MantidKernel/VMD.h"
 
 using namespace Mantid;

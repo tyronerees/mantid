@@ -1,4 +1,5 @@
 #pylint: disable=invalid-name,no-name-in-module,too-many-instance-attributes
+from __future__ import (absolute_import, division, print_function)
 from PyQt4 import QtCore, QtGui
 import sys
 import mantid
@@ -215,6 +216,7 @@ class ClassicUBInputWidget(QtGui.QWidget):
         self.latt_vz=vvec.Z()
         #update the GUI
         self.updateGui()
+
 
 if __name__=='__main__':
     app=QtGui.QApplication(sys.argv)

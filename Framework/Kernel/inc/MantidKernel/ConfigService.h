@@ -5,27 +5,31 @@
 // Includes
 //----------------------------------------------------------------------
 #include "MantidKernel/DllConfig.h"
-#include "MantidKernel/SingletonHolder.h"
 #include "MantidKernel/ProxyInfo.h"
-#include <vector>
+#include "MantidKernel/SingletonHolder.h"
+#include <boost/optional/optional.hpp>
+
 #include <map>
 #include <set>
+#include <string>
+#include <vector>
 
 #include <Poco/Notification.h>
 #include <Poco/NotificationCenter.h>
-#include <Poco/AutoPtr.h>
 
 //----------------------------------------------------------------------
 // Forward declarations
 //----------------------------------------------------------------------
 /// @cond Exclude from doxygen documentation
 namespace Poco {
+class AbstractObserver;
 class Channel;
+template <class C> class AutoPtr;
 namespace Util {
 class PropertyFileConfiguration;
 class SystemConfiguration;
-}
-}
+} // namespace Util
+} // namespace Poco
 /// @endcond
 
 namespace Mantid {
@@ -37,7 +41,6 @@ namespace Kernel {
 //----------------------------------------------------------------------
 // More forward declarations
 //----------------------------------------------------------------------
-class Logger;
 class FacilityInfo;
 class InstrumentInfo;
 
@@ -76,10 +79,10 @@ class InstrumentInfo;
 class MANTID_KERNEL_DLL ConfigServiceImpl final {
 public:
   /**
-  * This is the base class for POCO Notifications sent out from the Config
-  * Service.
-  * It does nothing.
-  */
+   * This is the base class for POCO Notifications sent out from the Config
+   * Service.
+   * It does nothing.
+   */
   class ConfigServiceNotification : public Poco::Notification {
   public:
     /// Empty constructor for ConfigServiceNotification Base Class
@@ -87,17 +90,17 @@ public:
   };
 
   /**
-  * This is the class for the notification that is to be sent when a value has
-  * been changed in
-  * config service.
-  */
+   * This is the class for the notification that is to be sent when a value has
+   * been changed in
+   * config service.
+   */
   class ValueChanged : public ConfigServiceNotification {
   public:
     /** Creates the Notification object with the required values
-    *   @param name :: property that has been changed
-    *   @param newvalue :: new value of property
-    *   @param prevvalue :: previous value of property
-    */
+     *   @param name :: property that has been changed
+     *   @param newvalue :: new value of property
+     *   @param prevvalue :: previous value of property
+     */
     ValueChanged(const std::string &name, const std::string &newvalue,
                  const std::string &prevvalue)
         : ConfigServiceNotification(), m_name(name), m_value(newvalue),
@@ -121,6 +124,8 @@ public:
     std::string m_prev;  ///< The previous value for the property
   };
 
+  /// Setup the base directory
+  void setBaseDirectory();
   /// Reset to "factory" settings. Removes current user properties
   void reset();
   /// Wipe out the current configuration and load a new one
@@ -147,7 +152,7 @@ public:
   /// Sets a configuration property
   void setString(const std::string &key, const std::string &value);
   // Searches for a configuration property and returns its value
-  template <typename T> int getValue(const std::string &keyName, T &out);
+  template <typename T> boost::optional<T> getValue(const std::string &keyName);
   /// Return the local properties filename.
   std::string getLocalFilename() const;
   /// Return the user properties filename
@@ -205,6 +210,8 @@ public:
   void appendDataSearchSubDir(const std::string &subdir);
   /// Get the list of user search paths
   const std::vector<std::string> &getUserSearchDirs() const;
+  /// Sets instrument directories
+  void setInstrumentDirectories(const std::vector<std::string> &directories);
   /// Get instrument search directory
   const std::vector<std::string> &getInstrumentDirectories() const;
   /// Get instrument search directory
@@ -225,17 +232,8 @@ public:
   const FacilityInfo &getFacility(const std::string &facilityName) const;
   /// Set the default facility
   void setFacility(const std::string &facilityName);
-
-  /// registers additional logging filter channels
-  void registerLoggingFilterChannel(const std::string &filterChannelName,
-                                    Poco::Channel *pChannel);
-  /// Sets the log level priority for the File log channel
-  void setFileLogLevel(int logLevel);
-  /// Sets the log level priority for the Console log channel
-  void setConsoleLogLevel(int logLevel);
-  /// Sets the log level priority for the selected Filter log channel
-  void setFilterChannelLogLevel(const std::string &filterChannelName,
-                                int logLevel);
+  /// Sets the log level priority for all log channels
+  void setLogLevel(int logLevel, bool quiet = false);
 
   /// Look for an instrument
   const InstrumentInfo &
@@ -250,14 +248,11 @@ public:
   // Starts up the logging
   void configureLogging();
 
-  /// Return true if ParaView plugins are available
-  bool pvPluginsAvailable() const;
-
-  /// Return the path to the pv plugins
-  const std::string getPVPluginsPath() const;
-
   /// Gets the proxy for the system
   Kernel::ProxyInfo &getProxy(const std::string &url);
+
+  std::string getFullPath(const std::string &filename, const bool ignoreDirs,
+                          const int options) const;
 
 private:
   friend struct Mantid::Kernel::CreateUsingNew<ConfigServiceImpl>;
@@ -276,8 +271,6 @@ private:
   /// Read a file and place its contents into the given string
   bool readFile(const std::string &filename, std::string &contents) const;
 
-  /// Provides a string of a default configuration
-  std::string defaultConfig() const;
   /// Writes out a fresh user properties file
   void createUserPropertiesFile() const;
   /// Convert any relative paths to absolute ones and store them locally so that
@@ -297,6 +290,8 @@ private:
   /// Empty the list of facilities, deleting the FacilityInfo objects in the
   /// process
   void clearFacilities();
+  /// Determine the name of the facilities file to use
+  std::string getFacilityFilename(const std::string &fName);
   /// Verifies the directory exists and add it to the back of the directory list
   /// if valid
   bool addDirectoryifExists(const std::string &directoryName,
@@ -304,8 +299,6 @@ private:
   /// Returns a list of all keys under a given root key
   void getKeysRecursive(const std::string &root,
                         std::vector<std::string> &allKeys) const;
-  /// Finds the lowest registered logging filter level
-  int FindLowestFilterLevel() const;
 
   // Forward declaration of inner class
   template <class T> class WrappedObject;
@@ -331,8 +324,6 @@ private:
   const std::string m_properties_file_name;
   /// The filename of the Mantid user properties file
   const std::string m_user_properties_file_name;
-  /// The filename where the log ends up
-  std::string m_logFilePath;
   /// Store a list of data search paths
   std::vector<std::string> m_DataSearchDirs;
   /// Store a list of user search paths
@@ -349,19 +340,16 @@ private:
   Kernel::ProxyInfo m_proxyInfo;
   /// whether the proxy has been populated yet
   bool m_isProxySet;
-
-  /// store a list of logging FilterChannels
-  std::vector<std::string> m_filterChannels;
 };
 
 EXTERN_MANTID_KERNEL template class MANTID_KERNEL_DLL
     Mantid::Kernel::SingletonHolder<ConfigServiceImpl>;
-typedef Mantid::Kernel::SingletonHolder<ConfigServiceImpl> ConfigService;
+using ConfigService = Mantid::Kernel::SingletonHolder<ConfigServiceImpl>;
 
-typedef Mantid::Kernel::ConfigServiceImpl::ValueChanged
-    ConfigValChangeNotification;
-typedef const Poco::AutoPtr<Mantid::Kernel::ConfigServiceImpl::ValueChanged> &
-    ConfigValChangeNotification_ptr;
+using ConfigValChangeNotification =
+    Mantid::Kernel::ConfigServiceImpl::ValueChanged;
+using ConfigValChangeNotification_ptr =
+    const Poco::AutoPtr<Mantid::Kernel::ConfigServiceImpl::ValueChanged> &;
 
 } // namespace Kernel
 } // namespace Mantid

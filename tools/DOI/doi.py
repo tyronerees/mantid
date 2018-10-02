@@ -56,6 +56,7 @@ USEFUL LINKS:
   http://docs.python.org/2/library/httplib.html#httplib.HTTPS_PORT
 """
 
+from __future__ import (absolute_import, division, print_function)
 import argparse
 import getpass
 import os
@@ -75,6 +76,9 @@ SUCCESS_RESPONSE = r'^OK( \((.+)\))?$'
 
 # Point all "deleted" DOIs to here:
 INVALID_URL = 'http://www.datacite.org/invalidDOI'
+
+PLAINTEXT_CONTENT_HEADER = 'Content-Type:text/plain;charset=UTF-8'
+XML_CONTENT_HEADER = 'Content-Type:application/xml;charset=UTF-8'
 
 
 def build_xml_form(doi, relationships, creator_name_list, version_str):
@@ -189,7 +193,7 @@ def build_xml_form(doi, relationships, creator_name_list, version_str):
     return ET.tostring(root, encoding='utf-8')
 
 
-def _http_request(body, method, url, options):
+def _http_request(body, method, url, options, content_type=None):
     '''Issue an HTTP request with the given options.
 
     We are forced to use a command line tool for this rather than use the
@@ -206,11 +210,13 @@ def _http_request(body, method, url, options):
     args = [
         'curl',
         '--user',    options.username + ':' + options.password,
-        '--header',  'Content-Type:text/plain;charset=UTF-8',
         # The bodies of HTTP messages must be encoded:
         '--data',    body.encode('utf-8'),
         '--request', method,
     ]
+    if content_type is not None:
+        args.extend(['--header',  content_type,])
+
     if 'http_proxy' in os.environ:
         args.extend(['--proxy', os.environ['http_proxy']])
 
@@ -225,7 +231,7 @@ def _http_request(body, method, url, options):
     proc = subprocess.Popen(args,stdout=subprocess.PIPE)
     result = proc.stdout.readlines()
 
-    print "Server Response: " + str(result)
+    print("Server Response: " + str(result))
     return result
 
 
@@ -234,7 +240,7 @@ def delete_doi(base, doi, options):
     remove the DOI from the DataCite servers; it makes its metadata "inactive"
     and points the DOI to a "DOI invalid" page.
     '''
-    print "\nAttempting to delete the meta data for:" + doi
+    print("\nAttempting to delete the meta data for:" + doi)
     result = _http_request(
         body    = '',
         method  = 'DELETE',
@@ -245,7 +251,7 @@ def delete_doi(base, doi, options):
     if not re.match(SUCCESS_RESPONSE, result[0]):
         raise RuntimeError('Deleting metadata unsuccessful.  Quitting.')
 
-    print "\nAttempting to point " + doi + " to invalid page."
+    print("\nAttempting to point " + doi + " to invalid page.")
     result = _http_request(
         body    = 'doi=' + doi + '\n' + 'url=' + INVALID_URL,
         method  = "PUT",
@@ -262,12 +268,13 @@ def create_or_update_metadata(xml_form, base, doi, options):
     Metadata must be created before a doi can be created.  If the metadata
     already exists, then it will simply be updated.
     '''
-    print "\nAttempting to create / update metadata:"
+    print("\nAttempting to create / update metadata:")
     result = _http_request(
         body    = xml_form,
-        method  = "PUT",
-        url     = base + "metadata/" + doi,
-        options = options
+        method  = "POST",
+        url     = base + "metadata",
+        options = options,
+        content_type=XML_CONTENT_HEADER
     )
 
     if not re.match(SUCCESS_RESPONSE, result[0]):
@@ -279,14 +286,15 @@ def create_or_update_doi(base, doi, destination, options):
     created before this can be successful.  If the doi already exists, then it
     will simply be updated.
     '''
-    print "\nAttempting to create / update the following DOI:"
-    print 'DOI = ' + doi
-    print 'URL = ' + destination
+    print("\nAttempting to create / update the following DOI:")
+    print('DOI = ' + doi)
+    print('URL = ' + destination)
     result = _http_request(
         body    = 'doi=' + doi + '\n' + 'url=' + destination,
         method  = "PUT",
         url     = base + "doi/" + doi,
-        options = options
+        options = options,
+        content_type = XML_CONTENT_HEADER
     )
 
     if not re.match(SUCCESS_RESPONSE, result[0]):
@@ -300,7 +308,7 @@ def check_if_doi_exists(base, doi, destination, options):
     as the given destination), else false.  Throws if the response from the
     server is unrecognised, or if there is no response at all.
     '''
-    print "\nChecking if \"" + base + "doi/" + doi + "\" DOI exists."
+    print("\nChecking if \"" + base + "doi/" + doi + "\" DOI exists.")
     result = _http_request(
         body    = '',
         method  = 'GET',
@@ -309,10 +317,10 @@ def check_if_doi_exists(base, doi, destination, options):
     )
 
     if result[0] == 'DOI not found' or result[0] == INVALID_URL:
-        print "\"" + doi + "\" does not exist"
+        print("\"" + doi + "\" does not exist")
         return False
     elif result[0] == destination:
-        print "DOI found."
+        print("DOI found.")
         return True
     else:
         raise RuntimeError(
@@ -419,7 +427,7 @@ def run(args):
                                                          prev_version_str, shortened_prev_version_str)
 
     if args.test:
-        server_url_base = 'https://test.datacite.org/mds/'
+        server_url_base = 'https://mds.test.datacite.org/'
     else:
         server_url_base = 'https://mds.datacite.org/'
 
@@ -511,9 +519,10 @@ def run(args):
         message = "\nSUCCESS!" + \
                   "\nThe DOI can be %s at \"%s\"." % (method, doi_add) + \
                   "\nThe metadata can be inspected at \"%s\"." % (meta_add)
-    print message
+    print(message)
 
     quit()
+
 
 if __name__ == "__main__":
     check_for_curl()

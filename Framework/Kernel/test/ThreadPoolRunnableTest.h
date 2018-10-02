@@ -1,9 +1,9 @@
 #ifndef MANTID_KERNEL_THREADPOOLRUNNABLETEST_H_
 #define MANTID_KERNEL_THREADPOOLRUNNABLETEST_H_
 
-#include <cxxtest/TestSuite.h>
-#include <MantidKernel/Timer.h>
 #include <MantidKernel/System.h>
+#include <MantidKernel/Timer.h>
+#include <cxxtest/TestSuite.h>
 
 #include <MantidKernel/ThreadPoolRunnable.h>
 #include <MantidKernel/ThreadScheduler.h>
@@ -15,7 +15,7 @@ int ThreadPoolRunnableTest_value;
 class ThreadPoolRunnableTest : public CxxTest::TestSuite {
 public:
   void test_constructor() {
-    TS_ASSERT_THROWS(new ThreadPoolRunnable(0, NULL), std::invalid_argument);
+    TS_ASSERT_THROWS(new ThreadPoolRunnable(0, nullptr), std::invalid_argument);
   }
 
   //=======================================================================================

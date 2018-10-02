@@ -1,15 +1,15 @@
 #include "MantidAlgorithms/TOFSANSResolutionByPixel.h"
-#include "MantidAlgorithms/GravitySANSHelper.h"
-#include "MantidAlgorithms/TOFSANSResolutionByPixelCalculator.h"
-#include "MantidAlgorithms/SANSCollimationLengthEstimator.h"
 #include "MantidAPI/SpectrumInfo.h"
 #include "MantidAPI/WorkspaceUnitValidator.h"
+#include "MantidAlgorithms/GravitySANSHelper.h"
+#include "MantidAlgorithms/SANSCollimationLengthEstimator.h"
+#include "MantidAlgorithms/TOFSANSResolutionByPixelCalculator.h"
 #include "MantidDataObjects/Workspace2D.h"
 #include "MantidGeometry/Instrument.h"
 #include "MantidKernel/ArrayProperty.h"
 #include "MantidKernel/BoundedValidator.h"
-#include "MantidKernel/Interpolation.h"
 #include "MantidKernel/ITimeSeriesProperty.h"
+#include "MantidKernel/Interpolation.h"
 #include "MantidKernel/UnitFactory.h"
 #include "MantidKernel/make_unique.h"
 
@@ -94,8 +94,8 @@ void TOFSANSResolutionByPixel::exec() {
   // create interpolation table from sigmaModeratorVSwavelength
   Kernel::Interpolation lookUpTable;
 
-  const auto xInterpolate = sigmaModeratorVSwavelength->points(0);
-  const MantidVec yInterpolate = sigmaModeratorVSwavelength->readY(0);
+  const auto &xInterpolate = sigmaModeratorVSwavelength->points(0);
+  const auto &yInterpolate = sigmaModeratorVSwavelength->y(0);
 
   // prefer the input to be a pointworkspace and create interpolation function
   if (sigmaModeratorVSwavelength->isHistogramData()) {
@@ -120,8 +120,8 @@ void TOFSANSResolutionByPixel::exec() {
     auto collimationLengthEstimator = SANSCollimationLengthEstimator();
     LCollim = collimationLengthEstimator.provideCollimationLength(inWS);
     g_log.information() << "No collimation length was specified. A default "
-                           "collimation length was estimated to be " << LCollim
-                        << '\n';
+                           "collimation length was estimated to be "
+                        << LCollim << '\n';
   } else {
     g_log.information() << "The collimation length is  " << LCollim << '\n';
   }
@@ -153,7 +153,7 @@ void TOFSANSResolutionByPixel::exec() {
     double sinTheta = sin(0.5 * theta);
     double factor = 4.0 * M_PI * sinTheta;
 
-    const MantidVec &xIn = inWS->readX(i);
+    const auto &xIn = inWS->x(i);
     const size_t xLength = xIn.size();
 
     // Gravity correction
@@ -164,7 +164,7 @@ void TOFSANSResolutionByPixel::exec() {
     }
 
     // Get handles on the outputWorkspace
-    MantidVec &yOut = outWS->dataY(i);
+    auto &yOut = outWS->mutableY(i);
     // for each wavelenght bin of each pixel calculate a q-resolution
     for (size_t j = 0; j < xLength - 1; j++) {
       // use the midpoint of each bin

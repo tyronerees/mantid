@@ -1,16 +1,20 @@
-set ( SRC_FILES
+﻿set ( SRC_FILES
 	src/AppendGeometryToSNSNexus.cpp
 	src/AsciiPointBase.cpp
+	src/BankPulseTimes.cpp
 	src/CheckMantidVersion.cpp
 	src/CompressEvents.cpp
 	src/CreateChopperModel.cpp
 	src/CreateChunkingFromInstrument.cpp
 	src/CreateModeratorModel.cpp
+	src/CreatePolarizationEfficiencies.cpp
+	src/CreatePolarizationEfficienciesBase.cpp
 	src/CreateSampleShape.cpp
 	src/CreateSimulationWorkspace.cpp
 	src/DataBlock.cpp
 	src/DataBlockComposite.cpp
 	src/DataBlockGenerator.cpp
+	src/DefaultEventLoader.cpp
 	src/DefineGaugeVolume.cpp
 	src/DeleteTableRows.cpp
 	src/DetermineChunking.cpp
@@ -18,6 +22,7 @@ set ( SRC_FILES
 	src/DownloadInstrument.cpp
 	src/EventWorkspaceCollection.cpp
 	src/ExtractMonitorWorkspace.cpp
+	src/ExtractPolarizationEfficiencies.cpp
 	src/FilterEventsByLogValuePreNexus.cpp
 	src/FindDetectorsInShape.cpp
 	src/FindDetectorsPar.cpp
@@ -27,12 +32,13 @@ set ( SRC_FILES
 	src/H5Util.cpp
 	src/ISISDataArchive.cpp
 	src/ISISRunLogs.cpp
-	src/ImggAggregateWavelengths.cpp
+	src/JoinISISPolarizationEfficiencies.cpp
 	src/Load.cpp
 	src/LoadANSTOHelper.cpp
 	src/LoadAscii.cpp
 	src/LoadAscii2.cpp
 	src/LoadBBY.cpp
+	src/LoadBankFromDiskTask.cpp
 	src/LoadCalFile.cpp
 	src/LoadCanSAS1D.cpp
 	src/LoadCanSAS1D2.cpp
@@ -43,9 +49,7 @@ set ( SRC_FILES
 	src/LoadDspacemap.cpp
 	src/LoadEmptyInstrument.cpp
 	src/LoadEventNexus.cpp
-	src/ProcessBankData.cpp
-	src/BankPulseTimes.cpp
-	src/LoadEventPreNexus.cpp
+	src/LoadEventNexusIndexSetup.cpp
 	src/LoadEventPreNexus2.cpp
 	src/LoadFITS.cpp
 	src/LoadFullprofResolution.cpp
@@ -53,19 +57,20 @@ set ( SRC_FILES
 	src/LoadGSS.cpp
 	src/LoadHelper.cpp
 	src/LoadIDFFromNexus.cpp
-	src/LoadILL.cpp
-	src/LoadILLIndirect.cpp
-	src/LoadILLTOF.cpp
+	src/LoadILLDiffraction.cpp
+	src/LoadILLIndirect2.cpp
+	src/LoadILLPolarizationFactors.cpp
 	src/LoadILLReflectometry.cpp
-	src/LoadILLSANS.cpp
+        src/LoadILLSANS.cpp
+	src/LoadILLTOF2.cpp
 	src/LoadISISNexus2.cpp
+	src/LoadISISPolarizationEfficiencies.cpp
 	src/LoadInstrument.cpp
 	src/LoadInstrumentFromNexus.cpp
 	src/LoadInstrumentFromRaw.cpp
 	src/LoadIsawDetCal.cpp
 	src/LoadLLB.cpp
 	src/LoadLog.cpp
-	src/LoadLogsForSNSPulsedMagnet.cpp
 	src/LoadMLZ.cpp
 	src/LoadMappingTable.cpp
 	src/LoadMask.cpp
@@ -86,6 +91,7 @@ set ( SRC_FILES
 	src/LoadParameterFile.cpp
 	src/LoadPreNexus.cpp
 	src/LoadPreNexusMonitors.cpp
+	src/LoadPSIMuonBin.cpp
 	src/LoadQKK.cpp
 	src/LoadRKH.cpp
 	src/LoadRaw/byte_rel_comp.cpp
@@ -97,38 +103,42 @@ set ( SRC_FILES
 	src/LoadRawBin0.cpp
 	src/LoadRawHelper.cpp
 	src/LoadRawSpectrum0.cpp
-	src/LoadTBL.cpp
+	src/LoadSampleShape.cpp
+	src/LoadSESANS.cpp
 	src/LoadSINQFocus.cpp
 	src/LoadSNSspec.cpp
 	src/LoadSPE.cpp
 	src/LoadSampleDetailsFromRaw.cpp
 	src/LoadSassena.cpp
-	src/LoadSavuTomoConfig.cpp
 	src/LoadSpec.cpp
 	src/LoadSpice2D.cpp
 	src/LoadSpiceAscii.cpp
 	src/LoadSpiceXML2DDet.cpp
 	src/LoadSwans.cpp
+	src/LoadTBL.cpp
 	src/LoadTOFRawNexus.cpp
 	src/LoadVulcanCalFile.cpp
 	src/MaskDetectors.cpp
 	src/MaskDetectorsInShape.cpp
+	src/MaskSpectra.cpp
 	src/MergeLogs.cpp
 	src/ModifyDetectorDotDatFile.cpp
 	src/MoveInstrumentComponent.cpp
 	src/NexusTester.cpp
 	src/PDLoadCharacterizations.cpp
+	src/ParallelEventLoader.cpp
 	src/PatchBBY.cpp
-	src/ProcessDasNexusLog.cpp
+	src/ProcessBankData.cpp
 	src/RawFileInfo.cpp
 	src/RemoveLogs.cpp
 	src/RenameLog.cpp
 	src/RotateInstrumentComponent.cpp
 	src/RotateSource.cpp
 	src/SNSDataArchive.cpp
-	src/SaveANSTOAscii.cpp
+        src/SaveANSTOAscii.cpp
 	src/SaveAscii.cpp
 	src/SaveAscii2.cpp
+	src/SaveBankScatteringAngles.cpp
 	src/SaveCSV.cpp
 	src/SaveCalFile.cpp
 	src/SaveCanSAS1D.cpp
@@ -141,12 +151,13 @@ set ( SRC_FILES
 	src/SaveFITS.cpp
 	src/SaveFocusedXYE.cpp
 	src/SaveFullprofResolution.cpp
+	src/SaveGDA.cpp
 	src/SaveGSASInstrumentFile.cpp
 	src/SaveGSS.cpp
 	src/SaveILLCosmosAscii.cpp
 	src/SaveISISNexus.cpp
 	src/SaveIsawDetCal.cpp
-	src/SaveMask.cpp
+        src/SaveMask.cpp
 	src/SaveNISTDAT.cpp
 	src/SaveNXSPE.cpp
 	src/SaveNXTomo.cpp
@@ -159,11 +170,12 @@ set ( SRC_FILES
 	src/SavePHX.cpp
 	src/SaveParameterFile.cpp
 	src/SaveRKH.cpp
+        src/SaveReflectometryAscii.cpp
 	src/SaveReflCustomAscii.cpp
-	src/SaveTBL.cpp
 	src/SaveReflThreeColumnAscii.cpp
+	src/SaveSESANS.cpp
 	src/SaveSPE.cpp
-	src/SaveSavuTomoConfig.cpp
+	src/SaveTBL.cpp
 	src/SaveToSNSHistogramNexus.cpp
 	src/SaveVTK.cpp
 	src/SetBeam.cpp
@@ -179,16 +191,20 @@ set ( SRC_FILES
 set ( INC_FILES
 	inc/MantidDataHandling/AppendGeometryToSNSNexus.h
 	inc/MantidDataHandling/AsciiPointBase.h
+	inc/MantidDataHandling/BankPulseTimes.h
 	inc/MantidDataHandling/CheckMantidVersion.h
 	inc/MantidDataHandling/CompressEvents.h
 	inc/MantidDataHandling/CreateChopperModel.h
 	inc/MantidDataHandling/CreateChunkingFromInstrument.h
 	inc/MantidDataHandling/CreateModeratorModel.h
+	inc/MantidDataHandling/CreatePolarizationEfficiencies.h
+	inc/MantidDataHandling/CreatePolarizationEfficienciesBase.h
 	inc/MantidDataHandling/CreateSampleShape.h
 	inc/MantidDataHandling/CreateSimulationWorkspace.h
 	inc/MantidDataHandling/DataBlock.h
 	inc/MantidDataHandling/DataBlockComposite.h
 	inc/MantidDataHandling/DataBlockGenerator.h
+	inc/MantidDataHandling/DefaultEventLoader.h
 	inc/MantidDataHandling/DefineGaugeVolume.h
 	inc/MantidDataHandling/DeleteTableRows.h
 	inc/MantidDataHandling/DetermineChunking.h
@@ -196,6 +212,7 @@ set ( INC_FILES
 	inc/MantidDataHandling/DownloadInstrument.h
 	inc/MantidDataHandling/EventWorkspaceCollection.h
 	inc/MantidDataHandling/ExtractMonitorWorkspace.h
+	inc/MantidDataHandling/ExtractPolarizationEfficiencies.h
 	inc/MantidDataHandling/FilterEventsByLogValuePreNexus.h
 	inc/MantidDataHandling/FindDetectorsInShape.h
 	inc/MantidDataHandling/FindDetectorsPar.h
@@ -205,12 +222,13 @@ set ( INC_FILES
 	inc/MantidDataHandling/H5Util.h
 	inc/MantidDataHandling/ISISDataArchive.h
 	inc/MantidDataHandling/ISISRunLogs.h
-	inc/MantidDataHandling/ImggAggregateWavelengths.h
+	inc/MantidDataHandling/JoinISISPolarizationEfficiencies.h
 	inc/MantidDataHandling/Load.h
 	inc/MantidDataHandling/LoadANSTOHelper.h
 	inc/MantidDataHandling/LoadAscii.h
 	inc/MantidDataHandling/LoadAscii2.h
 	inc/MantidDataHandling/LoadBBY.h
+	inc/MantidDataHandling/LoadBankFromDiskTask.h
 	inc/MantidDataHandling/LoadCalFile.h
 	inc/MantidDataHandling/LoadCanSAS1D.h
 	inc/MantidDataHandling/LoadCanSAS1D2.h
@@ -221,9 +239,7 @@ set ( INC_FILES
 	inc/MantidDataHandling/LoadDspacemap.h
 	inc/MantidDataHandling/LoadEmptyInstrument.h
 	inc/MantidDataHandling/LoadEventNexus.h
-	inc/MantidDataHandling/ProcessBankData.h
-	inc/MantidDataHandling/BankPulseTimes.h
-	inc/MantidDataHandling/LoadEventPreNexus.h
+	inc/MantidDataHandling/LoadEventNexusIndexSetup.h
 	inc/MantidDataHandling/LoadEventPreNexus2.h
 	inc/MantidDataHandling/LoadFITS.h
 	inc/MantidDataHandling/LoadFullprofResolution.h
@@ -231,19 +247,20 @@ set ( INC_FILES
 	inc/MantidDataHandling/LoadGSS.h
 	inc/MantidDataHandling/LoadHelper.h
 	inc/MantidDataHandling/LoadIDFFromNexus.h
-	inc/MantidDataHandling/LoadILL.h
-	inc/MantidDataHandling/LoadILLIndirect.h
-	inc/MantidDataHandling/LoadILLTOF.h
+	inc/MantidDataHandling/LoadILLDiffraction.h
+	inc/MantidDataHandling/LoadILLIndirect2.h
+	inc/MantidDataHandling/LoadILLPolarizationFactors.h
 	inc/MantidDataHandling/LoadILLReflectometry.h
 	inc/MantidDataHandling/LoadILLSANS.h
+	inc/MantidDataHandling/LoadILLTOF2.h
 	inc/MantidDataHandling/LoadISISNexus2.h
+	inc/MantidDataHandling/LoadISISPolarizationEfficiencies.h
 	inc/MantidDataHandling/LoadInstrument.h
 	inc/MantidDataHandling/LoadInstrumentFromNexus.h
 	inc/MantidDataHandling/LoadInstrumentFromRaw.h
 	inc/MantidDataHandling/LoadIsawDetCal.h
 	inc/MantidDataHandling/LoadLLB.h
 	inc/MantidDataHandling/LoadLog.h
-	inc/MantidDataHandling/LoadLogsForSNSPulsedMagnet.h
 	inc/MantidDataHandling/LoadMLZ.h
 	inc/MantidDataHandling/LoadMappingTable.h
 	inc/MantidDataHandling/LoadMask.h
@@ -264,36 +281,40 @@ set ( INC_FILES
 	inc/MantidDataHandling/LoadParameterFile.h
 	inc/MantidDataHandling/LoadPreNexus.h
 	inc/MantidDataHandling/LoadPreNexusMonitors.h
+	inc/MantidDataHandling/LoadPSIMuonBin.h
 	inc/MantidDataHandling/LoadQKK.h
 	inc/MantidDataHandling/LoadRKH.h
 	inc/MantidDataHandling/LoadRaw3.h
 	inc/MantidDataHandling/LoadRawBin0.h
 	inc/MantidDataHandling/LoadRawHelper.h
 	inc/MantidDataHandling/LoadRawSpectrum0.h
-	inc/MantidDataHandling/LoadTBL.h
+	inc/MantidDataHandling/LoadSampleShape.h
+	inc/MantidDataHandling/LoadSESANS.h
 	inc/MantidDataHandling/LoadSINQFocus.h
 	inc/MantidDataHandling/LoadSNSspec.h
 	inc/MantidDataHandling/LoadSPE.h
 	inc/MantidDataHandling/LoadSampleDetailsFromRaw.h
 	inc/MantidDataHandling/LoadSassena.h
-	inc/MantidDataHandling/LoadSavuTomoConfig.h
 	inc/MantidDataHandling/LoadSpec.h
 	inc/MantidDataHandling/LoadSpice2D.h
 	inc/MantidDataHandling/LoadSpiceAscii.h
 	inc/MantidDataHandling/LoadSpiceXML2DDet.h
 	inc/MantidDataHandling/LoadSwans.h
+	inc/MantidDataHandling/LoadTBL.h
 	inc/MantidDataHandling/LoadTOFRawNexus.h
 	inc/MantidDataHandling/LoadVulcanCalFile.h
 	inc/MantidDataHandling/MaskDetectors.h
 	inc/MantidDataHandling/MaskDetectorsInShape.h
+	inc/MantidDataHandling/MaskSpectra.h
 	inc/MantidDataHandling/MergeLogs.h
 	inc/MantidDataHandling/ModifyDetectorDotDatFile.h
 	inc/MantidDataHandling/MoveInstrumentComponent.h
 	inc/MantidDataHandling/NXcanSASDefinitions.h
 	inc/MantidDataHandling/NexusTester.h
 	inc/MantidDataHandling/PDLoadCharacterizations.h
+	inc/MantidDataHandling/ParallelEventLoader.h
 	inc/MantidDataHandling/PatchBBY.h
-	inc/MantidDataHandling/ProcessDasNexusLog.h
+	inc/MantidDataHandling/ProcessBankData.h
 	inc/MantidDataHandling/RawFileInfo.h
 	inc/MantidDataHandling/RemoveLogs.h
 	inc/MantidDataHandling/RenameLog.h
@@ -303,6 +324,7 @@ set ( INC_FILES
 	inc/MantidDataHandling/SaveANSTOAscii.h
 	inc/MantidDataHandling/SaveAscii.h
 	inc/MantidDataHandling/SaveAscii2.h
+	inc/MantidDataHandling/SaveBankScatteringAngles.h
 	inc/MantidDataHandling/SaveCSV.h
 	inc/MantidDataHandling/SaveCalFile.h
 	inc/MantidDataHandling/SaveCanSAS1D.h
@@ -315,6 +337,7 @@ set ( INC_FILES
 	inc/MantidDataHandling/SaveFITS.h
 	inc/MantidDataHandling/SaveFocusedXYE.h
 	inc/MantidDataHandling/SaveFullprofResolution.h
+	inc/MantidDataHandling/SaveGDA.h
 	inc/MantidDataHandling/SaveGSASInstrumentFile.h
 	inc/MantidDataHandling/SaveGSS.h
 	inc/MantidDataHandling/SaveILLCosmosAscii.h
@@ -333,11 +356,12 @@ set ( INC_FILES
 	inc/MantidDataHandling/SavePHX.h
 	inc/MantidDataHandling/SaveParameterFile.h
 	inc/MantidDataHandling/SaveRKH.h
+        inc/MantidDataHandling/SaveReflectometryAscii.h
 	inc/MantidDataHandling/SaveReflCustomAscii.h
-	inc/MantidDataHandling/SaveTBL.h
 	inc/MantidDataHandling/SaveReflThreeColumnAscii.h
+	inc/MantidDataHandling/SaveSESANS.h
 	inc/MantidDataHandling/SaveSPE.h
-	inc/MantidDataHandling/SaveSavuTomoConfig.h
+	inc/MantidDataHandling/SaveTBL.h
 	inc/MantidDataHandling/SaveToSNSHistogramNexus.h
 	inc/MantidDataHandling/SaveVTK.h
 	inc/MantidDataHandling/SetBeam.h
@@ -362,6 +386,7 @@ set ( TEST_FILES
 	CreateChopperModelTest.h
 	CreateChunkingFromInstrumentTest.h
 	CreateModeratorModelTest.h
+	CreatePolarizationEfficienciesTest.h
 	CreateSampleShapeTest.h
 	CreateSimulationWorkspaceTest.h
 	DataBlockCompositeTest.h
@@ -374,6 +399,7 @@ set ( TEST_FILES
 	DownloadInstrumentTest.h
 	EventWorkspaceCollectionTest.h
 	ExtractMonitorWorkspaceTest.h
+	ExtractPolarizationEfficienciesTest.h
 	FilterEventsByLogValuePreNexusTest.h
 	FindDetectorsInShapeTest.h
 	FindDetectorsParTest.h
@@ -382,8 +408,8 @@ set ( TEST_FILES
 	GroupDetectorsTest.h
 	H5UtilTest.h
 	ISISDataArchiveTest.h
-	ImggAggregateWavelengthsTest.h
 	InstrumentRayTracerTest.h
+	JoinISISPolarizationEfficienciesTest.h
 	LoadAscii2Test.h
 	LoadAsciiTest.h
 	LoadBBYTest.h
@@ -395,19 +421,23 @@ set ( TEST_FILES
 	LoadDiffCalTest.h
 	LoadDspacemapTest.h
 	LoadEmptyInstrumentTest.h
+	LoadEventNexusIndexSetupTest.h
 	LoadEventNexusTest.h
 	LoadEventPreNexus2Test.h
-	LoadEventPreNexusTest.h
 	LoadFITSTest.h
 	LoadFullprofResolutionTest.h
 	LoadGSASInstrumentFileTest.h
 	LoadGSSTest.h
 	LoadIDFFromNexusTest.h
-	LoadILLIndirectTest.h
-	LoadILLTOFTest.h
+	LoadILLDiffractionTest.h
+	LoadILLIndirect2Test.h
+	LoadILLPolarizationFactorsTest.h
 	LoadILLReflectometryTest.h
 	LoadILLSANSTest.h
+	LoadILLTOF2Test.h
 	LoadISISNexusTest.h
+	LoadISISPolarizationEfficienciesTest.h
+	LoadInstrumentFromNexusTest.h
 	LoadInstrumentFromRawTest.h
 	LoadInstrumentTest.h
 	LoadIsawDetCalTest.h
@@ -431,34 +461,38 @@ set ( TEST_FILES
 	LoadParameterFileTest.h
 	LoadPreNexusMonitorsTest.h
 	LoadPreNexusTest.h
+	LoadPSIMuonBinTest.h
 	LoadQKKTest.h
 	LoadRKHTest.h
 	LoadRaw3Test.h
 	LoadRawBin0Test.h
 	LoadRawSaveNxsLoadNxsTest.h
 	LoadRawSpectrum0Test.h
-	LoadTBLTest.h
+	LoadSampleShapeTest.h
+	LoadSESANSTest.h
 	LoadSINQFocusTest.h
 	LoadSNSspecTest.h
 	LoadSPETest.h
+	LoadSampleDetailsFromRawTest.h
 	LoadSassenaTest.h
 	LoadSaveAsciiTest.h
-	LoadSavuTomoConfigTest.h
+	LoadSpecTest.h
 	LoadSpice2dTest.h
 	LoadSpiceAsciiTest.h
 	LoadSpiceXML2DDetTest.h
 	LoadSwansTest.h
+	LoadTBLTest.h
 	LoadTOFRawNexusTest.h
 	LoadTest.h
 	LoadVulcanCalFileTest.h
 	MaskDetectorsInShapeTest.h
 	MaskDetectorsTest.h
+	MaskSpectraTest.h
 	MergeLogsTest.h
 	ModifyDetectorDotDatFileTest.h
 	MoveInstrumentComponentTest.h
 	NexusTesterTest.h
 	PDLoadCharacterizationsTest.h
-	ProcessDasNexusLogTest.h
 	RawFileInfoTest.h
 	RemoveLogsTest.h
 	RenameLogTest.h
@@ -468,6 +502,7 @@ set ( TEST_FILES
 	SaveANSTOAsciiTest.h
 	SaveAscii2Test.h
 	SaveAsciiTest.h
+	SaveBankScatteringAnglesTest.h
 	SaveCSVTest.h
 	SaveCalFileTest.h
 	SaveCanSAS1dTest.h
@@ -477,8 +512,9 @@ set ( TEST_FILES
 	SaveDiffCalTest.h
 	SaveDspacemapTest.h
 	SaveFITSTest.h
-	SaveFocussedXYETest.h
+	SaveFocusedXYETest.h
 	SaveFullprofResolutionTest.h
+	SaveGDATest.h
 	SaveGSASInstrumentFileTest.h
 	SaveGSSTest.h
 	SaveILLCosmosAsciiTest.h
@@ -490,16 +526,18 @@ set ( TEST_FILES
 	SaveNXcanSASTest.h
 	SaveNexusProcessedTest.h
 	SaveNexusTest.h
+	SaveOpenGenieAsciiTest.h
 	SavePARTest.h
 	SavePDFGuiTest.h
 	SavePHXTest.h
 	SaveParameterFileTest.h
 	SaveRKHTest.h
+        SaveReflectometryAsciiTest.h
 	SaveReflCustomAsciiTest.h
-	SaveTBLTest.h
 	SaveReflThreeColumnAsciiTest.h
+	SaveSESANSTest.h
 	SaveSPETest.h
-	SaveSavuTomoConfigTest.h
+	SaveTBLTest.h
 	SaveToSNSHistogramNexusTest.h
 	SetBeamTest.h
 	SetSampleMaterialTest.h
@@ -528,10 +566,13 @@ enable_precompiled_headers( inc/MantidDataHandling/PrecompiledHeader.h SRC_FILES
 add_library ( DataHandling ${SRC_FILES} ${INC_FILES})
 # Set the name of the generated library
 set_target_properties ( DataHandling PROPERTIES OUTPUT_NAME MantidDataHandling
-                        COMPILE_DEFINITIONS "IN_MANTID_DATAHANDLING")
+  COMPILE_DEFINITIONS "IN_MANTID_DATAHANDLING"
+)
 
 if (OSX_VERSION VERSION_GREATER 10.8)
-  set_target_properties ( DataHandling PROPERTIES INSTALL_RPATH "@loader_path/../Contents/MacOS")
+  set_target_properties(DataHandling PROPERTIES INSTALL_RPATH "@loader_path/../Contents/MacOS")
+elseif ( ${CMAKE_SYSTEM_NAME} STREQUAL "Linux" )
+  set_target_properties(DataHandling PROPERTIES INSTALL_RPATH "\$ORIGIN/../${LIB_DIR}")
 endif ()
 
 # Add to the 'Framework' group in VS

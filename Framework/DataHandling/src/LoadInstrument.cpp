@@ -1,37 +1,27 @@
-//----------------------------------------------------------------------
-// Includes
-//----------------------------------------------------------------------
+#include "MantidDataHandling/LoadInstrument.h"
 #include "MantidAPI/FileProperty.h"
 #include "MantidAPI/InstrumentDataService.h"
 #include "MantidAPI/MatrixWorkspace.h"
 #include "MantidAPI/Progress.h"
-#include "MantidDataHandling/LoadInstrument.h"
 #include "MantidGeometry/Instrument.h"
 #include "MantidKernel/ArrayProperty.h"
 #include "MantidKernel/ConfigService.h"
-#include "MantidKernel/OptionalBool.h"
 #include "MantidKernel/MandatoryValidator.h"
+#include "MantidKernel/OptionalBool.h"
+#include "MantidKernel/Strings.h"
 
+#include "MantidGeometry/Instrument/InstrumentDefinitionParser.h"
 #include <Poco/DOM/DOMParser.h>
 #include <Poco/DOM/Document.h>
 #include <Poco/DOM/Element.h>
-#include <Poco/DOM/NodeList.h>
-#include <Poco/DOM/NodeIterator.h>
 #include <Poco/DOM/NodeFilter.h>
+#include <Poco/DOM/NodeIterator.h>
+#include <Poco/DOM/NodeList.h>
+#include <Poco/Exception.h>
 #include <Poco/File.h>
 #include <Poco/Path.h>
-#include <Poco/Exception.h>
-#include <sstream>
 #include <fstream>
-#include "MantidGeometry/Instrument/InstrumentDefinitionParser.h"
-
-using Poco::XML::DOMParser;
-using Poco::XML::Document;
-using Poco::XML::Element;
-using Poco::XML::Node;
-using Poco::XML::NodeList;
-using Poco::XML::NodeIterator;
-using Poco::XML::NodeFilter;
+#include <sstream>
 
 namespace Mantid {
 namespace DataHandling {
@@ -44,10 +34,6 @@ using namespace Geometry;
 
 std::recursive_mutex LoadInstrument::m_mutex;
 
-/// Empty default constructor
-LoadInstrument::LoadInstrument() : Algorithm() {}
-
-//------------------------------------------------------------------------------------------------------------------------------
 /// Initialisation method.
 void LoadInstrument::init() {
   // When used as a Child Algorithm the workspace name is not used - hence the
@@ -76,24 +62,31 @@ void LoadInstrument::init() {
       make_unique<PropertyWithValue<OptionalBool>>(
           "RewriteSpectraMap", OptionalBool::Unset,
           boost::make_shared<MandatoryValidator<OptionalBool>>()),
-      "If true then a 1:1 map between the spectrum numbers and "
-      "detector/monitor IDs is set up as follows: the detector/monitor IDs in "
+      "If set to True then a 1:1 map between the spectrum numbers and "
+      "detector/monitor IDs is set up such that the detector/monitor IDs in "
       "the IDF are ordered from smallest to largest number and then assigned "
       "in that order to the spectra in the workspace. For example if the IDF "
-      "has defined detectors/monitors with ID = 1, 5 and 10 and the workspace "
-      "contains 3 spectra with numbers 1,2,3 (and workspace indices 0,1, and "
-      "2) then spectrum number 1 is associated with det ID=1, spectrum number "
-      "2 with det ID=5 and spectrum number 3 with det ID=10");
+      "has defined detectors/monitors with IDs 1, 5, 10 and the workspace "
+      "contains 3 spectra with numbers 1, 2, 3 (and workspace indices 0, 1, 2) "
+      "then spectrum number 1 is associated with detector ID 1, spectrum "
+      "number 2 with detector ID 5 and spectrum number 3 with detector ID 10."
+      "If the number of spectra and detectors do not match then the operation "
+      "is performed until the maximum number of either is reached. For example "
+      "if there are 12 spectra and 50 detectors then the first 12 detectors "
+      "are assigned to the 12 spectra in the workspace."
+      "If set to False then the spectrum numbers and detector IDs of the "
+      "workspace are not modified."
+      "This property must be set to either True or False.");
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
 /** Executes the algorithm. Reading in the file and creating and populating
-*  the output workspace
-*
-*  @throw FileError Thrown if unable to parse XML file
-*  @throw InstrumentDefinitionError Thrown if issues with the content of XML
-*instrument file
-*/
+ *  the output workspace
+ *
+ *  @throw FileError Thrown if unable to parse XML file
+ *  @throw InstrumentDefinitionError Thrown if issues with the content of XML
+ *instrument file
+ */
 void LoadInstrument::exec() {
   // Get the input workspace
   m_workspace = getProperty("Workspace");
@@ -179,22 +172,29 @@ void LoadInstrument::exec() {
           InstrumentDataService::Instance().retrieve(instrumentNameMangled);
     } else {
       // Really create the instrument
-      auto prog = new Progress(this, 0, 1, 100);
-      instrument = parser.parseXML(prog);
-      delete prog;
+      Progress prog(this, 0.0, 1.0, 100);
+      instrument = parser.parseXML(&prog);
+      // Parse the instrument tree (internally create ComponentInfo and
+      // DetectorInfo). This is an optimization that avoids duplicate parsing of
+      // the instrument tree when loading multiple workspaces with the same
+      // instrument. As a consequence less time is spent and less memory is
+      // used. Note that this is only possible since the tree in `instrument`
+      // will not be modified once we add it to the IDS.
+      instrument->parseTreeAndCacheBeamline();
       // Add to data service for later retrieval
       InstrumentDataService::Instance().add(instrumentNameMangled, instrument);
     }
+    m_workspace->setInstrument(instrument);
+
+    // populate parameter map of workspace
+    m_workspace->populateInstrumentParameters();
+
+    // LoadParameterFile modifies the base instrument stored in the IDS so this
+    // must also be protected by the lock until LoadParameterFile is fixed.
+    // check if default parameter file is also present, unless loading from
+    if (!m_filename.empty())
+      runLoadParameterFile();
   }
-  // Add the instrument to the workspace
-  m_workspace->setInstrument(instrument);
-
-  // populate parameter map of workspace
-  m_workspace->populateInstrumentParameters();
-
-  // check if default parameter file is also present, unless loading from
-  if (!m_filename.empty())
-    runLoadParameterFile();
 
   // Set the monitors output property
   setProperty("MonitorList", instrument->getMonitors());
@@ -270,7 +270,7 @@ std::string LoadInstrument::getFullPathParamIDF(std::string directoryName) {
   directoryPath.makeDirectory();
   // Remove the path from the filename
   Poco::Path filePath(m_filename);
-  std::string instrumentFile = filePath.getFileName();
+  const std::string &instrumentFile = filePath.getFileName();
 
   // First check whether there is a parameter file whose name is the same as the
   // IDF file,

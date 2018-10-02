@@ -22,12 +22,11 @@
   File change history is stored at: <https://github.com/mantidproject/mantid>.
   Code Documentation is available at: <http://doxygen.mantidproject.org>
 */
-#include "MantidKernel/System.h"
-#include "MantidKernel/ClassMacros.h"
-#include "MantidAPI/ParamFunction.h"
+#include "MantidAPI/ExperimentInfo.h"
 #include "MantidAPI/IMDEventWorkspace_fwd.h"
 #include "MantidAPI/IMDIterator.h"
-#include "MantidAPI/ExperimentInfo.h"
+#include "MantidAPI/ParamFunction.h"
+#include "MantidKernel/System.h"
 #include "MantidMDAlgorithms/Quantification/ForegroundModel.h"
 #include "MantidMDAlgorithms/Quantification/MDResolutionConvolutionFactory.h"
 
@@ -61,6 +60,13 @@ public:
   /// a fit
   MDResolutionConvolution(const API::IFunctionMD &fittingFunction,
                           const std::string &fgModelName);
+
+  /// Disable copy operator
+  MDResolutionConvolution(const MDResolutionConvolution &) = delete;
+
+  /// Disable assignment operator
+  MDResolutionConvolution &operator=(const MDResolutionConvolution &) = delete;
+
   /// Function category
   const std::string category() const override { return "Quantification"; }
 
@@ -114,8 +120,6 @@ protected:
   const API::IFunctionMD &getFittingFunction() const;
 
 private:
-  DISABLE_COPY_AND_ASSIGN(MDResolutionConvolution)
-
   /// Required for function interface
   void function(const Mantid::API::FunctionDomain &,
                 Mantid::API::FunctionValues &) const override{};
@@ -125,8 +129,8 @@ private:
   /// A pointer to the foreground model
   ForegroundModel *m_foreground;
 };
-}
-}
+} // namespace MDAlgorithms
+} // namespace Mantid
 
 /*
  * Register a class into the factory using a global RegistrationHelper

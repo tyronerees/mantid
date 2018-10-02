@@ -2,8 +2,8 @@
 #define MANTID_DATAOBJECTS_SPLITTERSWORKSPACE_H_
 
 #include "MantidAPI/ISplittersWorkspace.h"
-#include "MantidKernel/TimeSplitter.h"
 #include "MantidDataObjects/TableWorkspace.h"
+#include "MantidKernel/TimeSplitter.h"
 
 #ifdef _MSC_VER
 #pragma warning(                                                               \
@@ -53,6 +53,12 @@ public:
   std::unique_ptr<SplittersWorkspace> clone() const {
     return std::unique_ptr<SplittersWorkspace>(doClone());
   }
+
+  /// Returns a default-initialized clone of the workspace
+  std::unique_ptr<SplittersWorkspace> cloneEmpty() const {
+    return std::unique_ptr<SplittersWorkspace>(doCloneEmpty());
+  }
+
   SplittersWorkspace &operator=(const SplittersWorkspace &other) = delete;
   void addSplitter(Kernel::SplittingInterval splitter) override;
 
@@ -70,11 +76,14 @@ private:
   SplittersWorkspace *doClone() const override {
     return new SplittersWorkspace(*this);
   }
+  SplittersWorkspace *doCloneEmpty() const override {
+    return new SplittersWorkspace();
+  }
 };
 
-typedef boost::shared_ptr<SplittersWorkspace> SplittersWorkspace_sptr;
-typedef boost::shared_ptr<const SplittersWorkspace>
-    SplittersWorkspace_const_sptr;
+using SplittersWorkspace_sptr = boost::shared_ptr<SplittersWorkspace>;
+using SplittersWorkspace_const_sptr =
+    boost::shared_ptr<const SplittersWorkspace>;
 
 } // namespace DataObjects
 } // namespace Mantid

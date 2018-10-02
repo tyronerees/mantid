@@ -112,15 +112,16 @@ protected:
   /// buffer
   /// @param to :: Pointer to the buffer, it must be large enough
   void multiply(double *to) const;
-
-  std::vector<double> m_calculated; ///< buffer for calculated values
-  std::vector<double> m_data;       ///< buffer for fit data
-  std::vector<double>
-      m_weights; ///< buffer for fitting weights (reciprocal errors)
+  /// buffer for calculated values
+  std::vector<double> m_calculated;
+  /// buffer for fit data
+  std::vector<double> m_data;
+  /// buffer for fitting weights (reciprocal errors)
+  std::vector<double> m_weights;
 };
 
 /// typedef for a shared pointer
-typedef boost::shared_ptr<FunctionValues> FunctionValues_sptr;
+using FunctionValues_sptr = boost::shared_ptr<FunctionValues>;
 
 } // namespace API
 } // namespace Mantid

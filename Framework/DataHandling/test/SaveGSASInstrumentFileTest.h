@@ -3,13 +3,14 @@
 
 #include <cxxtest/TestSuite.h>
 
+#include "MantidAPI/AnalysisDataService.h"
+#include "MantidAPI/FrameworkManager.h"
+#include "MantidAPI/TableRow.h"
 #include "MantidDataHandling/SaveGSASInstrumentFile.h"
 #include "MantidDataObjects/TableWorkspace.h"
-#include "MantidAPI/TableRow.h"
-#include "MantidAPI/FrameworkManager.h"
 
-#include <fstream>
 #include <Poco/File.h>
+#include <fstream>
 
 using namespace Mantid;
 using namespace Mantid::API;
@@ -124,7 +125,7 @@ public:
 
   //----------------------------------------------------------------------------------------------
   /** Test on import FP .irf file and import multiple banks
-    */
+   */
   void Ptest_SaveGSSInstrumentFile_MultiBank() {
     // Generate a 3-bank .irf file
     string irffilename("pg3_60hz_3b.irf");
@@ -179,7 +180,7 @@ public:
 
   //----------------------------------------------------------------------------------------------
   /** Load table workspace containing instrument parameters
-    */
+   */
   void loadProfileTable(string wsname) {
     // The data befow is from Bank1 in pg60_2011B.irf
 
@@ -259,7 +260,7 @@ public:
 
   //----------------------------------------------------------------------------------------------
   /** Generate a 3 bank .irf file
-    */
+   */
   void generate3BankIrfFile(string filename) {
     ofstream ofile;
     ofile.open(filename.c_str());
@@ -396,7 +397,7 @@ public:
 
   //------------------------------------------------------------------------------------
   /** Read several specified lines from a file
-    */
+   */
   void readLines(const std::string &filename,
                  const std::vector<size_t> &veclineindex,
                  std::vector<std::string> &veclines) {

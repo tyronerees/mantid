@@ -30,8 +30,8 @@
 #define FITDIALOG_H
 
 #include "Graph.h"
-#include <QDoubleSpinBox>
 #include <QCheckBox>
+#include <QDoubleSpinBox>
 
 class QPushButton;
 class QLineEdit;
@@ -56,7 +56,7 @@ class FitDialog : public QDialog {
   Q_OBJECT
 
 public:
-  FitDialog(Graph *g, QWidget *parent = 0, Qt::WFlags fl = 0);
+  FitDialog(Graph *g, QWidget *parent = nullptr, Qt::WFlags fl = nullptr);
 
   void setSrcTables(QList<MdiSubWindow *> tables);
 

@@ -30,6 +30,11 @@ public:
     return std::unique_ptr<GroupingWorkspace>(doClone());
   }
 
+  /// Returns a default-initialized clone of the workspace
+  std::unique_ptr<GroupingWorkspace> cloneEmpty() const {
+    return std::unique_ptr<GroupingWorkspace>(doCloneEmpty());
+  }
+
   /** Gets the name of the workspace type
   @return Standard string name  */
   const std::string id() const override { return "GroupingWorkspace"; }
@@ -47,15 +52,18 @@ private:
   GroupingWorkspace *doClone() const override {
     return new GroupingWorkspace(*this);
   }
+  GroupingWorkspace *doCloneEmpty() const override {
+    return new GroupingWorkspace();
+  }
 };
 
 /// shared pointer to the GroupingWorkspace class
-typedef boost::shared_ptr<GroupingWorkspace> GroupingWorkspace_sptr;
+using GroupingWorkspace_sptr = boost::shared_ptr<GroupingWorkspace>;
 
 /// shared pointer to a const GroupingWorkspace
-typedef boost::shared_ptr<const GroupingWorkspace> GroupingWorkspace_const_sptr;
+using GroupingWorkspace_const_sptr = boost::shared_ptr<const GroupingWorkspace>;
 
-} // namespace Mantid
 } // namespace DataObjects
+} // namespace Mantid
 
 #endif /* MANTID_DATAOBJECTS_GROUPINGWORKSPACE_H_ */

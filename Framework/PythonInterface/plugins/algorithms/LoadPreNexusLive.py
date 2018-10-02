@@ -1,3 +1,4 @@
+from __future__ import (absolute_import, division, print_function)
 from mantid import mtd
 from mantid.api import AlgorithmFactory, DataProcessorAlgorithm, FileAction, \
     FileProperty, WorkspaceProperty
@@ -131,5 +132,6 @@ class LoadPreNexusLive(DataProcessorAlgorithm):
         FilterByXValue(InputWorkspace=wkspName, XMin=1)
 
         self.setProperty('OutputWorkspace', mtd[wkspName])
+
 
 AlgorithmFactory.subscribe(LoadPreNexusLive)

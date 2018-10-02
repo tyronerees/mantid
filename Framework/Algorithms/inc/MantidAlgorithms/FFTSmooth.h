@@ -5,6 +5,7 @@
 // Includes
 //----------------------------------------------------------------------
 #include "MantidAPI/Algorithm.h"
+#include "MantidAPI/DeprecatedAlgorithm.h"
 #include "MantidAPI/MatrixWorkspace_fwd.h"
 
 namespace Mantid {
@@ -35,8 +36,11 @@ namespace Algorithms {
     File change history is stored at: <https://github.com/mantidproject/mantid>
     Code Documentation is available at: <http://doxygen.mantidproject.org>
  */
-class DLLExport FFTSmooth : public API::Algorithm {
+class DLLExport FFTSmooth : public API::Algorithm,
+                            public API::DeprecatedAlgorithm {
 public:
+  /// Constructor
+  FFTSmooth() { this->useAlgorithm("FFTSmooth", 2); }
   /// Algorithm's name for identification overriding a virtual method
   const std::string name() const override { return "FFTSmooth"; }
   /// Summary of algorithms purpose
@@ -70,7 +74,7 @@ private:
   API::MatrixWorkspace_sptr m_filteredWS;
 };
 
-} // namespace Algorithm
+} // namespace Algorithms
 } // namespace Mantid
 
 #endif /*MANTID_ALGORITHM_FFTSMOOTH_H_*/

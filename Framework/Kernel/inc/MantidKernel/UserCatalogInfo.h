@@ -3,14 +3,13 @@
 
 #include "MantidKernel/DllConfig.h"
 #include "MantidKernel/ICatalogInfo.h"
-#include "Poco/Path.h"
 #include <boost/optional.hpp>
 #include <memory>
 
 namespace Mantid {
 namespace Kernel {
 
-typedef boost::optional<std::string> OptionalPath;
+using OptionalPath = boost::optional<std::string>;
 
 class CatalogConfigService {
 public:

@@ -1,7 +1,7 @@
 #include "MantidMDAlgorithms/UnitsConversionHelper.h"
 #include "MantidAPI/NumericAxis.h"
-#include "MantidKernel/UnitFactory.h"
 #include "MantidKernel/Strings.h"
+#include "MantidKernel/UnitFactory.h"
 #include <cmath>
 
 namespace Mantid {
@@ -25,7 +25,7 @@ UnitsConversionHelper::analyzeUnitsConversion(const std::string &UnitsFrom,
                                               const std::string &UnitsTo,
                                               bool forceViaTOF) {
   // if units are equal, no conversion is necessary;
-  if (UnitsFrom.compare(UnitsTo) == 0)
+  if (UnitsFrom == UnitsTo)
     return CnvrtToMD::ConvertNo;
 
   // get all known units:
@@ -48,7 +48,7 @@ UnitsConversionHelper::analyzeUnitsConversion(const std::string &UnitsFrom,
     return CnvrtToMD::ConvertFast;
   } else {
     // are the input units TOF?
-    if (UnitsFrom.compare("TOF") == 0) {
+    if (UnitsFrom == "TOF") {
       return CnvrtToMD::ConvertFromTOF;
     } else { // convert using TOF
       m_TargetUnit = Kernel::UnitFactory::Instance().create(UnitsTo);
@@ -91,7 +91,7 @@ void UnitsConversionHelper::initialize(const MDWSDescription &targetWSDescr,
   if (!pAxis)
     throw(std::invalid_argument(
         "Cannot retrieve numeric X axis from the input workspace: " +
-        inWS2D->name()));
+        inWS2D->getName()));
 
   std::string unitsFrom = inWS2D->getAxis(0)->unit()->unitID();
 
@@ -360,5 +360,5 @@ UnitsConversionHelper::UnitsConversionHelper()
       m_L1(1), m_Efix(1), m_TwoTheta(0), m_L2(1), m_pTwoThetas(nullptr),
       m_pL2s(nullptr), m_pEfixedArray(nullptr) {}
 
-} // endNamespace DataObjects
-} // endNamespace Mantid
+} // namespace MDAlgorithms
+} // namespace Mantid

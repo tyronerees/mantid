@@ -1,9 +1,9 @@
-#include <vector>
-#include <sstream>
-#include "MantidKernel/System.h"
 #include "MantidNexus/MuonNexusReader.h"
+#include "MantidKernel/System.h"
 #include <boost/scoped_array.hpp>
 #include <nexus/NeXusException.hpp>
+#include <sstream>
+#include <vector>
 
 using std::string;
 
@@ -19,7 +19,7 @@ const string START_TIME("start_time");
 
 /// logger
 Mantid::Kernel::Logger g_log("MuonNexusReader");
-}
+} // namespace
 
 using namespace Mantid;
 
@@ -175,7 +175,6 @@ string MuonNexusReader::getInstrumentName() const {
 void MuonNexusReader::readLogData(const string &filename) {
   // reset the count of logs
   nexusLogCount = 0;
-  int nexusSampleCount = 0; // debug
 
   NeXus::File handle(filename, NXACC_READ);
   openFirstNXentry(handle);
@@ -203,7 +202,6 @@ void MuonNexusReader::readLogData(const string &filename) {
       handle.openGroup(nxname, nxclass);
       handle.readData("name", nexus_samplename);
       handle.closeGroup();
-      nexusSampleCount++; // debug
     }
     if (nxname == START_TIME) {
       handle.readData(START_TIME, startTime);

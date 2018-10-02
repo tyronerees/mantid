@@ -1,6 +1,8 @@
 #ifndef MANTID_GEOMETRY_INSTRUMENTDEFINITIONPARSERTEST_H_
 #define MANTID_GEOMETRY_INSTRUMENTDEFINITIONPARSERTEST_H_
 
+#include "MantidGeometry/Instrument/ComponentInfo.h"
+#include "MantidGeometry/Instrument/DetectorInfo.h"
 #include "MantidGeometry/Instrument/InstrumentDefinitionParser.h"
 #include "MantidGeometry/Instrument/RectangularDetector.h"
 #include "MantidGeometry/Instrument/ReferenceFrame.h"
@@ -12,8 +14,8 @@
 #include "MantidTestHelpers/ScopedFileHelper.h"
 #include <cxxtest/TestSuite.h>
 
-#include <gmock/gmock.h>
 #include <boost/algorithm/string/replace.hpp>
+#include <gmock/gmock.h>
 
 using namespace Mantid;
 using namespace Mantid::Kernel;
@@ -22,7 +24,7 @@ using namespace testing;
 using ScopedFileHelper::ScopedFile;
 
 class InstrumentDefinitionParserTest : public CxxTest::TestSuite {
-  GCC_DIAG_OFF_SUGGEST_OVERRIDE
+  GNU_DIAG_OFF_SUGGEST_OVERRIDE
 private:
   /// Mock Type to act as IDF files.
   class MockIDFObject : public Mantid::Geometry::IDFObject {
@@ -40,7 +42,7 @@ private:
     MOCK_CONST_METHOD0(exists, bool());
     MOCK_CONST_METHOD0(getParentDirectory, const Poco::Path());
   };
-  GCC_DIAG_ON_SUGGEST_OVERRIDE
+  GNU_DIAG_ON_SUGGEST_OVERRIDE
   /**
   Helper type to pass around related IDF environment information in a
   collection.
@@ -135,7 +137,7 @@ public:
 
     // Parse the XML
     InstrumentDefinitionParser parser(filename, "For Unit Testing", xmlText);
-    TS_ASSERT_THROWS_NOTHING(i = parser.parseXML(NULL););
+    TS_ASSERT_THROWS_NOTHING(i = parser.parseXML(nullptr););
 
     // Extract the reference frame object
     boost::shared_ptr<const ReferenceFrame> frame = i->getReferenceFrame();
@@ -146,6 +148,24 @@ public:
     TS_ASSERT_EQUALS(Y, frame->pointingUp());
     TS_ASSERT_EQUALS(Z, frame->pointingAlongBeam());
     TS_ASSERT(frame->origin().empty());
+  }
+
+  void test_extract_ref_info_theta_sign() {
+    std::string filename = ConfigService::Instance().getInstrumentDirectory() +
+                           "/IDFs_for_UNIT_TESTING/IDF_for_UNIT_TESTING6.xml";
+    std::string xmlText = Strings::loadFile(filename);
+    boost::shared_ptr<const Instrument> i;
+
+    // Parse the XML
+    InstrumentDefinitionParser parser(filename, "For Unit Testing", xmlText);
+    TS_ASSERT_THROWS_NOTHING(i = parser.parseXML(nullptr););
+
+    // Extract the reference frame object
+    boost::shared_ptr<const ReferenceFrame> frame = i->getReferenceFrame();
+
+    // Test that values have been populated with expected values (those from
+    // file).
+    TS_ASSERT_EQUALS(V3D(1., 0., 0.), frame->vecThetaSign());
   }
 
   void
@@ -168,7 +188,7 @@ public:
     } catch (Poco::FileNotFoundException &) {
     }
 
-    TS_ASSERT_THROWS_NOTHING(i = parser.parseXML(NULL););
+    TS_ASSERT_THROWS_NOTHING(i = parser.parseXML(nullptr););
     try {
       Poco::File vtpFile(vtpFilename);
       vtpFile.remove();
@@ -462,7 +482,7 @@ public:
 
     // Parse the XML
     InstrumentDefinitionParser parser(filename, "For Unit Testing2", xmlText);
-    TS_ASSERT_THROWS_NOTHING(i = parser.parseXML(NULL););
+    TS_ASSERT_THROWS_NOTHING(i = parser.parseXML(nullptr););
 
     boost::shared_ptr<const IDetector> ptrDetShape = i->getDetector(1100);
     TS_ASSERT_EQUALS(ptrDetShape->getID(), 1100);
@@ -524,7 +544,7 @@ public:
 
     // Parse the XML
     InstrumentDefinitionParser parser(filename, "RectangularUnitTest", xmlText);
-    TS_ASSERT_THROWS_NOTHING(i = parser.parseXML(NULL););
+    TS_ASSERT_THROWS_NOTHING(i = parser.parseXML(nullptr););
 
     // Now the XY detector in bank1
     boost::shared_ptr<const RectangularDetector> bank1 =
@@ -577,7 +597,7 @@ public:
 
     // Parse the XML
     InstrumentDefinitionParser parser(filename, "AdjustTest", xmlText);
-    TS_ASSERT_THROWS_NOTHING(i = parser.parseXML(NULL););
+    TS_ASSERT_THROWS_NOTHING(i = parser.parseXML(nullptr););
 
     // None rotated cuboid
     boost::shared_ptr<const IDetector> ptrNoneRot = i->getDetector(1400);
@@ -690,7 +710,7 @@ public:
     InstrumentDefinitionParser parser(idf, cache, instrumentEnv._instName,
                                       instrumentEnv._xmlText);
 
-    TS_ASSERT_THROWS_NOTHING(parser.parseXML(NULL));
+    TS_ASSERT_THROWS_NOTHING(parser.parseXML(nullptr));
 
     TS_ASSERT_EQUALS(InstrumentDefinitionParser::ReadFallBack,
                      parser.getAppliedCachingOption()); // Check that the
@@ -737,7 +757,7 @@ public:
                                       instrumentEnv._xmlText);
     RemoveFallbackVTPFile(parser);
 
-    TS_ASSERT_THROWS_NOTHING(parser.parseXML(NULL));
+    TS_ASSERT_THROWS_NOTHING(parser.parseXML(nullptr));
 
     TS_ASSERT_EQUALS(InstrumentDefinitionParser::WroteGeomCache,
                      parser.getAppliedCachingOption()); // Check that the
@@ -780,7 +800,7 @@ public:
     InstrumentDefinitionParser parser(idf, cache, instrumentEnv._instName,
                                       instrumentEnv._xmlText);
 
-    TS_ASSERT_THROWS_NOTHING(parser.parseXML(NULL));
+    TS_ASSERT_THROWS_NOTHING(parser.parseXML(nullptr));
 
     TS_ASSERT_EQUALS(InstrumentDefinitionParser::WroteCacheTemp,
                      parser.getAppliedCachingOption()); // Check that the TEMP
@@ -834,7 +854,7 @@ public:
 
     std::string errorMsg("");
     try {
-      parser.parseXML(NULL);
+      parser.parseXML(nullptr);
       errorMsg = "Exception not thrown";
     } catch (Kernel::Exception::InstrumentDefinitionError &e) {
       errorMsg = e.what();
@@ -862,9 +882,9 @@ public:
     Instrument_sptr instr;
 
     if (rethrow)
-      instr = parser.parseXML(NULL);
+      instr = parser.parseXML(nullptr);
     else
-      TS_ASSERT_THROWS_NOTHING(instr = parser.parseXML(NULL));
+      TS_ASSERT_THROWS_NOTHING(instr = parser.parseXML(nullptr));
 
     TS_ASSERT_EQUALS(instr->getNumberDetectors(), numDetectors);
 
@@ -873,7 +893,7 @@ public:
 
   void testLocationsNaming() {
     std::string locations =
-        "<locations n-elements=\" 5\" name-count-start=\" 10\" name=\"det\" />";
+        R"(<locations n-elements=" 5" name-count-start=" 10" name="det" />)";
     detid_t numDetectors = 5;
 
     Instrument_sptr instr = loadInstrLocations(locations, numDetectors);
@@ -885,7 +905,7 @@ public:
 
   void testLocationsStaticValues() {
     std::string locations =
-        "<locations n-elements=\"5\" x=\" 1.0\" y=\" 2.0\" z=\" 3.0\" />";
+        R"(<locations n-elements="5" x=" 1.0" y=" 2.0" z=" 3.0" />)";
     detid_t numDetectors = 5;
 
     Instrument_sptr instr = loadInstrLocations(locations, numDetectors);
@@ -968,13 +988,13 @@ public:
 
   void testLocationsInvalidNoElements() {
     std::string locations =
-        "<locations n-elements=\"0\" t=\"0.0\" t-end=\"180.0\" />";
+        R"(<locations n-elements="0" t="0.0" t-end="180.0" />)";
     detid_t numDetectors = 2;
 
     TS_ASSERT_THROWS(loadInstrLocations(locations, numDetectors, true),
                      Exception::InstrumentDefinitionError);
 
-    locations = "<locations n-elements=\"-1\" t=\"0.0\" t-end=\"180.0\" />";
+    locations = R"(<locations n-elements="-1" t="0.0" t-end="180.0" />)";
 
     TS_ASSERT_THROWS(loadInstrLocations(locations, numDetectors, true),
                      Exception::InstrumentDefinitionError);
@@ -982,28 +1002,28 @@ public:
 
   void testLocationsNotANumber() {
     std::string locations =
-        "<locations n-elements=\"2\" t=\"0.0\" t-end=\"180.x\" />";
+        R"(<locations n-elements="2" t="0.0" t-end="180.x" />)";
     detid_t numDetectors = 2;
 
     TS_ASSERT_THROWS_ANYTHING(
         loadInstrLocations(locations, numDetectors, true));
 
-    locations = "<locations n-elements=\"2\" t=\"0.x\" t-end=\"180.0\" />";
+    locations = R"(<locations n-elements="2" t="0.x" t-end="180.0" />)";
 
     TS_ASSERT_THROWS_ANYTHING(
         loadInstrLocations(locations, numDetectors, true));
 
-    locations = "<locations n-elements=\"x\" t=\"0.0\" t-end=\"180.0\" />";
+    locations = R"(<locations n-elements="x" t="0.0" t-end="180.0" />)";
     TS_ASSERT_THROWS_ANYTHING(
         loadInstrLocations(locations, numDetectors, true));
 
-    locations = "<locations n-elements=\"2\" name-count-start=\"x\"/>";
+    locations = R"(<locations n-elements="2" name-count-start="x"/>)";
     TS_ASSERT_THROWS_ANYTHING(
         loadInstrLocations(locations, numDetectors, true));
   }
 
   void testLocationsNoCorrespondingStartAttr() {
-    std::string locations = "<locations n-elements=\"2\" t-end=\"180.0\" />";
+    std::string locations = R"(<locations n-elements="2" t-end="180.0" />)";
     detid_t numDetectors = 2;
 
     TS_ASSERT_THROWS(loadInstrLocations(locations, numDetectors, true),
@@ -1013,21 +1033,63 @@ public:
 
 class InstrumentDefinitionParserTestPerformance : public CxxTest::TestSuite {
 public:
+  // This pair of boilerplate methods prevent the suite being created statically
+  // This means the constructor isn't called when running other tests
+  static InstrumentDefinitionParserTestPerformance *createSuite() {
+    return new InstrumentDefinitionParserTestPerformance();
+  }
+  static void destroySuite(InstrumentDefinitionParserTestPerformance *suite) {
+    delete suite;
+  }
+
+  InstrumentDefinitionParserTestPerformance()
+      : m_instrumentDirectoryPath(
+            ConfigService::Instance().getInstrumentDirectory()) {}
+
   void testLoadingAndParsing() {
     const std::string filename =
-        ConfigService::Instance().getInstrumentDirectory() +
+        m_instrumentDirectoryPath +
         "/IDFs_for_UNIT_TESTING/IDF_for_UNIT_TESTING.xml";
     const std::string xmlText = Strings::loadFile(filename);
 
     boost::shared_ptr<const Instrument> instrument;
     InstrumentDefinitionParser parser(filename, "For Unit Testing", xmlText);
-    TS_ASSERT_THROWS_NOTHING(instrument = parser.parseXML(NULL));
+    TS_ASSERT_THROWS_NOTHING(instrument = parser.parseXML(nullptr));
 
     // Clean up VTP file
     const std::string vtpFilename = parser.createVTPFileName();
     if (!vtpFilename.empty()) {
       Poco::File(vtpFilename).remove();
     }
+  }
+
+  void test_load_wish() {
+    const auto definition =
+        m_instrumentDirectoryPath + "/WISH_Definition_10Panels.xml";
+    std::string contents = Strings::loadFile(definition);
+    InstrumentDefinitionParser parser(definition, "dummy", contents);
+    auto wishInstrument = parser.parseXML(nullptr);
+    TS_ASSERT_EQUALS(extractDetectorInfo(*wishInstrument)->size(),
+                     778245); // Sanity check
+  }
+
+  void test_load_sans2d() {
+    const auto definition =
+        m_instrumentDirectoryPath + "/SANS2D_Definition_Tubes.xml";
+    std::string contents = Strings::loadFile(definition);
+    InstrumentDefinitionParser parser(definition, "dummy", contents);
+    auto sansInstrument = parser.parseXML(nullptr);
+    TS_ASSERT_EQUALS(extractDetectorInfo(*sansInstrument)->size(),
+                     122888); // Sanity check
+  }
+
+private:
+  const std::string m_instrumentDirectoryPath;
+
+  std::unique_ptr<Geometry::DetectorInfo>
+  extractDetectorInfo(const Mantid::Geometry::Instrument &instrument) {
+    Geometry::ParameterMap pmap;
+    return std::move(std::get<1>(instrument.makeBeamline(pmap)));
   }
 };
 

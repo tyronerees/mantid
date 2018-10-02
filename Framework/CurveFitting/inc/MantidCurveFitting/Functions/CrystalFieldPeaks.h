@@ -1,6 +1,7 @@
 #ifndef MANTID_CURVEFITTING_CRYSTALFIELDPEAKS_H_
 #define MANTID_CURVEFITTING_CRYSTALFIELDPEAKS_H_
 
+#include "MantidAPI/IFunctionGeneral.h"
 #include "MantidCurveFitting/Functions/CrystalFieldPeaksBase.h"
 
 namespace Mantid {
@@ -32,7 +33,8 @@ namespace Functions {
   File change history is stored at: <https://github.com/mantidproject/mantid>
   Code Documentation is available at: <http://doxygen.mantidproject.org>
 */
-class MANTID_CURVEFITTING_DLL CrystalFieldPeaks : public CrystalFieldPeaksBase {
+class MANTID_CURVEFITTING_DLL CrystalFieldPeaks : public CrystalFieldPeaksBase,
+                                                  public API::IFunctionGeneral {
 public:
   CrystalFieldPeaks();
   std::string name() const override;

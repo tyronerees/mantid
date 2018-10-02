@@ -1,13 +1,11 @@
-//----------------------------------------------------------------------
-// Includes
-//----------------------------------------------------------------------
 #include "MantidAlgorithms/CreateLogPropertyTable.h"
 
 #include "MantidAPI/ITableWorkspace.h"
-#include "MantidAPI/TableRow.h"
 #include "MantidAPI/MatrixWorkspace.h"
 #include "MantidAPI/Run.h"
+#include "MantidAPI/TableRow.h"
 #include "MantidAPI/WorkspaceFactory.h"
+#include "MantidAPI/WorkspaceGroup.h"
 #include "MantidKernel/ArrayProperty.h"
 #include "MantidKernel/ListValidator.h"
 #include "MantidKernel/MandatoryValidator.h"
@@ -38,7 +36,7 @@ GroupPolicy getGroupPolicyByName(const std::string &name);
 std::set<std::string> getAllGroupPolicyNames();
 Math::StatisticType getStatisticTypeByName(const std::string &name);
 std::set<std::string> getAllStatisticTypeNames();
-}
+} // namespace
 
 /**
  * Initialise the algorithm's properties.
@@ -333,6 +331,6 @@ std::set<std::string> getAllStatisticTypeNames() {
 
   return statisticTypeNames;
 }
-}
+} // namespace
 } // namespace Algorithms
 } // namespace Mantid

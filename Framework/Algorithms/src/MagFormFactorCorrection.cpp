@@ -1,12 +1,12 @@
 #include "MantidAlgorithms/MagFormFactorCorrection.h"
-#include "MantidKernel/MagneticIon.h"
-#include "MantidKernel/ListValidator.h"
-#include "MantidKernel/Unit.h"
-#include "MantidKernel/UnitFactory.h"
-#include "MantidAPI/Axis.h"
 #include "MantidAPI/AnalysisDataService.h"
+#include "MantidAPI/Axis.h"
 #include "MantidAPI/MatrixWorkspace.h"
 #include "MantidAPI/WorkspaceFactory.h"
+#include "MantidKernel/ListValidator.h"
+#include "MantidKernel/MagneticIon.h"
+#include "MantidKernel/Unit.h"
+#include "MantidKernel/UnitFactory.h"
 
 using namespace Mantid::PhysicalConstants;
 
@@ -80,12 +80,12 @@ void MagFormFactorCorrection::exec() {
   }
 
   // Parses the ion name and get handle to MagneticIon object
-  const MagneticIon ion = getMagneticIon(ionNameStr);
+  const MagneticIon &ion = getMagneticIon(ionNameStr);
   // Gets the vector of form factor values
   std::vector<double> FF;
   FF.reserve(Qvals.size());
-  for (int64_t iQ = 0; iQ < (int64_t)Qvals.size(); iQ++) {
-    FF.push_back(ion.analyticalFormFactor(Qvals[iQ] * Qvals[iQ]));
+  for (double Qval : Qvals) {
+    FF.push_back(ion.analyticalFormFactor(Qval * Qval));
   }
   if (!ffwsStr.empty()) {
     MatrixWorkspace_sptr ffws = API::WorkspaceFactory::Instance().create(

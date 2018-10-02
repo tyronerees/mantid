@@ -1,9 +1,9 @@
 #ifndef MDRESOLUTIONCONVOLUTIONFACTORYTEST_H_
 #define MDRESOLUTIONCONVOLUTIONFACTORYTEST_H_
 
-#include <cxxtest/TestSuite.h>
-#include "MantidMDAlgorithms/Quantification/MDResolutionConvolutionFactory.h"
 #include "MDFittingTestHelpers.h"
+#include "MantidMDAlgorithms/Quantification/MDResolutionConvolutionFactory.h"
+#include <cxxtest/TestSuite.h>
 
 using Mantid::MDAlgorithms::MDResolutionConvolutionFactory;
 
@@ -33,12 +33,12 @@ public:
     FakeMDFunction fakeFunction;
     registerFakeTypes();
 
-    MDResolutionConvolution *convolution(NULL);
+    MDResolutionConvolution *convolution(nullptr);
     TS_ASSERT_THROWS_NOTHING(
         convolution =
             MDResolutionConvolutionFactory::Instance().createConvolution(
                 "FakeConvolution", "FakeForegroundModel", fakeFunction));
-    TS_ASSERT(convolution != NULL);
+    TS_ASSERT(convolution != nullptr);
     if (convolution) {
       TS_ASSERT_EQUALS(convolution->nAttributes(), 2);
       TS_ASSERT_EQUALS(convolution->getAttributeNames()[0], "ConvAtt0");

@@ -1,10 +1,11 @@
 #ifndef MANTID_API_IMDWORKSPACE_H_
 #define MANTID_API_IMDWORKSPACE_H_
 
-#include "MantidAPI/IMDWorkspace.h"
+#include "MantidAPI/IMDIterator.h"
 #include "MantidAPI/ITableWorkspace_fwd.h"
 #include "MantidAPI/MDGeometry.h"
 #include "MantidAPI/Workspace.h"
+#include "MantidKernel/SpecialCoordinateSystem.h"
 #include <cstdint>
 #include <vector>
 
@@ -15,20 +16,6 @@ class MDImplicitFunction;
 }
 
 namespace API {
-
-class IMDIterator;
-
-/** Enum describing different ways to normalize the signal
- * in a MDWorkspace.
- */
-enum MDNormalization {
-  /// Don't normalize = return raw counts
-  NoNormalization = 0,
-  /// Divide the signal by the volume of the box/bin
-  VolumeNormalization = 1,
-  /// Divide the signal by the number of events that contributed to it.
-  NumEventsNormalization = 2
-};
 
 static const signal_t MDMaskValue = std::numeric_limits<double>::quiet_NaN();
 
@@ -68,7 +55,8 @@ static const signal_t MDMaskValue = std::numeric_limits<double>::quiet_NaN();
 
 class MANTID_API_DLL IMDWorkspace : public Workspace, public API::MDGeometry {
 public:
-  IMDWorkspace();
+  IMDWorkspace(
+      const Parallel::StorageMode storageMode = Parallel::StorageMode::Cloned);
   IMDWorkspace &operator=(const IMDWorkspace &other) = delete;
 
   /**
@@ -84,6 +72,12 @@ public:
   std::unique_ptr<IMDWorkspace> clone() const {
     return std::unique_ptr<IMDWorkspace>(doClone());
   }
+
+  /// Returns a default-initialized clone of the workspace
+  std::unique_ptr<IMDWorkspace> cloneEmpty() const {
+    return std::unique_ptr<IMDWorkspace>(doCloneEmpty());
+  }
+
   /// Get the number of points associated with the workspace.
   /// For MDEvenWorkspace it is the number of events contributing into the
   /// workspace
@@ -92,14 +86,14 @@ public:
   /// the number of bins.
   virtual uint64_t getNPoints() const = 0;
   /*** Get the number of events, associated with the workspace
-     * For MDEvenWorkspace it is equal to the number of points
-     * For regularly gridded workspace (MDHistoWorkspace and MatrixWorkspace),
+   * For MDEvenWorkspace it is equal to the number of points
+   * For regularly gridded workspace (MDHistoWorkspace and MatrixWorkspace),
    * it is the number of contributed non-zero events.
-  */
+   */
   virtual uint64_t getNEvents() const = 0;
 
   /// Creates a new iterator pointing to the first cell in the workspace
-  virtual std::vector<IMDIterator *> createIterators(
+  virtual std::vector<std::unique_ptr<IMDIterator>> createIterators(
       size_t suggestedNumCores = 1,
       Mantid::Geometry::MDImplicitFunction *function = nullptr) const = 0;
 
@@ -119,7 +113,7 @@ public:
                                const Mantid::Kernel::VMD &end,
                                Mantid::API::MDNormalization normalize) const;
 
-  IMDIterator *createIterator(
+  std::unique_ptr<IMDIterator> createIterator(
       Mantid::Geometry::MDImplicitFunction *function = nullptr) const;
 
   std::string getConvention() const;
@@ -163,6 +157,9 @@ public:
   // Check if this class is an instance of MDHistoWorkspace
   virtual bool isMDHistoWorkspace() const { return false; }
 
+  // Check if this class has an oriented lattice on a sample object
+  virtual bool hasOrientedLattice() const = 0;
+
 protected:
   /// Protected copy constructor. May be used by childs for cloning.
   IMDWorkspace(const IMDWorkspace &) = default;
@@ -175,12 +172,13 @@ protected:
 private:
   std::string m_convention;
   IMDWorkspace *doClone() const override = 0;
+  IMDWorkspace *doCloneEmpty() const override = 0;
 };
 
 /// Shared pointer to the IMDWorkspace base class
-typedef boost::shared_ptr<IMDWorkspace> IMDWorkspace_sptr;
+using IMDWorkspace_sptr = boost::shared_ptr<IMDWorkspace>;
 /// Shared pointer to the IMDWorkspace base class (const version)
-typedef boost::shared_ptr<const IMDWorkspace> IMDWorkspace_const_sptr;
-}
-}
+using IMDWorkspace_const_sptr = boost::shared_ptr<const IMDWorkspace>;
+} // namespace API
+} // namespace Mantid
 #endif // MANTID_API_IMDWORKSPACE_H_

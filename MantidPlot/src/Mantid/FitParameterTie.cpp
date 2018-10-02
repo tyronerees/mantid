@@ -6,7 +6,7 @@
 /// Constructor
 FitParameterTie::FitParameterTie(
     boost::shared_ptr<Mantid::API::CompositeFunction> cf)
-    : m_compositeFunction(cf), m_prop(0) {}
+    : m_compositeFunction(cf), m_prop(nullptr) {}
 
 /// Destructor
 FitParameterTie::~FitParameterTie() {
@@ -42,7 +42,7 @@ void FitParameterTie::set(const QString &estr) {
   // rx matches function identifiers in the parameter names and captures the
   // function index:
   // for f12.Sigma rx.cap(1).toInt() returns 12
-  QRegExp rx("\\bf(\\d+)\\.");
+  QRegExp rx(R"(\bf(\d+)\.)");
 
   if (rx.indexIn(parName) < 0) {
     throw std::invalid_argument(
@@ -106,10 +106,10 @@ QString FitParameterTie::exprRHS() const {
 }
 
 /**
- * When a new function is added the function indeces in the tying expression
+ * When a new function is added the function indices in the tying expression
  * must
  * be changed.
- * @param i :: The index at wich the function is inserted. All old indeces
+ * @param i :: The index at which the function is inserted. All old indices
  * starting
  *   from i (inclusive) must be incremented.
  */
@@ -122,10 +122,10 @@ void FitParameterTie::functionInserted(int i) {
 }
 
 /**
- * When a function is deleted the function indeces in the tying expression must
+ * When a function is deleted the function indices in the tying expression must
  * be changed or the tie may become invalid if the deleted function is used in
  * the tie.
- * @param i :: The index of the deleted function. All old indeces starting
+ * @param i :: The index of the deleted function. All old indices starting
  *   from i+1 must be decremented.
  * @return true if the tie remains valid and false otherwise.
  */

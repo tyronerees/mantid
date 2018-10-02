@@ -3,8 +3,8 @@
 
 #include <cxxtest/TestSuite.h>
 
-#include "MantidDataObjects/MementoTableWorkspace.h"
 #include "MantidAPI/WorkspaceFactory.h"
+#include "MantidDataObjects/MementoTableWorkspace.h"
 
 using namespace Mantid::DataObjects;
 using namespace Mantid::API;
@@ -21,7 +21,7 @@ public:
         product =
             WorkspaceFactory::Instance().createTable("MementoTableWorkspace"));
     TSM_ASSERT("Product is not a MementoTableWorkspace",
-               NULL != dynamic_cast<MementoTableWorkspace *>(product.get()));
+               nullptr != dynamic_cast<MementoTableWorkspace *>(product.get()));
   }
 
   void testConstruction() {
@@ -74,8 +74,9 @@ public:
   void testCompareWithWrongColumnType() {
     MementoTableWorkspace standard;
     TableWorkspace ws; // Candidate workspace.
-    ws.addColumn("double", standard.getColumn(0)
-                               ->name()); // Copy the name, but not the type.
+    ws.addColumn(
+        "double",
+        standard.getColumn(0)->name()); // Copy the name, but not the type.
     TSM_ASSERT("Wrong column type, should have been identified.",
                !MementoTableWorkspace::isMementoWorkspace(ws));
   }

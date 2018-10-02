@@ -4,21 +4,21 @@
 #include "MantidAPI/Algorithm.h"
 #include "MantidAPI/CoordTransform.h"
 #include "MantidAPI/IMDEventWorkspace_fwd.h"
-#include "MantidGeometry/MDGeometry/MDHistoDimension.h"
-#include "MantidGeometry/MDGeometry/MDImplicitFunction.h"
-#include "MantidKernel/System.h"
-#include "MantidKernel/VMD.h"
 #include "MantidDataObjects/MDBox.h"
 #include "MantidDataObjects/MDEventFactory.h"
 #include "MantidDataObjects/MDEventWorkspace.h"
 #include "MantidDataObjects/MDHistoWorkspace.h"
+#include "MantidGeometry/MDGeometry/MDHistoDimension.h"
+#include "MantidGeometry/MDGeometry/MDImplicitFunction.h"
+#include "MantidKernel/System.h"
+#include "MantidKernel/VMD.h"
 #include "MantidMDAlgorithms/SlicingAlgorithm.h"
 
 namespace Mantid {
 namespace Geometry {
 // Forward declaration
 class MDImplicitFunction;
-}
+} // namespace Geometry
 namespace MDAlgorithms {
 
 /** Take a MDEventWorkspace and bin it to a dense histogram
@@ -44,6 +44,9 @@ public:
 
   /// Algorithm's version for identification
   int version() const override { return 1; }
+  const std::vector<std::string> seeAlso() const override {
+    return {"SliceMDHisto", "ProjectMD", "CutMD", "SliceMD"};
+  }
   /// Algorithm's category for identification
   const std::string category() const override {
     return "MDAlgorithms\\Slicing";
@@ -71,7 +74,7 @@ private:
   /// The output MDHistoWorkspace
   Mantid::DataObjects::MDHistoWorkspace_sptr outWS;
   /// Progress reporting
-  Mantid::API::Progress *prog;
+  std::unique_ptr<Mantid::API::Progress> prog = nullptr;
   /// ImplicitFunction used
   Mantid::Geometry::MDImplicitFunction *implicitFunction;
 
@@ -80,9 +83,10 @@ private:
   signal_t *signals;
   signal_t *errors;
   signal_t *numEvents;
+  bool m_accumulate{false};
 };
 
+} // namespace MDAlgorithms
 } // namespace Mantid
-} // namespace DataObjects
 
 #endif /* MANTID_MDALGORITHMS_BINMD_H_ */

@@ -1,15 +1,14 @@
 #ifndef MANTID_GEOMETRY_ICOMPONENT_H_
 #define MANTID_GEOMETRY_ICOMPONENT_H_
 
-//----------------------------------------------------------------------
-// Includes
-//----------------------------------------------------------------------
 #include "MantidGeometry/DllConfig.h"
+#include "MantidGeometry/Objects/BoundingBox.h"
 #include "MantidKernel/V3D.h"
 
+#include <map>
+#include <set>
 #include <string>
 #include <vector>
-#include <set>
 
 #ifndef Q_MOC_RUN
 #include <boost/shared_ptr.hpp>
@@ -22,15 +21,11 @@ class Quat;
 }
 
 namespace Geometry {
-//---------------------------------------------------------
-// Forward declarations
-//---------------------------------------------------------
 class IComponent;
-class BoundingBox;
 class ParameterMap;
 
 /// Define a type for a unique component identifier.
-typedef IComponent *ComponentID;
+using ComponentID = IComponent *;
 
 /** @class IComponent
 @brief base class for Geometric IComponent
@@ -102,8 +97,8 @@ public:
   // otherwise absolute
   virtual void setPos(double, double, double) = 0;
   /** Set the position of the component
-  *  The position is with respect to the parent component
-  */
+   *  The position is with respect to the parent component
+   */
   virtual void setPos(const Kernel::V3D &) = 0;
   //! Set the orientation Kernel::Quaternion relative to parent (if present)
   // otherwise absolute
@@ -121,22 +116,22 @@ public:
   //! Rotate the IComponent by an angle in degrees with respect to an axis.
   virtual void rotate(double, const Kernel::V3D &) = 0;
   //! Get the position relative to the parent IComponent (absolute if no parent)
-  virtual const Kernel::V3D getRelativePos() const = 0;
+  virtual Kernel::V3D getRelativePos() const = 0;
   //! Get the position of the IComponent. Tree structure is traverse through the
   // parent chain
   virtual Kernel::V3D getPos() const = 0;
   //! Get the relative Orientation
-  virtual const Kernel::Quat &getRelativeRot() const = 0;
+  virtual Kernel::Quat getRelativeRot() const = 0;
   //! Get the absolute orientation of the IComponent
-  virtual const Kernel::Quat getRotation() const = 0;
+  virtual Kernel::Quat getRotation() const = 0;
   //! Get the distance to another IComponent
   virtual double getDistance(const IComponent &) const = 0;
   /// Get the bounding box for this component and store it in the given argument
   virtual void getBoundingBox(BoundingBox &boundingBox) const = 0;
 
   /** Gets the scaling factor of the object for the Object Component.
-    * @return a vector with 1 in all 3 directions.
-    */
+   * @return a vector with 1 in all 3 directions.
+   */
   virtual Kernel::V3D getScaleFactor() const {
     return Kernel::V3D(1.0, 1.0, 1.0);
   }
@@ -183,21 +178,17 @@ public:
                                            bool recursive = true) const = 0;
   //@}
   /** Prints a text representation of itself
-  */
+   */
   virtual void printSelf(std::ostream &) const = 0;
   //! Returns true if the Component is parametrized (has a parameter map)
   virtual bool isParametrized() const = 0;
+  virtual size_t registerContents(class ComponentVisitor &component) const = 0;
 };
 
 /// Typedef of a shared pointer to a IComponent
-typedef boost::shared_ptr<IComponent> IComponent_sptr;
+using IComponent_sptr = boost::shared_ptr<IComponent>;
 /// Typdef of a shared pointer to a const IComponent
-typedef boost::shared_ptr<const IComponent> IComponent_const_sptr;
-
-/** Prints a text representation
-*/
-MANTID_GEOMETRY_DLL std::ostream &operator<<(std::ostream &,
-                                             const IComponent &);
+using IComponent_const_sptr = boost::shared_ptr<const IComponent>;
 
 } // Namespace Geometry
 

@@ -7,9 +7,9 @@
 #include "SampleLogDialogBase.h"
 
 // Qt
-#include <QTextEdit>
-#include <QLineEdit>
 #include <QDoubleSpinBox>
+#include <QLineEdit>
+#include <QTextEdit>
 
 //----------------------------------
 // Forward declarations
@@ -55,10 +55,14 @@ class MantidSampleLogDialog : public SampleLogDialogBase {
 public:
   /// Constructor
   MantidSampleLogDialog(const QString &wsname, MantidUI *mui,
-                        Qt::WFlags flags = 0, size_t experimentInfoIndex = 0);
+                        Qt::WFlags flags = nullptr,
+                        size_t experimentInfoIndex = 0);
 
   /// Destructor
   virtual ~MantidSampleLogDialog() override;
+
+  /// Which type of filtering is selected
+  Mantid::API::LogFilterGenerator::FilterType getFilterType() const override;
 
 protected slots:
 

@@ -8,6 +8,11 @@
 #include "MantidAPI/Workspace_fwd.h"
 
 namespace Mantid {
+namespace HistogramData {
+class HistogramX;
+class HistogramY;
+class HistogramE;
+} // namespace HistogramData
 namespace Algorithms {
 /** Takes a 2D workspace as input and regroups the data according to the input
    regroup parameters.
@@ -55,6 +60,7 @@ public:
 
   /// Algorithm's version for identification overriding a virtual method
   int version() const override { return 1; }
+  const std::vector<std::string> seeAlso() const override { return {"Rebin"}; }
   /// Algorithm's category for identification overriding a virtual method
   const std::string category() const override { return "Transforms\\Rebin"; }
 
@@ -67,12 +73,14 @@ private:
   void init() override;
   void exec() override;
 
-  void rebin(const std::vector<double> &, const std::vector<double> &,
-             const std::vector<double> &, const std::vector<int> &,
-             std::vector<double> &, std::vector<double> &, bool);
+  void rebin(const HistogramData::HistogramX &xold,
+             const HistogramData::HistogramY &yold,
+             const HistogramData::HistogramE &eold, std::vector<int> &xoldIndex,
+             HistogramData::HistogramY &ynew, HistogramData::HistogramE &enew,
+             bool distribution);
 };
 
-} // namespace Algorithm
+} // namespace Algorithms
 } // namespace Mantid
 
 #endif /*MANTID_ALGORITHM_REGROUP_H_*/

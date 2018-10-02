@@ -1,7 +1,10 @@
 #ifndef MANTID_KERNEL_DATEVALIDATOR_H_
 #define MANTID_KERNEL_DATEVALIDATOR_H_
 
+#include "MantidKernel/DllConfig.h"
+#include "MantidKernel/IValidator.h"
 #include "MantidKernel/TypedValidator.h"
+#include <string>
 
 namespace Mantid {
 namespace Kernel {
@@ -45,7 +48,7 @@ private:
   /// Checks the value is valid
   std::string checkValidity(const std::string &value) const override;
 };
-}
-}
+} // namespace Kernel
+} // namespace Mantid
 
 #endif

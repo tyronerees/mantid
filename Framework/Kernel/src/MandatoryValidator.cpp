@@ -39,8 +39,19 @@ template <> DLLExport bool checkIsEmpty(const int &value) {
  * @return True if the value is considered empty, see EmptyValues.h
  */
 template <> DLLExport bool checkIsEmpty(const long &value) {
+  // 32 bit for Windows and Clang, 64 bit for GCC
   return (value == Mantid::EMPTY_LONG());
 }
+#if defined(_WIN32) || defined(__clang__) && defined(__APPLE__)
+/**
+ * Specialization of checkIsEmpty for 64 bit intiger
+ * @param value :: A int64_t value
+ * @return True if the value is considered empty, see EmptyValues.h
+ */
+template <> DLLExport bool checkIsEmpty(const int64_t &value) {
+  return (value == Mantid::EMPTY_INT64());
+}
+#endif
 /**
  * Specialization of checkIsEmpty for OptionalBool
  * @param value :: A long value
@@ -49,6 +60,6 @@ template <> DLLExport bool checkIsEmpty(const long &value) {
 template <> DLLExport bool checkIsEmpty(const OptionalBool &value) {
   return (value.getValue() == OptionalBool::Unset);
 }
-}
-}
-}
+} // namespace Detail
+} // namespace Kernel
+} // namespace Mantid

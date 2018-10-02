@@ -3,20 +3,21 @@
 #include "MantidAPI/AlgorithmManager.h"
 #include "MantidAPI/FileProperty.h"
 #include "MantidAPI/MatrixWorkspace.h"
+#include "MantidAPI/SpectrumInfo.h"
 #include "MantidAPI/TextAxis.h"
 #include "MantidAPI/WorkspaceFactory.h"
 #include "MantidGeometry/Instrument.h"
+#include "MantidGeometry/Objects/IObject.h"
 #include "MantidKernel/BoundedValidator.h"
 #include "MantidKernel/Statistics.h"
 #include "MantidKernel/Unit.h"
 
-#include <fstream>
-
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/make_shared.hpp>
-#include <boost/random/variate_generator.hpp>
-#include <boost/random/uniform_real.hpp>
+
+#include <fstream>
+#include <random>
 
 namespace Mantid {
 namespace Algorithms {
@@ -27,17 +28,10 @@ using namespace Mantid::Geometry;
 
 namespace {
 Mantid::Kernel::Logger g_log("VesuvioL1ThetaResolution");
-
-class SquareRoot {
-public:
-  double operator()(double x) { return sqrt(x); }
-};
 }
 
 // Register the algorithm into the AlgorithmFactory
 DECLARE_ALGORITHM(VesuvioL1ThetaResolution)
-
-//----------------------------------------------------------------------------------------------
 
 /// Algorithms name for identification. @see Algorithm::name
 const std::string VesuvioL1ThetaResolution::name() const {
@@ -108,10 +102,6 @@ void VesuvioL1ThetaResolution::init() {
 /** Execute the algorithm.
  */
 void VesuvioL1ThetaResolution::exec() {
-  // Set up random number generator
-  m_generator.seed(static_cast<boost::mt19937::result_type>(
-      static_cast<int>(getProperty("Seed"))));
-
   // Load the instrument workspace
   loadInstrument();
 
@@ -173,21 +163,27 @@ void VesuvioL1ThetaResolution::exec() {
 
   // Set up progress reporting
   Progress prog(this, 0.0, 1.0, numHist);
+  const int seed(getProperty("Seed"));
+  std::mt19937 randEngine(static_cast<std::mt19937::result_type>(seed));
+  std::uniform_real_distribution<> flatDistrib(0.0, 1.0);
+  std::function<double()> flatVariateGen(
+      [&randEngine, &flatDistrib]() { return flatDistrib(randEngine); });
 
+  const auto &spectrumInfo = m_instWorkspace->spectrumInfo();
   // Loop for all detectors
   for (size_t i = 0; i < numHist; i++) {
     std::vector<double> l1;
     std::vector<double> theta;
-    IDetector_const_sptr det = m_instWorkspace->getDetector(i);
+    const auto &det = spectrumInfo.detector(i);
 
     // Report progress
     std::stringstream report;
-    report << "Detector " << det->getID();
+    report << "Detector " << det.getID();
     prog.report(report.str());
-    g_log.information() << "Detector ID " << det->getID() << '\n';
+    g_log.information() << "Detector ID " << det.getID() << '\n';
 
     // Do simulation
-    calculateDetector(det, l1, theta);
+    calculateDetector(det, flatVariateGen, l1, theta);
 
     // Calculate statistics for L1 and theta
     Statistics l1Stats = getStatistics(l1);
@@ -201,43 +197,41 @@ void VesuvioL1ThetaResolution::exec() {
 
     // Set values in output workspace
     const int specNo = m_instWorkspace->getSpectrum(i).getSpectrumNo();
-    m_outputWorkspace->dataX(0)[i] = specNo;
-    m_outputWorkspace->dataX(1)[i] = specNo;
-    m_outputWorkspace->dataX(2)[i] = specNo;
-    m_outputWorkspace->dataX(3)[i] = specNo;
-    m_outputWorkspace->dataY(0)[i] = l1Stats.mean;
-    m_outputWorkspace->dataY(1)[i] = l1Stats.standard_deviation;
-    m_outputWorkspace->dataY(2)[i] = thetaStats.mean;
-    m_outputWorkspace->dataY(3)[i] = thetaStats.standard_deviation;
+    m_outputWorkspace->mutableX(0)[i] = specNo;
+    m_outputWorkspace->mutableX(1)[i] = specNo;
+    m_outputWorkspace->mutableX(2)[i] = specNo;
+    m_outputWorkspace->mutableX(3)[i] = specNo;
+    m_outputWorkspace->mutableY(0)[i] = l1Stats.mean;
+    m_outputWorkspace->mutableY(1)[i] = l1Stats.standard_deviation;
+    m_outputWorkspace->mutableY(2)[i] = thetaStats.mean;
+    m_outputWorkspace->mutableY(3)[i] = thetaStats.standard_deviation;
 
     // Process data for L1 distribution
     if (m_l1DistributionWs) {
-      std::vector<double> &x = m_l1DistributionWs->dataX(i);
-      std::vector<double> y(numEvents, 1.0);
+      auto &x = m_l1DistributionWs->mutableX(i);
 
       std::sort(l1.begin(), l1.end());
       std::copy(l1.begin(), l1.end(), x.begin());
 
-      m_l1DistributionWs->dataY(i) = y;
+      m_l1DistributionWs->mutableY(i) = 1.0;
 
       auto &spec = m_l1DistributionWs->getSpectrum(i);
       spec.setSpectrumNo(specNo);
-      spec.addDetectorID(det->getID());
+      spec.addDetectorID(det.getID());
     }
 
     // Process data for theta distribution
     if (m_thetaDistributionWs) {
-      std::vector<double> &x = m_thetaDistributionWs->dataX(i);
-      std::vector<double> y(numEvents, 1.0);
+      auto &x = m_thetaDistributionWs->mutableX(i);
 
       std::sort(theta.begin(), theta.end());
       std::copy(theta.begin(), theta.end(), x.begin());
 
-      m_thetaDistributionWs->dataY(i) = y;
+      m_thetaDistributionWs->mutableY(i) = 1.0;
 
       auto &spec = m_thetaDistributionWs->getSpectrum(i);
       spec.setSpectrumNo(specNo);
-      spec.addDetectorID(det->getID());
+      spec.addDetectorID(det.getID());
     }
   }
 
@@ -350,8 +344,8 @@ void VesuvioL1ThetaResolution::loadInstrument() {
 /** Loads the instrument into a workspace.
  */
 void VesuvioL1ThetaResolution::calculateDetector(
-    IDetector_const_sptr detector, std::vector<double> &l1Values,
-    std::vector<double> &thetaValues) {
+    const IDetector &detector, std::function<double()> &flatRandomVariateGen,
+    std::vector<double> &l1Values, std::vector<double> &thetaValues) {
   const int numEvents = getProperty("NumEvents");
   l1Values.reserve(numEvents);
   thetaValues.reserve(numEvents);
@@ -362,7 +356,7 @@ void VesuvioL1ThetaResolution::calculateDetector(
     sampleWidth = 4.0;
 
   // Get detector dimensions
-  Geometry::Object_const_sptr pixelShape = detector->shape();
+  Geometry::IObject_const_sptr pixelShape = detector.shape();
   if (!pixelShape || !pixelShape->hasValidShape()) {
     throw std::invalid_argument("Detector pixel has no defined shape!");
   }
@@ -375,12 +369,12 @@ void VesuvioL1ThetaResolution::calculateDetector(
                 << '\n';
 
   // Scattering angle in rad
-  const double theta = m_instWorkspace->detectorTwoTheta(*detector);
+  const double theta = m_instWorkspace->detectorTwoTheta(detector);
   if (theta == 0.0)
     return;
 
   // Final flight path in cm
-  const double l1av = detector->getDistance(*m_sample) * 100.0;
+  const double l1av = detector.getDistance(*m_sample) * 100.0;
 
   const double x0 = l1av * sin(theta);
   const double y0 = l1av * cos(theta);
@@ -389,16 +383,16 @@ void VesuvioL1ThetaResolution::calculateDetector(
   // This loop is not iteration limited but highly unlikely to ever become
   // infinate
   while (l1Values.size() < static_cast<size_t>(numEvents)) {
-    const double xs = -sampleWidth / 2 + sampleWidth * random();
+    const double xs = -sampleWidth / 2 + sampleWidth * flatRandomVariateGen();
     const double ys = 0.0;
-    const double zs = -sampleWidth / 2 + sampleWidth * random();
+    const double zs = -sampleWidth / 2 + sampleWidth * flatRandomVariateGen();
     const double rs = sqrt(pow(xs, 2) + pow(zs, 2));
 
     if (rs <= sampleWidth / 2) {
-      const double a = -detWidth / 2 + detWidth * random();
+      const double a = -detWidth / 2 + detWidth * flatRandomVariateGen();
       const double xd = x0 - a * cos(theta);
       const double yd = y0 + a * sin(theta);
-      const double zd = -detHeight / 2 + detHeight * random();
+      const double zd = -detHeight / 2 + detHeight * flatRandomVariateGen();
 
       const double l1 =
           sqrt(pow(xd - xs, 2) + pow(yd - ys, 2) + pow(zd - zs, 2));
@@ -429,7 +423,7 @@ VesuvioL1ThetaResolution::processDistribution(MatrixWorkspace_sptr ws,
   double xMin(DBL_MAX);
   double xMax(DBL_MIN);
   for (size_t i = 0; i < numHist; i++) {
-    const std::vector<double> &x = ws->readX(i);
+    auto &x = ws->x(i);
     xMin = std::min(xMin, x.front());
     xMax = std::max(xMax, x.back());
   }
@@ -448,22 +442,13 @@ VesuvioL1ThetaResolution::processDistribution(MatrixWorkspace_sptr ws,
   ws = rebin->getProperty("OutputWorkspace");
 
   for (size_t i = 0; i < numHist; i++) {
-    const std::vector<double> &y = ws->readY(i);
-    std::vector<double> &e = ws->dataE(i);
-
-    std::transform(y.begin(), y.end(), e.begin(), SquareRoot());
+    auto &y = ws->y(i);
+    auto &e = ws->mutableE(i);
+    std::transform(y.begin(), y.end(), e.begin(),
+                   [](double x) { return sqrt(x); });
   }
 
   return ws;
-}
-
-//----------------------------------------------------------------------------------------------
-/** Generates a random number.
- */
-double VesuvioL1ThetaResolution::random() {
-  typedef boost::uniform_real<double> uniform_double;
-  return boost::variate_generator<boost::mt19937 &, uniform_double>(
-      m_generator, uniform_double(0.0, 1.0))();
 }
 
 } // namespace Algorithms

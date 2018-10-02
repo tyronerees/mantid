@@ -5,8 +5,10 @@ This module contains the PyChop2 class which allows calculation of the resolutio
 direct geometry time-of-flight inelastic neutron spectrometers.
 """
 
+from __future__ import (absolute_import, division, print_function)
 from .ISISFermi import ISISFermi
 from .ISISDisk import ISISDisk
+import warnings
 
 
 class PyChop2:
@@ -29,9 +31,13 @@ class PyChop2:
         'LETHIFLUX': ISISDisk,   # LET, high flux configuration
         'LETINTERMED': ISISDisk, # LET, medium flux configuration
         'LETHIRES': ISISDisk,    # LET, low flux configuration
-        'MERLIN': ISISDisk}
+        'MERLIN': ISISDisk,
+        'MAPS': ISISDisk,
+        'MARI': ISISDisk}
 
     def __init__(self, instname, *args):
+        warnings.warn("The PyChop2 class is deprecated and will be removed in the next Mantid version. "
+                      "Please use the Instrument class or the official PyChop CLI interface.", DeprecationWarning)
         instname = instname.upper()
         if instname not in self.__Classes.keys():
             raise ValueError('Instrument %s not recognised' % (instname))
@@ -120,6 +126,12 @@ class PyChop2:
         """
         return self.object.getResFlux(*args)
 
+    def getWidths(self, *args):
+        """
+        ! Returns the individual time widths that go into the calculated energy widths as a dict
+        """
+        return self.object.getWidths(*args)
+
     def __getMultiRepObject(self):
         """
         Private method to obtain multi-rep information
@@ -152,6 +164,12 @@ class PyChop2:
         ! For instruments which support multi-rep mode, returns the flux for each rep
         """
         return self.__getMultiRepObject().getMultiRepFlux(*args)
+
+    def getMultiWidths(self, *args):
+        """
+        ! Returns the individual time widths that go into the calculated energy widths as a dict
+        """
+        return self.__getMultiRepObject().getMultiWidths(*args)
 
     def plotMultiRepFrame(self, *args):
         """

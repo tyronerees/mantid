@@ -1,12 +1,12 @@
 #ifndef MANTID_CURVEFITTING_COMPTONSCATTERINGCOUNTRATETEST_H_
 #define MANTID_CURVEFITTING_COMPTONSCATTERINGCOUNTRATETEST_H_
 
-#include <cxxtest/TestSuite.h>
-#include "MantidCurveFitting/Functions/ComptonScatteringCountRate.h"
 #include "ComptonProfileTestHelpers.h"
+#include "MantidCurveFitting/Functions/ComptonScatteringCountRate.h"
+#include <cxxtest/TestSuite.h>
 
-using Mantid::CurveFitting::Functions::ComptonScatteringCountRate;
 using Mantid::CurveFitting::Functions::ComptonProfile;
+using Mantid::CurveFitting::Functions::ComptonScatteringCountRate;
 
 class ComptonScatteringCountRateTest : public CxxTest::TestSuite {
 public:
@@ -63,7 +63,8 @@ public:
     IFunction_sptr func =
         createFunctionNoBackground(); // No equality matrix set
     double x0(165.0), x1(166.0), dx(0.5);
-    auto testWS = ComptonProfileTestHelpers::createTestWorkspace(1, x0, x1, dx);
+    auto testWS = ComptonProfileTestHelpers::createTestWorkspace(
+        1, x0, x1, dx, ComptonProfileTestHelpers::NoiseType::None);
 
     TS_ASSERT_THROWS_NOTHING(func->setMatrixWorkspace(testWS, 0, x0, x1));
   }
@@ -73,13 +74,14 @@ public:
     using namespace Mantid::API;
     IFunction_sptr func = createFunctionNoBackground();
     double x0(165.0), x1(166.0), dx(0.5);
-    auto testWS = ComptonProfileTestHelpers::createTestWorkspace(1, x0, x1, dx);
-    auto &dataX = testWS->dataX(0);
+    auto testWS = ComptonProfileTestHelpers::createTestWorkspace(
+        1, x0, x1, dx, ComptonProfileTestHelpers::NoiseType::None);
+    auto &dataX = testWS->mutableX(0);
     std::transform(
         dataX.begin(), dataX.end(), dataX.begin(),
         std::bind2nd(std::multiplies<double>(), 1e-06)); // to seconds
     func->setMatrixWorkspace(testWS, 0, dataX.front(), dataX.back());
-    FunctionDomain1DView domain(dataX.data(), dataX.size());
+    FunctionDomain1DView domain(&dataX.front(), dataX.size());
     FunctionValues values(domain);
 
     TS_ASSERT_THROWS_NOTHING(func->function(domain, values));
@@ -95,14 +97,12 @@ public:
     using namespace Mantid::API;
     IFunction_sptr func = createFunctionWithBackground();
     double x0(165.0), x1(166.0), dx(0.5);
-    auto testWS = ComptonProfileTestHelpers::createTestWorkspace(1, x0, x1, dx);
-    auto &dataX = testWS->dataX(0);
-    std::transform(
-        dataX.begin(), dataX.end(), dataX.begin(),
-        std::bind2nd(std::multiplies<double>(), 1e-06)); // to seconds
+    auto testWS = ComptonProfileTestHelpers::createTestWorkspace(
+        1, x0, x1, dx, ComptonProfileTestHelpers::NoiseType::None);
+    auto &dataX = testWS->mutableX(0) *= 1e-06; // to seconds
     func->setMatrixWorkspace(testWS, 0, dataX.front(), dataX.back());
 
-    FunctionDomain1DView domain(dataX.data(), dataX.size());
+    FunctionDomain1DView domain(&dataX.front(), dataX.size());
     FunctionValues values(domain);
 
     TS_ASSERT_THROWS_NOTHING(func->function(domain, values));
@@ -119,11 +119,9 @@ public:
     using namespace Mantid::API;
     IFunction_sptr func = createFunctionNoBackground();
     double x0(165.0), x1(166.0), dx(0.5);
-    auto testWS = ComptonProfileTestHelpers::createTestWorkspace(1, x0, x1, dx);
-    auto &dataX = testWS->dataX(0);
-    std::transform(
-        dataX.begin(), dataX.end(), dataX.begin(),
-        std::bind2nd(std::multiplies<double>(), 1e-06)); // to seconds
+    auto testWS = ComptonProfileTestHelpers::createTestWorkspace(
+        1, x0, x1, dx, ComptonProfileTestHelpers::NoiseType::None);
+    auto &dataX = testWS->mutableX(0) *= 1e-06; // to seconds
     func->setMatrixWorkspace(testWS, 0, dataX.front(), dataX.back());
 
     func->iterationStarting();
@@ -143,11 +141,9 @@ public:
                             "Matrix(1|2)1|-2"); // I_1 = 2I_2
 
     double x0(165.0), x1(166.0), dx(0.5);
-    auto testWS = ComptonProfileTestHelpers::createTestWorkspace(1, x0, x1, dx);
-    auto &dataX = testWS->dataX(0);
-    std::transform(
-        dataX.begin(), dataX.end(), dataX.begin(),
-        std::bind2nd(std::multiplies<double>(), 1e-06)); // to seconds
+    auto testWS = ComptonProfileTestHelpers::createTestWorkspace(
+        1, x0, x1, dx, ComptonProfileTestHelpers::NoiseType::None);
+    auto &dataX = testWS->mutableX(0) *= 1e-06; // to seconds
     func->setMatrixWorkspace(testWS, 0, dataX.front(), dataX.back());
 
     func->iterationStarting();
@@ -167,12 +163,9 @@ public:
         createFunctionNoBackground(useTwoIntensityFuncAsFirst);
 
     double x0(165.0), x1(166.0), dx(0.5);
-    auto testWS = ComptonProfileTestHelpers::createTestWorkspace(1, x0, x1, dx);
-    auto &dataX = testWS->dataX(0);
-    std::transform(
-        dataX.begin(), dataX.end(), dataX.begin(),
-        std::bind2nd(std::multiplies<double>(), 1e-06)); // to seconds
-
+    auto testWS = ComptonProfileTestHelpers::createTestWorkspace(
+        1, x0, x1, dx, ComptonProfileTestHelpers::NoiseType::None);
+    auto &dataX = testWS->mutableX(0) *= 1e-06; // to seconds
     func->setMatrixWorkspace(testWS, 0, dataX.front(), dataX.back());
 
     func->iterationStarting();
@@ -189,30 +182,26 @@ public:
   }
 
   void
-  xtest_Iteration_Starting_Resets_Intensity_Parameters_And_Background_Parameters_With_Background_Included() {
+  test_IterStartingResetsIntensityAndBackgroundParsWithBackgroundIncluded() {
     using namespace Mantid::API;
     IFunction_sptr func = createFunctionWithBackground();
     func->setAttributeValue("IntensityConstraints",
                             "Matrix(1|2)1|-2"); // I_1 = 2I_2
 
     double x0(165.0), x1(166.0), dx(0.5);
-    auto testWS = ComptonProfileTestHelpers::createTestWorkspace(1, x0, x1, dx);
-    auto &dataX = testWS->dataX(0);
-    std::transform(
-        dataX.begin(), dataX.end(), dataX.begin(),
-        std::bind2nd(std::multiplies<double>(), 1e-06)); // to seconds
-
+    auto testWS = ComptonProfileTestHelpers::createTestWorkspace(
+        1, x0, x1, dx, ComptonProfileTestHelpers::NoiseType::None);
+    auto &dataX = testWS->mutableX(0) *= 1e-06; // to seconds
     func->setMatrixWorkspace(testWS, 0, dataX.front(), dataX.back());
 
     func->iterationStarting();
-    //    TS_ASSERT_DELTA(func->getParameter(0),5.0, 1e-10); // width_1
-    //    TS_ASSERT_DELTA(func->getParameter(1),-0.0506748344, 1e-10); // I_1
-    //    TS_ASSERT_DELTA(func->getParameter(2),10.0, 1e-10); //width_2
-    //    TS_ASSERT_DELTA(func->getParameter(3),-0.0253374172, 1e-10); // I_2
-    //    TS_ASSERT_DELTA(func->getParameter(4),-0.0422290287, 1e-10); //
-    //    background A_0
-    //    TS_ASSERT_DELTA(func->getParameter(5),0.00675680781, 1e-10); //
-    //    background A_1
+    TS_ASSERT_DELTA(func->getParameter("f0.Width"), 5.0, 1e-10);
+    const double intensity0(0.42850051);
+    TS_ASSERT_DELTA(func->getParameter("f0.Intensity"), intensity0, 1e-8);
+    TS_ASSERT_DELTA(func->getParameter("f1.Width"), 10.0, 1e-8);
+    TS_ASSERT_DELTA(func->getParameter("f1.Intensity"), 0.5 * intensity0, 1e-8);
+    TS_ASSERT_DELTA(func->getParameter("f2.A0"), 0.35708376, 1e-8);
+    TS_ASSERT_DELTA(func->getParameter("f2.A1"), 0.99989358, 1e-8);
   }
 
 private:
@@ -229,9 +218,9 @@ private:
       return std::vector<size_t>(1, 1);
     }
 
-    size_t fillConstraintMatrix(Mantid::Kernel::DblMatrix &cmatrix,
-                                const size_t start,
-                                const std::vector<double> &) const override {
+    size_t fillConstraintMatrix(
+        Mantid::Kernel::DblMatrix &cmatrix, const size_t start,
+        const Mantid::HistogramData::HistogramE &) const override {
       for (size_t i = 0; i < cmatrix.numRows(); ++i) {
         cmatrix[i][start] = 1.0;
       }
@@ -260,9 +249,9 @@ private:
       indices[1] = 2;                    // index 2
       return indices;
     }
-    size_t fillConstraintMatrix(Mantid::Kernel::DblMatrix &cmatrix,
-                                const size_t start,
-                                const std::vector<double> &) const override {
+    size_t fillConstraintMatrix(
+        Mantid::Kernel::DblMatrix &cmatrix, const size_t start,
+        const Mantid::HistogramData::HistogramE &) const override {
       for (size_t i = 0; i < cmatrix.numRows(); ++i) {
         for (size_t j = start; j < start + 2; ++j) {
           cmatrix[i][j] = 1.0;

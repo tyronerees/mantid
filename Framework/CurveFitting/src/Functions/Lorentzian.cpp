@@ -56,11 +56,15 @@ void Lorentzian::setFwhm(const double w) {
   setParameter("FWHM", w);
 }
 
-void Lorentzian::fixCentre() { fixParameter("PeakCentre"); }
+void Lorentzian::fixCentre(bool isDefault) {
+  fixParameter("PeakCentre", isDefault);
+}
 
 void Lorentzian::unfixCentre() { unfixParameter("PeakCentre"); }
 
-void Lorentzian::fixIntensity() { fixParameter("Amplitude"); }
+void Lorentzian::fixIntensity(bool isDefault) {
+  fixParameter("Amplitude", isDefault);
+}
 
 void Lorentzian::unfixIntensity() { unfixParameter("Amplitude"); }
 
@@ -154,8 +158,9 @@ void Lorentzian::histogramDerivative1D(Jacobian *jacobian, double left,
     double cRight = cumulFun(xr);
     jacobian->set(i, 0, cRight - cLeft);
     jacobian->set(i, 1, -2.0 * (g / denomRight - g / denomLeft) * amplitude);
-    jacobian->set(i, 2, -2.0 * ((xr - c) / denomRight - (xl - c) / denomLeft) *
-                            amplitude);
+    jacobian->set(i, 2,
+                  -2.0 * ((xr - c) / denomRight - (xl - c) / denomLeft) *
+                      amplitude);
     denomLeft = denomRight;
     cLeft = cRight;
     xl = xr;

@@ -1,5 +1,6 @@
 #include "MantidAlgorithms/CorrectKiKf.h"
 #include "MantidAPI/Run.h"
+#include "MantidAPI/SpectrumInfo.h"
 #include "MantidAPI/WorkspaceFactory.h"
 #include "MantidAPI/WorkspaceUnitValidator.h"
 #include "MantidDataObjects/EventWorkspace.h"
@@ -95,8 +96,9 @@ void CorrectKiKf::exec() {
 
   // Get the parameter map
   const ParameterMap &pmap = outputWS->constInstrumentParameters();
+  const auto &spectrumInfo = inputWS->spectrumInfo();
 
-  PARALLEL_FOR2(inputWS, outputWS)
+  PARALLEL_FOR_IF(Kernel::threadSafe(*inputWS, *outputWS))
   for (int64_t i = 0; i < int64_t(numberOfSpectra); ++i) {
     PARALLEL_START_INTERUPT_REGION
     double Efi = 0;
@@ -105,27 +107,15 @@ void CorrectKiKf::exec() {
     if (emodeStr == "Indirect") {
       if (efixedProp != EMPTY_DBL())
         Efi = efixedProp;
-      else
-        try {
-          IDetector_const_sptr det = inputWS->getDetector(i);
-          if (!det->isMonitor()) {
-            try {
-              Parameter_sptr par = pmap.getRecursive(det.get(), "Efixed");
-              if (par) {
-                Efi = par->value<double>();
-                g_log.debug() << "Detector: " << det->getID()
-                              << " EFixed: " << Efi << "\n";
-              }
-            } catch (std::runtime_error &) { /* Throws if a DetectorGroup, use
-                                                single provided value */
-            }
-          }
-
-        } catch (std::runtime_error &) {
-          g_log.information() << "Workspace Index " << i
-                              << ": cannot find detector"
-                              << "\n";
-        }
+      // If a DetectorGroup is present should provide a value as a property
+      // instead
+      else if (spectrumInfo.hasUniqueDetector(i)) {
+        getEfixedFromParameterMap(Efi, i, spectrumInfo, pmap);
+      } else {
+        g_log.information()
+            << "Workspace Index " << i << ": cannot find detector"
+            << "\n";
+      }
     }
 
     auto &yOut = outputWS->mutableY(i);
@@ -221,8 +211,9 @@ void CorrectKiKf::execEvent() {
   const ParameterMap &pmap = outputWS->constInstrumentParameters();
 
   int64_t numHistograms = static_cast<int64_t>(inputWS->getNumberHistograms());
+  const auto &spectrumInfo = inputWS->spectrumInfo();
   API::Progress prog = API::Progress(this, 0.0, 1.0, numHistograms);
-  PARALLEL_FOR1(outputWS)
+  PARALLEL_FOR_IF(Kernel::threadSafe(*outputWS))
   for (int64_t i = 0; i < numHistograms; ++i) {
     PARALLEL_START_INTERUPT_REGION
 
@@ -230,29 +221,17 @@ void CorrectKiKf::execEvent() {
     // Now get the detector object for this histogram to check if monitor
     // or to get Ef for indirect geometry
     if (emodeStr == "Indirect") {
-      if (efixedProp != EMPTY_DBL())
+      if (efixedProp != EMPTY_DBL()) {
         Efi = efixedProp;
-      else
-        try {
-          IDetector_const_sptr det = inputWS->getDetector(i);
-          if (!det->isMonitor()) {
-            try {
-              Parameter_sptr par = pmap.getRecursive(det.get(), "Efixed");
-              if (par) {
-                Efi = par->value<double>();
-                g_log.debug() << "Detector: " << det->getID()
-                              << " EFixed: " << Efi << "\n";
-              }
-            } catch (std::runtime_error &) { /* Throws if a DetectorGroup, use
-                                                single provided value */
-            }
-          }
-
-        } catch (std::runtime_error &) {
-          g_log.information() << "Workspace Index " << i
-                              << ": cannot find detector"
-                              << "\n";
-        }
+        // If a DetectorGroup is present should provide a value as a property
+        // instead
+      } else if (spectrumInfo.hasUniqueDetector(i)) {
+        getEfixedFromParameterMap(Efi, i, spectrumInfo, pmap);
+      } else {
+        g_log.information()
+            << "Workspace Index " << i << ": cannot find detector"
+            << "\n";
+      }
     }
 
     if (emodeStr == "Indirect")
@@ -266,8 +245,8 @@ void CorrectKiKf::execEvent() {
     case TOF:
       // Switch to weights if needed.
       evlist.switchTo(WEIGHTED);
-    /* no break */
-    // Fall through
+      /* no break */
+      // Fall through
 
     case WEIGHTED:
       correctKiKfEventHelper(evlist.getWeightedEvents(), efixed, emodeStr);
@@ -288,8 +267,9 @@ void CorrectKiKf::execEvent() {
   if (inputWS->getNumberEvents() != outputWS->getNumberEvents()) {
     g_log.information() << "Ef <= 0 or Ei <= 0 for "
                         << inputWS->getNumberEvents() -
-                               outputWS->getNumberEvents() << " events, out of "
-                        << inputWS->getNumberEvents() << '\n';
+                               outputWS->getNumberEvents()
+                        << " events, out of " << inputWS->getNumberEvents()
+                        << '\n';
     if (efixedProp == EMPTY_DBL())
       g_log.information() << "Try to set fixed energy\n";
   }
@@ -324,5 +304,21 @@ void CorrectKiKf::correctKiKfEventHelper(std::vector<T> &wevector,
   }
 }
 
-} // namespace Algorithm
+void CorrectKiKf::getEfixedFromParameterMap(double &Efi, int64_t i,
+                                            const SpectrumInfo &spectrumInfo,
+                                            const ParameterMap &pmap) {
+  Efi = 0;
+
+  if (spectrumInfo.isMonitor(i))
+    return;
+
+  const auto &det = spectrumInfo.detector(i);
+  Parameter_sptr par = pmap.getRecursive(&det, "Efixed");
+  if (par) {
+    Efi = par->value<double>();
+    g_log.debug() << "Detector: " << det.getID() << " EFixed: " << Efi << "\n";
+  }
+}
+
+} // namespace Algorithms
 } // namespace Mantid

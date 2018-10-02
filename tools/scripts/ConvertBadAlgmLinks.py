@@ -1,7 +1,9 @@
 #pylint: disable=invalid-name
+from __future__ import (absolute_import, division, print_function)
 import re
 import glob
 import os
+from mantid.api import AlgorithmFactory
 
 
 def grep(patt,lines):
@@ -19,9 +21,9 @@ def grep(patt,lines):
     else:
         return None
 
+
 #get alg names
 algs = AlgorithmFactory.getRegisteredAlgorithms(True)
-#algs = ['Abragam','BackToBackExponential','BivariateNormal','BSpline','Chebyshev','ChudleyElliot','CompositeFunction','Convolution','CubicSpline','DiffRotDiscreteCircle','DiffSphere','DSFInterp1DFit','ExpDecay','ExpDecayMuon','ExpDecayOsc','FickDiffusion','FlatBackground','GausDecay','GausOsc','Gaussian','HallRoss','IkedaCarpenterPV','LatticeErrors','LinearBackground','LogNormal','Lorentzian','MuonFInteraction','NeutronBk2BkExpConvPVoigt','PeakHKLErrors','ProductFunction','ProductLinearExp','ProductQuadraticExp','Quadratic','SCDPanelErrors','StaticKuboToyabe','StaticKuboToyabeTimesExpDecay','StaticKuboToyabeTimesGausDecay','StretchedExpFT','StretchExp','StretchExpMuon','TeixeiraWater','ThermalNeutronBk2BkExpConvPVoigt','UserFunction','Voigt']
 regexs= {}
 for alg in algs:
     regexs[alg] = re.compile(r'`%s\s+<[\w\:\/\.]+\/%s>`_' % (alg,alg))
@@ -39,5 +41,5 @@ for filename in files:
             expr = regexs[alg]
             results = grep(expr, lines)
             if results:
-                print filename
-                print results
+                print(filename)
+                print(results)

@@ -3,6 +3,7 @@
 
 #include <cxxtest/TestSuite.h>
 
+#include "MantidAPI/AnalysisDataService.h"
 #include "MantidAPI/MatrixWorkspace.h"
 #include "MantidAPI/WorkspaceFactory.h"
 #include "MantidAlgorithms/CalculateZscore.h"
@@ -62,7 +63,7 @@ public:
   }
 
   /** Generate a workspace for test
-    */
+   */
   MatrixWorkspace_sptr generateTestWorkspace() {
     vector<double> data{12, 13, 9,  18, 7,  9,  14, 16, 10, 12,
                         7,  13, 14, 19, 10, 16, 12, 16, 19, 11};

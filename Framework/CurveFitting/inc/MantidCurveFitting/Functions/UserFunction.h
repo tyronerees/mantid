@@ -4,8 +4,8 @@
 //----------------------------------------------------------------------
 // Includes
 //----------------------------------------------------------------------
-#include "MantidAPI/ParamFunction.h"
 #include "MantidAPI/IFunction1D.h"
+#include "MantidAPI/ParamFunction.h"
 #include <boost/shared_array.hpp>
 
 namespace mu {
@@ -83,7 +83,7 @@ public:
 private:
   /// The formula
   std::string m_formula;
-  /// muParser instance
+  /// extended muParser instance
   mu::Parser *m_parser;
   /// Used as 'x' variable in m_parser.
   mutable double m_x;

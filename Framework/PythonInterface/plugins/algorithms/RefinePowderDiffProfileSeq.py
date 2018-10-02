@@ -5,7 +5,6 @@ from six.moves import range #pylint: disable=redefined-builtin
 
 from mantid.api import *
 import mantid.simpleapi as api
-from mantid.api import *
 from mantid.kernel import *
 
 
@@ -40,6 +39,9 @@ class RefinePowderDiffProfileSeq(PythonAlgorithm):
         """ Category
         """
         return "Diffraction\\Fitting"
+
+    def seeAlso(self):
+        return [ "RefinePowderInstrumentParameters" ]
 
     def name(self):
         """ Algorithm name
@@ -922,7 +924,7 @@ class RefineProfileParameters(object):
                 UseInputPeakHeights             = False,
                 PeakRadius                      ='8',
                 Minimizer                       = 'Levenberg-Marquardt',
-                MCSetupWorkspace                = str(wsname),
+                MCSetupWorkspace                = tablews,
                 Damping                         = '5.0',
                 RandomSeed                      = 0,
                 AnnealingTemperature            = 100.0,
@@ -930,6 +932,7 @@ class RefineProfileParameters(object):
         # ENDIF (step)
 
         return
+
 
 # Register algorithm with Mantid
 AlgorithmFactory.subscribe(RefinePowderDiffProfileSeq)

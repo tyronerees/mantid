@@ -1,9 +1,9 @@
+#include "MantidAPI/IPeaksWorkspace.h"
 #include "MantidPythonInterface/api/WorkspacePropertyExporter.h"
 #include "MantidPythonInterface/kernel/GetPointer.h"
-#include "MantidAPI/IPeaksWorkspace.h"
 
 using Mantid::API::IPeaksWorkspace;
-using Mantid::API::WorkspaceProperty;
+using Mantid::API::WorkspaceProperty; // NOLINT
 
 GET_POINTER_SPECIALIZATION(WorkspaceProperty<IPeaksWorkspace>)
 

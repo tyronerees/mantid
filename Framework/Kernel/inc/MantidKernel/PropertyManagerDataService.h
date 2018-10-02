@@ -2,11 +2,16 @@
 #define MANTID_KERNEL_PROPERTYMANAGERDATASERVICE_
 
 #include "MantidKernel/DataService.h"
-#include "MantidKernel/PropertyManager.h"
+#include "MantidKernel/DllConfig.h"
 #include "MantidKernel/SingletonHolder.h"
+
+#include <iosfwd>
 
 namespace Mantid {
 namespace Kernel {
+// Forward declare
+class PropertyManager;
+
 /**
 PropertyManagerDataService Class. Derived from DataService.
 
@@ -48,8 +53,8 @@ private:
 
 EXTERN_MANTID_KERNEL template class MANTID_KERNEL_DLL
     Mantid::Kernel::SingletonHolder<PropertyManagerDataServiceImpl>;
-typedef Mantid::Kernel::SingletonHolder<PropertyManagerDataServiceImpl>
-    PropertyManagerDataService;
+using PropertyManagerDataService =
+    Mantid::Kernel::SingletonHolder<PropertyManagerDataServiceImpl>;
 
 } // Namespace Kernel
 } // Namespace Mantid

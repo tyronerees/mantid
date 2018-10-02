@@ -1,8 +1,9 @@
 #ifndef MANTID_ALGORITHMS_STITCH1DMANY_H_
 #define MANTID_ALGORITHMS_STITCH1DMANY_H_
 
-#include "MantidKernel/System.h"
 #include "MantidAPI/Algorithm.h"
+#include "MantidAPI/WorkspaceGroup.h"
+#include "MantidKernel/System.h"
 
 namespace Mantid {
 namespace Algorithms {
@@ -37,6 +38,9 @@ public:
   const std::string name() const override { return "Stitch1DMany"; }
   /// Algorithm's version for identification. @see Algorithm::version
   int version() const override { return 1; }
+  const std::vector<std::string> seeAlso() const override {
+    return {"Rebin", "Stitch1D"};
+  }
   /// Algorithm's category for identification. @see Algorithm::category
   const std::string category() const override { return "Reflectometry"; }
   /// Summary of algorithm's purpose
@@ -46,24 +50,35 @@ public:
   /// Validates algorithm inputs
   std::map<std::string, std::string> validateInputs() override;
 
+  /// Performs the Stitch1D algorithm at a specific workspace index
+  void doStitch1D(std::vector<API::MatrixWorkspace_sptr> &toStitch,
+                  const std::vector<double> &manualScaleFactors,
+                  API::Workspace_sptr &outWS, std::string &outName);
+
+  /// Performs the Stitch1DMany algorithm at a specific period
+  void doStitch1DMany(const size_t period, const bool useManualScaleFactors,
+                      std::string &outName,
+                      std::vector<double> &outScaleFactors);
+
 private:
   /// Overwrites Algorithm method.
   void init() override;
   /// Overwrites Algorithm method.
   void exec() override;
 
-  // Data
-  std::vector<Mantid::API::Workspace_sptr> m_inputWorkspaces;
+  // A 2D matrix holding workspaces obtained from each workspace list/group
+  std::vector<std::vector<API::MatrixWorkspace_sptr>> m_inputWSMatrix;
+
   std::vector<double> m_startOverlaps;
   std::vector<double> m_endOverlaps;
   std::vector<double> m_params;
   std::vector<double> m_scaleFactors;
-  Mantid::API::Workspace_sptr m_outputWorkspace;
+  std::vector<double> m_manualScaleFactors;
+  API::Workspace_sptr m_outputWorkspace;
 
-  size_t m_numWorkspaces = 0;
-  double m_manualScaleFactor = 1.0;
   bool m_scaleRHSWorkspace = true;
-  bool m_useManualScaleFactor = false;
+  bool m_useManualScaleFactors = false;
+  size_t m_scaleFactorFromPeriod = 1;
 };
 
 } // namespace Algorithms

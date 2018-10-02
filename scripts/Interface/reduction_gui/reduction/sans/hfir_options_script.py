@@ -3,6 +3,7 @@
     from the the interface class so that the HFIRReduction class could
     be used independently of the interface implementation
 """
+from __future__ import (absolute_import, division, print_function)
 import inspect
 import xml.dom.minidom
 from reduction_gui.reduction.scripter import BaseScriptElement
@@ -14,7 +15,7 @@ class ReductionOptions(BaseScriptElement):
     ny_pixels = 192
     pixel_size = 5.1
 
-    # Absoulte scale
+    # Absolute scale
     scaling_factor = 1.0
     calculate_scale = False
     scaling_direct_file = ''

@@ -1,10 +1,10 @@
 #ifndef MANTID_GEOMETRY_RECTANGULARDETECTORPIXEL_H_
 #define MANTID_GEOMETRY_RECTANGULARDETECTORPIXEL_H_
 
-#include "MantidKernel/System.h"
-#include "MantidGeometry/Instrument/Detector.h"
 #include "MantidGeometry/IComponent.h"
+#include "MantidGeometry/Instrument/Detector.h"
 #include "MantidGeometry/Instrument/ParameterMap.h"
+#include "MantidKernel/System.h"
 #include "MantidKernel/V3D.h"
 
 namespace Mantid {
@@ -50,7 +50,7 @@ public:
   std::string type() const override { return "RectangularDetectorPixel"; }
 
   RectangularDetectorPixel(const std::string &name, int id,
-                           boost::shared_ptr<Object> shape, IComponent *parent,
+                           boost::shared_ptr<IObject> shape, IComponent *parent,
                            RectangularDetector *panel, size_t row, size_t col);
 
   RectangularDetectorPixel();
@@ -61,7 +61,7 @@ public:
     return new RectangularDetectorPixel(this, map);
   }
 
-  const Kernel::V3D getRelativePos() const override;
+  Kernel::V3D getRelativePos() const override;
 
 private:
   /// RectangularDetector that is the parent of this pixel.

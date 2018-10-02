@@ -1,20 +1,18 @@
 #ifndef MANTID_DATAHANDLING_UPDATEINSTRUMENTFROMFILE_H_
 #define MANTID_DATAHANDLING_UPDATEINSTRUMENTFROMFILE_H_
 
-//----------------------------------------------------------------------
-// Includes
-//----------------------------------------------------------------------
 #include "MantidAPI/Algorithm.h"
 #include "MantidGeometry/IDetector.h"
-#include <nexus/NeXusFile.hpp>
+
+namespace NeXus {
+class File;
+}
 
 namespace Mantid {
-//----------------------------------------------------------------------
-// Forward declarations
-//----------------------------------------------------------------------
 namespace Geometry {
+class DetectorInfo;
 class Instrument;
-}
+} // namespace Geometry
 
 namespace DataHandling {
 /**
@@ -74,6 +72,9 @@ public:
 
   /// Algorithm's version for identification overriding a virtual method
   int version() const override { return 1; };
+  const std::vector<std::string> seeAlso() const override {
+    return {"LoadInstrument"};
+  }
 
   /// Algorithm's category for identification overriding a virtual method
   const std::string category() const override {
@@ -109,17 +110,15 @@ private:
 
   /// Parse the header and fill the headerInfo struct
   bool parseAsciiHeader(AsciiFileHeader &headerInfo);
-  /// Set a new detector parameter
-  void setDetectorParameter(const Geometry::IDetector_const_sptr &det,
-                            const std::string &name, double value);
   /// Set the new detector positions
   void setDetectorPositions(const std::vector<int32_t> &detID,
                             const std::vector<float> &l2,
                             const std::vector<float> &theta,
                             const std::vector<float> &phi);
   /// Set the new detector position for a single det ID
-  void setDetectorPosition(const Geometry::IDetector_const_sptr &det,
-                           const float l2, const float theta, const float phi);
+  void setDetectorPosition(Geometry::DetectorInfo &detectorInfo,
+                           const size_t index, const float l2,
+                           const float theta, const float phi);
 
   /// The input workspace to modify
   API::MatrixWorkspace_sptr m_workspace;

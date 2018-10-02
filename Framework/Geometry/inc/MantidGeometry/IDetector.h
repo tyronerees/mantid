@@ -6,8 +6,8 @@
 //----------------------------------------------------------------------
 #include "MantidGeometry/DllConfig.h"
 #include "MantidGeometry/IComponent.h"
-#include "MantidGeometry/IObjComponent.h"
 #include "MantidGeometry/IDTypes.h"
+#include "MantidGeometry/IObjComponent.h"
 
 namespace Mantid {
 namespace Kernel {
@@ -15,7 +15,7 @@ namespace Kernel {
 // Forward declaration
 //----------------------------------------------------------------------
 class V3D;
-}
+} // namespace Kernel
 
 namespace Geometry {
 /** Describes the topology of a detectors group used to calculate angular
@@ -100,14 +100,14 @@ public:
   /// Gives the phi of this detector offset from y=0 by offset.
   virtual double getPhiOffset(const double &offset) const = 0;
 
-  /// Indicates whether the detector has been masked
-  virtual bool isMasked() const = 0;
-  /// Indicates whether this is a monitor detector
-  virtual bool isMonitor() const = 0;
-
   /// returns the geometry of detectors, meaningful for groups, rectangular for
   /// single; returns the centre of a detector
   virtual det_topology getTopology(Kernel::V3D &center) const = 0;
+
+  /// Helper for legacy access mode. Returns a reference to the ParameterMap.
+  virtual const ParameterMap &parameterMap() const = 0;
+  /// Helper for legacy access mode. Returns the index of the detector.
+  virtual size_t index() const = 0;
 
   /// (Empty) Constructor.
   /// prevent Warning C4436 and many failing unit tests on MSVC 2015.
@@ -115,10 +115,10 @@ public:
 };
 
 /// Shared pointer to IDetector
-typedef boost::shared_ptr<Mantid::Geometry::IDetector> IDetector_sptr;
+using IDetector_sptr = boost::shared_ptr<Mantid::Geometry::IDetector>;
 /// Shared pointer to IDetector (const version)
-typedef boost::shared_ptr<const Mantid::Geometry::IDetector>
-    IDetector_const_sptr;
+using IDetector_const_sptr =
+    boost::shared_ptr<const Mantid::Geometry::IDetector>;
 
 } // namespace Geometry
 } // namespace Mantid

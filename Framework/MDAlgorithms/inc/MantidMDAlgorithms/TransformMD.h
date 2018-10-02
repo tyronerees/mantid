@@ -1,9 +1,9 @@
 #ifndef MANTID_MDALGORITHMS_TRANSFORMMD_H_
 #define MANTID_MDALGORITHMS_TRANSFORMMD_H_
 
-#include "MantidKernel/System.h"
 #include "MantidAPI/Algorithm.h"
 #include "MantidDataObjects/MDEventWorkspace.h"
+#include "MantidKernel/System.h"
 
 namespace Mantid {
 namespace MDAlgorithms {
@@ -42,13 +42,18 @@ public:
   }
 
   int version() const override;
+  const std::vector<std::string> seeAlso() const override {
+    return {"InvertMDDim"};
+  }
   const std::string category() const override;
 
 private:
   void init() override;
   void exec() override;
   void reverse(signal_t *array, size_t arrayLength);
-
+  Mantid::DataObjects::MDHistoWorkspace_sptr
+  transposeMD(Mantid::DataObjects::MDHistoWorkspace_sptr &toTranspose,
+              const std::vector<int> &axes);
   template <typename MDE, size_t nd>
   void
   doTransform(typename Mantid::DataObjects::MDEventWorkspace<MDE, nd>::sptr ws);

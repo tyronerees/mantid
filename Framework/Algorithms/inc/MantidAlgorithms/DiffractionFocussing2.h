@@ -1,12 +1,10 @@
 #ifndef MANTID_ALGORITHMS_DIFFRACTIONFOCUSSING2_H_
 #define MANTID_ALGORITHMS_DIFFRACTIONFOCUSSING2_H_
 
-//----------------------------------------------------------------------
-// Includes
-//----------------------------------------------------------------------
 #include "MantidAPI/Algorithm.h"
 #include "MantidDataObjects/EventWorkspace.h"
 #include "MantidDataObjects/GroupingWorkspace.h"
+#include "MantidIndexing/SpectrumNumber.h"
 #include "MantidKernel/System.h"
 
 namespace Mantid {
@@ -92,6 +90,9 @@ public:
 
   /// Algorithm's version for identification overriding a virtual method
   int version() const override { return 2; }
+  const std::vector<std::string> seeAlso() const override {
+    return {"AlignDetectors", "AlignAndFocusPowder", "LoadCalFile"};
+  }
   /// Algorithm's category for identification overriding a virtual method
   const std::string category() const override {
     return "Diffraction\\Focussing";
@@ -123,13 +124,9 @@ private:
   /// Shared pointer to the event workspace
   DataObjects::EventWorkspace_const_sptr m_eventW;
 
-  // This map does not need to be ordered, just a lookup for udet
-  /// typedef for the storage of the UDET-group mapping
-  typedef std::map<detid_t, int> udet2groupmap;
-
   // This map needs to be ordered to process the groups in order.
   /// typedef for the storage of each group's X vector
-  typedef std::map<int, boost::shared_ptr<MantidVec>> group2vectormap;
+  using group2vectormap = std::map<int, boost::shared_ptr<MantidVec>>;
   /// Map from udet to group
   std::vector<int> udet2group;
   /// The list of group numbers
@@ -147,10 +144,10 @@ private:
   /// Mapping of group number to vector of inputworkspace indices.
   std::vector<std::vector<std::size_t>> m_wsIndices;
   /// List of valid group numbers
-  std::vector<int> m_validGroups;
+  std::vector<Indexing::SpectrumNumber> m_validGroups;
 };
 
-} // namespace Algorithm
+} // namespace Algorithms
 } // namespace Mantid
 
 #endif /*MANTID_ALGORITHM_DIFFRACTIONFOCUSSING2_H_*/

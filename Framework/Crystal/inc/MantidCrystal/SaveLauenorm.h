@@ -1,9 +1,10 @@
 #ifndef MANTID_CRYSTAL_SAVELauenorm_H_
 #define MANTID_CRYSTAL_SAVELauenorm_H_
 
-#include "MantidKernel/System.h"
 #include "MantidAPI/Algorithm.h"
 #include "MantidDataObjects/PeaksWorkspace.h"
+#include "MantidGeometry/Crystal/OrientedLattice.h"
+#include "MantidKernel/System.h"
 
 namespace Mantid {
 namespace Crystal {
@@ -39,9 +40,16 @@ private:
 
   DataObjects::PeaksWorkspace_sptr ws;
   void sizeBanks(std::string bankName, int &nCols, int &nRows);
+
+  const std::vector<std::string> m_typeList{
+      "TRICLINIC", "MONOCLINIC",   "ORTHORHOMBIC", "TETRAGONAL",
+      "HEXAGONAL", "RHOMBOHEDRAL", "CUBIC"};
+
+  const std::vector<std::string> m_centeringList{"P", "A", "B", "C",
+                                                 "I", "F", "R"};
 };
 
-} // namespace Mantid
 } // namespace Crystal
+} // namespace Mantid
 
 #endif /* MANTID_CRYSTAL_SAVELauenorm_H_ */

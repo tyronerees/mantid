@@ -3,15 +3,14 @@
 
 // Tests the MatrixWorkspace as an IMDWorkspace.
 
-#include <cxxtest/TestSuite.h>
 #include "MantidAPI/MatrixWorkspace.h"
-#include "MantidAPI/WorkspaceFactory.h"
 #include "MantidAPI/NumericAxis.h"
 #include "MantidAPI/SpectraAxis.h"
 #include "MantidGeometry/Instrument.h"
 #include "MantidGeometry/MDGeometry/IMDDimension.h"
 #include "MantidTestHelpers/FakeObjects.h"
 #include "PropertyManagerHelper.h"
+#include <cxxtest/TestSuite.h>
 
 using std::size_t;
 using namespace Mantid::Kernel;
@@ -32,8 +31,6 @@ public:
   IMDWorkspaceTest() {
     workspace.setTitle("workspace");
     workspace.initialize(2, 4, 3);
-    workspace.getSpectrum(0).setSpectrumNo(1);
-    workspace.getSpectrum(1).setSpectrumNo(2);
     for (int i = 0; i < 4; ++i) {
       workspace.dataX(0)[i] = i;
       workspace.dataX(1)[i] = i + 4;
@@ -49,7 +46,7 @@ public:
 
   void testGetXDimension() {
     WorkspaceTester matrixWS;
-    matrixWS.init(1, 1, 1);
+    matrixWS.initialize(1, 1, 1);
     boost::shared_ptr<const Mantid::Geometry::IMDDimension> dimension =
         matrixWS.getXDimension();
     std::string id = dimension->getDimensionId();
@@ -59,7 +56,7 @@ public:
 
   void testGetYDimension() {
     WorkspaceTester matrixWS;
-    matrixWS.init(1, 1, 1);
+    matrixWS.initialize(1, 1, 1);
     boost::shared_ptr<const Mantid::Geometry::IMDDimension> dimension =
         matrixWS.getYDimension();
     std::string id = dimension->getDimensionId();
@@ -83,14 +80,14 @@ public:
 
   void testGetDimensionThrows() {
     WorkspaceTester matrixWS;
-    matrixWS.init(1, 1, 1);
+    matrixWS.initialize(1, 1, 1);
     TSM_ASSERT_THROWS("Id doesn't exist. Should throw during find routine.",
                       matrixWS.getDimensionWithId("3"), std::overflow_error);
   }
 
   void testGetDimension() {
     WorkspaceTester matrixWS;
-    matrixWS.init(1, 1, 1);
+    matrixWS.initialize(1, 1, 1);
     boost::shared_ptr<const Mantid::Geometry::IMDDimension> dim =
         matrixWS.getDimensionWithId("yDimension");
     TSM_ASSERT_EQUALS(
@@ -100,7 +97,7 @@ public:
 
   void testGetDimensionOverflow() {
     WorkspaceTester matrixWS;
-    matrixWS.init(1, 1, 1);
+    matrixWS.initialize(1, 1, 1);
     TSM_ASSERT_THROWS(
         "The dimension does not exist. Attempting to get it should throw",
         matrixWS.getDimensionWithId("1"), std::overflow_error);
@@ -108,14 +105,14 @@ public:
 
   void testGetNPoints() {
     WorkspaceTester matrixWS;
-    matrixWS.init(5, 5, 5);
+    matrixWS.initialize(5, 5, 5);
     TSM_ASSERT_EQUALS("The expected number of points have not been returned.",
                       25, matrixWS.getNPoints());
   }
 
   /**
-  * Test declaring an input workspace and retrieving as const_sptr or sptr
-  */
+   * Test declaring an input workspace and retrieving as const_sptr or sptr
+   */
   void testGetProperty_const_sptr() {
     const std::string wsName = "InputWorkspace";
     IMDWorkspace_sptr wsInput(new WorkspaceTester());
@@ -127,10 +124,10 @@ public:
     IMDWorkspace_sptr wsNonConst;
     TS_ASSERT_THROWS_NOTHING(
         wsConst = manager.getValue<IMDWorkspace_const_sptr>(wsName));
-    TS_ASSERT(wsConst != NULL);
+    TS_ASSERT(wsConst != nullptr);
     TS_ASSERT_THROWS_NOTHING(wsNonConst =
                                  manager.getValue<IMDWorkspace_sptr>(wsName));
-    TS_ASSERT(wsNonConst != NULL);
+    TS_ASSERT(wsNonConst != nullptr);
     TS_ASSERT_EQUALS(wsConst, wsNonConst);
 
     // Check TypedValue can be cast to const_sptr or to sptr
@@ -138,9 +135,9 @@ public:
     IMDWorkspace_const_sptr wsCastConst;
     IMDWorkspace_sptr wsCastNonConst;
     TS_ASSERT_THROWS_NOTHING(wsCastConst = (IMDWorkspace_const_sptr)val);
-    TS_ASSERT(wsCastConst != NULL);
+    TS_ASSERT(wsCastConst != nullptr);
     TS_ASSERT_THROWS_NOTHING(wsCastNonConst = (IMDWorkspace_sptr)val);
-    TS_ASSERT(wsCastNonConst != NULL);
+    TS_ASSERT(wsCastNonConst != nullptr);
     TS_ASSERT_EQUALS(wsCastConst, wsCastNonConst);
   }
 };

@@ -1,10 +1,10 @@
 #ifndef MANTID_LIVEDATA_LIVEDATAALGORITHM_H_
 #define MANTID_LIVEDATA_LIVEDATAALGORITHM_H_
 
-#include "MantidKernel/System.h"
 #include "MantidAPI/Algorithm.h"
-#include "MantidKernel/DateAndTime.h"
 #include "MantidAPI/ILiveListener.h"
+#include "MantidKernel/DateAndTime.h"
+#include "MantidKernel/System.h"
 
 namespace Mantid {
 namespace LiveData {
@@ -44,7 +44,8 @@ public:
 
   void copyPropertyValuesFrom(const LiveDataAlgorithm &other);
 
-  Mantid::API::ILiveListener_sptr getLiveListener();
+  Mantid::API::ILiveListener_sptr getLiveListener(bool start = true);
+  Mantid::API::ILiveListener_sptr createLiveListener(bool connect = false);
   void setLiveListener(Mantid::API::ILiveListener_sptr listener);
 
   std::map<std::string, std::string> validateInputs() override;
@@ -52,7 +53,7 @@ public:
 protected:
   void initProps();
 
-  Mantid::Kernel::DateAndTime getStartTime() const;
+  Mantid::Types::Core::DateAndTime getStartTime() const;
 
   Mantid::API::IAlgorithm_sptr makeAlgorithm(bool postProcessing);
 

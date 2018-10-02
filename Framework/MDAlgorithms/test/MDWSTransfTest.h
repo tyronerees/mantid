@@ -1,11 +1,12 @@
 #ifndef MANTID_MDWS_SLICE_H_
 #define MANTID_MDWS_SLICE_H_
 
+#include "MantidAPI/Sample.h"
 #include "MantidGeometry/Crystal/OrientedLattice.h"
+#include "MantidGeometry/Instrument/Goniometer.h"
 #include "MantidMDAlgorithms/MDTransfAxisNames.h"
 #include "MantidMDAlgorithms/MDWSDescription.h"
 #include "MantidMDAlgorithms/MDWSTransform.h"
-#include "MantidAPI/Sample.h"
 #include "MantidTestHelpers/WorkspaceCreationHelper.h"
 
 #include <cxxtest/TestSuite.h>
@@ -48,7 +49,7 @@ public:
   void testFindTargetFrame() {
     MDWSDescription TargWSDescription;
     Mantid::API::MatrixWorkspace_sptr spws =
-        WorkspaceCreationHelper::Create2DWorkspaceBinned(10, 10);
+        WorkspaceCreationHelper::create2DWorkspaceBinned(10, 10);
     // Mantid::API::MatrixWorkspace_sptr spws
     // =WorkspaceCreationHelper::createProcessedWorkspaceWithCylComplexInstrument(4,10,true);
     std::vector<double> minVal(4, -3), maxVal(4, 3);
@@ -60,7 +61,7 @@ public:
     TS_ASSERT_EQUALS(CnvrtToMD::LabFrame,
                      Transf.findTargetFrame(TargWSDescription));
 
-    WorkspaceCreationHelper::SetGoniometer(spws, 0, 0, 0);
+    WorkspaceCreationHelper::setGoniometer(spws, 0, 0, 0);
     // spws->mutableRun().mutableGoniometer().setRotationAngle(0,20);
 
     TS_ASSERT_EQUALS(CnvrtToMD::SampleFrame,
@@ -74,10 +75,10 @@ public:
     MDWSDescription TargWSDescription;
 
     Mantid::API::MatrixWorkspace_sptr spws =
-        WorkspaceCreationHelper::Create2DWorkspaceBinned(10, 10);
+        WorkspaceCreationHelper::create2DWorkspaceBinned(10, 10);
     std::vector<double> minVal(4, -3), maxVal(4, 3);
     TargWSDescription.setMinMax(minVal, maxVal);
-    spws->mutableSample().setOrientedLattice(NULL);
+    spws->mutableSample().setOrientedLattice(nullptr);
 
     TargWSDescription.buildFromMatrixWS(spws, "Q3D", "Direct");
 
@@ -95,7 +96,7 @@ public:
                       std::invalid_argument);
     spws->mutableSample().setOrientedLattice(pLattice);
 
-    WorkspaceCreationHelper::SetGoniometer(spws, 20, 0, 0);
+    WorkspaceCreationHelper::setGoniometer(spws, 20, 0, 0);
 
     // spws->mutableRun().mutableGoniometer().setRotationAngle(0,20);
 
@@ -377,7 +378,7 @@ public:
     std::vector<double> rot, sample(9, 0);
 
     Mantid::API::MatrixWorkspace_sptr spws =
-        WorkspaceCreationHelper::Create2DWorkspaceBinned(10, 10);
+        WorkspaceCreationHelper::create2DWorkspaceBinned(10, 10);
     // Mantid::API::MatrixWorkspace_sptr spws
     // =WorkspaceCreationHelper::createProcessedWorkspaceWithCylComplexInstrument(4,10,true);
     std::vector<double> minVal(2, 0), maxVal(2, 3);

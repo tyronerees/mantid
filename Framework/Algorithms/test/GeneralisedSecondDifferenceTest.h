@@ -3,12 +3,12 @@
 
 #include <cxxtest/TestSuite.h>
 
+#include "../../DataObjects/test/EventWorkspaceTest.h"
 #include "MantidAPI/AlgorithmManager.h"
 #include "MantidAPI/MatrixWorkspace.h"
 #include "MantidAPI/WorkspaceFactory.h"
-#include <MantidDataObjects/EventWorkspace.h>
-#include "../../DataObjects/test/EventWorkspaceTest.h"
 #include <MantidAlgorithms/GeneralisedSecondDifference.h>
+#include <MantidDataObjects/EventWorkspace.h>
 
 using namespace Mantid::API;
 using namespace Mantid::HistogramData;
@@ -79,9 +79,9 @@ public:
   }
 
   void setUp() override {
-    inputMatrix = WorkspaceCreationHelper::Create2DWorkspaceBinned(10000, 1000);
+    inputMatrix = WorkspaceCreationHelper::create2DWorkspaceBinned(10000, 1000);
     inputEvent =
-        WorkspaceCreationHelper::CreateEventWorkspace(10000, 1000, 5000);
+        WorkspaceCreationHelper::createEventWorkspace(10000, 1000, 5000);
   }
 
   void tearDown() override {

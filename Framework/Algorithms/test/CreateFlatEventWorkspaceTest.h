@@ -3,8 +3,8 @@
 
 #include <cxxtest/TestSuite.h>
 
+#include "MantidAPI/AnalysisDataService.h"
 #include "MantidAlgorithms/CreateFlatEventWorkspace.h"
-
 #include "MantidDataObjects/EventWorkspace.h"
 
 using Mantid::Algorithms::CreateFlatEventWorkspace;

@@ -1,10 +1,9 @@
 #ifndef MANTID_MDALGORITHMS_REFLECTOMETRYTRANFORMQXQZ_H_
 #define MANTID_MDALGORITHMS_REFLECTOMETRYTRANFORMQXQZ_H_
 
+#include "MantidDataObjects/CalculateReflectometryQxQz.h"
 #include "MantidDataObjects/RebinnedOutput.h"
 #include "MantidDataObjects/ReflectometryTransform.h"
-#include "MantidDataObjects/CalculateReflectometryQxQz.h"
-#include "MantidKernel/ClassMacros.h"
 
 namespace Mantid {
 
@@ -47,9 +46,15 @@ public:
                              int numberOfBinsQx = 100,
                              int numberOfBinsQz = 100);
 
-private:
-  DISABLE_DEFAULT_CONSTRUCT(ReflectometryTransformQxQz)
-  DISABLE_COPY_AND_ASSIGN(ReflectometryTransformQxQz)
+  /// Disable default constructor
+  ReflectometryTransformQxQz() = delete;
+
+  /// Disable copy operator
+  ReflectometryTransformQxQz(const ReflectometryTransformQxQz &) = delete;
+
+  /// Disable assignment operator
+  ReflectometryTransformQxQz &
+  operator=(const ReflectometryTransformQxQz &) = delete;
 };
 
 } // namespace MDAlgorithms

@@ -4,9 +4,11 @@
 //----------------------------------
 // Includes
 //----------------------------------
-#include "MantidQtAPI/IProjectSerialisable.h"
+#include "MantidQtWidgets/Common/IProjectSerialisable.h"
 #include "Script.h"
+
 #include <QMainWindow>
+#include <boost/optional.hpp>
 
 //----------------------------------------------------------
 // Forward declarations
@@ -23,7 +25,7 @@ class QShowEvent;
 class QHideEvent;
 
 /** @class ScriptingWindow
-    This class displays a seperate window for editing and executing scripts
+    This class displays a separate window for editing and executing scripts
 */
 class ScriptingWindow : public QMainWindow {
   /// Qt macro
@@ -32,7 +34,7 @@ class ScriptingWindow : public QMainWindow {
 public:
   /// Constructor
   ScriptingWindow(ScriptingEnv *env, bool capturePrint = true,
-                  QWidget *parent = 0, Qt::WindowFlags flags = 0);
+                  QWidget *parent = nullptr, Qt::WindowFlags flags = nullptr);
   /// Destructor
   ~ScriptingWindow() override;
   /// Override the closeEvent
@@ -63,6 +65,11 @@ public:
                        const int fileVersion);
   // Loads the scripts from a list of filenames
   void loadFromFileList(const QStringList &files);
+
+  /// Sets a flag which is set to true if synchronous execution fails
+  // We set a flag on failure to avoid problems with Async not returning success
+  bool getSynchronousErrorFlag() { return m_failureFlag; }
+
 signals:
   /// Show the scripting language dialog
   void chooseScriptingLanguage();
@@ -145,9 +152,6 @@ private:
   /// Returns the current execution mode
   Script::ExecutionMode getExecutionMode() const;
 
-  /// Extract py files from urllist
-  QStringList extractPyFiles(const QList<QUrl> &urlList) const;
-
 private:
   /// The script editors' manager
   MultiTabScriptInterpreter *m_manager;
@@ -187,6 +191,8 @@ private:
   QAction *m_scripting_lang;
   /// Flag to define whether we should accept a close event
   bool m_acceptClose;
+
+  bool m_failureFlag{false};
 };
 
 #endif // SCRIPTINGWINDOW_H_

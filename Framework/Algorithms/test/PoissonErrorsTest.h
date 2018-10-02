@@ -1,16 +1,15 @@
 #ifndef POISSONERRORSTEST_H_
 #define POISSONERRORSTEST_H_
 
-#include <cxxtest/TestSuite.h>
 #include <cmath>
+#include <cxxtest/TestSuite.h>
 
-#include "MantidTestHelpers/WorkspaceCreationHelper.h"
-#include "MantidAlgorithms/PoissonErrors.h"
 #include "MantidAPI/AnalysisDataService.h"
-#include "MantidAPI/WorkspaceFactory.h"
-#include "MantidDataObjects/Workspace2D.h"
-#include "MantidAPI/WorkspaceProperty.h"
 #include "MantidAPI/WorkspaceOpOverloads.h"
+#include "MantidAPI/WorkspaceProperty.h"
+#include "MantidAlgorithms/PoissonErrors.h"
+#include "MantidDataObjects/Workspace2D.h"
+#include "MantidTestHelpers/WorkspaceCreationHelper.h"
 
 using namespace Mantid::API;
 using namespace Mantid::Kernel;
@@ -48,9 +47,9 @@ public:
     int nBins = 10;
     // Register the workspace in the data service
     MatrixWorkspace_sptr work_in1 =
-        WorkspaceCreationHelper::Create1DWorkspaceFib(nBins);
+        WorkspaceCreationHelper::create1DWorkspaceFib(nBins, true);
     MatrixWorkspace_sptr work_in2 =
-        WorkspaceCreationHelper::Create1DWorkspaceFib(nBins);
+        WorkspaceCreationHelper::create1DWorkspaceFib(nBins, true);
     AnalysisDataService::Instance().add("test_in11", work_in1);
     AnalysisDataService::Instance().add("test_in12", work_in2);
 
@@ -78,9 +77,9 @@ public:
     int nBins = 10;
     // Register the workspace in the data service
     MatrixWorkspace_sptr work_in1 =
-        WorkspaceCreationHelper::Create1DWorkspaceFib(nBins);
+        WorkspaceCreationHelper::create1DWorkspaceFib(nBins, true);
     MatrixWorkspace_sptr work_in2 =
-        WorkspaceCreationHelper::Create1DWorkspaceRand(nBins);
+        WorkspaceCreationHelper::create1DWorkspaceRand(nBins, true);
     AnalysisDataService::Instance().add("test_in11", work_in1);
     AnalysisDataService::Instance().add("test_in12", work_in2);
 
@@ -108,9 +107,9 @@ public:
     int nHist = 10, nBins = 20;
     // Register the workspace in the data service
     MatrixWorkspace_sptr work_in1 =
-        WorkspaceCreationHelper::Create2DWorkspace154(nHist, nBins);
+        WorkspaceCreationHelper::create2DWorkspace154(nHist, nBins);
     MatrixWorkspace_sptr work_in2 =
-        WorkspaceCreationHelper::Create2DWorkspace123(nHist, nBins);
+        WorkspaceCreationHelper::create2DWorkspace123(nHist, nBins);
 
     PoissonErrors alg;
 
@@ -138,9 +137,9 @@ public:
     int nHist = 10, nBins = 20;
     // Register the workspace in the data service
     MatrixWorkspace_sptr work_in1 =
-        WorkspaceCreationHelper::Create2DWorkspace154(nHist, nBins);
+        WorkspaceCreationHelper::create2DWorkspace154(nHist, nBins, true);
     MatrixWorkspace_sptr work_in2 =
-        WorkspaceCreationHelper::Create1DWorkspaceFib(nBins);
+        WorkspaceCreationHelper::create1DWorkspaceFib(nBins, true);
 
     PoissonErrors alg;
 
@@ -162,9 +161,9 @@ public:
     int nHist = 10, nBins = 20;
     // Register the workspace in the data service
     MatrixWorkspace_sptr work_in2 =
-        WorkspaceCreationHelper::Create1DWorkspaceRand(nBins);
+        WorkspaceCreationHelper::create1DWorkspaceRand(nBins, true);
     MatrixWorkspace_sptr work_in1 =
-        WorkspaceCreationHelper::Create2DWorkspace154(nHist, nBins);
+        WorkspaceCreationHelper::create2DWorkspace154(nHist, nBins, true);
 
     PoissonErrors alg;
 
@@ -187,9 +186,9 @@ public:
     // Register the workspace in the data service
 
     MatrixWorkspace_sptr work_in1 =
-        WorkspaceCreationHelper::Create1DWorkspaceFib(nBins);
+        WorkspaceCreationHelper::create1DWorkspaceFib(nBins, true);
     MatrixWorkspace_sptr work_in2 =
-        WorkspaceCreationHelper::CreateWorkspaceSingleValue(2.2);
+        WorkspaceCreationHelper::createWorkspaceSingleValue(2.2);
     AnalysisDataService::Instance().add("test_in11", work_in1);
     AnalysisDataService::Instance().add("test_in12", work_in2);
 
@@ -211,9 +210,9 @@ public:
     int nBins = 300;
     // Register the workspace in the data service
     MatrixWorkspace_sptr work_in1 =
-        WorkspaceCreationHelper::Create1DWorkspaceFib(nBins);
+        WorkspaceCreationHelper::create1DWorkspaceFib(nBins, true);
     MatrixWorkspace_sptr work_in2 =
-        WorkspaceCreationHelper::CreateWorkspaceSingleValue(4.455);
+        WorkspaceCreationHelper::createWorkspaceSingleValue(4.455);
 
     PoissonErrors alg;
 

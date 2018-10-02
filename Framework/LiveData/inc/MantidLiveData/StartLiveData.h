@@ -1,8 +1,8 @@
 #ifndef MANTID_LIVEDATA_STARTLIVEDATA_H_
 #define MANTID_LIVEDATA_STARTLIVEDATA_H_
 
-#include "MantidKernel/System.h"
 #include "MantidAPI/Algorithm.h"
+#include "MantidKernel/System.h"
 #include "MantidLiveData/LiveDataAlgorithm.h"
 
 namespace Mantid {
@@ -56,6 +56,11 @@ public:
 private:
   void init() override;
   void exec() override;
+  void afterPropertySet(const std::string &) override;
+
+  void copyListenerProperties(
+      const boost::shared_ptr<Mantid::API::ILiveListener> &listener);
+  void removeListenerProperties();
 };
 
 } // namespace LiveData

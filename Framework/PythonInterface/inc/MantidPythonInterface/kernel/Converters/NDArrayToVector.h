@@ -23,31 +23,36 @@
   Code Documentation is available at: <http://doxygen.mantidproject.org>
 */
 #include "MantidKernel/System.h"
-#include <boost/python/object.hpp>
+#include "MantidPythonInterface/core/NDArray.h"
 #include <vector>
 
 namespace Mantid {
 namespace PythonInterface {
 namespace Converters {
 /**
- * Converts a Python sequence type to a C++ std::vector, where the vector
- * element
- * type is defined by the template type
+ * Converter taking an input numpy array and converting it to a std::vector.
+ * Multi-dimensional arrays are flattened and copied.
  */
 template <typename DestElementType> struct DLLExport NDArrayToVector {
+  // Alias definitions
+  using TypedVector = std::vector<DestElementType>;
+  using TypedVectorIterator = typename std::vector<DestElementType>::iterator;
+
   /// Constructor
-  NDArrayToVector(const boost::python::object &value);
-  /// Do the conversion
-  const std::vector<DestElementType> operator()();
+  NDArrayToVector(const NDArray &value);
+  /// Create a new vector from the contents of the array
+  const TypedVector operator()();
+  /// Fill the container with data from the array
+  void copyTo(TypedVector &dest) const;
 
 private:
-  /// Check the array is of the correct type and coerce it if not
-  void typeCheck();
-  /// Pointer to ndarray object
-  boost::python::object m_arr;
+  void throwIfSizeMismatched(const TypedVector &dest) const;
+
+  // reference to the held array
+  NDArray m_arr;
 };
-}
-}
-}
+} // namespace Converters
+} // namespace PythonInterface
+} // namespace Mantid
 
 #endif /* MANTID_PYTHONINTERFACE_NDARRAYTOVECTORCONVERTER_H_ */

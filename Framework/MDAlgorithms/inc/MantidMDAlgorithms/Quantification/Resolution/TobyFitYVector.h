@@ -22,10 +22,8 @@
   File change history is stored at: <https://github.com/mantidproject/mantid>.
   Code Documentation is available at: <http://doxygen.mantidproject.org>
 */
-#include "MantidKernel/ClassMacros.h"
-#include "MantidKernel/System.h"
-#include "MantidKernel/V3D.h"
 #include "MantidAPI/IFunction.h"
+#include "MantidKernel/System.h"
 
 #include <cassert>
 #include <vector>
@@ -135,7 +133,7 @@ private:
   bool m_moderator, m_aperture, m_chopper, m_chopperJitter, m_sampleVolume,
       m_detectorDepth, m_detectorArea, m_detectionTime;
 };
-}
-}
+} // namespace MDAlgorithms
+} // namespace Mantid
 
 #endif /* MANTID_MDALGORITHMS_TOBYFITYVECTOR_H_ */

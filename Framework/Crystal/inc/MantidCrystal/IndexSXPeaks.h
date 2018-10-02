@@ -1,14 +1,13 @@
 #ifndef MANTID_CRYSTAL_INDEX_SX_PEAKS_H_
 #define MANTID_CRYSTAL_INDEX_SX_PEAKS_H_
 
-//----------------------------------------------------------------------
-// Includes
-//----------------------------------------------------------------------
 #include "MantidAPI/Algorithm.h"
-#include <boost/tuple/tuple.hpp>
 #include "MantidAPI/IPeaksWorkspace_fwd.h"
 #include "MantidGeometry/Crystal/UnitCell.h"
 #include "MantidKernel/V3D.h"
+#include <boost/tuple/tuple.hpp>
+
+#include <iterator>
 #include <set>
 
 namespace Mantid {
@@ -164,6 +163,9 @@ public:
 
   /// Algorithm's version for identification overriding a virtual method
   int version() const override { return (1); }
+  const std::vector<std::string> seeAlso() const override {
+    return {"IndexPeaks"};
+  }
   /// Algorithm's category for identification overriding a virtual method
   const std::string category() const override { return "Crystal\\Peaks"; }
 
@@ -180,7 +182,7 @@ private:
   //
 };
 
-} // namespace Algorithm
+} // namespace Crystal
 } // namespace Mantid
 
 #endif /*MANTID_ALGORITHMS_IndexSXPeaks_H_*/

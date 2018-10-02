@@ -7,6 +7,8 @@
 
 #include "MantidKernel/DeltaEMode.h"
 
+#include <boost/scoped_ptr.hpp>
+
 namespace Mantid {
 namespace MDAlgorithms {
 
@@ -62,6 +64,11 @@ public:
 
   /// Algorithm's version for identification
   int version() const override;
+  const std::vector<std::string> seeAlso() const override {
+    return {"ConvertToDiffractionMDWorkspace", "ConvertToMDMinMaxGlobal",
+            "ConvertToMDMinMaxLocal", "CreateMDWorkspace",
+            "SetSpecialCoordinates"};
+  }
 
 private:
   std::map<std::string, std::string> validateInputs() override;
@@ -119,7 +126,7 @@ protected: // for testing, otherwise private:
   void setupTopLevelSplitting(Mantid::API::BoxController_sptr bc);
 };
 
-} // namespace Mantid
 } // namespace MDAlgorithms
+} // namespace Mantid
 
 #endif /* MANTID_MDALGORITHMS_MAKEDIFFRACTIONMDEVENTWORKSPACE_H_ */

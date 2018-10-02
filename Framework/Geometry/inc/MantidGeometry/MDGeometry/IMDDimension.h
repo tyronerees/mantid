@@ -2,8 +2,8 @@
 #define I_MD_DIMENSION_H
 
 #include "MantidGeometry/DllConfig.h"
-#include "MantidGeometry/MDGeometry/MDTypes.h"
 #include "MantidGeometry/MDGeometry/MDFrame.h"
+#include "MantidGeometry/MDGeometry/MDTypes.h"
 #include "MantidKernel/MDUnit.h"
 #include "MantidKernel/V3D.h"
 #ifndef Q_MOC_RUN
@@ -18,7 +18,7 @@ namespace Kernel {
 // Forward declarations
 //---------------------------------------------------------------------------
 class UnitLabel;
-}
+} // namespace Kernel
 
 namespace Geometry {
 /** The class describes one dimension of multidimensional dataset representing
@@ -73,7 +73,7 @@ public:
   /// can be usually find by its ID and various
   /// various method exist to manipulate set of dimensions by their names.
   /// @return Dimension ID string.
-  virtual std::string getDimensionId() const = 0;
+  virtual const std::string &getDimensionId() const = 0;
 
   /// @return the minimum extent of this dimension
   virtual coord_t getMinimum() const = 0;
@@ -84,6 +84,9 @@ public:
   /// @return number of bins dimension have (an integrated has one). A axis
   /// directed along dimension would have getNBins+1 axis points.
   virtual size_t getNBins() const = 0;
+
+  /// @return number of bin boundaries (axis points)
+  virtual size_t getNBoundaries() const = 0;
 
   /// @return an XML string representation of the dimension.
   virtual std::string toXMLString() const = 0;
@@ -114,14 +117,14 @@ public:
 };
 
 /// Shared Pointer for IMDDimension. Frequently used type in framework.
-typedef boost::shared_ptr<IMDDimension> IMDDimension_sptr;
+using IMDDimension_sptr = boost::shared_ptr<IMDDimension>;
 /// Shared Pointer to const IMDDimension. Not strictly necessary since
 /// IMDDimension is pure abstract.
-typedef boost::shared_ptr<const IMDDimension> IMDDimension_const_sptr;
+using IMDDimension_const_sptr = boost::shared_ptr<const IMDDimension>;
 /// Vector of constant shared pointers to IMDDimensions.
-typedef std::vector<IMDDimension_const_sptr> VecIMDDimension_const_sptr;
+using VecIMDDimension_const_sptr = std::vector<IMDDimension_const_sptr>;
 /// Vector of shared pointers to IMDDimensions.
-typedef std::vector<IMDDimension_sptr> VecIMDDimension_sptr;
-}
-}
+using VecIMDDimension_sptr = std::vector<IMDDimension_sptr>;
+} // namespace Geometry
+} // namespace Mantid
 #endif

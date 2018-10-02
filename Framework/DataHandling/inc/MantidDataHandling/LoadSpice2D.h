@@ -1,24 +1,20 @@
 #ifndef MANTID_DATAHANDLING_LoadSpice2D_H
 #define MANTID_DATAHANDLING_LoadSpice2D_H
 
-//----------------------------------------------------------------------
-// Includes
-//----------------------------------------------------------------------
 #include "MantidAPI/IFileLoader.h"
-#include "MantidDataObjects/Workspace2D.h"
 #include "MantidDataHandling/XmlHandler.h"
+#include "MantidDataObjects/Workspace2D.h"
+#include "MantidKernel/DateAndTime.h"
 #include <map>
 #include <string>
-#include <vector>
 #include <utility>
-
-//----------------------------------------------------------------------
+#include <vector>
 
 namespace Poco {
 namespace XML {
 class Element;
 }
-}
+} // namespace Poco
 
 namespace Mantid {
 namespace DataHandling {
@@ -66,6 +62,9 @@ public:
 
   /// Algorithm's version for identification overriding a virtual method
   int version() const override { return 1; }
+  const std::vector<std::string> seeAlso() const override {
+    return {"LoadSpiceAscii", "LoadSpiceXML2DDet"};
+  }
   /// Algorithm's category for identification overriding a virtual method
   const std::string category() const override {
     return "DataHandling\\Text;SANS\\DataHandling";
@@ -113,6 +112,8 @@ private:
   void setMetadataAsRunProperties(std::map<std::string, std::string> &metadata);
   void rotateDetector(const double &);
   void setTimes();
+  void
+  setSansSpiceXmlFormatVersion(std::map<std::string, std::string> &metadata);
 
   // Member variables:
   DataObjects::Workspace2D_sptr m_workspace;
@@ -121,8 +122,9 @@ private:
   Mantid::DataHandling::XmlHandler m_xmlHandler;
   double m_wavelength{0.0};
   double m_dwavelength{0.0};
-  Mantid::Kernel::DateAndTime m_startTime;
-  Mantid::Kernel::DateAndTime m_endTime;
+  double m_sansSpiceXmlFormatVersion{0.0};
+  Mantid::Types::Core::DateAndTime m_startTime;
+  Mantid::Types::Core::DateAndTime m_endTime;
 };
 } // namespace DataHandling
 } // namespace Mantid

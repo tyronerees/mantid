@@ -1,9 +1,9 @@
 #ifndef MANTID_ALGORITHMS_PDDETERMINECHARACTERIZATIONS_H_
 #define MANTID_ALGORITHMS_PDDETERMINECHARACTERIZATIONS_H_
 
-#include "MantidKernel/System.h"
-#include "MantidAPI/Algorithm.h"
+#include "MantidAPI/DistributedAlgorithm.h"
 #include "MantidAPI/ITableWorkspace_fwd.h"
+#include "MantidKernel/System.h"
 
 namespace Mantid {
 
@@ -15,8 +15,8 @@ namespace Kernel {
 /// forward declaration
 class PropertyMantager;
 /// Typedef for a shared pointer to a PropertyManager
-typedef boost::shared_ptr<PropertyManager> PropertyManager_sptr;
-}
+using PropertyManager_sptr = boost::shared_ptr<PropertyManager>;
+} // namespace Kernel
 
 namespace Algorithms {
 
@@ -43,7 +43,8 @@ namespace Algorithms {
   File change history is stored at: <https://github.com/mantidproject/mantid>
   Code Documentation is available at: <http://doxygen.mantidproject.org>
 */
-class DLLExport PDDetermineCharacterizations : public API::Algorithm {
+class DLLExport PDDetermineCharacterizations
+    : public API::DistributedAlgorithm {
 public:
   const std::string name() const override;
   int version() const override;
@@ -53,7 +54,8 @@ public:
 
 private:
   double getLogValue(API::Run &run, const std::string &propName);
-  void getInformationFromTable(const double frequency, const double wavelength);
+  void getInformationFromTable(const double frequency, const double wavelength,
+                               const std::string &canName);
   void setDefaultsInPropManager();
   void overrideRunNumProperty(const std::string &inputName,
                               const std::string &propName);

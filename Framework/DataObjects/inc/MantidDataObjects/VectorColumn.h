@@ -5,8 +5,8 @@
 #include "MantidKernel/StringTokenizer.h"
 
 #include <boost/algorithm/string/join.hpp>
-#include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/lexical_cast.hpp>
 
 namespace Mantid {
 namespace DataObjects {
@@ -80,8 +80,7 @@ public:
     Mantid::Kernel::StringTokenizer elements(
         text, ",", Mantid::Kernel::StringTokenizer::TOK_TRIM);
 
-    for (const auto &it : elements) {
-      std::string element(it);
+    for (const auto &element : elements) {
       try {
         newValues.push_back(boost::lexical_cast<Type>(element));
       } catch (boost::bad_lexical_cast &) {
@@ -93,8 +92,17 @@ public:
     m_data.at(index) = newValues;
   }
 
+  /// Set item from a stream
+  void read(const size_t index, std::istringstream &in) override {
+    std::string s;
+    in >> s;
+    read(index, s);
+  }
+
   /// Specialized type check
   bool isBool() const override { return false; }
+
+  bool isNumber() const override { return false; }
 
   /// Overall memory size taken by the column (bytes)
   long int sizeOfData() const override {

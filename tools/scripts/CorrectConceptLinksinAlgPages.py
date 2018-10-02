@@ -1,6 +1,8 @@
 #pylint: disable=invalid-name
+from __future__ import (absolute_import, division, print_function)
 import os
 import re
+from mantid.api import AlgorithmFactory
 
 concepts = ['Algorithm',
             'Analysis_Data_Service',
@@ -45,7 +47,8 @@ concepts = ['Algorithm',
 
 
 def outputError(alg, algVersion, description, notes=""):
-    print "%s, %i, %s, %s" % (alg, algVersion, description, notes)
+    print("%s, %i, %s, %s" % (alg, algVersion, description, notes))
+
 
 rstdir = r"C:\Mantid\Code\Mantid\docs\source\algorithms"
 conceptsPattern = {}

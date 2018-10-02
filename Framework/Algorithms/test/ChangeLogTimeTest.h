@@ -1,17 +1,19 @@
 #ifndef CHANGELOGTIMETEST_H_
 #define CHANGELOGTIMETEST_H_
 
-#include <cxxtest/TestSuite.h>
+#include "MantidAPI/AnalysisDataService.h"
+#include "MantidAPI/Run.h"
 #include "MantidAlgorithms/ChangeLogTime.h"
 #include "MantidDataObjects/Workspace2D.h"
 #include "MantidKernel/TimeSeriesProperty.h"
-#include "MantidAPI/Run.h"
+#include <cxxtest/TestSuite.h>
 
 using std::string;
 using namespace Mantid::Algorithms;
 using namespace Mantid::API;
 using namespace Mantid::DataObjects;
 using namespace Mantid::Kernel;
+using Mantid::Types::Core::DateAndTime;
 
 class ChangeLogTimeTest : public CxxTest::TestSuite {
 public:

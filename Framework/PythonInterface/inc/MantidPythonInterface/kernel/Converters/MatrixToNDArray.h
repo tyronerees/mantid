@@ -22,9 +22,8 @@
     File change history is stored at: <https://github.com/mantidproject/mantid>
     Code Documentation is available at: <http://doxygen.mantidproject.org>
  */
-#include "MantidKernel/System.h"
 #include "MantidKernel/Matrix.h"
-#include "MantidPythonInterface/kernel/Converters/WrapWithNumpy.h"
+#include "MantidPythonInterface/core/Converters/WrapWithNDArray.h"
 #include <boost/python/detail/prefix.hpp>
 
 namespace Mantid {
@@ -52,12 +51,12 @@ struct DLLExport MatrixToNDArray {
     const std::pair<size_t, size_t> matrixDims = cmatrix.size();
     Py_intptr_t dims[2] = {static_cast<Py_intptr_t>(matrixDims.first),
                            static_cast<Py_intptr_t>(matrixDims.second)};
-    typedef typename ConversionPolicy::template apply<ElementType> policy;
+    using policy = typename ConversionPolicy::template apply<ElementType>;
     return policy::createFromArray(&(cmatrix[0][0]), 2, dims);
   }
 };
-}
-}
-}
+} // namespace Converters
+} // namespace PythonInterface
+} // namespace Mantid
 
 #endif /// MANTID_PYTHONINTERFACE_MATRIXTONDARRAY_H_

@@ -1,26 +1,27 @@
 #ifndef MANTID_KERNEL_DISKBUFFER_H_
 #define MANTID_KERNEL_DISKBUFFER_H_
 
-#include "MantidKernel/DllConfig.h"
 #include "MantidKernel/FreeBlock.h"
-#include "MantidKernel/ISaveable.h"
 #include "MantidKernel/System.h"
 #ifndef Q_MOC_RUN
-#include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/mem_fun.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
+#include <boost/multi_index_container.hpp>
 #endif
 #include <cstdint>
 #include <limits>
 #include <list>
-#include <map>
 #include <mutex>
+#include <string>
 #include <vector>
 
 namespace Mantid {
 namespace Kernel {
+
+// Forward declare
+class ISaveable;
 
 /** Buffer objects that need to be written out to disk
   so as to optimize writing operations.
@@ -60,18 +61,17 @@ public:
    * Index 1: Position in the file.
    * Index 2: Size of the free block
    */
-  typedef boost::multi_index::multi_index_container<
-      FreeBlock,
-      boost::multi_index::indexed_by<
-          boost::multi_index::ordered_non_unique<
-              BOOST_MULTI_INDEX_CONST_MEM_FUN(FreeBlock, uint64_t,
-                                              getFilePosition)>,
-          boost::multi_index::ordered_non_unique<
-              BOOST_MULTI_INDEX_CONST_MEM_FUN(FreeBlock, uint64_t, getSize)>>>
-      freeSpace_t;
+  using freeSpace_t = boost::multi_index::multi_index_container<
+      FreeBlock, boost::multi_index::indexed_by<
+                     boost::multi_index::ordered_non_unique<
+                         ::boost::multi_index::const_mem_fun<
+                             FreeBlock, uint64_t, &FreeBlock::getFilePosition>>,
+                     boost::multi_index::ordered_non_unique<
+                         ::boost::multi_index::const_mem_fun<
+                             FreeBlock, uint64_t, &FreeBlock::getSize>>>>;
 
   /// A way to index the free space by their size
-  typedef freeSpace_t::nth_index<1>::type freeSpace_bySize_t;
+  using freeSpace_bySize_t = freeSpace_t::nth_index<1>::type;
 
   DiskBuffer();
   DiskBuffer(uint64_t m_writeBufferSize);

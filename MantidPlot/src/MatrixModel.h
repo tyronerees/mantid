@@ -31,10 +31,10 @@
 #define MATRIXMODEL_H
 
 #include <QAbstractTableModel>
-#include <QVector>
 #include <QLocale>
-#include <QSize>
 #include <QMessageBox>
+#include <QSize>
+#include <QVector>
 
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_permutation.h>
@@ -48,7 +48,7 @@ protected:
   explicit MatrixModel(QObject *parent);
 
 public:
-  MatrixModel(int rows = 32, int cols = 32, QObject *parent = 0);
+  MatrixModel(int rows = 32, int cols = 32, QObject *parent = nullptr);
   MatrixModel(const QImage &image, QObject *parent);
   ~MatrixModel() override;
 

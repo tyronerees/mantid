@@ -38,9 +38,8 @@ template <class VectorClass> class FortranVector : public VectorClass {
   int m_base;
   /// Typedef the types returned by the base class's operators []. They aren't
   /// necessarily the same as the stored type (double or complex).
-  typedef decltype(
-      std::declval<const VectorClass>().operator[](0)) ElementConstType;
-  typedef decltype(std::declval<VectorClass>().operator[](0)) ElementRefType;
+  using ElementConstType = decltype(std::declval<const VectorClass>()[0]);
+  using ElementRefType = decltype(std::declval<VectorClass>()[0]);
 
 public:
   /// Constructor
@@ -121,8 +120,7 @@ void FortranVector<VectorClass>::allocate(int newSize) {
 /// The "index" operator
 template <class VectorClass>
 typename FortranVector<VectorClass>::ElementConstType
-    FortranVector<VectorClass>::
-    operator()(int i) const {
+FortranVector<VectorClass>::operator()(int i) const {
   return this->VectorClass::operator[](static_cast<size_t>(i - m_base));
 }
 
@@ -136,8 +134,7 @@ operator()(int i) {
 /// The "index" operator
 template <class VectorClass>
 typename FortranVector<VectorClass>::ElementConstType
-    FortranVector<VectorClass>::
-    operator[](int i) const {
+    FortranVector<VectorClass>::operator[](int i) const {
   return this->VectorClass::operator[](static_cast<size_t>(i - m_base));
 }
 

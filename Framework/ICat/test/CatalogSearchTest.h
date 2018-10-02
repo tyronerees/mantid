@@ -1,17 +1,21 @@
 #ifndef SEARCHBYADVANCED_H_
 #define SEARCHBYADVANCED_H_
 
-#include <cxxtest/TestSuite.h>
-#include "MantidICat/CatalogSearch.h"
-#include "MantidICat/CatalogLogin.h"
-#include "MantidDataObjects/WorkspaceSingleValue.h"
-#include "MantidAPI/FrameworkManager.h"
 #include "ICatTestHelper.h"
+#include "MantidAPI/FrameworkManager.h"
+#include "MantidDataObjects/WorkspaceSingleValue.h"
+#include "MantidICat/CatalogLogin.h"
+#include "MantidICat/CatalogSearch.h"
+#include <cxxtest/TestSuite.h>
 
 using namespace Mantid;
 using namespace Mantid::ICat;
 class CatalogSearchTest : public CxxTest::TestSuite {
 public:
+  // This means the constructor isn't called when running other tests
+  static CatalogSearchTest *createSuite() { return new CatalogSearchTest(); }
+  static void destroySuite(CatalogSearchTest *suite) { delete suite; }
+
   /// Skip all unit tests if ICat server is down
   bool skipTests() override { return ICatTestHelper::skipTests(); }
 
@@ -37,7 +41,8 @@ public:
       searchobj.initialize();
 
     searchobj.setPropertyValue("RunRange", "1000000-1000001");
-    searchobj.setPropertyValue("Instrument", "LOQ");
+    // search ALF instrument it is much faster
+    searchobj.setPropertyValue("Instrument", "ALF");
     searchobj.setPropertyValue("OutputWorkspace", "Investigations");
 
     TS_ASSERT_THROWS_NOTHING(searchobj.execute());
@@ -54,7 +59,8 @@ public:
     if (!searchobj.isInitialized())
       searchobj.initialize();
 
-    searchobj.setPropertyValue("Keywords", "000117");
+    // This is a keyword that is chosen to return an empty dataset - very fast
+    searchobj.setPropertyValue("Keywords", ":-)");
     searchobj.setPropertyValue("Instrument", "HRPD");
     searchobj.setPropertyValue("OutputWorkspace", "Investigations");
 

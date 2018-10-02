@@ -1,6 +1,6 @@
+#include "MantidCurveFitting/Functions/CrystalFieldPeaks.h"
 #include "MantidAPI/FunctionFactory.h"
 #include "MantidCurveFitting/Functions/CrystalElectricField.h"
-#include "MantidCurveFitting/Functions/CrystalFieldPeaks.h"
 
 #include <functional>
 #include <map>
@@ -13,7 +13,7 @@ DECLARE_FUNCTION(CrystalFieldPeaks)
 
 /// Constructor
 CrystalFieldPeaks::CrystalFieldPeaks()
-    : CrystalFieldPeaksBase(), m_defaultDomainSize(0) {
+    : CrystalFieldPeaksBase(), API::IFunctionGeneral(), m_defaultDomainSize(0) {
 
   declareAttribute("Temperature", Attribute(1.0));
   declareParameter("IntensityScaling", 1.0,

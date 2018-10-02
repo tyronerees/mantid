@@ -1,13 +1,13 @@
+#include "MantidRemoteJobManagers/MantidWebServiceAPIHelper.h"
 #include "MantidKernel/ConfigService.h"
 #include "MantidKernel/Logger.h"
 #include "MantidKernel/RemoteJobManager.h"
-#include "MantidRemoteJobManagers/MantidWebServiceAPIHelper.h"
 
 #include <Poco/Base64Encoder.h>
-#include <Poco/Net/HTTPSClientSession.h>
+#include <Poco/Net/HTTPCookie.h>
 #include <Poco/Net/HTTPRequest.h>
 #include <Poco/Net/HTTPResponse.h>
-#include <Poco/Net/HTTPCookie.h>
+#include <Poco/Net/HTTPSClientSession.h>
 #include <Poco/Net/NameValueCollection.h>
 #include <Poco/URI.h>
 
@@ -211,7 +211,7 @@ void MantidWebServiceAPIHelper::initHTTPRequest(Poco::Net::HTTPRequest &req,
   path += extraPath;
 
   uri.setPath(path);
-  if (method == Poco::Net::HTTPRequest::HTTP_GET && queryString.size() > 0) {
+  if (method == Poco::Net::HTTPRequest::HTTP_GET && !queryString.empty()) {
     uri.setQuery(queryString);
   }
 

@@ -1,18 +1,16 @@
-#include <ostream>
-#include <sstream>
-
-#include "MantidKernel/ConfigService.h"
-#include "MantidKernel/Logger.h"
 #include "MantidKernel/RemoteJobManager.h"
+#include "MantidKernel/Logger.h"
 
 #include <Poco/DOM/Element.h>
 #include <Poco/DOM/NodeList.h>
 #include <Poco/DOM/Text.h>
 
 #include <Poco/Base64Encoder.h>
-#include <Poco/Net/HTTPSClientSession.h>
 #include <Poco/Net/HTTPRequest.h>
+#include <Poco/Net/HTTPSClientSession.h>
 #include <Poco/URI.h>
+
+#include <sstream>
 
 namespace Mantid {
 namespace Kernel {
@@ -20,7 +18,7 @@ namespace Kernel {
 namespace {
 // static logger object
 Logger g_log("RemoteJobManager");
-}
+} // namespace
 
 RemoteJobManager::RemoteJobManager(const Poco::XML::Element *elem)
     : m_displayName(elem->getAttribute("name")),
@@ -225,7 +223,7 @@ void RemoteJobManager::initHTTPRequest(Poco::Net::HTTPRequest &req,
   path += extraPath;
 
   uri.setPath(path);
-  if (method == Poco::Net::HTTPRequest::HTTP_GET && queryString.size() > 0) {
+  if (method == Poco::Net::HTTPRequest::HTTP_GET && !queryString.empty()) {
     uri.setQuery(queryString);
   }
 

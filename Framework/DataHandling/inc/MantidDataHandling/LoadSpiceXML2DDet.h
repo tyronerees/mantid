@@ -1,10 +1,10 @@
 #ifndef MANTID_DATAHANDLING_LOADSPICEXML2DDET_H_
 #define MANTID_DATAHANDLING_LOADSPICEXML2DDET_H_
 
-#include "MantidKernel/System.h"
 #include "MantidAPI/Algorithm.h"
-#include "MantidAPI/MatrixWorkspace_fwd.h"
 #include "MantidAPI/ITableWorkspace_fwd.h"
+#include "MantidAPI/MatrixWorkspace_fwd.h"
+#include "MantidKernel/System.h"
 
 namespace Mantid {
 namespace DataHandling {
@@ -69,6 +69,9 @@ public:
 
   /// Algorithm version
   int version() const override;
+  const std::vector<std::string> seeAlso() const override {
+    return {"LoadSpice2D"};
+  }
 
   /// Category
   const std::string category() const override;
@@ -92,6 +95,16 @@ private:
                         const size_t &numpixelx, const size_t &numpixely,
                         const std::string &detnodename,
                         const bool &loadinstrument);
+
+  /// Create output MatrixWorkspace
+  API::MatrixWorkspace_sptr
+  createMatrixWorkspaceVersion2(const std::vector<SpiceXMLNode> &vecxmlnode,
+                                const std::string &detnodename,
+                                const bool &loadinstrument);
+
+  API::MatrixWorkspace_sptr parseDetectorNode(const std::string &detvaluestr,
+                                              bool loadinstrument,
+                                              double &max_counts);
 
   /// Set up sample logs from table workspace loaded where SPICE data file is
   /// loaded
@@ -131,6 +144,11 @@ private:
   int m_ptNumber4Log;
   /// IDF file name to override Mantid's
   std::string m_idfFileName;
+  /// User specified wave length
+  double m_userSpecifiedWaveLength;
+  /// shift of detector on X and Y direction
+  double m_detXShift;
+  double m_detYShift;
 };
 
 } // namespace DataHandling

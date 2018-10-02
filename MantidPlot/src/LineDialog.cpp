@@ -27,22 +27,22 @@
  *                                                                         *
  ***************************************************************************/
 #include "LineDialog.h"
-#include "ColorButton.h"
-#include "ArrowMarker.h"
-#include "Graph.h"
-#include "Plot.h"
 #include "ApplicationWindow.h"
-#include "MantidQtMantidWidgets/DoubleSpinBox.h"
+#include "ArrowMarker.h"
+#include "ColorButton.h"
+#include "Graph.h"
+#include "MantidQtWidgets/Common/DoubleSpinBox.h"
+#include "Plot.h"
 
 #include <qwt_plot.h>
 
+#include <QComboBox>
 #include <QGroupBox>
 #include <QSpinBox>
-#include <QComboBox>
 
 LineDialog::LineDialog(ArrowMarker *line, QWidget *parent, Qt::WFlags fl)
     : QDialog(parent, fl) {
-  unitBox = NULL;
+  unitBox = nullptr;
 
   setWindowTitle(tr("MantidPlot - Line options"));
   setAttribute(Qt::WA_DeleteOnClose);
@@ -159,7 +159,7 @@ LineDialog::LineDialog(ArrowMarker *line, QWidget *parent, Qt::WFlags fl)
 }
 
 void LineDialog::initGeometryTab() {
-  if (unitBox == NULL)
+  if (unitBox == nullptr)
     unitBox = new QComboBox();
   unitBox->addItem(tr("Scale Coordinates"));
   unitBox->addItem(tr("Pixels"));

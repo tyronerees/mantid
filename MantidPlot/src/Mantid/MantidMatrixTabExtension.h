@@ -3,9 +3,9 @@
 
 #include "MantidMatrixModel.h"
 
+#include <QPointer>
 #include <QString>
 #include <QTableView>
-#include <QPointer>
 /**
  * Holds the information for a new tab.
  */
@@ -15,15 +15,14 @@ struct MantidMatrixTabExtension {
                            MantidMatrixModel::Type type)
       : label(label), tableView(tableView), model(model), type(type) {}
   MantidMatrixTabExtension()
-      : label(""), tableView(NULL), model(NULL),
+      : label(""), tableView(), model(nullptr),
         type(MantidMatrixModel::Type::DX) {}
   QString label;
-  QTableView *tableView;
+  std::unique_ptr<QTableView> tableView;
   QPointer<MantidMatrixModel> model;
   MantidMatrixModel::Type type;
 };
 
-typedef std::map<MantidMatrixModel::Type, MantidMatrixTabExtension>
-    MantidMatrixTabExtensionMap;
-
+using MantidMatrixTabExtensionMap =
+    std::map<MantidMatrixModel::Type, MantidMatrixTabExtension>;
 #endif

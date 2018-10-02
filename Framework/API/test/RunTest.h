@@ -2,14 +2,14 @@
 #define RUNTEST_H_
 
 #include "MantidAPI/Run.h"
+#include "MantidGeometry/Instrument/Goniometer.h"
 #include "MantidKernel/Exception.h"
 #include "MantidKernel/Matrix.h"
 #include "MantidKernel/Property.h"
 #include "MantidKernel/TimeSeriesProperty.h"
 #include "MantidKernel/V3D.h"
-#include <cxxtest/TestSuite.h>
 #include "MantidTestHelpers/NexusTestHelper.h"
-#include "MantidGeometry/Instrument/Goniometer.h"
+#include <cxxtest/TestSuite.h>
 
 using namespace Mantid::Kernel;
 using namespace Mantid::API;
@@ -50,7 +50,7 @@ void addTestTimeSeries(Run &run, const std::string &name) {
   timeSeries->addValue("2012-07-19T16:19:20", 24);
   run.addProperty(timeSeries);
 }
-}
+} // namespace
 
 class RunTest : public CxxTest::TestSuite {
 public:
@@ -73,7 +73,7 @@ public:
     Property *p = new ConcreteProperty();
     TS_ASSERT_THROWS_NOTHING(runInfo.addProperty(p));
 
-    Property *pp = NULL;
+    Property *pp = nullptr;
     TS_ASSERT_THROWS_NOTHING(pp = runInfo.getProperty("Test"));
     TS_ASSERT_EQUALS(p, pp);
     TS_ASSERT(!pp->name().compare("Test"));
@@ -142,7 +142,7 @@ public:
     const double value = 10.9;
     addTimeSeriesEntry(runInfo, name, value);
 
-    TimeSeriesProperty<double> *tsp(NULL);
+    TimeSeriesProperty<double> *tsp(nullptr);
     TS_ASSERT_THROWS_NOTHING(tsp = runInfo.getTimeSeriesProperty<double>(name));
     TS_ASSERT_DELTA(tsp->firstValue(), value, 1e-12);
   }

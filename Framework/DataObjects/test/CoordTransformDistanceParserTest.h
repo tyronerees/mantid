@@ -1,14 +1,14 @@
 #ifndef MANTID_DATAOBJECTS_COORDTRANSFORMDISTANCEPARSERTEST_H_
 #define MANTID_DATAOBJECTS_COORDTRANSFORMDISTANCEPARSERTEST_H_
 
-#include "MantidDataObjects/CoordTransformDistanceParser.h"
-#include "MantidDataObjects/CoordTransformDistance.h"
 #include "MantidDataObjects/CoordTransformAffine.h"
+#include "MantidDataObjects/CoordTransformDistance.h"
+#include "MantidDataObjects/CoordTransformDistanceParser.h"
 
 #include <cxxtest/TestSuite.h>
 
-#include <Poco/DOM/Document.h>
 #include <Poco/DOM/DOMParser.h>
+#include <Poco/DOM/Document.h>
 #include <Poco/DOM/Element.h>
 
 using namespace Mantid::DataObjects;
@@ -42,7 +42,7 @@ public:
     Poco::XML::Element *pRootElem = pDoc->documentElement();
 
     CoordTransformDistanceParser parser;
-    Mantid::API::CoordTransform *transform = NULL;
+    Mantid::API::CoordTransform *transform = nullptr;
     TS_ASSERT_THROWS_NOTHING(transform = parser.createTransform(pRootElem));
 
     // Circular check. Acutally hard to debug, but gives certainty that
@@ -99,7 +99,7 @@ public:
 
     CoordTransformDistanceParser parser;
     parser.setSuccessor(new MockCoordTransformAffineParser);
-    Mantid::API::CoordTransform *product = NULL;
+    Mantid::API::CoordTransform *product = nullptr;
     TS_ASSERT_THROWS_NOTHING(product = parser.createTransform(pRootElem));
     delete product;
   }

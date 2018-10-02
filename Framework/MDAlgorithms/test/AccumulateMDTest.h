@@ -1,15 +1,15 @@
 #ifndef MANTID_MDALGORITHMS_ACCUMULATEMDTEST_H_
 #define MANTID_MDALGORITHMS_ACCUMULATEMDTEST_H_
 
-#include <cxxtest/TestSuite.h>
-#include "MantidMDAlgorithms/AccumulateMD.h"
-#include "MantidTestHelpers/WorkspaceCreationHelper.h"
-#include "MantidTestHelpers/MDEventsTestHelper.h"
-#include "MantidKernel/ConfigService.h"
 #include "MantidAPI/AlgorithmManager.h"
 #include "MantidAPI/IMDEventWorkspace.h"
-#include <Poco/Path.h>
+#include "MantidKernel/ConfigService.h"
+#include "MantidMDAlgorithms/AccumulateMD.h"
+#include "MantidTestHelpers/MDEventsTestHelper.h"
+#include "MantidTestHelpers/WorkspaceCreationHelper.h"
 #include <Poco/File.h>
+#include <Poco/Path.h>
+#include <cxxtest/TestSuite.h>
 
 using Mantid::MDAlgorithms::AccumulateMD;
 using namespace Mantid::API;
@@ -98,7 +98,7 @@ public:
 
     // Create a cheap workspace
     std::string ws_name = "ACCUMULATEMDTEST_EXISTENTWORKSPACE";
-    auto bkg_ws = WorkspaceCreationHelper::Create1DWorkspaceRand(1);
+    auto bkg_ws = WorkspaceCreationHelper::create1DWorkspaceRand(1, true);
     // add to ADS (no choice but to use ADS here)
     AnalysisDataService::Instance().add(ws_name, bkg_ws);
 

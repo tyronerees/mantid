@@ -1,19 +1,19 @@
 #ifndef MANTIDPLOT_FIRST_RUN_SETUP_WINDOW
 #define MANTIDPLOT_FIRST_RUN_SETUP_WINDOW
 
-#include <QDialog>
 #include "ui_FirstTimeSetup.h"
+#include <QDialog>
 
 /**
-* FirstTimeSetup dialog for MantidPlot.
-*
-*/
+ * FirstTimeSetup dialog for MantidPlot.
+ *
+ */
 
 class FirstTimeSetup : public QDialog {
   Q_OBJECT
 
 public:
-  explicit FirstTimeSetup(QWidget *parent = 0);
+  explicit FirstTimeSetup(QWidget *parent = nullptr);
   ~FirstTimeSetup() override;
 
 private:

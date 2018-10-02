@@ -40,8 +40,8 @@ void EqualToMD::execHistoScalar(
     Mantid::DataObjects::MDHistoWorkspace_sptr out,
     Mantid::DataObjects::WorkspaceSingleValue_const_sptr scalar) {
   double tolerance = getProperty("Tolerance");
-  out->equalTo(scalar->dataY(0)[0], tolerance);
+  out->equalTo(scalar->y(0)[0], tolerance);
 }
 
-} // namespace Mantid
 } // namespace MDAlgorithms
+} // namespace Mantid

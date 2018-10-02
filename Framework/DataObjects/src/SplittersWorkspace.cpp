@@ -11,7 +11,7 @@ namespace DataObjects {
 namespace {
 /// static logger
 Kernel::Logger g_log("SplittersWorkspace");
-}
+} // namespace
 //----------------------------------------------------------------------------------------------
 /** Constructor
  */
@@ -41,8 +41,8 @@ Kernel::SplittingInterval SplittersWorkspace::getSplitter(size_t index) {
   row >> stop;
   row >> wsgroup;
 
-  Kernel::SplittingInterval splitter(Kernel::DateAndTime(start),
-                                     Kernel::DateAndTime(stop), wsgroup);
+  Kernel::SplittingInterval splitter(Types::Core::DateAndTime(start),
+                                     Types::Core::DateAndTime(stop), wsgroup);
 
   return splitter;
 }
@@ -64,8 +64,8 @@ bool SplittersWorkspace::removeSplitter(size_t index) {
   return removed;
 }
 
-} // namespace Mantid
 } // namespace DataObjects
+} // namespace Mantid
 
 ///\cond TEMPLATE
 

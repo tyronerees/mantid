@@ -20,7 +20,7 @@ namespace Mantid {
 namespace API {
 class Algorithm;
 }
-}
+} // namespace Mantid
 
 namespace Mantid {
 namespace Kernel {
@@ -63,7 +63,7 @@ public:
   /// A string ID for the class
   virtual const std::string id() const = 0;
   /// The name of the object
-  virtual const std::string name() const = 0;
+  virtual const std::string &getName() const = 0;
   /// Can this object be accessed from multiple threads safely
   virtual bool threadSafe() const = 0;
   /// Serializes the object to a string
@@ -92,9 +92,9 @@ private:
 };
 
 /// Shared pointer to a DataItem
-typedef boost::shared_ptr<DataItem> DataItem_sptr;
+using DataItem_sptr = boost::shared_ptr<DataItem>;
 /// Shared pointer to a const DataItem
-typedef boost::shared_ptr<const DataItem> DataItem_const_sptr;
+using DataItem_const_sptr = boost::shared_ptr<const DataItem>;
 
 } // namespace Kernel
 } // namespace Mantid

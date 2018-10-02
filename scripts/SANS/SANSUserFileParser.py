@@ -1,4 +1,5 @@
-﻿#pylint: disable=invalid-name
+#pylint: disable=invalid-name
+from __future__ import (absolute_import, division, print_function)
 from collections import namedtuple
 import re
 
@@ -52,7 +53,7 @@ class BackCommandParser(object):
 
     def _evaluate_mean(self, argument):
         '''
-        Evalutes if the argument is either MEAN, TOF or something else.
+        Evaluates if the argument is either MEAN, TOF or something else.
         @param argument: string to investigate
         @raise RuntimeError: If the argument cannot be parsed correctly
         '''
@@ -67,7 +68,7 @@ class BackCommandParser(object):
 
     def _evaluate_uniform(self, argument):
         '''
-        Evalutes if the argument is either TIME, UAMP or something else.
+        Evaluates if the argument is either TIME, UAMP or something else.
         @param argument: string to investigate
         @raise RuntimeError: If the argument cannot be parsed correctly
         '''
@@ -82,7 +83,7 @@ class BackCommandParser(object):
 
     def _evaluate_run(self, argument):
         '''
-        Evalutes if the argument is RUN=
+        Evaluates if the argument is RUN=
         @param argument: string to investigate
         @raise RuntimeError: If the argument cannot be parsed correctly
         '''
@@ -97,7 +98,7 @@ class BackCommandParser(object):
 
     def _evaluate_mon(self, argument):
         '''
-        Evaluates which detector to use. At this point the validty of this has already been checkd, so
+        Evaluates which detector to use. At this point the validty of this has already been checked, so
         we can just take it as is.
         @param argument: string to investigate
         @raise RuntimeError: If the argument cannot be parsed correctly

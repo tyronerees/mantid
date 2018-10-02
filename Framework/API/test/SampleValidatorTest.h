@@ -6,9 +6,10 @@
 #include "MantidAPI/Sample.h"
 #include "MantidAPI/SampleValidator.h"
 #include "MantidKernel/Material.h"
-#include "MantidTestHelpers/FakeObjects.h"
 #include "MantidTestHelpers/ComponentCreationHelper.h"
+#include "MantidTestHelpers/FakeObjects.h"
 
+using namespace Mantid::Kernel;
 using Mantid::API::SampleValidator;
 
 class SampleValidatorTest : public CxxTest::TestSuite {
@@ -22,7 +23,7 @@ public:
 
   void test_fail() {
     auto ws = boost::make_shared<WorkspaceTester>();
-    ws->init(2, 11, 10);
+    ws->initialize(2, 11, 10);
     SampleValidator validator;
     TS_ASSERT_EQUALS(
         validator.isValid(ws),
@@ -35,7 +36,7 @@ public:
     Mantid::Kernel::Material material(
         "stuff", Mantid::PhysicalConstants::NeutronAtom(), 10);
     sphere->setMaterial(material);
-    ws->mutableSample().setShape(*sphere);
+    ws->mutableSample().setShape(sphere);
 
     SampleValidator validator;
     TS_ASSERT_EQUALS(validator.checkValidity(ws), "");

@@ -31,7 +31,7 @@ class ScriptFileInterpreter : public QWidget {
 
 public:
   /// Construct the object
-  ScriptFileInterpreter(QWidget *parent = NULL,
+  ScriptFileInterpreter(QWidget *parent = nullptr,
                         const QString &settingsGroup = "");
   /// Destroy the object
   ~ScriptFileInterpreter() override;
@@ -87,7 +87,7 @@ public slots:
   virtual void spacesToTabs();
 
   /// Execute the whole script.
-  virtual void
+  virtual bool
   executeAll(const Script::ExecutionMode mode = Script::Asynchronous);
   /// Execute the current selection
   virtual void
@@ -152,12 +152,9 @@ private:
   void setupScriptRunner(const ScriptingEnv &env, const QString &identifier);
 
   bool readFileIntoEditor(const QString &filename);
-  void executeCode(const ScriptCode &code, const Script::ExecutionMode mode);
+  bool executeCode(const ScriptCode &code, const Script::ExecutionMode mode);
 
   void toggleComment(bool addComment);
-  // Replaces the currently selected text in the editor
-  inline void replaceSelectedText(const ScriptEditor *editor,
-                                  const QString &text);
 
   QSplitter *m_splitter;
   ScriptEditor *m_editor;
@@ -176,7 +173,7 @@ class NullScriptFileInterpreter : public ScriptFileInterpreter {
 
 public:
   /// Constructor
-  NullScriptFileInterpreter() : ScriptFileInterpreter(NULL) {}
+  NullScriptFileInterpreter() : ScriptFileInterpreter(nullptr) {}
 
   /// Does nothing
   bool shouldClose() override { return false; }
@@ -203,7 +200,7 @@ private slots:
   void showFindReplaceDialog() override {}
 
   /// Does nothing
-  void executeAll(const Script::ExecutionMode) override {}
+  bool executeAll(const Script::ExecutionMode) override { return true; }
   /// Does nothing
   void executeSelection(const Script::ExecutionMode) override {}
   /// Does nothing
@@ -241,7 +238,8 @@ class ScriptCloseDialog : public QWidget {
   Q_OBJECT
 
 public:
-  ScriptCloseDialog(ScriptFileInterpreter &interpreter, QWidget *parent = NULL);
+  ScriptCloseDialog(ScriptFileInterpreter &interpreter,
+                    QWidget *parent = nullptr);
 
   bool shouldScriptClose();
 

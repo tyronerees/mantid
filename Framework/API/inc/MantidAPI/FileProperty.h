@@ -53,10 +53,11 @@ public:
   };
 
   /// Constructor taking a list of extensions as a vector
-  FileProperty(const std::string &name, const std::string &defaultValue,
-               unsigned int action, const std::vector<std::string> &exts =
-                                        std::vector<std::string>(),
-               unsigned int direction = Kernel::Direction::Input);
+  FileProperty(
+      const std::string &name, const std::string &defaultValue,
+      unsigned int action,
+      const std::vector<std::string> &exts = std::vector<std::string>(),
+      unsigned int direction = Kernel::Direction::Input);
   /// Constructor taking a single extension as a string
   FileProperty(const std::string &name, const std::string &default_value,
                unsigned int action, const std::string &ext,
@@ -99,11 +100,6 @@ private:
   std::string setLoadProperty(const std::string &propValue);
   /// Handles the filename if this is a save property
   std::string setSaveProperty(const std::string &propValue);
-  /// Check that a given directory exists
-  std::string createDirectory(const std::string &path) const;
-  /// Check file extension to see if a lower- or upper-cased version will also
-  /// match if the first does not exist
-  std::string convertExtension(const std::string &filepath) const;
   /// The action type of this property, i.e. load/save
   unsigned int m_action;
   /// The default file extension associated with the type of file this property
@@ -125,6 +121,6 @@ private:
     pop) // Re-enable the warning about multiple assignment operators
 #endif
 }
-}
+} // namespace Mantid
 
 #endif // MANTID_API_FILEPROPERTY_H_

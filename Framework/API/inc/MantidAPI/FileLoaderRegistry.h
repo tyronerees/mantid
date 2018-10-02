@@ -6,7 +6,7 @@
 #include "MantidKernel/SingletonHolder.h"
 
 #ifndef Q_MOC_RUN
-#include <boost/type_traits/is_base_of.hpp>
+#include <type_traits>
 #endif
 
 #include <map>
@@ -14,12 +14,12 @@
 #include <vector>
 
 namespace Mantid {
-// Forward declaration
 namespace Kernel {
+
 class Logger;
 }
 namespace API {
-// Forward declaration
+
 class IAlgorithm;
 
 /**
@@ -106,22 +106,23 @@ private:
     static void check(LoaderFormat format) {
       switch (format) {
       case Nexus:
-        if (!boost::is_base_of<IFileLoader<Kernel::NexusDescriptor>,
-                               T>::value) {
+        if (!std::is_base_of<IFileLoader<Kernel::NexusDescriptor>, T>::value) {
           throw std::runtime_error(
               std::string("FileLoaderRegistryImpl::subscribe - Class '") +
-              typeid(T).name() + "' registered as Nexus loader but it does not "
-                                 "inherit from "
-                                 "API::IFileLoader<Kernel::NexusDescriptor>");
+              typeid(T).name() +
+              "' registered as Nexus loader but it does not "
+              "inherit from "
+              "API::IFileLoader<Kernel::NexusDescriptor>");
         }
         break;
       case Generic:
-        if (!boost::is_base_of<IFileLoader<Kernel::FileDescriptor>, T>::value) {
+        if (!std::is_base_of<IFileLoader<Kernel::FileDescriptor>, T>::value) {
           throw std::runtime_error(
               std::string("FileLoaderRegistryImpl::subscribe - Class '") +
-              typeid(T).name() + "' registered as Generic loader but it does "
-                                 "not inherit from "
-                                 "API::IFileLoader<Kernel::FileDescriptor>");
+              typeid(T).name() +
+              "' registered as Generic loader but it does "
+              "not inherit from "
+              "API::IFileLoader<Kernel::FileDescriptor>");
         }
         break;
       default:
@@ -145,8 +146,8 @@ private:
 };
 
 /// Type for the actual singleton instance
-typedef Mantid::Kernel::SingletonHolder<FileLoaderRegistryImpl>
-    FileLoaderRegistry;
+using FileLoaderRegistry =
+    Mantid::Kernel::SingletonHolder<FileLoaderRegistryImpl>;
 
 } // namespace API
 } // namespace Mantid
@@ -156,6 +157,6 @@ namespace Kernel {
 EXTERN_MANTID_API template class MANTID_API_DLL
     Mantid::Kernel::SingletonHolder<Mantid::API::FileLoaderRegistryImpl>;
 }
-}
+} // namespace Mantid
 
 #endif /* MANTID_API_FILELOADERREGISTRY_H_ */

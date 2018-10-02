@@ -2,16 +2,17 @@
 #include "MantidAPI/Axis.h"
 #include "MantidAPI/LiveListenerFactory.h"
 #include "MantidAPI/WorkspaceFactory.h"
-#include "MantidKernel/MersenneTwister.h"
 #include "MantidDataObjects/EventWorkspace.h"
-#include "MantidTestHelpers/ComponentCreationHelper.h"
 #include "MantidGeometry/Instrument.h"
 #include "MantidKernel/ConfigService.h"
+#include "MantidKernel/MersenneTwister.h"
+#include "MantidTestHelpers/ComponentCreationHelper.h"
 
 using namespace Mantid::API;
 using namespace Mantid::DataObjects;
 using namespace Mantid::Geometry;
 using Mantid::Kernel::ConfigService;
+using Mantid::Types::Event::TofEvent;
 
 namespace Mantid {
 namespace LiveData {
@@ -19,33 +20,40 @@ DECLARE_LISTENER(TestDataListener)
 
 /// Constructor
 TestDataListener::TestDataListener()
-    : ILiveListener(), m_buffer(),
+    : LiveListener(), m_buffer(),
       m_rand(new Kernel::MersenneTwister(
-          Kernel::DateAndTime::getCurrentTime().totalNanoseconds(), 40000,
+          Types::Core::DateAndTime::getCurrentTime().totalNanoseconds(), 40000,
           60000)),
       m_changeStatusAfter(0), m_newStatus(ILiveListener::EndRun) {
   // Set up the first workspace buffer
   this->createEmptyWorkspace();
 
-  m_timesCalled = 0;
   m_dataReset = false;
-  if (!ConfigService::Instance().getValue("testdatalistener.reset_after",
-                                          m_resetAfter))
-    m_resetAfter = 0;
-  if (!ConfigService::Instance().getValue(
-          "testdatalistener.m_changeStatusAfter", m_changeStatusAfter))
-    m_changeStatusAfter = 0;
-  int temp = 0;
-  if (!ConfigService::Instance().getValue("testdatalistener.m_newStatus",
-                                          temp)) {
-    if (temp == 0)
-      m_newStatus = ILiveListener::NoRun;
-    if (temp == 1)
-      m_newStatus = ILiveListener::BeginRun;
-    if (temp == 2)
-      m_newStatus = ILiveListener::Running;
-    if (temp == 4)
-      m_newStatus = ILiveListener::EndRun;
+  m_timesCalled = 0;
+  m_resetAfter = ConfigService::Instance()
+                     .getValue<int>("testdatalistener.reset_after")
+                     .get_value_or(0);
+  m_changeStatusAfter =
+      ConfigService::Instance()
+          .getValue<int>("testdatalistener.m_changeStatusAfter")
+          .get_value_or(0);
+  int temp = ConfigService::Instance()
+                 .getValue<int>("testdatalistener.m_newStatus")
+                 .get_value_or(0);
+
+  switch (temp) {
+  case 0:
+    m_newStatus = ILiveListener::NoRun;
+    break;
+  case 1:
+    m_newStatus = ILiveListener::BeginRun;
+    break;
+  case 2:
+    m_newStatus = ILiveListener::Running;
+    break;
+  case 4:
+    m_newStatus = ILiveListener::EndRun;
+    break;
   }
 }
 
@@ -58,7 +66,13 @@ bool TestDataListener::connect(const Poco::Net::SocketAddress &) {
 }
 
 bool TestDataListener::isConnected() {
-  return true; // For the time being at least
+  // For the time being at least
+  return true;
+}
+
+bool TestDataListener::dataReset() {
+  // No support for reset signal
+  return false;
 }
 
 ILiveListener::RunStatus TestDataListener::runStatus() {
@@ -73,7 +87,7 @@ ILiveListener::RunStatus TestDataListener::runStatus() {
 int TestDataListener::runNumber() const { return 999; }
 
 void TestDataListener::start(
-    Kernel::DateAndTime /*startTime*/) // Ignore the start time
+    Types::Core::DateAndTime /*startTime*/) // Ignore the start time
 {}
 
 /** Create the default empty event workspace */
@@ -96,7 +110,8 @@ void TestDataListener::createEmptyWorkspace() {
   // Add a monitor workspace
   auto monitorWS =
       WorkspaceFactory::Instance().create("EventWorkspace", 1, 2, 1);
-  WorkspaceFactory::Instance().initializeFromParent(m_buffer, monitorWS, true);
+  WorkspaceFactory::Instance().initializeFromParent(*m_buffer, *monitorWS,
+                                                    true);
   monitorWS->dataX(0)[0] = 40000;
   monitorWS->dataX(0)[1] = 60000;
   m_buffer->setMonitorWorkspace(monitorWS);
@@ -104,7 +119,6 @@ void TestDataListener::createEmptyWorkspace() {
 
 boost::shared_ptr<Workspace> TestDataListener::extractData() {
   m_dataReset = false;
-
   // Add a small number of uniformly distributed events to each event list.
   using namespace DataObjects;
   EventList &el1 = m_buffer->getSpectrum(0);

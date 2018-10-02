@@ -24,7 +24,6 @@
   File change history is stored at: <https://github.com/mantidproject/mantid>
   Code Documentation is available at: <http://doxygen.mantidproject.org>
 */
-#include "MantidKernel/ClassMacros.h"
 #include "MantidKernel/DllConfig.h"
 #include <string>
 
@@ -36,12 +35,14 @@ namespace Kernel {
  */
 class MANTID_KERNEL_DLL UnitLabel {
 public:
+  UnitLabel() = delete;
+
   /// Type that contains a plain-text string
-  typedef std::string AsciiString;
+  using AsciiString = std::string;
   /// Type that can hold a unicode string. This may vary per-platform depending
   /// on the
   /// width of the the built-in std::wstring
-  typedef std::wstring Utf8String;
+  using Utf8String = std::wstring;
 
   /// Constructor giving labels as ascii, unicode, and latex respectively
   UnitLabel(const AsciiString &ascii, const Utf8String &unicode,
@@ -80,8 +81,6 @@ public:
   operator std::string() const;
 
 private:
-  DISABLE_DEFAULT_CONSTRUCT(UnitLabel)
-
   /// Value of plain-text label
   std::string m_ascii;
   /// Value of utf-8 encoded string

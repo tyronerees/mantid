@@ -14,7 +14,7 @@ namespace Poco {
 namespace DOM {
 class Element;
 }
-}
+} // namespace Poco
 namespace Mantid {
 namespace MDAlgorithms {
 /**
@@ -68,9 +68,9 @@ Vector3DParameterParser<VectorValueParameterType>::parseVectorParameter(
 
   double nx, ny, nz;
   try {
-    nx = atof(strs.at(0).c_str());
-    ny = atof(strs.at(1).c_str());
-    nz = atof(strs.at(2).c_str());
+    nx = std::stod(strs.at(0));
+    ny = std::stod(strs.at(1));
+    nz = std::stod(strs.at(2));
   } catch (std::exception &ex) {
     std::string message = std::string(ex.what()) + " Failed to parse " +
                           VectorValueParameterType::parameterName() +
@@ -100,7 +100,7 @@ void Vector3DParameterParser<VectorValueParameterType>::setSuccessorParser(
   Mantid::API::ImplicitFunctionParameterParser::SuccessorType temp(paramParser);
   m_successor.swap(temp);
 }
-}
-}
+} // namespace MDAlgorithms
+} // namespace Mantid
 
 #endif

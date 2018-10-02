@@ -1,5 +1,7 @@
 #include "ICatTestHelper.h"
 
+#include <iostream>
+
 namespace ICatTestHelper {
 /// Skip all unit tests if ICat server is down
 bool skipTests() {
@@ -29,4 +31,4 @@ void logout() {
   logoutobj.initialize();
   logoutobj.execute();
 }
-}
+} // namespace ICatTestHelper

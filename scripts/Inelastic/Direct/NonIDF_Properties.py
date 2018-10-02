@@ -1,6 +1,9 @@
-﻿#pylint: disable=invalid-name
+#pylint: disable=invalid-name
+from __future__ import (absolute_import, division, print_function)
 from Direct.PropertiesDescriptors import *
 from Direct.RunDescriptor import RunDescriptor,RunDescriptorDependent
+from mantid.simpleapi import *
+from mantid import geometry
 
 
 class NonIDF_Properties(object):
@@ -16,11 +19,11 @@ class NonIDF_Properties(object):
     # logging levels available for user
 #pylint: disable=unnecessary-lambda
     log_options = \
-        { "error" :       (1,lambda (msg):   logger.error(msg)),
-          "warning" :     (2,lambda (msg):   logger.warning(msg)),
-          "notice" :      (3,lambda (msg):   logger.notice(msg)),
-          "information" : (4,lambda (msg):   logger.information(msg)),
-          "debug" :       (5,lambda (msg):   logger.debug(msg))}
+        { "error" :       (1,lambda msg:   logger.error(msg)),
+          "warning" :     (2,lambda msg:   logger.warning(msg)),
+          "notice" :      (3,lambda msg:   logger.notice(msg)),
+          "information" : (4,lambda msg:   logger.information(msg)),
+          "debug" :       (5,lambda msg:   logger.debug(msg))}
 
     def __init__(self,Instrument,run_workspace=None):
         """ initialize main properties, defined by the class
@@ -66,7 +69,7 @@ class NonIDF_Properties(object):
         else:
         # TODO: reconcile this with Mantid.
             if lev <= self._current_log_level:
-                print msg
+                print(msg)
     #-----------------------------------------------------------------------------
     # Complex properties with personal descriptors
     #-----------------------------------------------------------------------------
@@ -161,7 +164,7 @@ class NonIDF_Properties(object):
     def mapmask_ref_ws(self):
         """Property provides reference workspace for LoadMask and GroupWorkspace algorithms
 
-            on 26/07/2016 refernce workspace (a workspace which provides appropriate
+            on 26/07/2016 reference workspace (a workspace which provides appropriate
             spectra-detector mapping was implemented for LoadMask algorithm only.
         """
         return self._mapmask_ref_ws

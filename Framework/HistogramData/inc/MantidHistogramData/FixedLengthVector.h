@@ -4,6 +4,8 @@
 #include "MantidHistogramData/DllConfig.h"
 #include "MantidHistogramData/Validation.h"
 
+#include <limits>
+#include <numeric>
 #include <stdexcept>
 #include <vector>
 
@@ -55,13 +57,11 @@ public:
   FixedLengthVector(const std::vector<double> &other) : m_data(other) {}
   FixedLengthVector(std::vector<double> &&other) : m_data(std::move(other)) {}
   template <class InputIt>
-  FixedLengthVector(InputIt first, InputIt last)
-      : m_data(first, last) {}
+  FixedLengthVector(InputIt first, InputIt last) : m_data(first, last) {}
   template <class Generator,
             class = typename std::enable_if<
                 !std::is_convertible<Generator, double>::value>::type>
-  FixedLengthVector(size_t count, const Generator &g)
-      : m_data(count) {
+  FixedLengthVector(size_t count, const Generator &g) : m_data(count) {
     std::generate(m_data.begin(), m_data.end(), g);
   }
 
@@ -105,6 +105,14 @@ public:
     return *this;
   }
 
+  bool operator==(const FixedLengthVector<T> &rhs) const {
+    return this->rawData() == rhs.rawData();
+  }
+
+  bool operator!=(const FixedLengthVector<T> &rhs) const {
+    return !(*this == rhs);
+  }
+
   bool empty() const { return m_data.empty(); }
   size_t size() const { return m_data.size(); }
 
@@ -113,6 +121,14 @@ public:
 
   /// Returns a const reference to the underlying vector.
   const std::vector<double> &rawData() const { return m_data; }
+
+  /// Returns the sum over a range of values from min (inclusive) to max
+  /// (exclusive)
+  double sum(size_t min = 0, size_t max = std::numeric_limits<size_t>::max(),
+             double initialValue = 0.0) const {
+    max = std::min(max, size());
+    return std::accumulate(begin() + min, begin() + max, initialValue);
+  }
 
 protected:
   /** Returns a reference to the underlying vector.
@@ -157,6 +173,10 @@ public:
   double &back() { return m_data.back(); }
   const double &front() const { return m_data.front(); }
   const double &back() const { return m_data.back(); }
+
+  // expose typedefs for the iterator types in the underlying container
+  using iterator = std::vector<double>::iterator;
+  using const_iterator = std::vector<double>::const_iterator;
 };
 
 } // namespace detail

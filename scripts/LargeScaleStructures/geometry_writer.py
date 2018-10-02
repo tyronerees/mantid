@@ -1,4 +1,5 @@
 # pylint: disable=invalid-name
+from __future__ import (absolute_import, division, print_function)
 from xml.dom.minidom import getDOMImplementation
 from datetime import datetime
 import re
@@ -38,7 +39,7 @@ class MantidGeom(object):
         """
             Print the XML geometry to the screen
         """
-        print self
+        print(self)
 
     def addSnsDefaults(self):
         """
@@ -82,8 +83,8 @@ class MantidGeom(object):
             if distance > 0:
                 distance *= -1.0
             self._append_child("location", source, z=distance)
-        except (StandardError, StopIteration, Warning):
-            print "PROBLEM with addModerator"
+        except (Exception, StopIteration, Warning):
+            print("PROBLEM with addModerator")
 
         child = self._append_child("type", self._root, name="moderator")
         child.setAttribute("is", "Source")
@@ -248,16 +249,16 @@ class MantidGeom(object):
 
     def addLocationPolar(self, root, r, theta, phi, name=None):
         if name is not None:
-           self._append_child("location", root, r=r, t=theta, p=phi, name=name)
+            self._append_child("location", root, r=r, t=theta, p=phi, name=name)
         else:
-           self._append_child("location", root, r=r, t=theta, p=phi)
+            self._append_child("location", root, r=r, t=theta, p=phi)
 
     def addLocationRTP(self, root, r, t, p, rot_x, rot_y, rot_z, name=None):
         """
         Add a location element to a specific parent node given by root, using r, theta, phi coordinates.
         """
         float(r)
-        float(f)
+        float(t)
         float(p)
         if name is not None:
             pos_loc = self._append_child("location", root, r=r, t=t, p=p, name=name)
@@ -389,7 +390,7 @@ class MantidGeom(object):
         step2, ...]. If no step is required, use None.
         """
         if len(idlist) % 3 != 0:
-            raise IndexError("Please specifiy list as [start1, end1, step1, "
+            raise IndexError("Please specify list as [start1, end1, step1, "
                              + "start2, end2, step2, ...]. If no step is"
                              + "required, use None.")
         num_ids = len(idlist) / 3

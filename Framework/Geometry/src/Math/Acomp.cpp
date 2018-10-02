@@ -1,12 +1,14 @@
 #include "MantidGeometry/Math/Acomp.h"
-#include "MantidKernel/Logger.h"
-#include "MantidKernel/Strings.h"
-#include "MantidKernel/Exception.h"
-#include "MantidKernel/Matrix.h"
 #include "MantidGeometry/Math/RotCounter.h"
+#include "MantidKernel/Exception.h"
+#include "MantidKernel/Logger.h"
+#include "MantidKernel/Matrix.h"
+#include "MantidKernel/Strings.h"
+
 #include <algorithm>
-#include <iostream>
 #include <functional>
+#include <iostream>
+#include <iterator>
 
 namespace Mantid {
 
@@ -459,7 +461,7 @@ Units are sorted after this function is returned.
         Express += iu;
     }
   }
-  if (Express.size() > 0) {
+  if (!Express.empty()) {
     Acomp AX;
     try {
       AX.setString(Express);

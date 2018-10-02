@@ -12,16 +12,17 @@
 
 #include "MantidAlgorithms/FilterByTime.h"
 #include "MantidDataHandling/LoadEventNexus.h"
-#include "MantidKernel/DateAndTime.h"
 #include "MantidDataObjects/EventWorkspace.h"
-#include "MantidTestHelpers/WorkspaceCreationHelper.h"
+#include "MantidKernel/DateAndTime.h"
 #include "MantidKernel/TimeSeriesProperty.h"
+#include "MantidTestHelpers/WorkspaceCreationHelper.h"
 
 using namespace Mantid::Algorithms;
 using namespace Mantid::DataHandling;
 using namespace Mantid::DataObjects;
 using namespace Mantid::Kernel;
 using namespace Mantid::API;
+using Mantid::Types::Core::DateAndTime;
 
 class FilterByTimeTest : public CxxTest::TestSuite {
 public:
@@ -33,7 +34,7 @@ public:
   FilterByTimeTest() {
     inWS = "filterbytime_input";
     EventWorkspace_sptr ws =
-        WorkspaceCreationHelper::CreateEventWorkspace(4, 1);
+        WorkspaceCreationHelper::createEventWorkspace(4, 1);
     // Add proton charge
     TimeSeriesProperty<double> *pc =
         new TimeSeriesProperty<double>("proton_charge");
@@ -53,7 +54,7 @@ public:
 
   void testTooManyParams() {
     EventWorkspace_sptr ws =
-        WorkspaceCreationHelper::CreateEventWorkspace(1, 1);
+        WorkspaceCreationHelper::createEventWorkspace(1, 1);
     AnalysisDataService::Instance().addOrReplace("eventWS", ws);
 
     // Do the filtering now.

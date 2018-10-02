@@ -87,6 +87,9 @@ public:
 
   /// Algorithm's version for identification overriding a virtual method
   int version() const override { return 1; }
+  const std::vector<std::string> seeAlso() const override {
+    return {"LorentzCorrection"};
+  }
   /// Algorithm's category for identification overriding a virtual method
   const std::string category() const override {
     return "Crystal\\Corrections;CorrectionFunctions\\AbsorptionCorrections";
@@ -123,7 +126,7 @@ private:
   double getEventWeight(double lamda, double two_theta);
   void BuildLamdaWeights();
   double absor_sphere(double &twoth, double &wl);
-  void scale_init(Geometry::IDetector_const_sptr det,
+  void scale_init(const Geometry::IDetector &det,
                   Geometry::Instrument_const_sptr inst, double &L2,
                   double &depth, double &pathlength, std::string &bankName);
   void scale_exec(std::string &bankName, double &lambda, double &depth,

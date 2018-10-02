@@ -1,4 +1,5 @@
 #pylint: disable=invalid-name
+from __future__ import (absolute_import, division, print_function)
 from FilterEvents import eventFilterGUI
 from PyQt4 import QtGui
 import sys
@@ -10,6 +11,7 @@ def qapp():
     else:
         _app = QtGui.QApplication(sys.argv)
     return _app
+
 
 app = qapp()
 

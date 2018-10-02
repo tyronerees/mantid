@@ -3,8 +3,9 @@ set ( SRC_FILES
 	# Old TMP convertToMD code prepared for deprecation:
 	# src/CreateMDFitWorkspace.cpp
 	#end TMP
-    src/AccumulateMD.cpp
+	src/AccumulateMD.cpp
 	src/AndMD.cpp
+	src/BaseConvertToDiffractionMDWorkspace.cpp
 	src/BinMD.cpp
 	src/BinaryOperationMD.cpp
 	src/BooleanBinaryOperationMD.cpp
@@ -28,6 +29,7 @@ set ( SRC_FILES
 	src/ConvertToDetectorFaceMD.cpp
 	src/ConvertToDiffractionMDWorkspace.cpp
 	src/ConvertToDiffractionMDWorkspace2.cpp
+	src/ConvertToDiffractionMDWorkspace3.cpp
 	src/ConvertToMD.cpp
 	src/ConvertToMDMinMaxGlobal.cpp
 	src/ConvertToMDMinMaxLocal.cpp
@@ -53,17 +55,17 @@ set ( SRC_FILES
 	src/ImportMDHistoWorkspaceBase.cpp
 	src/Integrate3DEvents.cpp
 	src/IntegrateEllipsoids.cpp
+	src/IntegrateEllipsoidsTwoStep.cpp
 	src/IntegrateFlux.cpp
 	src/IntegrateMDHistoWorkspace.cpp
+	src/IntegratePeaksCWSD.cpp
 	src/IntegratePeaksMD.cpp
 	src/IntegratePeaksMD2.cpp
 	src/IntegratePeaksMDHKL.cpp
-	src/IntegratePeaksCWSD.cpp
 	src/InvalidParameter.cpp
 	src/InvalidParameterParser.cpp
 	src/LessThanMD.cpp
-	src/LoadILLAscii.cpp
-	src/LoadILLAsciiHelper.cpp
+	src/LoadDNSSCD.cpp
 	src/LoadMD.cpp
 	src/LoadSQW.cpp
 	src/LoadSQW2.cpp
@@ -132,9 +134,9 @@ set ( SRC_FILES
 #)
 
 set ( INC_FILES
-	# inc/MantidMDAlgorithms/CreateMDFitWorkspace.h
-    inc/MantidMDAlgorithms/AccumulateMD.h
+	inc/MantidMDAlgorithms/AccumulateMD.h
 	inc/MantidMDAlgorithms/AndMD.h
+	inc/MantidMDAlgorithms/BaseConvertToDiffractionMDWorkspace.h
 	inc/MantidMDAlgorithms/BinMD.h
 	inc/MantidMDAlgorithms/BinaryOperationMD.h
 	inc/MantidMDAlgorithms/BooleanBinaryOperationMD.h
@@ -155,6 +157,7 @@ set ( INC_FILES
 	inc/MantidMDAlgorithms/ConvertToDetectorFaceMD.h
 	inc/MantidMDAlgorithms/ConvertToDiffractionMDWorkspace.h
 	inc/MantidMDAlgorithms/ConvertToDiffractionMDWorkspace2.h
+	inc/MantidMDAlgorithms/ConvertToDiffractionMDWorkspace3.h
 	inc/MantidMDAlgorithms/ConvertToMD.h
 	inc/MantidMDAlgorithms/ConvertToMDMinMaxGlobal.h
 	inc/MantidMDAlgorithms/ConvertToMDMinMaxLocal.h
@@ -182,17 +185,17 @@ set ( INC_FILES
 	inc/MantidMDAlgorithms/ImportMDHistoWorkspaceBase.h
 	inc/MantidMDAlgorithms/Integrate3DEvents.h
 	inc/MantidMDAlgorithms/IntegrateEllipsoids.h
+	inc/MantidMDAlgorithms/IntegrateEllipsoidsTwoStep.h
 	inc/MantidMDAlgorithms/IntegrateFlux.h
 	inc/MantidMDAlgorithms/IntegrateMDHistoWorkspace.h
+	inc/MantidMDAlgorithms/IntegratePeaksCWSD.h
 	inc/MantidMDAlgorithms/IntegratePeaksMD.h
 	inc/MantidMDAlgorithms/IntegratePeaksMD2.h
 	inc/MantidMDAlgorithms/IntegratePeaksMDHKL.h
-	inc/MantidMDAlgorithms/IntegratePeaksCWSD.h
 	inc/MantidMDAlgorithms/InvalidParameter.h
 	inc/MantidMDAlgorithms/InvalidParameterParser.h
 	inc/MantidMDAlgorithms/LessThanMD.h
-	inc/MantidMDAlgorithms/LoadILLAscii.h
-	inc/MantidMDAlgorithms/LoadILLAsciiHelper.h
+	inc/MantidMDAlgorithms/LoadDNSSCD.h
 	inc/MantidMDAlgorithms/LoadMD.h
 	inc/MantidMDAlgorithms/LoadSQW.h
 	inc/MantidMDAlgorithms/LoadSQW2.h
@@ -264,7 +267,7 @@ set ( TEST_FILES
 	#
 	# these tests are as they test verify different parts of the CPR algorithms
 	#CreateMDFitWorkspaceTest.h
-    AccumulateMDTest.h
+	AccumulateMDTest.h
 	AndMDTest.h
 	BooleanBinaryOperationMDTest.h
 	BoxControllerSettingsAlgorithmTest.h
@@ -284,6 +287,7 @@ set ( TEST_FILES
 	ConvertSpiceDataToRealSpaceTest.h
 	ConvertToDetectorFaceMDTest.h
 	ConvertToDiffractionMDWorkspace2Test.h
+	ConvertToDiffractionMDWorkspace3Test.h
 	ConvertToDiffractionMDWorkspaceTest.h
 	ConvertToMDComponentsTest.h
 	ConvertToMDMinMaxGlobalTest.h
@@ -311,18 +315,20 @@ set ( TEST_FILES
 	ImportMDHistoWorkspaceTest.h
 	Integrate3DEventsTest.h
 	IntegrateEllipsoidsTest.h
+	IntegrateEllipsoidsTwoStepTest.h
 	IntegrateFluxTest.h
 	IntegrateMDHistoWorkspaceTest.h
+	IntegratePeaksCWSDTest.h
 	IntegratePeaksMD2Test.h
 	IntegratePeaksMDHKLTest.h
 	IntegratePeaksMDTest.h
-	IntegratePeaksCWSDTest.h
 	InvalidParameterParserTest.h
 	InvalidParameterTest.h
 	LessThanMDTest.h
+	LoadDNSSCDTest.h
 	LoadMDTest.h
-	LoadSQWTest.h
 	LoadSQW2Test.h
+	LoadSQWTest.h
 	LogarithmMDTest.h
 	MDEventWSWrapperTest.h
 	MDNormDirectSCTest.h
@@ -377,19 +383,19 @@ set ( TEST_FILES
 )
 
 set ( GMOCK_TEST_FILES
-	BinaryOperationMDTest.h
-	BinMDTest.h
-)
+    BinaryOperationMDTest.h
+    BinMDTest.h
+    )
 
 if (COVERALLS)
     foreach( loop_var ${SRC_FILES} ${INC_FILES})
-      set_property(GLOBAL APPEND PROPERTY COVERAGE_SRCS "${CMAKE_CURRENT_SOURCE_DIR}/${loop_var}")
+        set_property(GLOBAL APPEND PROPERTY COVERAGE_SRCS "${CMAKE_CURRENT_SOURCE_DIR}/${loop_var}")
     endforeach(loop_var)
 endif()
 
 if(UNITY_BUILD)
-  include(UnityBuild)
-  enable_unity_build(MDAlgorithms SRC_FILES SRC_UNITY_IGNORE_FILES 10)
+    include(UnityBuild)
+    enable_unity_build(MDAlgorithms SRC_FILES SRC_UNITY_IGNORE_FILES 10)
 endif(UNITY_BUILD)
 
 # Use a precompiled header where they are supported
@@ -397,12 +403,15 @@ enable_precompiled_headers( inc/MantidMDAlgorithms/PrecompiledHeader.h SRC_FILES
 # Add the target for this directory
 add_library ( MDAlgorithms ${SRC_FILES} ${INC_FILES})
 # Set the name of the generated library
-set_target_properties ( MDAlgorithms PROPERTIES OUTPUT_NAME MantidMDAlgorithms 
-                                                COMPILE_DEFINITIONS IN_MANTID_MDALGORITHMS )
+set_target_properties ( MDAlgorithms PROPERTIES OUTPUT_NAME MantidMDAlgorithms
+    COMPILE_DEFINITIONS IN_MANTID_MDALGORITHMS
+)
 
 if (OSX_VERSION VERSION_GREATER 10.8)
-  set_target_properties ( MDAlgorithms PROPERTIES INSTALL_RPATH "@loader_path/../Contents/MacOS")
-endif () 
+  set_target_properties(MDAlgorithms PROPERTIES INSTALL_RPATH "@loader_path/../Contents/MacOS")
+elseif ( ${CMAKE_SYSTEM_NAME} STREQUAL "Linux" )
+  set_target_properties(MDAlgorithms PROPERTIES INSTALL_RPATH "\$ORIGIN/../${LIB_DIR}")
+endif ()
 
 # Add to the 'Framework' group in VS
 set_property ( TARGET MDAlgorithms PROPERTY FOLDER "MantidFramework" )

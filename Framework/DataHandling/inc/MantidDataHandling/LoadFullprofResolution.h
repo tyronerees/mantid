@@ -1,16 +1,16 @@
 #ifndef MANTID_DATAHANDLING_LOADFULLPROFRESOLUTION_H_
 #define MANTID_DATAHANDLING_LOADFULLPROFRESOLUTION_H_
 
-#include "MantidKernel/System.h"
 #include "MantidAPI/Algorithm.h"
 #include "MantidDataObjects/TableWorkspace.h"
+#include "MantidKernel/System.h"
 
 namespace Poco {
 namespace XML {
 class Document;
 class Element;
-}
-}
+} // namespace XML
+} // namespace Poco
 
 namespace Mantid {
 namespace DataHandling {
@@ -46,6 +46,9 @@ public:
 
   /// Algorithm's version for identification overriding a virtual method
   int version() const override { return 1; }
+  const std::vector<std::string> seeAlso() const override {
+    return {"LoadFullprofFile"};
+  }
 
   /// Algorithm's category for identification overriding a virtual method
   const std::string category() const override {
@@ -155,6 +158,10 @@ private:
 
   /// Parse 1 bank of lines of profile 10
   void parseProfile10();
+
+  /// Parse a value and prints warning if something is wrong
+  double parseDoubleValue(const std::string &value,
+                          const std::string &label = std::string());
 
   /// Generate output workspace
   DataObjects::TableWorkspace_sptr

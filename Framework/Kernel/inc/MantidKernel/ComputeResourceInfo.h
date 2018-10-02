@@ -1,15 +1,16 @@
 #ifndef MANTID_KERNEL_COMPUTERESOURCEINFO_H_
 #define MANTID_KERNEL_COMPUTERESOURCEINFO_H_
 
-#include <string>
-
 #include "MantidKernel/DllConfig.h"
+
+#include <iosfwd>
+#include <string>
 
 namespace Poco {
 namespace XML {
 class Element;
 }
-}
+} // namespace Poco
 
 namespace Mantid {
 namespace Kernel {

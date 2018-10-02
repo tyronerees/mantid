@@ -1,8 +1,8 @@
-#include "MantidHistogramData/BinEdges.h"
 #include "MantidHistogramData/CountVariances.h"
+#include "MantidHistogramData/BinEdges.h"
 #include "MantidHistogramData/CountStandardDeviations.h"
-#include "MantidHistogramData/FrequencyVariances.h"
 #include "MantidHistogramData/FrequencyStandardDeviations.h"
+#include "MantidHistogramData/FrequencyVariances.h"
 
 namespace Mantid {
 namespace HistogramData {
@@ -23,7 +23,7 @@ CountVariances::CountVariances(FrequencyVariances &&frequencies,
     throw std::logic_error("CountVariances: Cannot construct from "
                            "FrequencyVariances -- BinEdges are NULL.");
   if ((frequencies.size() + 1) != edges.size())
-    if (frequencies.size() != 0 || edges.size() != 0)
+    if (!frequencies.empty() || !edges.empty())
       throw std::logic_error("CountVariances: Cannot construct from "
                              "FrequencyVariances -- BinEdges size does not "
                              "match.");

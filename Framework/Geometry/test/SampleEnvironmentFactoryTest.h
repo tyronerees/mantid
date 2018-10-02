@@ -1,12 +1,14 @@
 #ifndef MANTID_GEOMETRY_SAMPLEENVIRONMENTFACTORYTEST_H_
 #define MANTID_GEOMETRY_SAMPLEENVIRONMENTFACTORYTEST_H_
 
-#include <cxxtest/TestSuite.h>
-#include "MantidGeometry/Instrument/SampleEnvironmentFactory.h"
 #include "MantidGeometry/Instrument/Container.h"
+#include "MantidGeometry/Instrument/SampleEnvironmentFactory.h"
 #include "MantidGeometry/Objects/ShapeFactory.h"
+#include "MantidKernel/make_unique.h"
+#include <cxxtest/TestSuite.h>
 
 #include "MantidTestHelpers/ComponentCreationHelper.h"
+#include <boost/make_shared.hpp>
 
 using Mantid::Geometry::SampleEnvironmentFactory;
 using Mantid::Geometry::SampleEnvironmentSpecFileFinder;
@@ -90,11 +92,11 @@ private:
       using namespace Mantid::Kernel;
 
       ShapeFactory factory;
-      auto small = factory.createShape<Container>(
-          ComponentCreationHelper::sphereXML(0.004, V3D(), "sp-1"));
+      auto small = boost::make_shared<Container>(factory.createShape(
+          ComponentCreationHelper::sphereXML(0.004, V3D(), "sp-1")));
       small->setID("8mm");
-      auto large = factory.createShape<Container>(
-          ComponentCreationHelper::sphereXML(0.005, V3D(), "sp-2"));
+      auto large = boost::make_shared<Container>(factory.createShape(
+          ComponentCreationHelper::sphereXML(0.005, V3D(), "sp-2")));
       large->setID("10mm");
 
       // Prepare a sample environment spec

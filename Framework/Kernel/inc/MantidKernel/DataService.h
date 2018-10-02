@@ -5,14 +5,14 @@
 // Includes
 //----------------------------------------------------------------------
 #ifndef Q_MOC_RUN
-#include <boost/shared_ptr.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/shared_ptr.hpp>
 #endif
-#include <Poco/NotificationCenter.h>
-#include <Poco/Notification.h>
-#include "MantidKernel/Logger.h"
-#include "MantidKernel/Exception.h"
 #include "MantidKernel/ConfigService.h"
+#include "MantidKernel/Exception.h"
+#include "MantidKernel/Logger.h"
+#include <Poco/Notification.h>
+#include <Poco/NotificationCenter.h>
 
 #include <mutex>
 
@@ -75,12 +75,12 @@ struct CaseInsensitiveCmp {
 template <typename T> class DLLExport DataService {
 private:
   /// Typedef for the map holding the names of and pointers to the data objects
-  typedef std::map<std::string, boost::shared_ptr<T>, CaseInsensitiveCmp>
-      svcmap;
+  using svcmap =
+      std::map<std::string, boost::shared_ptr<T>, CaseInsensitiveCmp>;
   /// Iterator for the data store map
-  typedef typename svcmap::iterator svc_it;
+  using svc_it = typename svcmap::iterator;
   /// Const iterator for the data store map
-  typedef typename svcmap::const_iterator svc_constit;
+  using svc_constit = typename svcmap::const_iterator;
 
 public:
   /// Class for named object notifications
@@ -136,12 +136,16 @@ public:
     BeforeReplaceNotification(const std::string &name,
                               const boost::shared_ptr<T> obj,
                               const boost::shared_ptr<T> newObj)
-        : DataServiceNotification(name, obj), m_newObject(newObj) {}
+        : DataServiceNotification(name, obj), m_newObject(newObj),
+          m_oldObject(obj) {}
     const boost::shared_ptr<T> newObject() const {
       return m_newObject;
     } ///< Returns the pointer to the new object.
+    const boost::shared_ptr<T> oldObject() const { return m_oldObject; }
+
   private:
     boost::shared_ptr<T> m_newObject; ///< shared pointer to the object
+    boost::shared_ptr<T> m_oldObject;
   };
 
   /// AfterReplaceNotification is sent after an object is replaced in the
@@ -149,11 +153,11 @@ public:
   class AfterReplaceNotification : public DataServiceNotification {
   public:
     /** Constructor.
-      * @param name :: The name of the replaced object
-      *  @param newObj :: The pointer to the new object
-      *  Only new objects are guaranteed to exist when an observer receives the
+     * @param name :: The name of the replaced object
+     *  @param newObj :: The pointer to the new object
+     *  Only new objects are guaranteed to exist when an observer receives the
      * notification.
-    */
+     */
     AfterReplaceNotification(const std::string &name,
                              const boost::shared_ptr<T> newObj)
         : DataServiceNotification(name, newObj) {}
@@ -310,28 +314,40 @@ public:
   void rename(const std::string &oldName, const std::string &newName) {
     checkForEmptyName(newName);
 
+    if (oldName == newName) {
+      g_log.warning("Rename: The existing name matches the new name");
+      return;
+    }
+
     // Make DataService access thread-safe
     std::unique_lock<std::recursive_mutex> lock(m_mutex);
 
-    auto it = datamap.find(oldName);
-    if (it == datamap.end()) {
+    auto existingNameIter = datamap.find(oldName);
+    if (existingNameIter == datamap.end()) {
       lock.unlock();
       g_log.warning(" rename '" + oldName + "' cannot be found");
       return;
     }
 
-    // delete the object with the old name
-    auto object = std::move(it->second);
-    datamap.erase(it);
+    auto existingNameObject = std::move(existingNameIter->second);
+    auto targetNameIter = datamap.find(newName);
 
-    // if there is another object which has newName delete it
-    auto it2 = datamap.find(newName);
-    if (it2 != datamap.end()) {
+    // If we are overriding send a notification for observers
+    if (targetNameIter != datamap.end()) {
+      auto targetNameObject = targetNameIter->second;
+      // As we are renaming the existing name turns into the new name
+      notificationCenter.postNotification(new BeforeReplaceNotification(
+          newName, targetNameObject, existingNameObject));
+    }
+
+    datamap.erase(existingNameIter);
+
+    if (targetNameIter != datamap.end()) {
+      targetNameIter->second = std::move(existingNameObject);
       notificationCenter.postNotification(
-          new AfterReplaceNotification(newName, object));
-      it2->second = std::move(object);
+          new AfterReplaceNotification(newName, targetNameIter->second));
     } else {
-      if (!(datamap.emplace(newName, std::move(object)).second)) {
+      if (!(datamap.emplace(newName, std::move(existingNameObject)).second)) {
         // should never happen
         lock.unlock();
         std::string error =
@@ -378,6 +394,15 @@ public:
               "': data service ",
           name);
     }
+  }
+
+  /// Checks all elements within the specified vector exist in the ADS
+  bool doAllWsExist(const std::vector<std::string> &listOfNames) {
+    for (const auto &wsName : listOfNames) {
+      if (!doesExist(wsName))
+        return false;
+    }
+    return true;
   }
 
   /// Check to see if a data object exists in the store
@@ -457,15 +482,22 @@ public:
   }
 
   /// Get a vector of the pointers to the data objects stored by the service
-  std::vector<boost::shared_ptr<T>> getObjects() const {
+  std::vector<boost::shared_ptr<T>>
+  getObjects(DataServiceHidden includeHidden = DataServiceHidden::Auto) const {
     std::lock_guard<std::recursive_mutex> _lock(m_mutex);
 
-    const bool showingHidden = showingHiddenObjects();
+    const bool alwaysIncludeHidden =
+        includeHidden == DataServiceHidden::Include;
+    const bool usingAuto =
+        includeHidden == DataServiceHidden::Auto && showingHiddenObjects();
+
+    const bool showingHidden = alwaysIncludeHidden || usingAuto;
+
     std::vector<boost::shared_ptr<T>> objects;
     objects.reserve(datamap.size());
-    for (auto it = datamap.begin(); it != datamap.end(); ++it) {
-      if (showingHidden || !isHiddenDataServiceObject(it->first)) {
-        objects.push_back(it->second);
+    for (const auto &it : datamap) {
+      if (showingHidden || !isHiddenDataServiceObject(it.first)) {
+        objects.push_back(it.second);
       }
     }
     return objects;
@@ -478,14 +510,9 @@ public:
   }
 
   static bool showingHiddenObjects() {
-    int showingHiddenFlag;
-    const int success = ConfigService::Instance().getValue(
-        "MantidOptions.InvisibleWorkspaces", showingHiddenFlag);
-    if (success == 1 && showingHiddenFlag == 1) {
-      return true;
-    } else {
-      return false;
-    }
+    auto showingHiddenFlag = ConfigService::Instance().getValue<bool>(
+        "MantidOptions.InvisibleWorkspaces");
+    return showingHiddenFlag.get_value_or(false);
   }
 
   /// Sends notifications to observers. Observers can subscribe to

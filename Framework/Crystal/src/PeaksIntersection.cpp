@@ -1,13 +1,17 @@
-#include "MantidKernel/ListValidator.h"
-#include "MantidAPI/IPeaksWorkspace.h"
-#include "MantidGeometry/Crystal/IPeak.h"
-#include "MantidAPI/TableRow.h"
 #include "MantidCrystal/PeaksIntersection.h"
+#include "MantidAPI/TableRow.h"
+#include "MantidDataObjects/PeaksWorkspace.h"
 #include "MantidDataObjects/TableWorkspace.h"
+#include "MantidGeometry/Crystal/IPeak.h"
+#include "MantidKernel/ListValidator.h"
+
+#include <boost/function.hpp>
 
 using namespace Mantid::API;
 using namespace Mantid::Geometry;
 using namespace Mantid::Kernel;
+using Mantid::DataObjects::PeaksWorkspace;
+using Mantid::DataObjects::PeaksWorkspace_sptr;
 
 namespace Mantid {
 namespace Crystal {
@@ -23,7 +27,7 @@ std::string PeaksIntersection::hklFrame() { return "HKL"; }
 /** Initialize the algorithm's properties.
  */
 void PeaksIntersection::initBaseProperties() {
-  declareProperty(make_unique<WorkspaceProperty<IPeaksWorkspace>>(
+  declareProperty(make_unique<WorkspaceProperty<PeaksWorkspace>>(
                       "InputWorkspace", "", Direction::Input),
                   "An input peaks workspace.");
 
@@ -64,7 +68,7 @@ the surfaces.
 */
 void PeaksIntersection::executePeaksIntersection(const bool checkPeakExtents) {
   const std::string coordinateFrame = this->getPropertyValue("CoordinateFrame");
-  IPeaksWorkspace_sptr ws = this->getProperty("InputWorkspace");
+  PeaksWorkspace_sptr ws = this->getProperty("InputWorkspace");
 
   m_peakRadius = this->getProperty("PeakRadius");
 
@@ -102,9 +106,9 @@ void PeaksIntersection::executePeaksIntersection(const bool checkPeakExtents) {
   if (frequency > 100) {
     frequency = nPeaks / 100;
   }
-  Progress prog(this, 0, 1, 100);
+  Progress prog(this, 0.0, 1.0, 100);
 
-  PARALLEL_FOR2(ws, outputWorkspace)
+  PARALLEL_FOR_IF(Kernel::threadSafe(*ws, *outputWorkspace))
   for (int i = 0; i < nPeaks; ++i) {
     PARALLEL_START_INTERUPT_REGION
     IPeak *peak = ws->getPeakPtr(i);

@@ -1,11 +1,11 @@
 #ifndef MANTID_DATAHANDLING_CREATECHOPPERMODELTEST_H_
 #define MANTID_DATAHANDLING_CREATECHOPPERMODELTEST_H_
 
-#include <cxxtest/TestSuite.h>
-#include "MantidDataHandling/CreateChopperModel.h"
 #include "MantidAPI/FermiChopperModel.h"
-#include "MantidTestHelpers/WorkspaceCreationHelper.h"
+#include "MantidDataHandling/CreateChopperModel.h"
 #include "MantidTestHelpers/ComponentCreationHelper.h"
+#include "MantidTestHelpers/WorkspaceCreationHelper.h"
+#include <cxxtest/TestSuite.h>
 
 using Mantid::DataHandling::CreateChopperModel;
 
@@ -109,7 +109,7 @@ private:
   }
 
   Mantid::API::MatrixWorkspace_sptr createTestWorkspace() {
-    auto ws = WorkspaceCreationHelper::Create2DWorkspace(1, 10);
+    auto ws = WorkspaceCreationHelper::create2DWorkspace(1, 10);
     ws->mutableRun().addProperty("Ei", 45.0);
     ws->mutableRun().addProperty("ChopperSpeed", 150.0);
     return ws;

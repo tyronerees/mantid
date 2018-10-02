@@ -1,15 +1,18 @@
+#include "MantidLiveData/MonitorLiveData.h"
 #include "MantidAPI/AlgorithmManager.h"
+#include "MantidAPI/AnalysisDataService.h"
 #include "MantidAPI/MatrixWorkspace.h"
 #include "MantidKernel/Memory.h"
+#include "MantidKernel/Strings.h"
 #include "MantidKernel/System.h"
 #include "MantidKernel/WriteLock.h"
 #include "MantidLiveData/LoadLiveData.h"
-#include "MantidLiveData/MonitorLiveData.h"
 
 #include <Poco/Thread.h>
 
 using namespace Mantid::Kernel;
 using namespace Mantid::API;
+using Mantid::Types::Core::DateAndTime;
 
 namespace Mantid {
 namespace LiveData {
@@ -84,8 +87,8 @@ void MonitorLiveData::doClone(const std::string &originalName,
         if (newMonitorWS) // If there was a monitor workspace, set it back on
                           // the result
         {
-          ads.retrieveWS<MatrixWorkspace>(newName)
-              ->setMonitorWorkspace(newMonitorWS);
+          ads.retrieveWS<MatrixWorkspace>(newName)->setMonitorWorkspace(
+              newMonitorWS);
         }
       } else {
         std::cout << "Not cloning\n";
@@ -224,8 +227,9 @@ void MonitorLiveData::exec() {
     seconds = DateAndTime::secondsFromDuration(now - lastTime);
     if (seconds > UpdateEvery)
       g_log.warning() << "Cannot process live data as quickly as requested: "
-                         "requested every " << UpdateEvery
-                      << " seconds but it takes " << seconds << " seconds!\n";
+                         "requested every "
+                      << UpdateEvery << " seconds but it takes " << seconds
+                      << " seconds!\n";
   } // loop until aborted
 
   // Set the outputs (only applicable when RunTransitionBehavior is "Stop")

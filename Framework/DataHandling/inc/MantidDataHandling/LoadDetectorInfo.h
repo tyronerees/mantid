@@ -1,11 +1,9 @@
 #ifndef MANTID_DATAHANDLING_LOADDETECTORINFO_H_
 #define MANTID_DATAHANDLING_LOADDETECTORINFO_H_
 
-//----------------------------------------------------------------------
-// Includes
-//----------------------------------------------------------------------
 #include "MantidAPI/Algorithm.h"
 #include "MantidGeometry/Instrument.h"
+#include "MantidGeometry/Instrument/DetectorInfo.h"
 
 namespace Mantid {
 namespace DataHandling {
@@ -47,6 +45,9 @@ public:
 
   /// Algorithm's version for identification overriding a virtual method
   int version() const override { return 1; }
+  const std::vector<std::string> seeAlso() const override {
+    return {"LoadRaw", "LoadNexus"};
+  }
   /// Algorithm's category for identification overriding a virtual method
   const std::string category() const override { return "DataHandling\\Raw"; }
 
@@ -78,8 +79,8 @@ private:
   void readNXSDotDat(::NeXus::File &nxsFile, DetectorInfo &detInfo) const;
 
   /// Update the parameter map with the new values for the given detector
-  void updateParameterMap(Geometry::ParameterMap &pmap,
-                          const Geometry::IDetector_const_sptr &det,
+  void updateParameterMap(Geometry::DetectorInfo &detectorInfo,
+                          const size_t detIndex, Geometry::ParameterMap &pmap,
                           const double l2, const double theta, const double phi,
                           const double delay, const double pressure,
                           const double thickness) const;

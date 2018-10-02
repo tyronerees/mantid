@@ -1,20 +1,17 @@
 #ifndef MANTID_DATAHANDLING_LoadCanSAS1D_H
 #define MANTID_DATAHANDLING_LoadCanSAS1D_H
 
-//----------------------------------------------------------------------
-// Includes
-//----------------------------------------------------------------------
 #include "MantidAPI/IFileLoader.h"
+#include "MantidAPI/WorkspaceGroup_fwd.h"
 #include "MantidDataObjects/Workspace2D.h"
 #include <Poco/DOM/Element.h>
 #include <Poco/DOM/Node.h>
-//----------------------------------------------------------------------
 
 namespace Poco {
 namespace XML {
 class Element;
 }
-}
+} // namespace Poco
 
 namespace Mantid {
 namespace DataHandling {
@@ -106,7 +103,7 @@ protected:
   void createSampleInformation(const Poco::XML::Element *const sasEntry,
                                Mantid::API::MatrixWorkspace_sptr wSpace) const;
 };
-}
-}
+} // namespace DataHandling
+} // namespace Mantid
 
 #endif

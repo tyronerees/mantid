@@ -1,9 +1,9 @@
 #ifndef MANTID_DATAHANDLING_SAVEFITS_H_
 #define MANTID_DATAHANDLING_SAVEFITS_H_
 
-#include "MantidDataHandling/DllConfig.h"
 #include "MantidAPI/Algorithm.h"
 #include "MantidAPI/MatrixWorkspace_fwd.h"
+#include "MantidDataHandling/DllConfig.h"
 
 namespace Mantid {
 namespace DataHandling {
@@ -37,6 +37,9 @@ public:
   const std::string name() const override final;
 
   int version() const override final;
+  const std::vector<std::string> seeAlso() const override {
+    return {"LoadFITS", "SaveNXTomo"};
+  }
 
   const std::string category() const override final;
 
@@ -68,7 +71,7 @@ private:
   void writePaddingFITSHeaders(size_t count, std::ofstream &file);
 
   static const size_t g_maxBitDepth;
-  static const std::vector<int> g_bitDepths;
+  static const std::array<int, 3> g_bitDepths;
   static const size_t g_maxBytesPP;
   // size of header entries in bytes
   static const size_t g_maxLenHdr;

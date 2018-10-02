@@ -1,14 +1,14 @@
 #ifndef SAVEANSTOASCIITEST_H_
 #define SAVEANSTOASCIITEST_H_
 
-#include <cxxtest/TestSuite.h>
+#include "MantidAPI/AlgorithmManager.h"
 #include "MantidDataHandling/SaveANSTOAscii.h"
 #include "MantidDataObjects/Workspace2D.h"
-#include "MantidAPI/AlgorithmManager.h"
 #include "MantidTestHelpers/WorkspaceCreationHelper.h"
-#include <fstream>
-#include <boost/algorithm/string.hpp>
 #include <Poco/File.h>
+#include <boost/algorithm/string.hpp>
+#include <cxxtest/TestSuite.h>
+#include <fstream>
 
 using namespace Mantid::API;
 using namespace Mantid::DataHandling;
@@ -61,7 +61,7 @@ public:
     TS_ASSERT_DELTA(boost::lexical_cast<double>(columns.at(0)), 1.5, 0.01);
     TS_ASSERT_DELTA(boost::lexical_cast<double>(columns.at(1)), 1, 0.01);
     TS_ASSERT_DELTA(boost::lexical_cast<double>(columns.at(2)), 1, 0.01);
-    TS_ASSERT_DELTA(boost::lexical_cast<double>(columns.at(3)), 0.6, 0.01);
+    TS_ASSERT_EQUALS(columns.at(3), "0.000000000000000e+00");
     in.close();
 
     cleanupafterwards();
@@ -92,7 +92,7 @@ public:
     TS_ASSERT_DELTA(boost::lexical_cast<double>(columns.at(0)), 0, 0.01);
     TS_ASSERT_DELTA(boost::lexical_cast<double>(columns.at(1)), 1, 0.01);
     TS_ASSERT_DELTA(boost::lexical_cast<double>(columns.at(2)), 1, 0.01);
-    TS_ASSERT((columns.at(3) == "nan") || (columns.at(3) == "inf"));
+    TS_ASSERT_EQUALS(columns.at(3), "0.000000000000000e+00");
     in.close();
 
     cleanupafterwards();
@@ -123,7 +123,7 @@ public:
     TS_ASSERT_DELTA(boost::lexical_cast<double>(columns.at(0)), 1.5, 0.01);
     TS_ASSERT_DELTA(boost::lexical_cast<double>(columns.at(1)), 0, 0.01);
     TS_ASSERT_DELTA(boost::lexical_cast<double>(columns.at(2)), 1, 0.01);
-    TS_ASSERT_DELTA(boost::lexical_cast<double>(columns.at(3)), 0.6, 0.01);
+    TS_ASSERT_EQUALS(columns.at(3), "0.000000000000000e+00");
     in.close();
 
     cleanupafterwards();
@@ -154,12 +154,43 @@ public:
     TS_ASSERT_DELTA(boost::lexical_cast<double>(columns.at(0)), 1.5, 0.01);
     TS_ASSERT_DELTA(boost::lexical_cast<double>(columns.at(1)), 1, 0.01);
     TS_ASSERT_DELTA(boost::lexical_cast<double>(columns.at(2)), 0, 0.01);
-    TS_ASSERT_DELTA(boost::lexical_cast<double>(columns.at(3)), 0.6, 0.01);
+    TS_ASSERT_EQUALS(columns.at(3), "0.000000000000000e+00");
     in.close();
 
     cleanupafterwards();
   }
+  void testParameters() {
+    // create a new workspace and then delete it later on
+    createWS();
 
+    Mantid::API::IAlgorithm_sptr alg =
+        Mantid::API::AlgorithmManager::Instance().create("SaveANSTOAscii");
+    alg->setPropertyValue("InputWorkspace", m_name);
+    alg->setPropertyValue("Filename", m_filename);
+    alg->setPropertyValue("Separator", "comma");
+    TS_ASSERT_THROWS_NOTHING(alg->execute());
+
+    if (!alg->isExecuted()) {
+      TS_FAIL("Could not run SaveANSTOAscii");
+    }
+    m_long_filename = alg->getPropertyValue("Filename");
+    // has the algorithm written a file to disk?
+    TS_ASSERT(Poco::File(m_long_filename).exists());
+    std::ifstream in(m_long_filename.c_str());
+    std::string fullline;
+    getline(in, fullline);
+    std::vector<std::string> columns;
+    boost::split(columns, fullline, boost::is_any_of(","),
+                 boost::token_compress_on);
+    TS_ASSERT_EQUALS(columns.size(), 4);
+    TS_ASSERT_DELTA(boost::lexical_cast<double>(columns.at(0)), 1.5, 0.01);
+    TS_ASSERT_DELTA(boost::lexical_cast<double>(columns.at(1)), 1, 0.01);
+    TS_ASSERT_DELTA(boost::lexical_cast<double>(columns.at(2)), 1, 0.01);
+    TS_ASSERT_EQUALS(columns.at(3), "0.000000000000000e+00");
+    in.close();
+
+    cleanupafterwards();
+  }
   void test_fail_invalid_workspace() {
     Mantid::API::IAlgorithm_sptr alg =
         Mantid::API::AlgorithmManager::Instance().create("SaveANSTOAscii");
@@ -177,7 +208,7 @@ public:
 
 private:
   void createWS(bool zeroX = false, bool zeroY = false, bool zeroE = false) {
-    MatrixWorkspace_sptr ws = WorkspaceCreationHelper::Create2DWorkspace(1, 10);
+    MatrixWorkspace_sptr ws = WorkspaceCreationHelper::create2DWorkspace(1, 10);
     AnalysisDataService::Instance().addOrReplace(m_name, ws);
     // Check if any of X, Y or E should be zeroed to check for divide by zero or
     // similiar

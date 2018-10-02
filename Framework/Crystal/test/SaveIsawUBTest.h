@@ -7,22 +7,22 @@
 #ifndef MANTID_CRYSTAL_SAVEISAWUBTEST_H_
 #define MANTID_CRYSTAL_SAVEISAWUBTEST_H_
 
-#include "MantidCrystal/SaveIsawUB.h"
 #include "MantidCrystal/LoadIsawUB.h"
+#include "MantidCrystal/SaveIsawUB.h"
 
+#include "MantidAPI/FileProperty.h"
 #include "MantidDataObjects/PeaksWorkspace.h"
 #include "MantidDataObjects/Workspace2D.h"
 #include "MantidKernel/Matrix.h"
 #include "MantidKernel/Strings.h"
 #include "MantidKernel/System.h"
-#include "MantidAPI/FileProperty.h"
 #include "MantidTestHelpers/WorkspaceCreationHelper.h"
 
 #include <cxxtest/TestSuite.h>
 #include <fstream>
+#include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sstream>
 
 using namespace Mantid::Kernel::Strings;
 using namespace Mantid::Crystal;
@@ -43,7 +43,7 @@ public:
   void test_exec() {
     // Fake output WS
     MatrixWorkspace_sptr ws =
-        WorkspaceCreationHelper::Create2DWorkspace(10, 10);
+        WorkspaceCreationHelper::create2DWorkspace(10, 10);
     AnalysisDataService::Instance().addOrReplace("LoadIsawUBTest_ws", ws);
 
     std::string File1, File2;

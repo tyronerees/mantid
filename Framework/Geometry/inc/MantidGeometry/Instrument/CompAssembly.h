@@ -1,10 +1,10 @@
 #ifndef COMPONENT_ASSEMBLY_
 #define COMPONENT_ASSEMBLY_
+#include "MantidGeometry/DllConfig.h"
+#include "MantidGeometry/ICompAssembly.h"
+#include "MantidGeometry/Instrument/Component.h"
 #include <string>
 #include <vector>
-#include "MantidGeometry/DllConfig.h"
-#include "MantidGeometry/Instrument/Component.h"
-#include "MantidGeometry/ICompAssembly.h"
 
 #ifdef _WIN32
 #pragma warning(disable : 4250)
@@ -47,9 +47,9 @@ namespace Geometry {
 class MANTID_GEOMETRY_DLL CompAssembly : public ICompAssembly,
                                          public Component {
 protected:
-  typedef std::vector<IComponent *>::iterator comp_it; ///< Iterator type
-  typedef std::vector<IComponent *>::const_iterator
-      const_comp_it; ///< Const iterator type
+  using comp_it = std::vector<IComponent *>::iterator; ///< Iterator type
+  using const_comp_it =
+      std::vector<IComponent *>::const_iterator; ///< Const iterator type
 
 public:
   /// String description of the type of component
@@ -93,7 +93,7 @@ public:
 
   Kernel::V3D getPos() const override;
 
-  const Kernel::Quat getRotation() const override;
+  Kernel::Quat getRotation() const override;
 
   /// Get the bounding box for this component and store it in the given argument
   void getBoundingBox(BoundingBox &assemblyBox) const override;
@@ -107,6 +107,9 @@ public:
   void testIntersectionWithChildren(
       Track &testRay,
       std::deque<IComponent_const_sptr> &searchQueue) const override;
+
+  virtual size_t
+  registerContents(class ComponentVisitor &componentVisitor) const override;
 
 private:
   /// Private copy assignment operator

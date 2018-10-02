@@ -4,11 +4,11 @@
 //----------------------------------------------------------------------
 // Includes
 //----------------------------------------------------------------------
+#include "MantidKernel/CaseInsensitiveMap.h"
 #include "MantidKernel/DllConfig.h"
 #include "MantidKernel/Exception.h"
 #include "MantidKernel/Instantiator.h"
 #include "MantidKernel/RegistrationHelper.h"
-#include "MantidKernel/CaseInsensitiveMap.h"
 
 // Boost
 #ifndef Q_MOC_RUN
@@ -18,10 +18,8 @@
 // Poco
 #include <Poco/Notification.h>
 #include <Poco/NotificationCenter.h>
-#include <Poco/AutoPtr.h>
 
 // std
-#include <cstring>
 #include <functional>
 #include <iterator>
 #include <vector>
@@ -34,7 +32,7 @@ namespace Kernel {
 //----------------------------------------------------------------------------
 class Logger;
 
-typedef std::less<std::string> CaseSensitiveStringComparator;
+using CaseSensitiveStringComparator = std::less<std::string>;
 
 /** @class DynamicFactory DynamicFactory.h Kernel/DynamicFactory.h
 
@@ -98,7 +96,7 @@ public:
   void disableNotifications() { m_notifyStatus = Disabled; }
 
   /// A typedef for the instantiator
-  typedef AbstractInstantiator<Base> AbstractFactory;
+  using AbstractFactory = AbstractInstantiator<Base>;
   /// Destroys the DynamicFactory and deletes the instantiators for
   /// all registered classes.
   virtual ~DynamicFactory() {
@@ -239,7 +237,7 @@ private:
   }
 
   /// A typedef for the map of registered classes
-  typedef std::map<std::string, AbstractFactory *, Comparator> FactoryMap;
+  using FactoryMap = std::map<std::string, AbstractFactory *, Comparator>;
   /// The map holding the registered class names and their instantiators
   FactoryMap _map;
   /// Flag marking whether we should dispatch notifications

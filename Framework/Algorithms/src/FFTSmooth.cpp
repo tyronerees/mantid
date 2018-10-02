@@ -95,7 +95,7 @@ void FFTSmooth::exec() {
     if (sn.empty())
       n = 2;
     else
-      n = atoi(sn.c_str());
+      n = std::stoi(sn);
     if (n < 1)
       throw std::invalid_argument(
           "Truncation parameter must be an integer > 1");
@@ -185,5 +185,5 @@ void FFTSmooth::zero(int n) {
             m_filteredWS->mutableY(1).begin());
 }
 
-} // namespace Algorithm
+} // namespace Algorithms
 } // namespace Mantid
